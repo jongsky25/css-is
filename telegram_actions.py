@@ -5,11 +5,13 @@ prepare/revalidate/apply/check_receipt, with domain authorization on every call.
 apply runs under BEGIN IMMEDIATE and MUST NOT commit or perform network I/O.
 """
 from datetime import timedelta
+from contextlib import nullcontext
 import base64
 import hmac
 import auth
 import hashlib
 import json
+import os
 import re
 import secrets
 import time
@@ -22,7 +24,18 @@ import telegram_storage as switches
 import telegram_transport as transport
 
 ADAPTERS = {}
-ACTIONS = {'calendar.create':'calendar_create','rooms.request':'rooms_request'}
+ACTIONS = {'calendar.create':'calendar_create','rooms.request':'rooms_request', 'tasks.acknowledge':'tasks_acknowledge', 'tasks.submit':'tasks_submit'}
+ACTIONS.update({'calendar.reschedule':'calendar_reschedule','calendar.cancel':'calendar_cancel'})
+ACTIONS.update({'rooms.withdraw':'rooms_withdraw','rooms.move':'rooms_move'})
+ACTIONS['tasks.create']='tasks_create'
+ACTIONS['tasks.deadline']='tasks_deadline'
+ACTIONS['tasks.assign']='tasks_assign'
+ACTIONS['tasks.reassign']='tasks_reassign'
+ACTIONS['tasks.reopen']='tasks_reopen'
+ACTIONS['tasks.cancel']='tasks_cancel'
+ACTIONS.update({'tasks.block':'tasks_block','tasks.unblock':'tasks_unblock','tasks.dependency_add':'tasks_dependency_add','tasks.dependency_remove':'tasks_dependency_remove'})
+ACTIONS.update({'work.comment':'work_comment','tasks.comment':'tasks_comment','work.reply':'work_reply','tasks.reply':'tasks_reply','work.comment_edit':'work_comment_edit','tasks.comment_edit':'tasks_comment_edit'})
+ACTIONS.update({'tasks.accept':'tasks_accept','tasks.return':'tasks_return'})
 TTL = 300
 CONTEXT = {'connection_id','generation','sender_id','chat_id','topic_id','registration_id','registration_generation'}
 
@@ -83,10 +96,19 @@ def authority(conn,context,action):
         group=groups.route(conn,context['chat_id'],context['topic_id'],bot)
         if not group or group['id']!=context['registration_id'] or group['generation']!=context['registration_generation']:
             raise Unavailable('Group context unavailable.')
-    if not links.authorized(conn,found[0]['id'],'calendar.read' if action=='calendar.create' else 'rooms.read'):
+    if (action.startswith('tasks.') or action in ('work.comment','work.reply','work.comment_edit')) and context['chat_id'] < 0:
+        raise Unavailable('Task actions are private only.')
+    if action in ('calendar.reschedule','calendar.cancel','rooms.withdraw','rooms.move','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply','work.comment_edit','tasks.comment_edit') and (context['chat_id']<0 or not switches.enabled('delivery')
+            or len(links.origin() or '')>200 or os.environ.get('CSS_TELEGRAM_REPLY_TRANSPORT')=='direct'):
+        raise Unavailable('Meeting management requires private webhook replies.')
+    read_scope = 'work.read' if (action.startswith('tasks.') or action in ('work.comment','work.reply','work.comment_edit')) else ('calendar.read' if action.startswith('calendar.') else 'rooms.read')
+    if not links.authorized(conn,found[0]['id'],read_scope):
         raise Unavailable('Current read consent is required for this action.')
     if action=='rooms.request' and not links.authorized(conn,found[0]['id'],'calendar.read'):
         raise Unavailable('Calendar read consent is required for a linked room request.')
+    if action in ('tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply','work.comment_edit','tasks.comment_edit'):
+        import work
+        if not work.enabled(conn):raise Unavailable('Task actions are paused with the source work module.')
     return found[0],adapter,bot
 
 
@@ -94,13 +116,15 @@ def fingerprint(action,fields,expected,summary):
     return digest(packed([action,fields,expected,summary]))
 
 
-def issue(conn,context,action,client_key,fields,now):
+def issue(conn,context,action,client_key,fields,now, *, commit=True):
     if not isinstance(client_key,str) or not re.fullmatch('[A-Za-z0-9_-]{16,80}',client_key):
         raise Unavailable('Use a unique action key.')
     if not isinstance(fields,dict):
         raise Unavailable('Action fields must be structured.')
     packed(fields)
-    with transaction(conn):
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Caller-owned action requires a transaction')
+    with transaction(conn) if commit else nullcontext():
         user,adapter,bot=authority(conn,context,action)
         # Adapter supplies normalized fields, exact user-facing preview and expected revisions.
         clean,summary,expected=adapter.prepare(conn,user,fields)
@@ -141,8 +165,10 @@ def receipt(conn,user,adapter,operation):
     return {k:operation[k] for k in ('operation_id','action','state','result_entry_id','result_room_id','result_code')}
 
 
-def recover(conn,context,action,operation_id):
-    with transaction(conn):
+def recover(conn,context,action,operation_id, *, commit=True):
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Caller-owned recovery requires a transaction')
+    with transaction(conn) if commit else nullcontext():
         user,adapter,_=authority(conn,context,action)
         found=rows(conn,'SELECT * FROM telegram_operation WHERE actor_id=? AND operation_id=? AND action=? AND connection_id=? AND generation=? AND context_hash=?',
                    (user['id'],operation_id,action,context['connection_id'],context['generation'],digest(packed(context))))
@@ -162,12 +188,16 @@ def confirm(conn,context,token,now):
     return confirm_digest(conn,context,digest(token),now)
 
 
-def confirm_digest(conn,context,token_hash,now):
+def confirm_digest(conn,context,token_hash,now, *, commit=True):
     started=time.monotonic()
     clock=lambda:now+timedelta(seconds=time.monotonic()-started)
     binding(context)
     if not isinstance(token_hash,str) or not re.fullmatch('[a-f0-9]{64}',token_hash):
         raise Unavailable('Confirmation unavailable.')
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Caller-owned confirmation requires a transaction')
+    if not commit and context['chat_id'] < 0:
+        raise Unavailable('Inline actions are private only.')
     # Fresh membership proof outside the writer lock, followed by local generation rechecks.
     if context['chat_id']<0:
         pre=rows(conn,'SELECT action FROM telegram_preview WHERE token_hash=?',(token_hash,))
@@ -177,7 +207,7 @@ def confirm_digest(conn,context,token_hash,now):
         check={**context,'projection_json':packed({'kind':'group_status','bot':bot[0],'fingerprint':bot[2]})}
         if not groups.verify_delivery(conn,check,bot):
             raise Unavailable('Group membership could not be verified.')
-    with transaction(conn):
+    with transaction(conn) if commit else nullcontext():
         found=rows(conn,'SELECT * FROM telegram_preview WHERE token_hash=?',(token_hash,))
         if not found:
             raise Unavailable('Confirmation unavailable.')
@@ -224,6 +254,6 @@ def cleanup_in_transaction(conn,now):
     conn.execute('''UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
         WHERE token_hash IN (SELECT token_hash FROM telegram_preview WHERE state='pending' AND expires_at<=? LIMIT 20)''',(links.stamp(now),))
     conn.execute("DELETE FROM telegram_preview WHERE token_hash IN (SELECT token_hash FROM telegram_preview WHERE state<>'pending' AND expires_at<? LIMIT 20)",(links.stamp(now-timedelta(days=1)),))
-    conn.execute('''UPDATE telegram_operation SET target_id=NULL,expected_revision=NULL,context_json=NULL,result_entry_id=NULL,result_room_id=NULL,result_code='retained_key'
+    conn.execute('''UPDATE telegram_operation SET target_id=NULL,dependency_task_id=NULL,comment_id=NULL,comment_revision=NULL,expected_revision=NULL,context_json=NULL,result_entry_id=NULL,result_room_id=NULL,result_code='retained_key'
         WHERE operation_id IN (SELECT operation_id FROM telegram_operation WHERE state<>'pending' AND updated_at<?
         AND (result_code IS NULL OR result_code<>'retained_key') LIMIT 20)''',(links.stamp(now-timedelta(days=180)),))

@@ -187,7 +187,7 @@ def test_expiry_scrubbing_and_key_tombstone(action_env):
 
 
 def test_unconsented_actions_remain_unavailable(linking,monkeypatch):
-    assert set(actions.ADAPTERS)=={'calendar.create','rooms.request'}
+    assert set(actions.ADAPTERS)=={'calendar.create','rooms.request','tasks.acknowledge','tasks.submit','calendar.reschedule','calendar.cancel','rooms.withdraw','rooms.move','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply','work.comment_edit','tasks.comment_edit'}
     c,_,_,client,payload=linking
     activate(linking)
     monkeypatch.setenv('CSS_TELEGRAM_CALENDAR_CREATE_ENABLED','1')
@@ -269,15 +269,21 @@ def test_pending_payloads_are_scrubbed_on_revoke_and_restore(action_env):
 def test_upgrade_adds_preview_schema_without_altering_old_operations(action_env):
     linking,ctx,_=action_env;c,_,path,_,_=linking
     p=issue(action_env)
-    for name in ('telegram_preview_connection','telegram_preview_group','telegram_preview_grant','telegram_room_calendar_grant','telegram_combined_room_grant'):
+    for name in ('telegram_preview_connection','telegram_preview_group','telegram_preview_grant','telegram_room_calendar_grant','telegram_combined_room_grant','telegram_task_proposal_delete','telegram_dependency_prerequisite_delete','telegram_comment_work_delete'):
         c.execute('DROP TRIGGER '+name)
     c.execute('DROP TABLE telegram_preview')
     c.execute('ALTER TABLE telegram_operation DROP COLUMN context_hash');c.commit()
+    c.execute('ALTER TABLE telegram_operation DROP COLUMN dependency_task_id');c.commit()
+    c.execute('ALTER TABLE telegram_operation DROP COLUMN comment_id');c.commit()
+    c.execute('ALTER TABLE telegram_operation DROP COLUMN comment_revision');c.commit()
     st.init_db(c)
     assert not rows(c,'SELECT * FROM telegram_preview')
     operation=rows(c,'SELECT * FROM telegram_operation')[0]
     assert operation['operation_id']==p['operation_id'] and operation['state']=='pending'
     assert operation['context_hash'] is None
+    assert operation['dependency_task_id'] is None
+    assert operation['comment_id'] is None
+    assert operation['comment_revision'] is None
     with pytest.raises(actions.Unavailable):actions.recover(c,ctx,'calendar.create',p['operation_id'])
 
 

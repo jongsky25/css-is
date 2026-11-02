@@ -14,7 +14,33 @@ import storage as st
 import telegram_storage as switches
 import telegram_transport as transport
 
-SCOPES = {'calendar.read': 'Read permitted calendar entries', 'rooms.read': 'Read room availability and own requests', 'calendar.create':'Create one meeting after an exact private preview and confirmation', 'rooms.request':'Request a room for my permitted meeting after private confirmation'}
+SCOPES = {'calendar.read': 'Read permitted calendar entries', 'rooms.read': 'Read room availability and own requests', 'calendar.create':'Create one meeting after an exact private preview and confirmation', 'rooms.request':'Request a room for my permitted meeting after private confirmation', 'travel.read': 'Read my travel filing checklist and status in private', 'meals.read': 'Read my meal request status in private', 'arrangements.read': 'Read my work-arrangement filing status in private', 'supplies.read': 'Read my supply request approval and collection status in private', 'documents.read': 'Read permitted document metadata and status in private', 'work.read': 'Read my tasks and permitted work status in private', 'tasks.acknowledge': 'Acknowledge my task after private confirmation', 'tasks.submit': 'Submit my task for review after private confirmation'}
+SCOPES.update({'calendar.reschedule':'Reschedule my own meeting after private preview and confirmation',
+               'calendar.cancel':'Cancel my own meeting after private preview and confirmation'})
+SCOPES.update({'rooms.withdraw':'Withdraw my own room request after private preview and confirmation',
+               'rooms.move':'Move my own room request date after private preview and confirmation'})
+SCOPES['tasks.create']='Propose a task in permitted work after private preview and confirmation'
+SCOPES['tasks.deadline']='Change permitted task deadlines after private preview and confirmation'
+SCOPES['tasks.assign']='Confirm proposed task ownership after private preview and confirmation'
+SCOPES['tasks.reassign']='Reassign active tasks after private preview and confirmation'
+SCOPES['tasks.reopen']='Reopen accepted tasks after private preview and confirmation'
+SCOPES['tasks.cancel']='Cancel unfinished tasks after private preview and confirmation'
+SCOPES['tasks.review.read']='Read tasks I can review: task, work, owner and deadline metadata'
+SCOPES['tasks.blockers.read']='Read permitted blocker flags, prerequisites and follow-up owner/date metadata'
+SCOPES['work.updates.read']='Read my unread discussion notice metadata and links'
+SCOPES['work.mentions']='Mention eligible colleagues in my comments and replies'
+SCOPES.update({'work.comment_edit':'Edit my own work comment',
+               'tasks.comment_edit':'Edit my own task comment',
+               'work.reply':'Reply to a work discussion comment',
+               'tasks.reply':'Reply to a task discussion comment',
+               'work.comment':'Post a work discussion comment',
+               'tasks.comment':'Post a task discussion comment',
+               'tasks.dependency_add':'Add a task prerequisite after private confirmation',
+               'tasks.dependency_remove':'Remove a task prerequisite after private confirmation',
+               'tasks.block':'Record a task blocker with reason and follow-up after private confirmation',
+               'tasks.unblock':'Clear a recorded task blocker with resolution reason after private confirmation'})
+SCOPES.update({'tasks.accept':'Accept submitted tasks after private preview and confirmation',
+               'tasks.return':'Return submitted tasks for changes after private preview and confirmation'})
 
 
 def stamp(now):
@@ -89,8 +115,17 @@ def claim(conn, payload, raw_code, scopes, now):
         raise ValueError('That code or permission choice is invalid. Start again in your private bot chat.')
     if 'calendar.create' in scopes and ('calendar.read' not in scopes or not switches.enabled('calendar_create')):
         raise ValueError('Meeting creation requires its pilot and separate calendar read consent.')
+    for action in ('calendar.reschedule','calendar.cancel'):
+        if action in scopes and ('calendar.read' not in scopes or not switches.enabled(action.replace('.','_'))):
+            raise ValueError('Meeting management requires its separate pilot and calendar read consent.')
+    for action in ('rooms.withdraw','rooms.move'):
+        if action in scopes and ('rooms.read' not in scopes or not switches.enabled(action.replace('.','_'))):
+            raise ValueError('Room management requires its separate pilot and room read consent.')
     if 'rooms.request' in scopes and (not {'calendar.read','rooms.read'}<=set(scopes) or not switches.enabled('rooms_request')):
         raise ValueError('Room requests require their pilot and separate calendar and room read consent.')
+    for action in ('tasks.acknowledge','tasks.submit','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply','work.comment_edit','tasks.comment_edit','work.mentions','work.updates.read','tasks.review.read','tasks.blockers.read'):
+        if action in scopes and ('work.read' not in scopes or not switches.enabled(action.replace('.','_'))):
+            raise ValueError('Task actions require their pilot and separate work read consent.')
     with transaction(conn):
         user = current(conn, payload)
         found = rows(conn, 'SELECT * FROM telegram_link_challenge WHERE token_hash=?', (digest(raw_code),))
@@ -130,6 +165,8 @@ def confirm(conn, sender, argument_hash, bot, now):
     if 'calendar.create' in json.loads(ch['scopes_json']) and not switches.enabled('calendar_create'):
         return None
     if 'rooms.request' in json.loads(ch['scopes_json']) and not switches.enabled('rooms_request'):
+        return None
+    if any(scope in json.loads(ch['scopes_json']) and not switches.enabled(scope.replace('.','_')) for scope in ('calendar.reschedule','calendar.cancel','rooms.withdraw','rooms.move','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply','work.comment_edit','tasks.comment_edit','work.mentions','work.updates.read','tasks.review.read','tasks.blockers.read')):
         return None
     cid, generation = conn.execute('''INSERT INTO telegram_connection
         (account_id,telegram_user_id,private_chat_id,bot_identity,bot_fingerprint,state,created_at,updated_at)

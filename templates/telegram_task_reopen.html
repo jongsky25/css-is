@@ -1,0 +1,27 @@
+{% extends "dash_layout.html" %}
+{% block title %}Reopen an accepted task — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>Reopen an accepted task</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/work">Review tasks and submissions</a></p>
+<p>Start with <code>/task_reopen</code> in your linked private chat. The concerned case officer or confirmed work lead must have the source reopening authority. Task ownership or Telegram consent alone grants no such authority.</p>
+<p><strong>This returns a Done task to In progress for its existing owner.</strong> The existing submission, expected output, deadline, history and blockers are preserved. Review the current submission in Office Connect first; stored submission contents stay there. Later submission and acceptance still follow normal rules.</p>
+<p>This does not reopen a completed work case or an official document. Reopen completed work through its separate source workflow first. Active formal consolidation review amendments stay in Office Connect so dependent approvals can be reviewed there. The existing owner must still be active and able to read every linked document.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if prepared %}
+<p role="status">{% if prepared.state == 'pending' %}Your preview is prepared. No task has been reopened. Send <code>/taskreopen_preview {{ prepared.operation_id }}</code> in the original private Telegram chat, check the identified task and Done → In progress change, then confirm before expiry.{% else %}This operation already has a recorded outcome. Send <code>/taskreopen_receipt {{ prepared.operation_id }}</code> in the original private chat. Recovery will not repeat the action.{% endif %}</p>
+{% endif %}
+{% if origins %}
+<form method="post" action="{{ action_path }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="reopen-origin">Starting private conversation</label><br><select id="reopen-origin" name="origin" required>{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
+<p><label for="reopen-work">Work item number</label><br><input id="reopen-work" name="case_id" type="number" min="1" value="{{ values.get('case_id','') }}" required></p>
+<p><label for="reopen-task">Task number</label><br><input id="reopen-task" name="task_id" type="number" min="1" value="{{ values.get('task_id','') }}" required></p>
+<p>Use IDs from your results or the signed-in work page. The preview identifies the exact work/task and current owner.</p>
+<p><label for="reopen-reason">Reopening reason</label><br><textarea id="reopen-reason" name="reason" rows="4" maxlength="500" style="box-sizing:border-box;width:100%" required>{{ values.get('reason','') }}</textarea></p>
+<p>Your reason appears in Telegram and task history. The preview expires after five minutes. Changed task, submission, work or linked records require a fresh preview; current permissions and owner eligibility are checked again at confirmation.</p>
+<button type="submit">Prepare exact private preview</button>
+</form>
+{% else %}<p>No current private reopening request is available. Start <code>/task_reopen</code> after enabling and consenting to its separate pilot and work read permission.</p>{% endif %}
+</div>
+{% endblock %}

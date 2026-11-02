@@ -1,0 +1,28 @@
+{% extends "dash_layout.html" %}
+{% block title %}Edit your {{ mode }} comment — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>Edit your {{ mode }} comment</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/work">Open source work and discussion history</a></p>
+<p>Start <code>/{{ mode }}_comment_edit</code> in your linked private chat. Only the original author with current work and every linked-document access may edit. Work leads, officers and technical administrators cannot edit someone else's comment through this flow.</p>
+<p>Review the existing text in Office Connect and use the comment number and current revision shown there. Work-level comments and task comments stay in their exact thread. Your own replies can also be edited; their parent stays unchanged.</p>
+<p>Earlier revisions remain in history. This saves a complete replacement text, not a new comment or reply. Work/task progress, ownership, submissions, blockers, prerequisites, deadlines and formal approvals stay unchanged. Native informal editing can remain available on completed work, Done/Cancelled tasks and work under formal review.</p>
+<p>Existing structured mentions are preserved and their current access is rechecked. If an existing mention is no longer eligible, amend mentions in Office Connect first. No mention selection, parent change or notification preferences are added. Native edit notice/read rules apply. Text such as <code>@name</code> remains plain text.</p>
+<p><strong>Your entered replacement text appears in the exact private Telegram preview and saved discussion history.</strong> Existing text, old revisions and mentioned identities are not copied into Telegram.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if prepared %}<p role="status">{% if prepared.state == 'pending' %}Your preview is prepared. No comment has been edited. Send <code>/{{ mode }}edit_preview {{ prepared.operation_id }}</code> in the original private chat, check the comment, revision and replacement text, then confirm before expiry.{% else %}This operation already has a recorded outcome. Send <code>/{{ mode }}edit_receipt {{ prepared.operation_id }}</code> in the original private chat. Recovery will not edit again.{% endif %}</p>{% endif %}
+{% if origins %}
+<form method="post" action="{{ action_path }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="edit-origin">Starting private conversation</label><br><select id="edit-origin" name="origin" required>{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
+<p><label for="edit-work">Work item number</label><br><input id="edit-work" name="case_id" type="number" min="1" value="{{ values.get('case_id','') }}" required></p>
+{% if mode == 'task' %}<p><label for="edit-task">Task number</label><br><input id="edit-task" name="task_id" type="number" min="1" value="{{ values.get('task_id','') }}" required></p>{% endif %}
+<p><label for="edit-comment">Comment number</label><br><input id="edit-comment" name="comment_id" type="number" min="1" value="{{ values.get('comment_id','') }}" required></p>
+<p><label for="edit-revision">Current comment revision</label><br><input id="edit-revision" name="revision" type="number" min="1" value="{{ values.get('revision','') }}" required></p>
+<p><label for="edit-body">Complete replacement text</label><br><textarea id="edit-body" name="body" rows="6" maxlength="1000" style="box-sizing:border-box;width:100%" required>{{ values.get('body','') }}</textarea></p>
+<p>The preview expires after five minutes. Any newer comment edit, changed source or lost permission requires a fresh preview. Saving the same text again is refused.</p>
+<button type="submit">Prepare exact private preview</button>
+</form>
+{% else %}<p>No current private request is available. Start <code>/{{ mode }}_comment_edit</code> after enabling and consenting to its separate pilot and work read permission.</p>{% endif %}
+</div>
+{% endblock %}

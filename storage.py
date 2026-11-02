@@ -11682,12 +11682,16 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
 
 
 def cal_update(conn, entry_id, *, by=None, expected_sequence=None,
-               expected_updated_at=None, people=None, tags=None, extra_org_ids=None, **fields):
+               expected_updated_at=None, people=None, tags=None, extra_org_ids=None, commit=True, **fields):
     """Change an entry. Raises CalendarConflict when `expected_sequence` or
     `expected_updated_at` is given and no longer matches what is stored (the form
     sends `updated_at`, which moves on every edit, not only schedule changes). `people` / `tags` /
     `extra_org_ids` (when not None) replace the whole list. The sequence rises only when a date/time/status/recurrence field
-    actually changes. Returns the updated entry; a no-op leaves no revision."""
+    actually changes. Returns the updated entry; a no-op leaves no revision.
+    With commit=False, the caller must own a transaction and commits the source,
+    change outbox, revision and audit together with its own receipt."""
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Calendar updates require a caller-owned writer transaction.')
     cur = cal_get(conn, entry_id)
     if cur is None:
         raise KeyError(entry_id)
@@ -11757,26 +11761,30 @@ def cal_update(conn, entry_id, *, by=None, expected_sequence=None,
         moved = [f for f in _CAL_NOTIFY_FIELDS if f in diff]
         if moved:
             _cal_enqueue(conn, merged, "changed", old_ids & new_ids, by, ",".join(moved))
-    conn.commit()
+    if commit:
+        conn.commit()
     if by:
         audit(conn, by, "calendar_update", target_type="calendar_entry",
               target_id=entry_id,
-              summary=f"Edited '{merged['title']}' ({', '.join(sorted(diff))})")
+              summary=f"Edited '{merged['title']}' ({', '.join(sorted(diff))})", commit=commit)
     return cal_get(conn, entry_id)
 
 
-def cal_cancel(conn, entry_id, *, by=None):
-    """Soft delete: status -> cancelled (restorable for CAL_RESTORE_DAYS)."""
+def cal_cancel(conn, entry_id, *, by=None, commit=True):
+    """Soft delete; commit=False includes the cancel revision in caller's transaction."""
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Calendar cancellation requires a caller-owned writer transaction.')
     cur = cal_get(conn, entry_id)
     if cur is None:
         raise KeyError(entry_id)
     if cur["status"] == "cancelled":
         return cur
-    out = cal_update(conn, entry_id, by=by, status="cancelled")
+    out = cal_update(conn, entry_id, by=by, status="cancelled", commit=commit)
     conn.execute("UPDATE calendar_entry_revision SET action='cancel' WHERE id="
                  "(SELECT MAX(id) FROM calendar_entry_revision WHERE entry_id=?)",
                  (entry_id,))
-    conn.commit()
+    if commit:
+        conn.commit()
     return out
 
 

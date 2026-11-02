@@ -31,7 +31,9 @@ def test_complete_tick_replies_to_unlinked_private_commands(setup, monkeypatch, 
     if command == '/start':
         assert 'https://office.example/account/telegram' in sent[0][2]
     else:
-        assert 'Office Connect private commands' in sent[0][2]
+        assert 'Office Connect private menu' in sent[0][2]
+        assert '/start' in sent[0][2]
+        assert '/calendar' not in sent[0][2] and '/my_tasks' not in sent[0][2]
     assert bot.tick(conn, NOW + timedelta(seconds=122)) == (0, 0)
 
 

@@ -1,7 +1,7 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 live pilot incomplete; silent private replies isolated to outbound transport failure before HTTP response. Source activation defaults remain off; live v9.52 diagnostics verify inbound/delivery/link enabled and worker healthy. Hugging Face-only webhook response repair is in progress.
-Last updated: 2026-10-31.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.79) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
 Owner: Office Connect maintainers. Delivery agent: Sol or another assigned coding agent.
@@ -92,9 +92,9 @@ Implement one increment per PR. If an increment needs multiple independent migra
 | T4.4 | Pilot the complete first release with linked test staff and one approved group; record runbook and rollback. | T4.3.2 | Real group request → calendar → room approval → Telegram update; UI changes return correctly; revoked account denied; deployed SHA recorded. |
 | T5.1 | Parse explicitly supplied natural-language meeting details into the existing preview. | T4.4 | Ambiguous dates/names prompt clarification; quoted content cannot bypass permissions; no write without confirmation; guided fallback works. |
 | T5.2 | Permit meeting edits using the existing revision/confirmation contract; recurring events require a separately scoped child increment. | T4.4 | Concurrent edits rejected; room/time implications explicit; notifications reflect final state; existing UI rules preserved. |
-| T6.1 | Private shared-work/task lookup and assignment/status notifications. | T4.4 | Reuse read/feed permission rules; hidden linked documents respected; deduplication and disconnect verified. |
-| T6.2 | Task acknowledgement using a new delegated action grant and existing receipt semantics. | T6.1 | Current assignee authority; duplicate and stale-state recovery; read-only grants cannot write. |
-| T6.3 | Task submission for review; scope comments/attachments as separate children if needed. | T6.2 | Existing readiness/review rules; private submission content protected; durable receipt and reviewer notification. |
+| T6.1 | Split: T6.1a private interactive task/work lookup; T6.1b assignment/status notifications. | T6.1a: verified private linking/webhook reads; T6.1b: T4.4 | Reuse read/feed permission rules; hidden linked documents respected; deduplication and disconnect verified. |
+| T6.2 | Private task acknowledgement after exact preview and confirmation. | T6.1a; separate action grant | Current assignee authority; duplicate and stale-state recovery; read-only grants cannot write. |
+| T6.3 | Private task submission for review after signed-in output preparation and private confirmation. | T6.2; separate action grant | Existing readiness/review rules; private submission content protected; durable receipt and reviewer notification. |
 | T7 | Expand additional modules through separately specified read → draft → submit increments. No blanket write enablement. | T4.4 and relevant services | Each child has exact fields, authority, acceptance tests, and independent switch before implementation. |
 
 ## Later-module backlog
@@ -148,8 +148,14 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 | T4.2 | Merged | Codex / 2026-10-25 | [PR #485](https://github.com/jongsky25/css-is/pull/485), `feat/telegram-t4-2-change-notices` | Safe notices through the existing durable sender; 927 regressions + 29 release tests passed | Merged at `e78dfcb`, release 8.75; all fresh CI passed; next T4.3.1 |
 | T4.3.1 | Merged | Codex / 2026-10-25 | [PR #486](https://github.com/jongsky25/css-is/pull/486), `feat/telegram-t4-3-1-preferences` | Channel controls and quiet hours; 1,013 regressions + 29 release tests passed | Merged at `3e88262`, release 8.76; all required CI passed; next T4.3.2 |
 | T4.3.2 | Merged | Codex / 2026-10-25 | [PR #487](https://github.com/jongsky25/css-is/pull/487), `d68fc899dd343f94235c2d4b1e49b27d824ed98b` | Durable private Telegram reminders; implementation evidence below | Operator supplied /ops build evidence for v8.77 / d68fc89 on 2026-10-27; replies remain unverified |
-| T4.4 | In progress; private reply repair | Codex / 2026-10-31 | PR #493 and #567 deployed; `fix/telegram-webhook-replies` | Live v9.52 worker healthy; two clients time out before HTTP response; all components must remain on Hugging Face | Webhook response implementation under verification; scheduled/group/guided-action paths and complete workflow remain unverified |
-| T5–T7 | Planned | Unassigned | — | Not implemented | Actual T4.4 verification remains a prerequisite |
+| T4.4 | In progress; hosted workflow unverified | Codex / 2026-10-31 | PR #569 and #570 merged; pilot runbook PR #488 remains open | Private `/start` receipt recorded; latest main deployment workflow passed at e0dde74; all components remain on Hugging Face | Owner confirms hosted linking/calendar reads. Draft 9.58 private actions await later live acceptance; resolve/verify outgoing provider connectivity for group/notice/reminder and the full revocation/rollback pilot. Private webhook replies alone cannot complete it. |
+| T6.1a | In review (draft) | Codex / 2026-11-01 | [PR #572](https://github.com/jongsky25/css-is/pull/572), `feat/telegram-private-work-lookup` | Private interactive task/work lookup; owner explicitly selected this expansion | Separate work consent/switch; webhook reads do not require T4.4 outgoing delivery. See [runbook](TELEGRAM_WORK_LOOKUP.md). |
+| T6.2–T6.3 | In review (draft); same batch by owner request | Codex / 2026-11-01 | PR #572 | Separate action grants/switches; private previews, explicit confirmation, canonical task workflow and atomic receipt | Build/test with synthetic data now; deployment and live acceptance explicitly deferred |
+| T7.1a | In review (draft) | Codex / 2026-11-01 | Draft PR #572 | Private document metadata lookup and status; separate permission/switch | Owner selected this independent private read child; hosted acceptance deferred |
+| T7.2a | In review (draft) | Codex / 2026-11-01 | Draft PR #572 | Own supplies requests and source approval/collection status; separate read scope | Independent private read; no stock/approval/write access or live activation |
+| T7.3a–T7.5a | In review (draft) | Codex / 2026-11-01 | Draft PR #572 | Owner-only travel, standalone/room-linked meals and arrangement filing status; separate scopes/switches | No source writes or live activation; see personal lookup runbook |
+| Private menu/discovery | In review (draft) | Codex / 2026-11-01 | Draft PR #572, candidate 9.59 | Current-account grouped menu/status and record-specific next steps; later acceptance checklist | Live testing/activation remain deferred; inspect fresh exact-head CI |
+| T5, T6.1b, other T7 | Planned | Unassigned | — | Not implemented | T4.4 remains a prerequisite for push/group expansion |
 
 ### T0 handoff — 2026-10-25
 
@@ -531,3 +537,1763 @@ T2.2 merge reconciliation: preserved concurrent search release 8.60 and its runt
 - Root cause: the browser claim still queued its second private confirmation on the timed-out outgoing path. The 9.53 linking tests derived the final confirmation from a synthetic database row, so they missed this delivery gap. Do not treat the 9.53 receipt as completed account linking or the full pilot.
 - Change: in webhook mode, a browser claim stays pending without queuing an outgoing push. The user sends `/status` privately to retrieve the current account/permissions and exact `/confirm` command through a new webhook response. Current sender, browser session, bot, expiry, consent and feature checks remain authoritative. Existing uncertain sends are never retried. Direct mode keeps its original queued path. The account page explains awaiting confirmation and the exact remaining steps.
 - Verification: the actual phone browser form and both webhook messages complete a link with scripts disabled and outgoing Telegram sends forbidden. This uses only message-visible codes; security and broader regressions/full CI remain in progress. Hosted end-to-end linking and all scheduled/group/guided-action delivery remain unverified.
+
+### Broader integration review — 2026-10-31
+
+- Owner: Codex; documentation branch `docs/telegram-broader-review`, based on clean main-equivalent `e0dde7452ccfa4dc383fffa2c1b0f207285bdc15`. GitHub branch/PR/workflow reads and local source review performed; no production setting, provider call or message changed.
+- GitHub reconciliation: PR #567 merged, PR #568 closed unmerged, PR #569 merged at `7212bd7a11338d31b3d79729cc4e5e55815fd154`, and PR #570 merged at `aaef9d3da0ac5289ca79b1e458c249a404292ddf`. PR #570's metadata, audit, normal/shuffled and aggregate checks all report success. Main is protected and matches this checkout's starting commit.
+- Latest canonical [deployment run 41227419174](https://github.com/jongsky25/css-is/actions/runs/41227419174) reports success for verification, deploy and read-only Telegram diagnostics at `e0dde74` (release 9.55). This review did not obtain diagnostic payloads or independently verify current provider connectivity, feature switches, user receipt or live linking. Successful job conclusions are not full-pilot evidence.
+- The source confirms webhook responses cover only private start/help/status/confirm/calendar/room-read commands. Group membership checks, group commands, guided write confirmations, change notices and reminders retain asynchronous outgoing transport. The previously observed Requests/HTTPX timeouts therefore remain an unresolved pilot blocker until fresh hosted evidence establishes recovery. An incoming webhook cannot provide an independently scheduled push.
+- T0–T4.3.2 deliver the implemented first-release scope: identity/groups, permission-checked reads, meeting/room writes, change capture/delivery and preference-controlled reminders. T4.4 remains incomplete. T5 language extraction/edits, T6 shared-work/task features and T7 module expansion remain planned behind T4.4; Google/Outlook synchronization and automatic video links remain separately scoped.
+- [PR #488](https://github.com/jongsky25/css-is/pull/488) is still OPEN and its hosted pilot runbook is absent from main. Reconcile that historical candidate with current transport, linking and release metadata before using it; do not merge it as proof of verification.
+- Next action: confirm the 9.54 hosted linking sequence using message-visible codes (`/start` → signed-in consent form → `/status` → `/confirm` → active account page). Then inspect fresh read-only hosted outbound diagnostics and repair/verify the Hugging Face outgoing path before the full approved-group/calendar/room approval/change/reminder/revocation/rollback pilot. Do not replay uncertain attempts. No new production activation or release is authorized by this review.
+- Validation: documentation diff and relative-link checks only; no application tests rerun or full-suite claim made. Existing GitHub check outcomes above were read, not rerun.
+
+### Owner acceptance and expansion request — 2026-10-31
+
+- Owner confirms the account is linked and calendar retrieval works through Telegram. This is user-reported hosted acceptance of those two flows, not independent verification of room commands, writes, group delivery or scheduled pushes. Supersedes the earlier linking-unverified handoff for this owner.
+- Owner requests progressively more Telegram capabilities. Recommended next bounded increment: make the existing private guided meeting creation flow usable end to end on Hugging Face, including user-visible preview retrieval, confirmation and receipt without reliance on a failing outgoing push; then linked room requests. Reuse current permissions, separate write consent and durable operation receipts. This is a proposed increment, not implementation or activation evidence.
+- Existing private read commands also include `/room_slots`, `/my_rooms` and `/room_status REFERENCE`, requiring room-read activation and the account's explicit room-read grant. `/help` reflects enabled host features; it does not establish that every listed flow works or is consented for the current user.
+- A preference question is pending for the first expansion: meetings/rooms (recommended), tasks/work status, or documents/status. T4.4 remains incomplete. If the owner selects a later module, explicitly rescope the plan and its prerequisites before implementation rather than silently marking T4.4 complete. No production change is implied by the expansion request.
+
+### T6.1a private task/work lookup — 2026-11-01
+
+- User explicitly selected tasks/work status as the next expansion. Rescope T6.1 into T6.1a private interactive reads and a later T6.1b assignment/status push notifications. T6.1a may proceed before the full T4.4 pilot because it reuses verified private webhook replies and requires no outgoing provider call. T4.4 and push/group verification remain incomplete; T6.2/T6.3 writes remain gated and out of scope.
+- Owner: Codex; branch `feat/telegram-private-work-lookup`; [draft PR #572](https://github.com/jongsky25/css-is/pull/572), in review. Separate default-off `CSS_TELEGRAM_WORK_READ_ENABLED` and explicit `work.read` linking consent. Existing calendar grants are unchanged.
+- Scope: bounded `/my_tasks [BEFORE_ID]` for owned tasks, `/task_status WORK_ID TASK_ID` for owned task metadata, `/my_work [BEFORE_ID]` for currently permitted cases and `/work_status WORK_ID` for current case metadata/task-state counts. No submission text, discussion, document contents, names, notifications, acknowledgements or writes. Source-document visibility uses the same RegistryScope policy as existing work reads. Disabled Documents/Collaborative work deny Telegram reads.
+- Webhook/direct transport both supported; current authorization rechecked at intake, processing and rendering/send; queues store command IDs only. No group commands. Fresh relinking is required for work consent. Tests and PR evidence follow below. No deployment or activation authorized.
+
+#### T6.1a implementation evidence — 2026-11-01
+
+- Implemented [private work adapter](../telegram_work.py), webhook/direct command integration, current delegated `work.read` grant, consent/help/account instructions, default-off work switch and deployment runtime closure. No schema/dependency changes. Release candidate 9.56 metadata is synchronized. [Operator/user runbook](TELEGRAM_WORK_LOOKUP.md).
+- Fresh hashed Python 3.11 setup and doctor passed. Focused tests: **26 passed** including 25 task/work cases and one actual 390×844 JavaScript-disabled browser consent/link/lookup/disconnect flow, with outbound Telegram forbidden. Broader Telegram/link/browser/calendar/room/work/API/deployment/release regression run: **419 passed**. Current targeted shuffled run (seed 311), including worker/deployment diagnostics and the phone flow: **46 passed**. Reports `/tmp/telegram-work-final.xml`, `/tmp/telegram-work-regressions.xml`, `/tmp/telegram-work-shuffled.xml` all passed no-failure/no-skip JUnit gates. Counts overlap and must not be summed as distinct tests.
+- Tests cover source-document hiding, own-task isolation, denied/unknown parity, invalid input before source reads, authorization before paging limits, duplicate webhook handoff, all four commands over webhook, stale queued source changes, revocation/disconnect/deactivation/restore/module and feature pause, current status and source-content exclusion. Providers and all business fixtures are synthetic.
+- Release metadata/increase, lock inputs, installed dependency compatibility, vendor integrity, AI evaluation contract, compilation, Markdown local links and whitespace checks passed. Full normal/shuffled repository suites and container dependency audit have not been run locally; those remain PR CI/release gates. No real hosted task lookup, preview publication, feature activation, merge or deployment occurred.
+- Next: review PR and exact-head CI, then explicitly authorized release/activation and owner acceptance of all four commands with fresh work consent. T6.1b notifications, T6.2 acknowledgement and T6.3 submission remain unimplemented. T4.4 retains its independent outgoing/group/full-workflow gaps.
+
+- PR opened: [#572](https://github.com/jongsky25/css-is/pull/572), draft, implementation commit `b31a6f2`; exact-head CI is pending. Branch is pushed; no merge/deployment.
+
+### Owner-authorized private task batch — 2026-11-01
+
+- The owner explicitly requested adding more before deployment/live testing, then approved overdue/upcoming/review filters, acknowledgement, review submission and clearer work progress. This overrides the earlier one-increment-per-PR sequence for this bounded private-task batch. Work stays in draft PR #572 on `feat/telegram-private-work-lookup`, release candidate 9.56; no release/activation is authorized.
+- Scope adjustment: T6.2/T6.3 depend on T6.1a private lookup and separately consented task grants. They do not require outgoing push transport. T4.4 remains incomplete, T6.1b assignment/status notifications are not implemented, and no full-pilot completion is inferred.
+- Implemented task filters before paging limits using Asia/Manila dates; `/work_status` reports completed/total tasks and task-state counts. Separate default-off acknowledgement/submission switches and consent checkboxes. `/task_ack` issues an expiring preview; `/task_submit` opens the signed-in bounded output form; `/task_preview` retrieves exact normalized content; `/task_confirm` applies the canonical domain action; `/task_receipt` recovers the durable outcome. Private webhook mode only for task writes.
+- Reused `telegram_actions` preview/confirmation engine with explicit caller-owned private transactions. Task mutation, audit, consumed preview, receipt and uncertain webhook response commit together. A savepoint rolls back late action failures before neutral errors. Existing calendar/room transaction behavior remains the default. No submission content is stored in Telegram intake/delivery descriptors. Existing preview schema is reused; the grant-revocation trigger is refreshed to scrub pending task previews when work-read access is revoked. No new dependency or service.
+- Runbook: [private work/task commands and activation](TELEGRAM_WORK_LOOKUP.md#draft-batch-filters-acknowledgement-and-review-submission). Verification and exact commit follow after final regressions.
+
+#### Private task batch verification — 2026-11-01
+
+- Final broader task/work/action/link/storage/webhook/meeting/room/deployment/release run: **292 passed**, zero failures/skips (`/tmp/telegram-batch-regressions-final.xml`). Shuffled action/read/mobile run with seed 311: **88 passed**, zero failures/skips (`/tmp/telegram-batch-shuffled-final.xml`). Final permission/link/submission-browser run: **43 passed**, zero failures/skips (`/tmp/telegram-task-consent-final.xml`). These groups overlap.
+- Actual 390×844 browser with JavaScript disabled linked using three explicit work/action scopes, acknowledged a task, entered synthetic evidence in the real submission form, retrieved its preview only through webhook output, confirmed submission and recovered the same result on repeat. Outgoing Telegram sends were forbidden. Tested invalid CSRF, own-task bounds, hidden documents, changed revisions/owner, paused modules/switches, grant/account/disconnect revocation, expiry, blockers, Unicode budgets, revocation scrubbing, two concurrent confirmations, SQLite receipt failure rollback and a late domain-error rollback. Filters cover paging and the UTC/Manila date boundary.
+- Early runs found the old adapter-inventory assertion and uncommitted fixture updates in new filter cases. Both were corrected; final green reports above replace the failing reports. No implementation test assertion was weakened to bypass permissions or source policy.
+- Synchronized 9.56 candidate metadata, dependency locks/vendor integrity, installed dependency compatibility, AI contract, compilation, relative Markdown links and whitespace passed. Full repository normal/shuffled suites and container dependency audit remain exact-head PR CI gates. No real provider sends, external deployment, preview publication, live activation or live task acceptance occurred.
+- Next action: continue review/additions on draft PR #572 as requested. Deployment/activation/live acceptance are explicitly deferred until the owner asks to release. Keep separate flags and consent for read, acknowledgement and submission; T6.1b push notifications and the complete T4.4 group/calendar/room pilot remain open.
+
+### Private document lookup and personal summary — 2026-11-01
+
+- Owner explicitly approved adding private document lookup and `/my_summary` to the existing draft before deployment/live testing. Same branch `feat/telegram-private-work-lookup`, PR #572, candidate 9.56. This is a bounded T7 document-read child (`T7.1a`); no document writes, notifications or full T4.4 completion is inferred.
+- `/documents [BEFORE_ID]`, `/find_documents WORDS` (literal number/subject only), `/document_status DOCUMENT_ID`; independent default-off `documents_read` switch and explicit `documents.read` consent. Existing grants are unchanged. Private webhook-only reads use the existing serialized intake/uncertain-handoff path. Search terms and rendered source metadata are never retained in Telegram queue payloads or URLs. Current RegistryScope visibility applies before limits; metadata is rechecked for current account/grant/configuration at reply handoff. No bodies, file URLs, people, instructions, review comments or history are projected.
+- `/my_summary` adds authorized-set counts for owned overdue/upcoming/review tasks and accessible work with review tasks, using Manila dates and existing work-read consent. Hidden source documents still suppress linked work and tasks. It creates no scheduled notification and requires no new grant.
+- Source metadata covers workflow, verification, routing instruction state, lead/reviewer assignment indicators, current-version approval and signed-in links. Default document lists/search exclude archives and merged aliases; detail resolves a permitted alias to the canonical record and denies invalid/cyclic aliases. Documents lookup remains available independently of Collaborative work.
+- Runbook: [document lookup and summary](TELEGRAM_DOCUMENT_LOOKUP.md). Final test/CI evidence follows below. Deployment/activation/live acceptance remain explicitly deferred.
+
+#### Document lookup/summary verification — 2026-11-01
+
+- **277 passed**, no failures/skips in broader documents/work/browser/tasks/action/link/storage/webhook/API/deployment/release regressions (`/tmp/telegram-documents-regressions.xml`). **55 passed**, no failures/skips in shuffled document/work/mobile cases, seed 311 (`/tmp/telegram-documents-shuffled.xml`). Counts overlap.
+- Includes two actual 390×844 JavaScript-disabled browser flows for separately consented document lookup and work summary. Outbound Telegram is forbidden. Cases cover fresh workflow/routing metadata, restricted/other-owner records, canonical aliases/cycles, permission-before-limit paging, literal metadata-only search, transient search text, invalid inputs, separate read grants, module independence, revocation at final reply, duplicate updates, paused/direct/group contexts, summary hidden-source counts and empty states. All records and providers are synthetic.
+- Candidate metadata/increase, lock inputs, installed compatibility, vendor integrity, AI contract, compilation, Markdown local links and diff checks passed. No schema/dependency change. Full normal/shuffled repository suites and container audit remain exact-head PR CI gates; no live verification is claimed.
+- Saved in the same draft PR #572. Next: review or continue additions as directed. Production deployment/activation/live testing remain deferred; automatic reminders/outgoing transport and T4.4 full pilot are still separate open work.
+
+### T7.2a private supplies lookup started — 2026-11-01
+
+- The owner instructed continuation to the next ready increment after readiness. All exact-head checks at `8ec39b428a0ac3164864714d737d803b7ea106df` passed: functional, release metadata, dependency audit, full normal/shuffled Python 3.11 and Required checks. CI run [41259502581](https://github.com/jongsky25/css-is/actions/runs/41259502581). This is code readiness, not live verification. Draft PR #572 remains unmerged.
+- Next independent read child: T7.2a own supply requests and approval/collection status. Owner: Codex, same draft branch/candidate 9.56; in progress. User continues to defer deployment, activation and live acceptance.
+- Exact scope: `/my_supplies [all|active|needs_action|completed] [PAGE]` and `/supply_status REQUEST_ID`, owner-only even for custodians/approvers/admins. Five entries per page, bounded numeric input. Return reference, approval state, source requester-stage label/neutral guidance, needed date and signed-in source link. No purpose, item descriptions, quantities, approver identities, decision notes, stock data, writes, receipt acknowledgment or notifications. Separate unchecked `supplies.read` consent and default-off `CSS_TELEGRAM_SUPPLIES_READ_ENABLED`; Supplies must be enabled, Documents/work may be paused.
+- Reuse existing `supplies_dashboard.queue` owner predicates and `request_stage` for actual fulfillment/acknowledgment semantics. Private webhook replies only, current authority before reads and at reply handoff, uncertain one-time handoff, no retained rendered data or query text. Source stage is informational and must not mark approved quantities as received before actual handover/acknowledgment.
+- Tests and final evidence follow. No new dependency/schema/service or broader inventory/approval grant.
+
+- T7.2a user/operator controls and exact filter/status semantics: [supplies lookup runbook](TELEGRAM_SUPPLIES_LOOKUP.md).
+
+#### T7.2a verification — 2026-11-01
+
+- **257 passed** in broader supplies/Telegram/document/task/link/storage/webhook/requester-stage/request/receipt/deployment/release regressions (`/tmp/telegram-supplies-regressions.xml`), **41 passed** in shuffled supply/document/mobile cases, seed 311 (`/tmp/telegram-supplies-shuffled.xml`), and **18 passed** in the final focused supplies run (`/tmp/telegram-supplies-final.xml`). All JUnit reports pass with zero failures/skips; groups overlap.
+- Actual source-service lifecycle covered submitted → approved/reserved/ready for pickup → issued/pending receipt → acknowledged/received. Tests compare source filters, business/stock/audit snapshots before/after lookup, owner isolation even with admin/custodian/auditor/approver roles, separate grants, paused modules/switches, invalid input, pagination, final-reply revocation, duplicates, groups/direct mode and independent reading while Documents/work are paused. An early fixture deliberately changing account role hit the correct delegation-revocation fence; it was replaced with a genuinely fresh admin link before the final green runs. No production revocation behavior was weakened.
+- Three actual 390×844 no-script browser cases verify work, document and supply read consent/lookup/disconnect with outgoing Telegram forbidden. Separate checkbox, host switch, help/account guidance and deployment import closure are included. Metadata/increase, locks/vendor, installed compatibility, AI contract, compilation, local Markdown links and diff checks pass.
+- Source from the previously approved draft head `8ec39b4` has passed full normal/shuffled CI and dependency/aggregate gates. The new T7.2a head requires its own fresh CI; do not transfer prior-head success. All work remains on the same draft PR #572, candidate 9.56; no merge/deploy/activation/real sends. Live testing stays deferred.
+- Next: inspect exact-head CI/review for this bounded child. Further module/write expansion requires its own recorded scope; scheduled notifications and full T4.4 hosted workflow remain open and are not resumed by these private-read additions.
+
+### T7.3a–T7.5a personal status batch started — 2026-11-01
+
+- Owner explicitly approved private travel filing lookup, then meal and work-arrangement request status, before live release/testing. Same draft PR #572/branch/candidate 9.56. Bounded read children T7.3a travel, T7.4a meals and T7.5a arrangements are in progress, independently of outgoing delivery and full T4.4 pilot.
+- Exact scope: `/my_travel [BEFORE_ID]`, `/travel_status ID`; `/my_meals [BEFORE_ID]`, `/meal_status ID`, `/my_room_meals [BEFORE_ID]`, `/room_meal_status ID`; `/my_arrangements [BEFORE_ID]`, `/arrangement_status ID`. Owner predicates precede limits and detail lookups, even for admins/reviewers/approvers. Up to five rows, seek pagination with current authority.
+- Separate unchecked `travel.read`, `meals.read`, `arrangements.read` consent and default-off matching host switches. Private webhook-only, no persistent rendered source data, source links, final-send authority fences. Travel also honors `travel.enabled` and excludes purged filings; no source module switch exists for ordinary meal/arrangement screens, so none is invented. Documents/work may remain paused.
+- Travel: activity/reference/kind/dates/deadline, source filing/review states and count of source completeness issues (not notes or readiness changes). No financial amounts, travel answers, DPO numbers, file URLs or reviewer identities. Meals: standalone and room-linked parent/status/date and each selected meal delivery/order state, without quantities, dietary/special requests, places, contacts or notes. Arrangements: filing period/requested type/source filing state, without reasons, approver remarks or weekday schedules; not a claim about the effective schedule in force.
+- All operations read only. No filing, review request/decision, meal ordering, arrangement change, approval, submission, receipt marking, notifications or live activation. Final tests and evidence follow.
+
+#### T7.3a–T7.5a verification — 2026-11-01
+
+- **426 passed**, no failures/skips, in broader personal/work-browser/supplies/documents/tasks/bot/link/storage/webhook/travel-core/meals/arrangement/deployment/release regressions (`/tmp/telegram-personal-regressions.xml`). **76 passed**, no failures/skips, in shuffled personal/work-browser/supplies/document cases, seed 311 (`/tmp/telegram-personal-shuffled.xml`). Counts overlap.
+- Six actual 390×844 no-script browser consent/read/disconnect cases cover work, documents, supplies, travel, meals and arrangements, all with outgoing Telegram forbidden. Personal fixtures use source travel/standalone-meal/arrangement creation services; source room-meal selection/status rules are exercised. Tests cover updated review/delivery/filing states, exact source completeness count, no sensitive contents, no business mutations on read, owner-before-pagination/detail (including admin), separate scope/flag/disconnect/account fences, module independence, purged/paused travel, final-reply revocation, invalid arguments, duplicate updates and denied group/direct mode.
+- Candidate 9.56 metadata/increase, locks/vendor/installed compatibility, AI contract, compilation, relative Markdown links and diff checks pass. Runtime deployment closure includes the new personal adapter. No schema/dependency change. Full normal/shuffled repository suites and container audit remain exact-head PR CI gates; no unrun check is claimed as passing.
+- [User/operator runbook](TELEGRAM_PERSONAL_LOOKUP.md) records all eight commands, consent/switches, source-state distinctions, retained-data limits and pause behavior. Same draft PR #572; no production/preview changes, merge, activation, real Telegram sends or live user acceptance.
+- Next: review exact-head CI or continue independently scoped additions when directed. Live release/testing, outgoing transport repair, automatic notifications and the complete T4.4 hosted workflow remain deferred/open.
+
+### Private meeting/room webhook transport repair started — 2026-11-01
+
+- Owner explicitly approved making guided meeting creation and optional/separate room requests work end to end through private webhook replies before live release/testing. Same draft PR #572, candidate 9.56, branch `feat/telegram-private-work-lookup`. Existing action/read scopes and switches remain authoritative; no automatic grant or activation.
+- Add private `/meeting_preview OPERATION_ID` and `/room_preview OPERATION_ID`. `/meeting`/`/room_request` return account-bound signed-in preparation links through the incoming webhook. The existing forms preserve their fields/CSRF rules and now show the exact preview-retrieval command after saving. Confirmations and receipt commands use the same private webhook transaction, with current authority/revisions/expiry and canonical business services. Optional combined calendar+room outcomes retain separate child receipts and pending-approval semantics. Room-only retry must reuse the original saved meeting.
+- Source preview/receipt rendering supports explicit caller-owned transactions; its ordinary direct/group behavior remains the default. Private webhook action forms issue no queued pushes. Old pending private action pushes become ineligible while webhook mode is active; uncertain deliveries are never retried. Group-origin confirmations and group/private pushes retain the old worker/membership-verification path, even when the configured private reply transport is webhook. No external provider verification occurs under the private writer lock.
+- Business mutation, audit, consumed preview, operation receipt, update deduplication and uncertain webhook handoff commit atomically. A local savepoint rolls back late domain/expiry errors before returning a neutral reply; SQLite failure returns 503 after full rollback so the same authentic update may retry safely. Unknown/wrong-account/action/group-context pulls cannot disclose a preview or cause a mutation.
+- New true webhook browser acceptance extracts all codes from actual bot responses and operation commands from the actual posted forms. Existing worker browser cases are explicitly direct mode; they no longer implicitly claim webhook coverage by deriving codes from synthetic database rows. Final test/runbook evidence follows. All hosted verification, group/automatic delivery and T4.4 full-pilot claims remain separate and unverified.
+
+#### Private guided webhook verification — 2026-11-01
+
+- **322 passed**, no failures/skips, in broader meeting/room/combined/action/browser/bot/webhook/group/storage/task/deployment/release regressions (`/tmp/telegram-guided-webhook-regressions.xml`). **19 passed**, no failures/skips, in shuffled private-webhook and legacy-worker browser/flow cases, seed 311 (`/tmp/telegram-guided-webhook-shuffled.xml`). Counts overlap.
+- Two actual 390×844 JavaScript-disabled browser cases complete real message-visible linking → private guide → signed-in meeting form → operation preview pull → exact private confirmation → receipt, for calendar-only followed by separate room request and optional combined calendar+room creation. Both outgoing sends and membership calls are forbidden. No confirmation code is obtained from a database fixture. Three legacy browser cases explicitly retain direct mode.
+- Unit flows verify one meeting under duplicate/concurrent confirmations, current/expired/revoked/foreign/wrong-action denial, no auto-booking, group confirmation worker/membership preservation, private old-push suppression, atomic 503 handoff-insert rollback, late domain rollback, partial room failure and parent-linked room-only retry/current recovery without a second meeting. Existing core tests also cover permission/revision/source-conflict rules.
+- [Private guided workflow runbook](TELEGRAM_PRIVATE_MEETING_WEBHOOK.md) documents commands, atomicity/uncertain handoff, pending approval, retry, direct/group boundaries and rollback. Related meeting/room/transport docs now link the draft behavior. Metadata/locks/vendor/compatibility/AI contract, compilation, local links and whitespace pass; no schema/dependency change. Fresh exact-head full normal/shuffled suites and container audit remain PR CI gates.
+- Same draft PR #572, branch `feat/telegram-private-work-lookup`, candidate 9.56. No merge, preview publication, deployment, provider registration, host switch/grant change, real Telegram send or live acceptance. T4.4 full hosted group/calendar/room/reminder/revocation/rollback pilot remains incomplete; outgoing scheduled/group behavior remains unverified.
+- Next: inspect exact-head CI/review or continue a separately scoped addition when directed. Live activation and user testing remain explicitly deferred.
+
+### Current-main reconciliation — candidate 9.58, 2026-11-01
+
+- Current main `5a6338d` contains separately merged audit PRs #573/#574 and source release 9.57. Merged those changes into this review branch, preserving all source behavior and audit evidence. No audit investigation or live database action was resumed.
+- Telegram transport implementation is saved at `f9ab222`; all draft Telegram release notes move from unpublished 9.56 to **9.58**, preserving main's released 9.56/9.57 histories. Current operator runbooks reflect 9.58; earlier candidate entries above are historical.
+- Final pre-merge phone cases: two passed without skips/failures (`/tmp/telegram-guided-webhook-browser-final.xml`), including no-script private meeting/separate room/combined flows with outgoing sends/membership calls forbidden and safe nullable legacy operation routing. New merged-head validation follows; full exact-head CI remains required. No production merge/deploy/activation authorized.
+
+#### Reconciled 9.58 validation — 2026-11-01
+
+- Implementation/merge source head `4ad1955` (main `5a6338d` preserved): **766 tests passed**, no failures/skips, across all `tests/test_telegram*.py` plus upstream audit-chain/audit-incident, deployment and release tests (`/tmp/telegram-958-merged-regressions.xml`). **45 shuffled tests passed**, no failures/skips, across private-webhook/legacy-worker browser flows and upstream audit regressions, seed 311 (`/tmp/telegram-958-merged-shuffled.xml`). Counts overlap.
+- This replaces pre-reconciliation targeted evidence for current source compatibility. Both JUnit gates pass, as do metadata/increase against actual main 9.57, lock inputs, vendor integrity, installed compatibility, AI contract, compilation, local relative Markdown links and full PR whitespace checks. Source runtime changes are tested after main's shared audit writer changes, not assumed compatible from prior-head CI.
+- No application changes follow those passing merged-source runs; final edits only record the evidence and current handoff. Fresh exact-head repository-wide normal/shuffled suites and container audit remain required PR CI gates. CI metadata/dependency checks had passed at `4ad1955` while its full suites were still running; final-head check results must be inspected separately.
+- Current review candidate: **9.58**, draft PR #572, `feat/telegram-private-work-lookup`. No production or preview publication, Telegram activation, provider/credential/grant change, real message or hosted acceptance. Private end-to-end behavior is verified only using synthetic no-script browser/webhook flows. Group/scheduled/outgoing delivery and full T4.4 live pilot remain open.
+
+### Personalized menu and guided next steps started — 2026-11-01
+
+- Owner approved a private personalized menu showing only enabled/consented commands, grouped Calendar/Tasks and work/Documents/Requests, with examples and missing-permission guidance; also a staged live-testing checklist. Same draft PR #572/candidate 9.58/branch. No deployment, activation or real messaging authorized.
+- `/menu` aliases the existing private `/help` projection and inherits its authentication, dedupe, destination/generation and transport fences. Menu readiness is recomputed from current account/link/bot, host switches, separate read/action grants, source module switches, prerequisites and private reply transport. It never queries source records or changes consent. `/status` explains unavailable features without publishing their commands. Pending two-channel linking status remains authoritative and unchanged.
+- Add record-bound detail/back commands to results, and only currently consented/available task next actions. Record ownership, source workflow/open-case/blocker checks and confirmation remain mandatory. Meeting/room guides/previews keep their explicit form/confirmation steps and URL positions; receipts name their own recovery command and menu. No bulk replay or new outbound provider call. Final tests and checklist evidence follow.
+
+### Menu candidate reconciled with monitoring main — 2026-11-01
+
+- Source main `c81b235` independently merged operational-monitoring PR #575, release 9.58. Preserved those changes on the Telegram review branch; no monitor run, incident test, live configuration, message or deployment was initiated by this task. Telegram menu implementation is saved at `97953e6`.
+- The unpublished Telegram batch is now candidate **9.59**, preserving main's actual 9.56/9.57/9.58 release histories. Current Telegram runbooks/checklist reflect 9.59. Earlier candidate entries remain historical.
+- Pre-merge menu checks: 310 broader cases, 84 shuffled cases, 10 final menu cases passed, zero failures/skips. Six actual no-script phone flows exercise current private menu/status after read consent and before disconnect. Fresh merged-candidate validation follows; no old-head CI result is transferred.
+
+- Menu worker compatibility: merged-source broad testing found one stale help-heading assertion. Updated it to the intentional neutral private-menu heading and strengthened it to require linking guidance and forbid business commands for an unlinked user. The final menu/worker run passed **23 tests**, no failures/skips (`/tmp/telegram-menu-worker-final.xml`). Full merged-source rerun is in progress; no failing report is treated as a passed gate.
+
+### Menu/acceptance plan final verification — candidate 9.59, 2026-11-01
+
+- Merged main `c81b235` is preserved; source/test head `cee7614` passed **813 tests**, zero failures/errors/skips, across all Telegram tests plus operational-monitor, audit-chain/incident, deployment and release tests (`/tmp/telegram-959-merged-regressions-final.xml`). **69 shuffled cases passed**, zero failures/errors/skips, covering menu/phone/guided workflows and upstream operational monitoring, seed 311 (`/tmp/telegram-959-merged-shuffled.xml`). Final focused menu/worker run: **23 passed** (`/tmp/telegram-menu-worker-final.xml`). Counts overlap.
+- Broad rerun replaces the report containing the obsolete help-heading assertion; that assertion was updated for the intentional copy change and strengthened to prohibit business commands for unlinked help. No permission/workflow assertion was removed. Source configuration/consent/transport/precondition and message-size tests pass, including all-grant/no-grant menus, current revocation, paused module/prerequisite, pending linking and task-specific blocker/write hints. Six actual no-script phone read/menu/status/disconnect flows pass with outbound Telegram forbidden.
+- User/operator docs: [personalized menu](TELEGRAM_MENU.md). The [later private live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md) covers actual version/SHA/CI/backup prerequisites, low-privilege scope discovery, records/paging, task and guided meeting/room confirmations/recovery, all module statuses, privacy/revocation and pause/evidence. Every live case is explicitly Pending; no action is scheduled or authorized now.
+- Candidate 9.59 metadata/increase against main 9.58, runtime closure, lock/vendor/installed compatibility, AI contract, compilation, local relative links and full PR whitespace checks pass. No app source changes follow the final merged-candidate runs; final commit only records these outcomes. Fresh exact-head repository-wide normal/shuffled/dependency/aggregate CI still must be inspected before any release/readiness claim.
+- Same draft PR #572, `feat/telegram-private-work-lookup`. No new scope, schema, provider/service, BotFather registration, activation, Telegram message, monitor test, live data action, preview publication or deployment was performed by the menu task. Next: review fresh CI and the concrete draft/checklist, or continue separately scoped additions when requested. T4.4 group/scheduled/outgoing/live acceptance remains open.
+
+
+### Daily brief and staged reminder choices — candidate 9.60, 2026-11-01
+
+Owner approved an on-demand daily work brief and reminder preferences, with
+scheduled delivery, activation and live testing deferred. `/brief` combines
+current permitted personal calendar entries, existing work/task summary and
+own-only request statuses. Every source retains its independent read grant,
+module, pilot and ownership/visibility policy. Bounded sections provide full
+lookup/detail commands; no records are mutated or business text queued.
+
+The signed-in notification page saves own section choices and a future reminder
+preference/time. The reminder preference defaults off and has no scheduler,
+worker/enqueue hook or automatic activation. Existing reminders and quiet hours
+remain separate. See [daily brief behavior](TELEGRAM_DAILY_BRIEF.md) and the
+expanded [pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md).
+
+Verification is being completed on `feat/telegram-private-work-lookup`; no
+production or preview publish, real message, host activation or live test is
+authorized by this implementation request. Exact-head full CI is still required.
+
+
+Daily-brief verification: **775** all-Telegram/deployment/release regressions and
+**37** shuffled brief/menu/phone-form cases passed with zero failures/errors/skips
+(groups overlap). Both JUnit gates, 9.60 metadata/increase, locks/vendor, installed
+compatibility, AI contract, compile, documentation links and whitespace pass.
+No source edits followed these runs. Full exact-head normal/shuffled/container
+dependency/aggregate CI remains a release gate; live cases remain Pending.
+
+
+### Unified private search — candidate 9.61, 2026-11-01
+
+Owner approved `/find WORDS` across permitted task/work titles, document
+numbers/subjects and meeting titles. Existing independent read consent, source
+module/host controls, ownership and canonical visibility apply before limits.
+Meetings use the calendar blend scope, entries layer/meeting kind, and the
+explicit next-31-day Manila window with source recurrence/visibility rules.
+Grouped two-result sections show source status where available, due dates and
+detail commands; work has no invented overall status. No notes, outputs, file
+contents, people or meeting URLs are searched/projected.
+
+Search is private webhook only, read only, literal Unicode-casefold metadata
+matching. Query text stays ephemeral in intake and is never queued/cached;
+existing deduplication, rate limits and uncertain-response behavior apply.
+The menu shows the command only when a supported source is ready. Six real
+no-script phone consent/read flows now check search scope isolation and denial
+after disconnect. See [search behavior](TELEGRAM_PRIVATE_SEARCH.md) and the
+expanded [pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md).
+
+Current isolated Python 3.11 verification: **796 all-Telegram/deployment/release
+regressions passed**, plus **61 shuffled search/menu/phone/brief cases**, zero
+failures/errors/skips (groups overlap). Reports:
+`/tmp/telegram-search-regressions.xml` and `/tmp/telegram-search-shuffled.xml`;
+both JUnit gates pass. The earlier focused run passed 37 cases, including the six
+real no-script phone flows; it overlaps the final groups. The initial schema-
+fixture error was corrected before the final runs. Candidate 9.61 metadata/
+increase over actual main 9.58, locks/vendor integrity, installed compatibility,
+AI contract, compilation, documentation file targets and whitespace checks pass.
+The existing Starlette/httpx deprecation warning remains. No application source
+edits followed the passing runs. Exact-head repository-wide normal/shuffled/
+dependency/container/aggregate CI remains required and is not claimed passed.
+
+
+Deployment, host activation, real messages and live acceptance remain deferred.
+Fresh exact-head full CI remains a release gate; no monitoring/operations work
+or production data access is part of this request.
+
+
+### Private meeting management implemented — 2026-11-01
+
+Owner approved continuing feature development while personal/live testing stays
+deferred. Draft PR #572 continues on `feat/telegram-private-work-lookup`,
+unpublished candidate **9.62**, preserving main c81b235 (9.58).
+
+Added separately consented, default-off `calendar.reschedule` and
+`calendar.cancel` actions. `/meeting_reschedule` and `/meeting_cancel` return
+signed-in, script-free forms; prepared operation IDs retrieve exact private
+previews with five-minute deadlines and action-specific confirmation/recovery
+commands. Existing create/read consent cannot grant either new write action.
+
+Only an actor's own plain native one-day meeting is eligible. Recurring, imported,
+activity-linked, already-cancelled and managed video cases stay in Office Connect.
+Active linked room requests/bookings block preparation and confirmation, including
+new links after preview; this increment does not move/cancel rooms or meals.
+Rescheduling changes date/start/end only, preserving remaining source fields.
+Cancellation uses native soft cancellation. Source notices follow current
+notification settings; no feature/notice/reminder delivery is activated now.
+
+Native calendar update/cancel now supports caller-owned transactions with existing
+default behavior preserved. Source revision/outbox/audit, consumed preview and
+operation receipt commit together. A full source hash plus latest revision ID
+blocks stale or edited/reverted previews. Atomic rollback, duplicate/concurrent
+confirmation, creator/current-authority/private transport fences and deletion
+recovery are covered by synthetic checks.
+
+See [meeting-management behavior](TELEGRAM_MEETING_MANAGEMENT.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md).
+
+Current isolated Python 3.11 verification: **1789 regression cases** across
+Telegram, native calendar, audit-chain writers, deployment and release checks
+passed, plus **98 shuffled action/menu/phone cases**, **11 native Meet relay
+cases** and **4 final normal late-receipt/consent cases**, zero failures/errors/
+skips. Groups overlap; the four final cases were added after broad-run collection
+and also passed in the shuffled group. The earlier new-management/phone run
+passed 48 cases, overlapping these groups. Initial synthetic table/API/seen-marker
+assertions were corrected to the actual source schema/semantics before final
+runs; no permission or atomicity assertion was weakened. JUnit reports:
+`/tmp/telegram-manage-regressions.xml`, `/tmp/telegram-manage-shuffled.xml`,
+`/tmp/telegram-manage-relay.xml`, `/tmp/telegram-manage-extra.xml`. All gates pass.
+
+Candidate 9.62 metadata/increase over main 9.58, dependency locks/vendor integrity,
+installed compatibility, AI contract, compilation, documentation file targets
+and whitespace checks pass. Existing Starlette/httpx deprecation warning remains.
+No application source edits followed the passing runs. Fresh exact-head full
+repository normal/shuffled/dependency/container/aggregate CI remains required;
+no live acceptance or deployment is claimed.
+
+Next: inspect fresh exact-head repository-wide normal/shuffled/dependency/aggregate
+CI and review the draft. Production/preview publication, host activation, real
+messages and user/live testing remain deferred. Independent room management and
+managed provider/series editing remain future work; no operational monitor action
+or live data access occurred in this task.
+
+
+### Private room withdrawal and date moves — 2026-11-01
+
+Owner approved room-request management while publication/activation and live
+testing remain deferred. Draft PR #572 continues on
+`feat/telegram-private-work-lookup`, unpublished candidate **9.63**, preserving
+main c81b235 (9.58). Separate default-off `rooms.withdraw` / `rooms.move` pilots
+and explicit consent also require current room read; existing read/request
+consent cannot grant either new action.
+
+`/room_withdraw` and `/room_move` return script-free signed-in forms accepting
+an own room reference or ID. Exact five-minute private previews precede
+confirmation and action-specific recovery. Pending date moves change the request
+in place. Approved moves submit a new pending child while the old booking stays
+held until normal approval; no bot action grants approval. Withdrawing releases
+held hours and identifies pending move children also withdrawn. Withdrawing only
+a move leaves the original unchanged and reports its actual current status.
+
+Only the actual requester can act, including when an administrator can view other
+requests. Meals/meal forms, series, standby, guests, direct activity links and
+on-behalf-of cases stay in Office Connect. A calendar-linked move additionally
+requires calendar read and a new date matching the current permitted meeting.
+The calendar is never silently edited.
+
+Native room writes/notices now support strict caller-owned transactions while
+existing default behavior remains. Source rows/held slots, move child, notice
+outbox/audit, consumed preview and receipt share one transaction. Durable source
+heads and full room/slot/family hashes stop stale/edited-reverted previews; linked
+meeting revisions and current target conflicts are also checked. Shared signed-in
+form handling retains actor/session/CSRF, strict fields, body bounds and rate
+limits for both meeting and room paths.
+
+See [room-management behavior](TELEGRAM_ROOM_MANAGEMENT.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md).
+
+Local Python 3.11 verification: **1,454 broad regressions passed** across
+Telegram, native room/approval/meal/series/guest/UI workflows, calendar links,
+existing MCP room tools, audit-chain writers, deployment and release checks.
+**142 final shuffled action/menu/phone checks** and **2 final normal parent-status/
+approval-race checks** passed, zero failures/errors/skips. Groups overlap. The
+broad run began before a final preview-only correction to show an original
+booking's actual status when cancelling a pending move; business writes were
+unchanged. The final shuffled/normal groups cover that correction and the
+additional race assertion. Initial expected old-booking status was corrected
+to native `withdrawn` after normal move approval, preserving the actual source
+semantics and held-slot assertions. Earlier focused run: 92 passed; initial
+native/shared-form subset: 90 passed.
+
+Reports: `/tmp/telegram-room-manage-regressions.xml`,
+`/tmp/telegram-room-manage-shuffled-final.xml`,
+`/tmp/telegram-room-manage-final-state.xml`; all JUnit gates pass. Candidate 9.63
+metadata/increase over main 9.58, locks/vendor integrity, installed compatibility,
+AI contract, compilation, local documentation file targets and whitespace checks
+pass. Existing Starlette/httpx deprecation warning remains. No app source edits
+followed the final passing groups. Fresh exact-head repository-wide normal/
+shuffled/dependency/container/aggregate CI still needs inspection; no hosted or
+user acceptance is claimed.
+
+Next: inspect fresh exact-head full normal/shuffled/dependency/container/aggregate
+CI and review the draft. Deployment, preview publication, host activation, real
+messages and user/live testing remain deferred. Meal/series/guest/on-behalf-of
+management, different-hour moves and combined calendar/room rescheduling remain
+separate future scope. No operational monitor action or live data access occurred.
+
+
+### Private guided task proposals — 2026-11-01
+
+Owner requested the next Telegram feature while deployment, preview publication,
+activation and personal/live testing remain deferred. Added `/new_task` guided
+proposals in draft PR #572 on `feat/telegram-private-work-lookup`, candidate
+**9.64**. Independent main monitoring registration repair `a7b9b38` (9.59,
+PR #577) was preserved by review-branch merge `6b064fc`; its released changelog
+entry remains below the unpublished Telegram batch. No monitor execution or
+configuration action was initiated by this task.
+
+Separate default-off `CSS_TELEGRAM_TASKS_CREATE_ENABLED` / `tasks.create` consent
+requires work read, available document/work modules and the original private
+webhook/account/bot context. The script-free signed-in form captures permitted
+work ID, task title, expected output, contributing unit, optional proposed owner
+and exact optional deadline. A five-minute private preview precedes confirmation;
+source deadline, visibility/intersection and open-work rules are checked again.
+
+Confirmation creates one native required contribution in proposed state, with no
+confirmed owner. Officer assignment remains a separate source decision and still
+requires linked-document access for the eventual owner; no access is granted by
+proposal. Native task/event/audit/review effects, consumed preview, receipt and
+final private reply share one transaction. Duplicate/concurrent confirmations
+produce one proposal. New receipt deletion fencing prevents numeric-ID reuse
+from displaying a replacement task. Legacy ack/submit preview endpoints reject
+proposal-shaped operations.
+
+Active latest, not-yet-invalidated consolidation review packets on nonterminal
+documents block bot creation. Native additions there can reset dependent formal
+approvals; those amendments stay in Office Connect, including when review starts
+after preview. Native services remain unchanged. Source module pause also blocks
+guides and directory forms.
+
+See [task proposal behavior](TELEGRAM_TASK_PROPOSALS.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md).
+
+Isolated Python 3.11 verification: **1,408 broad regressions passed** across
+Telegram, native work/assignment/review/completion/legacy/UI behavior, audit-chain
+writers, deployment and release checks. **125 final shuffled checks** cover new
+proposals, current module/formal-review guards, task ack/submit separation, menus,
+action engine and existing meeting/room phone forms. **3 final normal guard
+cases** passed; zero failures/errors/skips in all groups. Groups overlap.
+
+The broad run started before final proposal-only refinements: source pause now
+blocks guides, preview wording identifies required contributions, and active
+formal-review amendments stay in Office Connect. The final shuffled and normal
+guard groups cover those refinements. Earlier dedicated proposal/phone run: 35
+passed; existing task/menu/shared-form subset: 73 passed. Initial synthetic
+officer-confirmation reason and long-source-label fixtures were corrected to
+actual native requirements before passing final groups. No permission assertion
+was weakened.
+
+Reports: `/tmp/telegram-task-create-regressions.xml`,
+`/tmp/telegram-task-create-shuffled-verified.xml`,
+`/tmp/telegram-task-create-final-guards.xml`; JUnit gates pass. Candidate 9.64
+metadata/increase over actual main 9.59, locks/vendor integrity, installed
+compatibility, AI contract, compile, local file links and whitespace checks pass.
+Existing Starlette/httpx deprecation warning remains. No app source edits followed
+the final passing groups. Fresh exact-head full repository normal/shuffled/
+dependency/container/aggregate CI still requires inspection; no hosted or user
+acceptance is claimed.
+
+Next: inspect fresh exact-head repository-wide normal/shuffled/dependency/
+container/aggregate CI and review the draft. Release, host activation, real
+messages and user/live acceptance remain deferred. Automatic assignment, task
+acceptance/cancellation/deadline changes and amendments to active formal reviews
+remain separate scope. No production data or external staff messaging was used.
+
+
+### Private internal task deadlines — 2026-11-01
+
+The owner requested the next feature while keeping deployment, preview publication,
+activation and personal/live testing deferred. Added `/task_deadline` with a
+signed-in no-script form, `/deadline_preview`, `/deadline_confirm` and
+`/deadline_receipt` to draft PR #572, review branch
+`feat/telegram-private-work-lookup`, candidate **9.65**. Actual main remains
+`a7b9b38` (released 9.59); its changes and released changelog remain preserved.
+No main merge, provider calls, monitor execution or production data access occurred.
+
+Separate default-off `CSS_TELEGRAM_TASKS_DEADLINE_ENABLED` / `tasks.deadline`
+consent requires work read, source modules and original private webhook/account/
+chat/bot proof. The native concerned-officer or confirmed-work-lead `milestone`
+authority is checked at preparation and confirmation. Task ownership alone is
+insufficient. The form requires set/change with an exact date or explicit clear
+with a blank date, plus a bounded reason. The preview identifies work/task, status,
+old/new deadline and reason before exact five-minute confirmation.
+
+Confirmation uses the native task milestone transaction. Owner, progress,
+required status, expected output, submission and official deadlines stay unchanged.
+Internal targets cannot follow linked official deadlines. Completed/closed work,
+done/cancelled tasks, lost document visibility and active formal consolidation
+review block the operation. Formal review beginning after preview also blocks it;
+dependent approval amendments remain in Office Connect. Shared proposal/deadline
+helpers retain these rules and hash source state without projecting submissions.
+
+Native source/event/audit/reminder effects, preview consumption, receipt and
+private handoff commit atomically. Duplicate/concurrent confirmation changes one
+milestone; audit/receipt/handoff failures roll back. Task deletion cancels pending
+previews and clears recorded targets to fence numeric-ID reuse. Read revocation,
+source/host pauses, stale/reverted source, restored connection, expired proof and
+changed officer/lead authority refuse confirmation. Recovery rechecks current
+source view and reports current state without repeating a change.
+
+See [feature details](TELEGRAM_TASK_DEADLINES.md) and the extended
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No scheduler, automatic assignment, acceptance, cancellation or
+external staff message was added.
+
+Isolated Python 3.11 verification: **1459 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **167 current shuffled checks** (seed 311) passed across
+deadline/proposal services and phone forms, menu, generic action engine, existing
+task actions and private meeting webhook handling. Zero failures/errors/skips in
+both groups; groups overlap. The broad run includes the final authority-revocation
+and four native nonterminal-state cases. No application source edits followed
+these runs.
+
+Earlier dedicated proposal/deadline/menu/phone sample: 90 passed; earlier generic
+engine/deadline sample: 76 passed. Initial synthetic linked-document fixtures
+needed access for the assigned contributor; the legacy-schema simulation needed
+to remove the newer deletion trigger before dropping its referenced table. Those
+fixtures were corrected without weakening authority or migration assertions.
+Final passing groups cover both corrections.
+
+Reports: `/tmp/telegram-task-deadline-regressions.xml` and
+`/tmp/telegram-task-deadline-shuffled.xml`; both pass the JUnit no-skips gate.
+Candidate 9.65 release metadata/increase over actual main 9.59, locks/vendor
+integrity, installed compatibility, AI contract, Python compilation, local Markdown
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. No hosted or user acceptance is claimed.
+
+Next: inspect fresh exact-head repository-wide normal/shuffled/dependency/
+container/aggregate CI and continue the requested feature work. No hosted/user
+acceptance is claimed. Main merge, preview publication, release, feature activation,
+real messages and live testing remain deferred until the owner's later instruction.
+
+
+### Private submitted-task review — 2026-11-01
+
+Owner explicitly requested task acceptance and return-for-changes after the latest
+internal deadline feature. Added `/task_accept` and `/task_return`, separate
+signed-in no-script guides, private previews, exact confirmation and receipts to
+review branch `feat/telegram-private-work-lookup`, draft PR #572, candidate
+**9.66**. Actual main remains `a7b9b38` (released 9.59). Deployment, preview
+publication, activation and personal/live testing remain explicitly deferred.
+
+Separate default-off `CSS_TELEGRAM_TASKS_ACCEPT_ENABLED` / `tasks.accept` and
+`CSS_TELEGRAM_TASKS_RETURN_ENABLED` / `tasks.return` require work read and current
+private inbound/link/delivery/source/account/bot proof. The concerned case officer
+or confirmed work lead must have the native action. Task ownership or another
+Telegram permission alone grants neither review action. The form captures only
+permitted work/task IDs and a bounded mandatory reason. Review the current
+submission in Office Connect first; bot previews identify work/task, For review →
+Done or In progress, and the actor-entered reason without disclosing stored output.
+
+The existing native `accept`/`return` task transaction remains authoritative.
+Acceptance preserves recorded-blocker, unfinished-prerequisite and unresolved
+changed-decision rules. Return may request changes with those blockers still
+present; it does not resolve them. Changed source/submission/event history, lost
+visibility/authority, closed/completed work and task states, revocation/pause/
+restore/expiry and original-context checks prevent stale writes. Active formal
+consolidation review before or after preview blocks bot amendments, preserving
+dependent official approvals. No native work service was changed.
+
+Review preserves owner, submission, output, required status and deadlines. It does
+not complete the work case or approve/release/close an official document. Native
+source/event/audit/reminder effects, consumed preview, receipt and private handoff
+share one transaction. Audit/receipt/handoff failure rolls back. Duplicate and
+concurrent confirmation changes one task once; a pending opposite action cannot
+reverse a confirmed result. Deletion cancels pending previews and clears receipt
+targets, fencing numeric-ID reuse. Recovery reports the recorded outcome and
+current permitted state without repeating the action.
+
+Isolated Python 3.11 verification: **1559 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **265 current shuffled checks** (seed 311) passed across
+new review services/phone forms, deadline/proposal services/phone forms, menu,
+action engine, existing task actions and private meeting webhook handling. Zero
+failures/errors/skips in both groups; groups overlap. Both include final opposite-
+preview and native owner-account cases. Earlier focused service/phone group:
+94 passed; initial menu/action wiring group: 46 passed. No application source
+changes followed these runs.
+
+The first focused pass caught four changed-decision test fixtures treating the
+native discussion's returned message ID as a record. The fixture now uses that ID
+and its actual initial revision. A copied browser-selector syntax error was fixed
+before the final passing service/phone run. Current passing groups cover both
+corrections without weakening source or browser assertions.
+
+Reports: `/tmp/telegram-task-review-regressions.xml` and
+`/tmp/telegram-task-review-shuffled.xml`; both pass the no-skips JUnit gate.
+Candidate 9.66 metadata/increase over actual main 9.59, dependency locks/vendor
+integrity, installed compatibility, AI contract, Python compilation, local file
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head results are not current acceptance.
+
+See [task review behavior](TELEGRAM_TASK_REVIEWS.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md); all live cases
+remain Pending. No real provider message, production data access, scheduler,
+monitor execution or Telegram activation occurred. Assignment/reassignment,
+reopening, cancellation and formal-review amendments remain separate scope.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, pilot activation and personal/live
+acceptance remain deferred until the owner's later instruction.
+
+
+### Private initial task assignment — 2026-11-01
+
+Owner explicitly requested officer-confirmed initial task assignment after task
+review. Added `/task_assign`, a signed-in no-script owner selector, private
+`/taskassign_preview`, exact `/taskassign_confirm` and `/taskassign_receipt` to
+review branch `feat/telegram-private-work-lookup`, draft PR #572, candidate
+**9.67**. Actual main remains `a7b9b38` (released 9.59), preserved on this branch.
+Deployment, preview publication, activation and personal/live testing remain
+explicitly deferred. Initial access inspection found prior-head functional,
+metadata and dependency CI passing; full normal/shuffled were still running.
+Those results are not transferred to this candidate.
+
+Separate default-off `CSS_TELEGRAM_TASKS_ASSIGN_ENABLED` / `tasks.assign` consent
+requires work read, source modules and current private inbound/link/delivery/
+account/bot proof. The actor needs the native `confirm` action over the task's
+contributing unit; work-lead/proposer/suggested-owner status alone is insufficient.
+The form requires explicit owner selection and a bounded reason. No suggested
+owner is automatically selected. Preview identifies task/work/unit, suggestion,
+selected name/account, unchanged deadline and Proposed → To do before confirmation.
+
+The selected active person needs existing access to every linked document.
+Assignment grants no document permissions; confirmed ownership participates in
+normal work membership rules and keeps linked-document visibility intersections.
+Native source owner/document/date checks are repeated at preview and confirmation.
+Account/name/source changes, lost task-unit officer or contributor rights,
+completed/closed work, already-assigned/cancelled tasks and stale/revoked/expired/
+restored contexts block confirmation. Active formal consolidation review beginning
+before or after preview blocks amendments to preserve dependent approvals.
+
+Confirmation calls the existing native `confirm` transaction, setting the selected
+owner and To do state while preserving deadline, title/output/submission, required
+status, unit and original proposal. It does not acknowledge, submit, review,
+complete the case or approve an official document. Native source/event/audit/
+reminder effects, consumed preview, receipt and private handoff share one atomic
+transaction. Audit/receipt/handoff failure rolls back; duplicate/concurrent
+confirmation assigns once. A competing pending owner choice cannot reassign the
+confirmed task. Deletion fences numeric-ID reuse. Recovery reports current owner/
+status and recorded outcome without replaying the original assignment.
+
+Proposal wording now says officer assignment is separately confirmed, allowing
+this independent private officer flow without granting proposal scope any new
+authority. Native work/task services and source permissions remain unchanged.
+
+Isolated Python 3.11 verification: **1618 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **323 current shuffled checks** (seed 311) passed across
+assignment/review/deadline/proposal services and phone forms, menu/action engine,
+existing task actions and private meeting webhook handling. Zero failures/errors/
+skips in both groups; groups overlap. Both include the final positive contributing-
+unit officer case. Earlier focused assignment and phone/proposal-phone group:
+58 passed; existing menu/action/proposal wiring group: 83 passed. No application
+source changes followed these runs.
+
+The initial assignment sample caught one fixture assumption: changing an account's
+technical role also revokes its Telegram connection, so it cannot retrieve a guide.
+The corrected case tests native technical-admin authority directly and still
+requires source denial. Current groups cover connection revocation and source
+permissions without weakening either rule. A hidden-document case independently
+retains officer authority while removing explicit restricted-document visibility.
+
+Reports: `/tmp/telegram-task-assign-regressions.xml` and
+`/tmp/telegram-task-assign-shuffled.xml`; both pass the JUnit no-skips gate.
+Candidate 9.67 metadata/increase over actual main 9.59, locks/vendor integrity,
+installed compatibility, AI contract, Python compilation, local Markdown links
+and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head checks are not candidate acceptance.
+
+See [assignment behavior](TELEGRAM_TASK_ASSIGNMENT.md),
+[proposal boundary](TELEGRAM_TASK_PROPOSALS.md) and the extended
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No provider call, production data access, scheduler, monitor
+execution or pilot activation occurred. Reassignment/reopening/cancellation and
+formal-review amendments remain separate source actions.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+### Private officer task reassignment — 2026-11-01
+
+Owner requested the next feature after initial assignment. Added `/task_reassign`,
+a signed-in no-script different-owner selector, `/taskreassign_preview`, exact
+`/taskreassign_confirm` and `/taskreassign_receipt` to review branch
+`feat/telegram-private-work-lookup`, draft PR #572, candidate **9.68**. Actual main
+remains `a7b9b38` (released 9.59), preserved on this branch. Deployment, preview
+publication, activation and personal/live testing remain explicitly deferred.
+Initial access inspection found prior-head functional/metadata/dependency checks
+passing and full normal/shuffled still running; those are not current acceptance.
+
+Separate default-off `CSS_TELEGRAM_TASKS_REASSIGN_ENABLED` / `tasks.reassign`
+consent requires work read, source modules and current private inbound/link/
+delivery/account/chat/bot proof. Initial assignment consent grants no transfer
+right. Native officer authority must cover the task's contributing unit; task
+ownership or work-lead status alone is insufficient. Only To do/In progress/For
+review tasks qualify, and the new active owner must differ from the current one
+and already read every linked document. The bot grants no document access.
+
+The form and exact private preview explicitly show the reset to To do, including
+In progress and For review tasks. Preview identifies old/new owner, current/new
+state, work/task/unit, unchanged deadline and bounded reason. Existing submission,
+output, original proposal, required status, deadline and blocker/follow-up/
+prerequisite/changed-decision information remain preserved. Source membership
+rules determine the old/new owners' access; stored submissions stay in Office
+Connect. Transfer does not resolve blockers, accept work or approve a document.
+
+Native reassignment remains authoritative. Initial assignment and reassignment
+share identity/access/snapshot/receipt routing, with separate native actions,
+result codes, scopes/pilots and command protocols. Source/account/submission/
+event changes, lost officer/new-owner rights, hidden documents, closed/completed
+work and revoked/expired/restored contexts prevent stale transfer. Active formal
+consolidation review starting before or after preview blocks bot amendments,
+preserving dependent approvals. No native work/task service was changed.
+
+Native source/event/audit/reminder effects, consumed preview, receipt and final
+private handoff share one transaction. Audit/receipt/handoff failure rolls back;
+duplicate/concurrent confirmations transfer once. Competing owner choices cannot
+transfer the updated source again. Deletion cancels previews/clears targets to
+fence ID reuse. Recovery checks current source view and reports recorded outcome
+plus current owner/status without replay, including later source transfer/progress.
+
+Isolated Python 3.11 verification: **1680 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **384 current shuffled checks** (seed 311) passed across
+reassignment/initial-assignment/review/deadline/proposal services and phone forms,
+menu/action engine, existing task actions and private meeting webhook handling.
+**4 final normal phone checks** passed for reassignment and initial assignment.
+Zero failures/errors/skips in all groups; groups overlap. Earlier focused transfer
+service sample: 56 passed; combined transfer/initial-assignment/phone sample:
+116 passed; initial wiring group: 104 passed.
+
+Broad/shuffled collection preceded one wording-only refinement to the initial
+assignment form: it now points to the separately consented reassignment flow
+rather than saying all reassignment stays in Office Connect. Final four normal
+phone cases cover both current forms after that refinement. All functional source
+and the final three service cases (changed submission, missing access before
+preview and contributing-unit officer positive) were present before broad/shuffled
+collection. No functional code edits followed these groups.
+
+Reports: `/tmp/telegram-task-reassign-regressions.xml`,
+`/tmp/telegram-task-reassign-shuffled.xml` and
+`/tmp/telegram-task-reassign-phone-final.xml`; all pass the JUnit no-skips gate.
+Candidate 9.68 metadata/increase over actual main 9.59, locks/vendor integrity,
+installed compatibility, AI contract, Python compilation, local Markdown links
+and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head results are not current acceptance.
+
+See [transfer behavior](TELEGRAM_TASK_REASSIGNMENT.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No provider call, production data, scheduler, monitor execution,
+publication or activation occurred. Reopening/cancellation and formal-review
+amendments remain separate source actions.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+### Private accepted-task reopening — 2026-11-01
+
+Owner requested the next feature after reassignment. Added `/task_reopen`, a
+signed-in no-script reason form, `/taskreopen_preview`, exact private
+`/taskreopen_confirm` and `/taskreopen_receipt` to review branch
+`feat/telegram-private-work-lookup`, draft PR #572, candidate **9.69**. Actual main
+remains `a7b9b38` (released 9.59), preserved on this branch. Deployment, preview
+publication, activation and personal/live testing remain explicitly deferred.
+Initial exact prior-head inspection found all functional/release metadata/
+dependency/full normal/full shuffled/aggregate CI checks passing at `3bea6d1`.
+Those checks establish the earlier candidate only, not this new head's acceptance.
+
+Separate default-off `CSS_TELEGRAM_TASKS_REOPEN_ENABLED` / `tasks.reopen` consent
+requires work read, work/document modules and original private inbound/link/
+delivery/account/chat/bot proof. Native concerned case-officer or confirmed
+work-lead authority is checked on every preparation/confirmation; task ownership
+alone is insufficient. Only Done tasks qualify. Existing owner must still be
+active and able to read every linked document. The bounded mandatory reason and
+identified task/current owner/Done → In progress are shown before confirmation.
+
+Confirmation uses the existing native `reopen` mutation. It preserves owner,
+submission/output, deadline, required status, unit, original proposal and history.
+Pending changed-decision reviews or unfinished prerequisites remain unresolved;
+normal resubmission/acceptance blockers still apply. Source changes/reversion,
+lost rights, missing/ineligible owner, hidden documents and revoked/expired/
+restored contexts prevent stale writes. Active formal consolidation review begun
+before or after preview blocks amendments to preserve dependent approvals.
+Completed work must be reopened separately in Office Connect first; this task
+action does not reopen the case or an official document.
+
+The shared review adapter supplies source snapshots and receipt routing, with a
+separate reopening action/result/scope/protocol. Native task/work services remain
+unchanged. Source/event/audit/reminder effects, consumed preview, receipt and
+private handoff commit atomically. Audit/receipt/handoff failure rolls back;
+duplicate/concurrent confirmation reopens once. Deletion fences numeric-ID reuse.
+Recovery checks current read/source view and reports later status without replay.
+
+Expanded status initially exceeded Telegram's limit by 13 UTF-16 units. Removed
+repeated per-feature relinking instructions while preserving every missing-consent
+label and the shared account/relink footer. Current menu assertions require the
+full reopening/work-read consent labels and the 4096-unit budget.
+
+Isolated Python 3.11 verification: **1734 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **437 current shuffled checks** (seed 311) passed across
+reopening/reassignment/initial-assignment/review/deadline/proposal services and
+phone forms, menu/action engine, existing task actions and private meeting webhook
+handling. Zero failures/errors/skips in both groups; groups overlap. Both include
+the final native pending-direction/unfinished-prerequisite cases and the current
+status budget fix. Earlier focused service sample: 49 passed; combined reopening/
+review/menu/phone sample: 159 passed. No application source edits followed these
+passing groups.
+
+The initial shared review/menu/action run had one failure: expanded status was
+4109 UTF-16 units, above Telegram's 4096 limit. The fix preserves each human consent
+label and states relinking instructions once in the footer. Current budget and
+visibility assertions remain; full reopening/work-read consent labels are also
+asserted. The final groups cover this correction and both officer/lead phone flows.
+No permission, workflow or no-skips assertion was weakened.
+
+Reports: `/tmp/telegram-task-reopen-regressions.xml` and
+`/tmp/telegram-task-reopen-shuffled.xml`; both pass the JUnit no-skips gate.
+Candidate 9.69 metadata/increase over actual main 9.59, dependency locks/vendor
+integrity, installed compatibility, AI contract, Python compilation, local Markdown
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head results are not current acceptance.
+
+See [reopening behavior](TELEGRAM_TASK_REOPENING.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No provider call, production data, scheduler, monitor execution,
+publication or activation occurred. Task cancellation, completed-work reopening
+and amendments under active formal review remain separate source actions.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+### Private officer task cancellation — 2026-11-01
+
+Owner explicitly approved task cancellation. Added `/task_cancel`, a signed-in
+no-script reason form, `/taskcancel_preview`, exact `/taskcancel_confirm` and
+`/taskcancel_receipt` to review branch `feat/telegram-private-work-lookup`, draft
+PR #572, candidate **9.70**. Actual main remains `a7b9b38` (released 9.59), preserved
+on this branch. Deployment, preview publication, activation and personal/live
+testing remain explicitly deferred. Initial prior-head inspection at `535ef54`
+found metadata passing and the remaining checks still running; those are not
+this candidate's acceptance.
+
+Separate default-off `CSS_TELEGRAM_TASKS_CANCEL_ENABLED` / `tasks.cancel` consent
+requires work read, source modules and current private inbound/link/delivery/
+account/chat/bot proof. Native officer authority must cover the task's contributing
+unit; work-lead/task-owner status alone is insufficient. Proposed/To do/In progress/
+For review tasks qualify; Done/already-Cancelled tasks and completed/closed work
+refuse the action. Preview identifies work/task/unit, required/optional flag,
+retained owner, current → Cancelled, reason and completion/dependency effects.
+
+Cancelled tasks are excluded from outstanding-contribution checks, including
+required tasks. Cancellation does not accept output or satisfy dependencies
+requiring its acceptance. Work completion and official document decisions remain
+separate. Owner fields, previous submission/output, deadline, required status,
+original proposal, blocker/follow-up/decision history and dependency edges are
+preserved. Native cancellation can close unassigned tasks or tasks with ineligible
+owners without granting access; actor view/officer checks still apply. Normal
+membership can remove a former owner's work access without another source right.
+Cancelled tasks cannot use the Done-task reopening command. No task is deleted.
+
+The existing native `cancel` mutation remains authoritative; no native task/work
+service changed. Shared review snapshots/receipt routing use separate cancellation
+action/result/scope/protocol. Source/submission/work/history changes, lost officer
+rights, hidden documents, source pauses and revoked/expired/restored context block
+stale confirmation. Active formal consolidation review before or after preview
+blocks amendments, preserving dependent approvals. Source/event/audit/reminder
+effects, consumed preview, receipt and private handoff commit atomically. Audit/
+receipt/handoff failure rolls back. Duplicate/concurrent confirmation cancels
+once; deletion fences ID reuse. Recovery checks current source view and reports
+recorded outcome/current state without replay.
+
+Isolated Python 3.11 verification: **1788 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **490 current shuffled checks** (seed 311) passed across
+cancellation/reopening/reassignment/initial-assignment/review/deadline/proposal
+services and phone forms, menu/action engine, existing task actions and private
+meeting webhook handling. Zero failures/errors/skips in both groups; groups
+overlap. Earlier focused cancellation services: 46 passed; verified cancellation/
+phone/menu group: 63 passed; shared review/reopening/menu/action wiring: 193 passed.
+All functional source and final completion/dependency/blocker/optional/submission
+cases preceded broad/shuffled collection. No application source edits followed
+the passing groups.
+
+The first combined phone run had two fixture failures: a copied selector still
+pointed at the reopening form. Corrected it to the cancellation form without
+weakening any assertions. The verified 63-case group and current broad/shuffled
+runs use the corrected selector, exercise proposed and For review phone flows,
+and preserve all CSRF/allowlist/source/no-provider/no-skips assertions.
+
+Reports: `/tmp/telegram-task-cancel-regressions.xml`,
+`/tmp/telegram-task-cancel-shuffled.xml` and
+`/tmp/telegram-task-cancel-verified.xml`; all pass the JUnit no-skips gate.
+Candidate 9.70 metadata/increase over actual main 9.59, locks/vendor integrity,
+installed compatibility, AI contract, Python compilation, local Markdown links
+and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head results are not current acceptance.
+
+See [cancellation behavior](TELEGRAM_TASK_CANCELLATION.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No provider call, production data, scheduler, monitor execution,
+publication or activation occurred. Completed-work/document lifecycle and
+amendments under active formal review remain separate source workflows.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+### Private current task review queue — 2026-11-01
+
+Owner explicitly approved a review queue after task actions. Added `/review_queue
+[BEFORE_ID]` and `/review_task WORK_ID TASK_ID` to review branch
+`feat/telegram-private-work-lookup`, draft PR #572, candidate **9.71**. Actual main
+remains `a7b9b38` (released 9.59), preserved on this branch. Deployment, preview
+publication, activation and personal/live testing remain explicitly deferred.
+Initial prior-head inspection at `74fe448` found functional/metadata/dependency
+passing and normal/shuffled still running; those are not new-head acceptance.
+
+Separate default-off `CSS_TELEGRAM_TASKS_REVIEW_READ_ENABLED` / `tasks.review.read`
+metadata consent requires work read, source modules and current private inbound/
+link/delivery/account/chat/bot proof. The consent explicitly covers task/work/
+owner/deadline metadata; it grants no accept/return authority. Existing own-task,
+search and brief projections are unchanged. Only submitted tasks with current
+native case-officer or confirmed-work-lead review authority, source visibility,
+open work, no active formal review and an eligible current owner are shown.
+Owner/task-unit officer status alone is insufficient; hidden/unknown/ineligible
+details share a neutral denial.
+
+Rows show bounded task/work titles, IDs, owner display name/account and deadline.
+Submission/output/blocker reasons stay in Office Connect. A source-blocked
+acceptance can still permit return; each command hint also requires its separate
+write scope/pilot. Queue-only consent gives source review guidance without write
+commands. Offered existing start commands lead to the signed-in ID/reason form,
+expiring private preview and exact confirmation; no read creates an operation,
+preview, origin or source mutation. Fresh reads remove tasks after acceptance or
+return and recheck source/host/scope/context changes.
+
+SQL applies visibility and case coordinator authority before native bounded scan.
+At most 200 permitted candidates are inspected in batches of 50; rows then pass
+canonical work/open/formal-review/owner/native-action checks. Five-row/message
+budgets and seek cursors avoid skips. An empty page can offer Continue when more
+permitted source candidates remain after many fail eligibility; it never claims
+global emptiness. A one-row lookahead verifies continuation. Hidden-source IDs
+are excluded before scan limits. Queries/names/bodies are never retained in
+projections, reads create no worker push, and duplicate updates are not replayed.
+Current context is checked again before private reply handoff.
+
+Isolated Python 3.11 verification: **1832 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **533 current shuffled checks** (seed 311) passed across
+review queue/services/phone cases and all current task actions, menu/action engine,
+existing task actions and private meeting webhook handling. Zero failures/errors/
+skips in both groups; groups overlap. Both include final write-pilot guidance and
+formal-review-after-earlier-list checks. Earlier focused queue services: 38 passed;
+combined queue/menu/three phone flows: 51 passed; bot/link/menu wiring: 56 passed.
+No application source edits followed the passing groups.
+
+Phone cases cover read-only metadata consent and separately consented queue →
+accept/return with the existing signed-in form, exact private preview, confirmation/
+retry, current queue removal and disconnection denial. Native source/permission/
+owner/blocker/formal-review guards, no source/prepared writes, private/direct/group/
+topic boundaries, duplicate intake, ephemeral query/metadata, Unicode paging,
+pre-limit visibility/authority filtering and bounded scan continuation pass.
+
+Reports: `/tmp/telegram-review-queue-regressions.xml`,
+`/tmp/telegram-review-queue-shuffled.xml` and
+`/tmp/telegram-review-queue-verified.xml`; all pass the JUnit no-skips gate.
+Candidate 9.71 metadata/increase over actual main 9.59, locks/vendor integrity,
+installed compatibility, AI contract, Python compilation, local Markdown links
+and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head results are not current acceptance.
+
+See [review queue behavior](TELEGRAM_REVIEW_QUEUE.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No provider call, production data, scheduler, monitor execution,
+publication or activation occurred. Native review/task/work services are unchanged.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+### Private blocker and prerequisite lookup — 2026-11-01
+
+Owner explicitly approved blocker/prerequisite lookup. Added `/task_blockers
+WORK_ID TASK_ID [BEFORE_ID]` to review branch `feat/telegram-private-work-lookup`,
+draft PR #572, candidate **9.72**. Actual main remains `a7b9b38` (released 9.59),
+preserved on this branch. Deployment, preview publication, activation and personal/
+live testing remain explicitly deferred. Initial prior-head `5941882` inspection
+found metadata/dependency checks passing and functional/normal/shuffled still
+running; those checks are not new-head acceptance.
+
+Separate default-off `CSS_TELEGRAM_TASKS_BLOCKERS_READ_ENABLED` /
+`tasks.blockers.read` metadata consent requires work read, source modules and
+current private inbound/link/delivery/account/chat/bot proof. Existing own-task
+and review details offer the hint only with this independent grant/pilot. Source
+work/task visibility permits metadata reading; reviewer/officer authority is not
+required merely to read. Existing own-task/search/brief projections are unchanged.
+
+Reply shows native waiting/clear check, recorded-blocker and unresolved-direction
+flags, permitted follow-up display name/account/date, and unfinished same-case
+prerequisite IDs/titles/states/deadlines. Native decision/blocker checks supply
+flags. Blocker/dependency reasons, decision/resolution/discussion notes, outputs
+and submissions remain in Office Connect. Inactive or no-longer-permitted follow-up
+accounts are neutral, while the permitted task's date remains visible. Hidden/
+unknown/wrong-case targets and inconsistent foreign dependency edges share denial.
+
+Only Done satisfies a prerequisite; Cancelled remains waiting. Source unblocking,
+acceptance and changed-direction resolution update the next read. Completed work
+and terminal tasks can be read as history with a lifecycle warning; lookup enables
+no action, resolves nothing and changes no edge/deadline/task. Native source links
+point to exact task anchors. Five-row/UTF-16-budget pages filter same-case and
+non-Done state before seek/limit and avoid skips/duplicates. Empty cursor pages
+never imply global completion; other task state/permissions/review rules still apply.
+
+Reads remain in the incoming webhook transaction with context/grant/module recheck
+before handoff, retain no query/name/body projection, and never enqueue or replay
+worker pushes. No source mutation, operation, preview or origin is created. Native
+task/work/blocker/decision services remain unchanged. Group/topic/direct contexts,
+duplicate updates, revoked/restored links and changed bot proof remain fenced.
+
+Isolated Python 3.11 verification: **1869 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **569 current shuffled checks** (seed 311) passed across
+blocker/queue services and phone flows, all current task actions, menu/action
+engine, existing task actions and private meeting webhook handling. Zero failures/
+errors/skips in both groups; groups overlap. Earlier focused blocker services:
+32 passed; combined blockers/phone/queue/menu group: 86 passed; bot/link/menu/queue
+wiring: 96 passed. All final resolution freshness and independent hint cases were
+present before broad/shuffled collection. No application source edits followed
+these passing groups.
+
+Phone cases use ordinary owner and lead with read-only consent, open the exact
+source task anchor (detailed reason visible only there), verify no lookup mutation
+of task/edges or prepared actions, and observe a separate native resolution on
+fresh Telegram read before disconnect denial. Source/owner visibility, current
+modules/scopes/context, historical state, foreign-edge denial, body exclusion,
+accepted/cancelled prerequisites, direction resolution, Unicode seek paging and
+private/direct/group/topic/duplicate boundaries pass. No permission/no-skips
+assertion was weakened.
+
+Reports: `/tmp/telegram-task-blockers-regressions.xml`,
+`/tmp/telegram-task-blockers-shuffled.xml` and
+`/tmp/telegram-task-blockers-verified.xml`; all pass the JUnit no-skips gate.
+Candidate 9.72 metadata/increase over actual main 9.59, locks/vendor integrity,
+installed compatibility, AI contract, Python compilation, local Markdown links
+and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head results are not current acceptance.
+
+See [blocker lookup behavior](TELEGRAM_TASK_BLOCKERS.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No provider call, production data, scheduler, monitor execution,
+publication or activation occurred.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+### Private blocker recording and clearing — 2026-11-01
+
+Owner explicitly approved recording and clearing blockers. Added `/task_block` and
+`/task_unblock`, separate signed-in no-script forms, exact private previews/
+confirmation and receipts to review branch `feat/telegram-private-work-lookup`,
+draft PR #572, candidate **9.73**. Actual main remains `a7b9b38` (released 9.59),
+preserved on this branch. Deployment, preview publication, activation and personal/
+live testing remain explicitly deferred. Initial prior-head `a2be3ff` inspection
+found metadata passing and other checks running; those are not new-head acceptance.
+
+Independent default-off `CSS_TELEGRAM_TASKS_BLOCK_ENABLED` / `tasks.block` and
+`CSS_TELEGRAM_TASKS_UNBLOCK_ENABLED` / `tasks.unblock` require work read, source
+modules and original private inbound/link/delivery/account/chat/bot proof. Metadata
+lookup and other task grants grant neither write. Native task-owner/current-
+follow-up/lead/concerned-officer authority is rechecked; noncoordinator recording
+participants select only themselves. A coordinator may choose another active
+person who already reads the case and every linked document; no access is granted.
+
+Recording requires no existing blocker, an explicit follow-up person/exact date
+and bounded reason. It refuses silent overwrite; existing-blocker amendments stay
+in Office Connect or require a separate clearing first. Clearing requires a
+recorded blocker and resolution reason, removes its follow-up fields, and keeps
+native ability to clear despite an inactive former follow-up/task owner. Acting
+user/source rights remain required. The exact preview shows actor-entered reason
+and selected follow-up fields; old stored blocker details are hashed only and not
+copied into Telegram. Native history retains the old and resolution details.
+
+Task owner/state/submission/output, task deadline, dependency edges and pending
+changed-direction history stay unchanged. Clearing one blocker does not resolve
+prerequisites/decisions or bypass resubmission/acceptance checks. Done/Cancelled
+tasks, completed/closed work and active formal consolidation review before/after
+preview block amendments. Source/account/blocker changes, lost permissions,
+revocation/pause/expiry/restore and cross-protocol contexts refuse stale actions.
+
+Extracted `work_blockers.mutate_in_transaction` with strict caller-owned transaction
+requirement; public `mutate` keeps its existing transaction wrapper and identical
+native business rules. Telegram calls that helper so source/revision/event/audit,
+preview consumption, receipt and private handoff are atomic. Audit/receipt/handoff
+failure rolls back. Duplicate/concurrent confirmation changes once. Deletion
+fences numeric-ID reuse; recovery reports recorded outcome/current flag without
+replay or disclosure of stored blocker text, including later source changes.
+
+Isolated Python 3.11 verification: **1961 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **659 current shuffled checks** (seed 311) passed across
+blocker management/lookup, queue and all current task services/phone forms,
+menu/action engine, existing task actions and private meeting webhook handling.
+Zero failures/errors/skips in both groups; groups overlap. Earlier focused blocker
+management services: 77 passed; combined service/phone/menu group: 97 passed;
+native-work/menu/action wiring: 209 passed. All final changed-blocker and inactive-
+former-owner clearing cases preceded broad/shuffled collection. No application
+source edits followed these passing groups.
+
+Native participant/coordinator/self-selection/member/document rules, no overwrite/
+no-op, exact dates/strict fields, current source/context/terminal/formal-review
+fences, unchanged prerequisites/changed direction with blocked resubmission,
+strict caller-owned contract, audit/receipt/handoff rollback, concurrent retries,
+ID reuse and later-current-state receipts pass. Two JavaScript-disabled phone
+flows check separate scopes, prohibited other-person choice, CSRF/allowlists,
+exact private preview/confirmation/retry, retained state/deadline/submission,
+expired sessions and no outgoing provider calls. No native business rule or
+permission/no-skips assertion was weakened.
+
+Reports: `/tmp/telegram-blocker-manage-regressions.xml`,
+`/tmp/telegram-blocker-manage-shuffled.xml` and
+`/tmp/telegram-blocker-manage-verified.xml`; all pass the JUnit no-skips gate.
+Candidate 9.73 metadata/increase over actual main 9.59, locks/vendor integrity,
+installed compatibility, AI contract, Python compilation, local Markdown links
+and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head results are not current acceptance.
+
+See [blocker management behavior](TELEGRAM_BLOCKER_MANAGEMENT.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No provider call, production data, scheduler, monitor execution,
+publication or activation occurred. Dependency amendments remain separate source
+workflows; this feature changes only recorded blocker/follow-up fields.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+## Private task dependency management — 2026-11-01
+
+Owner explicitly approved adding/removing task prerequisites. Implemented
+`/task_dependency_add` and `/task_dependency_remove`, signed-in no-script forms,
+exact private previews/confirmation and outcome recovery on review branch
+`feat/telegram-private-work-lookup`, draft PR #572, candidate **9.74**. Actual main
+remains `a7b9b38` (released 9.59), preserved on the review branch. Deployment,
+preview publication, activation and personal/live testing remain deferred.
+
+Independent default-off `CSS_TELEGRAM_TASKS_DEPENDENCY_ADD_ENABLED` /
+`tasks.dependency_add` and `CSS_TELEGRAM_TASKS_DEPENDENCY_REMOVE_ENABLED` /
+`tasks.dependency_remove` require work-read consent and current private inbound/
+link/delivery/account/bot/chat proof. Other task/blocker/metadata scopes grant
+neither action. Native current work-lead/concerned case/task-officer authority
+must permit the active dependent task; ownership or follow-up responsibility
+alone is insufficient. Both tasks must currently be readable in the same work.
+
+Exact preview shows dependent/prerequisite IDs, titles, states, dependency
+direction, consequences and mandatory actor-entered reason. It never projects
+stored submissions, output criteria, blocker reasons or discussion. Adding
+refuses self/duplicate/cross-work/cancelled-prerequisite links and cycles of any
+length. Done prerequisites are allowed and labelled already satisfied. Removing
+requires the exact existing link and can remove a cancelled prerequisite. Only
+one edge/dependent revision/native history changes; other task fields, upstream
+task, deadlines, blockers and changed-decision history stay unchanged. Removal
+does not auto-submit or bypass remaining native submission/acceptance guards.
+Done/Cancelled dependents, closed/completed work and active formal consolidation
+review before/after preview refuse bot amendments.
+
+Current task/work/document digest, full prerequisite record, source history and
+same-work edge graph fence stale previews, including graph changes without task
+revision/event changes. The adapter calls the existing native caller-owned
+mutation inside the generic transaction. Source/task/edge/event/audit, consumed
+preview, receipt and webhook reply handoff are atomic; failures roll back and
+concurrent retry changes once. No native mutation or permission rule changed.
+
+Additive nullable `telegram_operation.dependency_task_id` migrates idempotently
+before trigger creation, preserving older operations. Pending previews are
+cancelled/scrubbed if either task is deleted; target deletion clears both pointers,
+prerequisite deletion clears its pointer and marks recovery, fencing numeric-ID
+reuse. Retained-key cleanup clears both. Recovery reports original outcome and
+current link/status or deletion with current source view, without replay.
+
+Expanded menu status shortens repeated work-read prerequisite wording while
+retaining each feature and full missing action consent. The upgrade test now
+simulates the new trigger/column's absence and checks unchanged old operations.
+
+Isolated Python 3.11 verification: **2072 broad regressions passed**
+across Telegram, native work, audit-chain writers, deployment and release checks.
+**766 shuffled current task/action/menu/phone checks** (seed 311)
+passed. **318 combined dependency/phone/shared/native-work checks**
+also passed, with a separate **1 maximum-origin menu/status budget check**.
+All groups have zero failures/errors/skips; groups overlap. The final menu boundary
+case was added after broad/shuffled collection and passed separately. No application
+source edits followed the passing final combined/broad/shuffled groups.
+
+Both 390×844 JavaScript-disabled phone flows, independent consent/pilots, current
+coordinator-only/source rules, exact direction, self/cross-work/duplicate/cancelled/
+acyclic guards, Done prerequisites/cancelled-link removal, stale tasks/work/docs/
+graph/formal review/context, native remaining submission gates, audit/receipt/
+handoff rollback, concurrent retries, both task deletion/ID reuse, retention and
+later-current-state recovery pass. Initial checks caught the expanded missing-
+consent status budget and a schema-upgrade fixture missing the new trigger; the
+status was shortened and the upgrade fixture extended, then passing groups reran.
+No native rule, permission assertion or no-skips gate was weakened.
+
+Reports: `/tmp/telegram-dependency-regressions.xml`,
+`/tmp/telegram-dependency-shuffled.xml`,
+`/tmp/telegram-dependency-verified-final.xml` and
+`/tmp/telegram-dependency-menu-limit.xml`; all pass the JUnit no-skips gate.
+Candidate 9.74 metadata over actual main 9.59, dependency locks/vendor integrity,
+installed compatibility, AI contract 1.12.0, Python compilation, local Markdown
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push; prior-head evidence is not current acceptance.
+
+See [dependency behavior](TELEGRAM_DEPENDENCY_MANAGEMENT.md) and
+[pending live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live rows
+remain Pending. No real Telegram message/provider registration, production data,
+scheduler/monitor execution, deployment, publication or activation occurred.
+Initial prior-head `936b7ab` inspection found metadata/dependency audit passing
+and normal/shuffled/avatar checks running; those are not new-head acceptance.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI and continue only the next explicitly requested feature.
+Main merge/release, preview publication, activation and live testing remain
+deferred until the owner's later instruction.
+
+
+## Private work and task comments — 2026-11-01
+
+Owner explicitly approved work/task discussion posting. Implemented `/work_comment`
+and `/task_comment`, signed-in JavaScript-free preparation, exact private previews/
+confirmation and receipt recovery on branch `feat/telegram-private-work-lookup`,
+draft PR #572, candidate **9.75**. Actual main remains `a7b9b38` (released 9.59),
+preserved on the review branch. Deployment, preview publication, activation and
+personal/live testing remain explicitly deferred.
+
+Independent default-off `CSS_TELEGRAM_WORK_COMMENT_ENABLED` / `work.comment` and
+`CSS_TELEGRAM_TASKS_COMMENT_ENABLED` / `tasks.comment` require separate work-read
+consent and current private inbound/link/delivery/account/bot/chat proof. Neither
+another task scope nor one comment scope grants the other. Private webhook-only
+handling rejects group/topic/direct-worker paths. Consent grants no source access.
+
+Native current work visibility, including every linked document, permits informal
+discussion; task ownership/lead/officer status is not required simply to post.
+Work-level comments accept no task; task comments require an exact task in that
+work. Each form takes only target IDs and plain text, up to 1,000 characters with
+normalized line endings. Unsupported reply/mention/edit/status/approval fields and
+controls are refused. Literal @name creates no mention. The exact preview shows
+target titles/IDs/current states and complete actor-entered text with visibility
+notice; stored discussion, submissions, output and blocker reasons are not copied.
+
+A comment creates native immutable message/revision history, normal permitted
+follower notices and the author's observed-revision marker. Task/work/document
+state, revisions, deadlines, ownership, submission, blockers, dependencies, events
+and formal approvals remain unchanged. Native discussion stays available on
+completed work, Done/Cancelled tasks and under active formal review. Changed
+source after preview still requires a fresh preview; unrelated new comments do
+not invalidate each other. No reply, mentions, edits, follow preference, digest
+setting or access grant is added. Independently configured existing digests may
+later include normal source notices; no scheduler/digest/provider is executed here.
+
+Extracted strict caller-owned `work_discussion.post_in_transaction`; the public
+`post` wrapper keeps its transaction and native body. AST comparison after SQL
+indentation normalization confirms identical posting logic. The adapter uses that
+helper inside generic confirmation, so comment/revision/follower notices/author
+read marker, operation comment ID, preview consumption, receipt and reply handoff
+commit atomically. Notice/receipt/handoff failure rolls back; retries/concurrent
+confirmation post once. Native author-only edits and reply/mention rules remain
+available unchanged to existing source callers.
+
+Additive nullable `telegram_operation.comment_id` migrates before triggers and
+preserves old operations. Pending task deletion cancels/scrubs task previews;
+work deletion cancels/scrubs comment previews and clears routing/identifier fields,
+fencing numeric-ID reuse. Native immutable history/FKs protect committed source
+references. Retention clears comment/source routing IDs. Recovery checks current
+source/thread/original author and reports recorded outcome, link/current revision
+without stored text or replay. A later source edit changes only the reported
+revision. Pending deleted-source recovery stays cancelled without describing a
+replacement. Schema upgrade now simulates absence of the new column/trigger and
+checks older operations acquire no new comment identifier.
+
+Isolated Python 3.11 verification: **2229 broad regressions passed**
+across Telegram/native work, integration submission API/MCP submissions, audit-chain
+writers, deployment and release checks. **857 current shuffled
+comment/dependency/blocker/task/action/menu/phone checks** (seed 311) passed.
+**300 combined comment/phone/shared/native-work checks**
+and an earlier **49 phone/menu/action/budget group** passed.
+All groups have zero failures/errors/skips and overlap. All final comment/source-
+access/line-ending/deletion assertions preceded broad/shuffled collection; no
+application source edits followed these passing final groups.
+
+Ordinary-reader and every-linked-document/source access, separate scopes/pilots,
+strict thread/input boundaries, literal mentions, normalized text, native follower/
+author-read effects, unchanged business state/reviews, terminal/formal discussion,
+independent comments, current source/context/restore fences, native caller-owned
+contract, atomic notice/receipt/handoff rollback, retries/concurrency, deletion/ID
+reuse, retention and later edited-revision recovery pass. Both 390×844 JavaScript-
+disabled phone flows pass CSRF/allowlists, exact text/target previews, confirmation/
+retry, unchanged tasks/work and expired sessions with no outgoing calls. Expanded
+menu/status fit the maximum supported origin. Initial checks required extending
+the schema-upgrade fixture for the new column/trigger and respecting native lead
+linked-document eligibility and append-only events in synthetic fixtures. Pending
+work deletion now explicitly asserts the existing cancelled receipt and cleared
+routing, without describing a reused ID. No native constraint, permission or
+no-skips assertion was relaxed.
+
+Reports: `/tmp/telegram-comment-regressions.xml`,
+`/tmp/telegram-comment-shuffled.xml`, `/tmp/telegram-comment-verified-final.xml`
+and `/tmp/telegram-comment-phone-wiring.xml`; all pass the JUnit no-skips gate.
+Candidate 9.75 metadata over actual main 9.59, dependency locks/vendor integrity,
+installed compatibility, AI contract 1.12.0, Python compilation, local Markdown
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push; prior-head evidence is not current acceptance.
+
+See [comment behavior](TELEGRAM_COMMENT_MANAGEMENT.md) and
+[pending live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live rows
+remain Pending. No real Telegram message/provider registration, production data,
+scheduler/monitor execution, deployment, preview publication or activation occurred.
+Initial prior-head `1e1063e` inspection found metadata/dependency audit/avatar
+functional checks passing and normal/shuffled checks running. Those are not
+new-head acceptance.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI and continue only the next explicitly requested feature.
+Main merge/release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+## Private work and task replies — 2026-11-01
+
+Owner explicitly approved replying to existing work/task comments. Implemented
+`/work_reply` and `/task_reply`, signed-in no-script forms, exact private previews/
+confirmation and recovery on branch `feat/telegram-private-work-lookup`, draft
+PR #572, candidate **9.76**. Actual main remains `a7b9b38` (released 9.59), preserved
+on the review branch. Deployment, preview publication, activation and personal/live
+testing remain explicitly deferred.
+
+Independent default-off `CSS_TELEGRAM_WORK_REPLY_ENABLED` / `work.reply` and
+`CSS_TELEGRAM_TASKS_REPLY_ENABLED` / `tasks.reply` each require work-read consent
+and current private inbound/link/delivery/account/bot/chat proof. Other comment/
+task/read scopes enable neither reply, and one reply scope grants neither the
+other nor ordinary comment posting. Groups/topics/direct-worker paths are refused.
+
+Native current work visibility, including every linked document, permits informal
+replies; ordinary source readers need no task-owner/lead/officer role. Selecting
+work/task/parent grants no access. Exact parent ID must exist in the same selected
+work-level or same-task discussion; cross-work/work-vs-task/other-task/missing
+parents are refused. Same-thread replies to replies remain allowed. The form
+accepts exact target IDs, parent ID and plain text up to 1,000 characters, normalizes
+line endings and rejects controls/unsupported fields. Literal @name adds no mention.
+
+Preview shows work/task IDs/titles/current states, exact parent number/current
+revision/source link and complete actor-entered reply with visibility/notice
+effects. Parent text/author names and other stored discussion/submission/output/
+blocker contents stay in Office Connect. The full parent record is hashed only;
+parent edits before preview pull or confirmation refuse stale input. Fresh preview
+shows the new revision. Unrelated discussion remains independent. Current work/
+task/document digest/history, source rights, modules, scopes/pilots, expiry and
+original context are rechecked; revocation/account change/disconnect/restore/pause
+cannot revive stale replies.
+
+Uses the existing unchanged native `work_discussion.post_in_transaction` with
+exact parent and no mentions. One immutable reply/revision, normal permitted
+follower/eligible parent-author notices and author-read marker are created. Native
+notice deduplication applies; inactive/no-longer-permitted parent authors and
+self-replies create no parent-author notice. No follow/access/notification setting
+is added, and no digest/scheduler/provider is enabled/executed. Work/task/document
+state, revisions, ownership, submissions, blockers, dependencies, deadlines, events
+and formal review/approvals stay unchanged. Native informal discussion remains
+available on terminal work/tasks and under active formal review; changed source
+still requires a fresh preview. Mentions, edits and stored discussion reads remain
+source workflows.
+
+Reply/history/notices/read marker, saved comment identifier, preview consumption,
+receipt and private reply handoff are atomic; failures roll back and retries/
+concurrent confirmation post once. Existing comment receipt/retention metadata is
+reused; no source mutation logic, new table or identifier column was introduced.
+Deletion and work-read-revocation fences include both reply scopes. Native
+append-only parent history and FKs protect parent/thread deletion/ID reuse, with
+constraints intact. Recovery checks source/thread/original author/nonempty parent,
+reports original reply outcome/parent/link/current reply revision, and never
+projects saved parent/reply text or posts again. A later native author edit changes
+only the reported reply revision. Ordinary post forms now point to separate reply
+commands while retaining their strict no-parent contract.
+
+The native discussion page now displays comment numbers and current revisions
+so the reply target can be selected from visible source metadata without inspecting
+a URL. Both final phone flows verify that source label before preparing the reply.
+
+Isolated Python 3.11 verification: **2337 broad regressions passed**
+across Telegram/native work, integration submission API/MCP submissions, audit-chain
+writers, deployment and release checks. **963 current shuffled
+reply/comment/dependency/blocker/task/action/menu/phone checks** (seed 311) passed.
+Focused reply services: **104 passed**; earlier phone/shared/menu/
+maximum-origin group: **49 passed**, with **47
+earlier shared wiring checks**. All groups have zero failures/errors/skips and
+overlap. Core reply behavior and service cases were fixed before broad/shuffled
+collection. Visible source comment numbers/revisions and their phone assertions
+were added afterward and verified separately by **2 final
+390×844 JavaScript-disabled phone flows**. No source edits followed those final
+phone checks or the completed broad/shuffled groups.
+
+Exact thread/work/task/parent boundaries, ordinary-reader/current document access,
+independent scopes/pilots, strict plain fields/literal mentions/normalized text,
+hash-only parent storage, stale edited-parent pulls/confirmations and fresh revision
+previews, replies to replies, eligible/no-access/inactive/self parent notices,
+unchanged business/formal/terminal source state, independent comments, current
+context/revoke/restore fences, atomic notice/receipt/handoff rollback, retries/
+concurrency, immutable parent/FK protection, retention and edited-reply revision
+recovery pass. Both final phone cases verify native source ID/revision discovery,
+separate grants/menu/forms, CSRF/strict parent/thread fields, exact full text/parent
+preview, confirmation/retry, unchanged work/tasks, no mentions/outgoing calls and
+expired sessions. No native rule, source constraint, permission or no-skips gate
+was changed or weakened.
+
+Reports: `/tmp/telegram-reply-regressions.xml`,
+`/tmp/telegram-reply-shuffled.xml`, `/tmp/telegram-reply-focused.xml`,
+`/tmp/telegram-reply-phone-wiring.xml`, `/tmp/telegram-reply-phone-final.xml` and
+`/tmp/telegram-reply-wiring.xml`; all pass the JUnit no-skips gate.
+Candidate 9.76 metadata over actual main 9.59, dependency locks/vendor integrity,
+installed compatibility, AI contract 1.12.0, Python compilation, local Markdown
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push; prior-head evidence is not current acceptance.
+
+See [reply behavior](TELEGRAM_REPLY_MANAGEMENT.md) and
+[pending live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live rows
+remain Pending. No real Telegram message/provider registration, production data,
+scheduler/monitor execution, deployment, preview publication or activation occurred.
+Initial prior-head `7c0e8a5` inspection found metadata/dependency audit/avatar
+functional checks passing and full normal/shuffled checks running; those are not
+new-head acceptance.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI and continue only the next explicitly requested feature.
+Main merge/release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+## Private author-owned comment editing — 2026-11-01
+
+Owner explicitly approved editing their own work/task comments. Implemented
+`/work_comment_edit` and `/task_comment_edit`, signed-in no-script forms, exact
+private previews/confirmation and recovery on branch
+`feat/telegram-private-work-lookup`, draft PR #572, candidate **9.77**. Actual main
+remains `a7b9b38` (released 9.59), preserved on the review branch. Deployment,
+preview publication, activation and personal/live testing remain deferred.
+
+Independent default-off `CSS_TELEGRAM_WORK_COMMENT_EDIT_ENABLED` /
+`work.comment_edit` and `CSS_TELEGRAM_TASKS_COMMENT_EDIT_ENABLED` /
+`tasks.comment_edit` require work-read consent and current private inbound/link/
+delivery/account/bot/original chat proof. Other comment/reply/task/read grants
+provide neither edit; one edit scope grants neither the other nor post/reply
+creation. Group/topic/direct-worker paths are refused. Consent grants no access.
+
+Only the original author with current work/every-linked-document access may edit,
+including their own replies. Reader/lead/officer/technical administrator status
+cannot override authorship. Exact comment must be in the selected work-level or
+same-task thread. Form takes exact source IDs/current comment revision and complete
+plain replacement text (up to 1,000 characters), normalizes line endings and refuses
+controls, unsupported parent/mention/progress fields, invalid/stale revisions and
+unchanged text. Visible source comment number/revision supports selection.
+
+Preview shows exact target, current → next revision, unchanged reply parent if any,
+source link and full replacement text with visibility notice. Old text/history
+and mentioned identities stay in Office Connect. The current comment/mention
+metadata is hashed only; older revision contents are not fetched. Existing
+structured mentions are preserved via native mentions=None and currently validated
+before preview/confirmation; inactive/no-access mentions block editing, including
+eligibility lost after preview without a source revision change. Their count alone
+is shown. Literal @name adds no mention. Amend mention selection in source if needed.
+
+One immutable revision is added; original comment, author, timestamp, parent and
+all old revisions remain intact. Native edit notice/author-read behavior applies,
+without new follower/reply notices or notification preferences. Work/task/document
+status, revisions, ownership, submissions, blockers, dependencies, deadlines, events
+and formal review/approvals remain unchanged. Native informal editing can remain
+available on completed work, terminal tasks and under active formal review. Unrelated
+comments remain independent. Newer edits before preview retrieval/confirmation
+require review of the latest revision and a fresh preview; no later text is overwritten.
+Current source/module/scope/pilot/context/expiry/revoke/account/disconnect/restore
+fences remain enforced.
+
+Extracted strict caller-owned `work_discussion.edit_in_transaction`; public `edit`
+retains its wrapper and identical native edit body (AST parity verified). Revision,
+retained mentions/native notice/read effects, recorded edit revision, consumed
+preview, receipt and private reply handoff commit atomically. Failures roll back;
+duplicate/concurrent confirmation adds one revision once. Native source constraints
+and authorship/history/mention behavior remain unchanged for existing callers.
+
+Additive nullable `telegram_operation.comment_revision` migrates before triggers
+and leaves older operations unchanged/null. Existing comment_id stores the selected
+comment; the recorded saved revision is retained separately from current source
+revision. Deletion/revocation fences include both edit scopes. Work deletion and
+retained-key cleanup clear identifier/revision/routing fields; native immutable
+history/FKs protect source references. Recovery checks current source/thread/author
+and reports original edit revision/current revision plus a link, without stored
+text/replay/overwrite. A later native edit to revision 3 leaves an earlier operation
+reported as recorded 2/current 3. Existing comment/reply forms now link to separate
+edit commands and keep their original field contracts.
+
+Shared status lists the repeated work-read prerequisite once when both action and
+read consent are missing, while retaining every feature/full missing action consent
+and the separate Work lookup consent. This fixes the maximum-origin message budget
+without hiding availability details. Schema-upgrade coverage simulates absence of
+the new column and checks that old pending operations receive no saved edit revision.
+
+Isolated Python 3.11 verification: **2466 broad regressions passed**
+across Telegram/native work, integration submission API/MCP submissions, audit-chain
+writers, deployment and release checks. **1090 current shuffled
+edit/reply/comment/task/action/menu/phone checks** (seed 311) passed.
+**337 combined edit/phone/shared/native-work checks** passed,
+including both final inactive-mention-after-preview cases. Earlier focused edits:
+**123 passed**; earlier phone/shared/menu/budget group:
+**49 passed**. All groups have zero failures/errors/skips and
+overlap. All final service/phone cases preceded broad/shuffled collection; no
+application source edits followed the passing final groups.
+
+Original-author authority against reader/lead/officer/technical-admin overrides,
+exact source/thread/revision selection, plain/no-op refusal, stale preview retrieval/
+confirmation and fresh revision, old immutable history/reply parent, retained
+mentions/current eligibility before/after preview, native notice/read effects,
+unchanged terminal/formal/business state, current source/context/revocation/restore
+fences, strict caller-owned contract, notice/receipt/handoff rollback, retries/
+concurrency, retention and recorded-versus-current revision recovery pass.
+Both 390×844 JavaScript-disabled phone flows verify source comment ID/revision,
+independent grants/menu/forms, CSRF/strict fields, other-author/stale revision
+refusal, full exact replacement preview, confirmation/retry, old history, unchanged
+work/tasks, no mentions/outgoing calls and expired sessions. Native discussion and
+submission API/MCP callers pass with the identical public edit body. Initial shared
+wiring exposed the expanded maximum-origin status budget; the repeated work-read
+prerequisite is now listed once without hiding any feature or missing action
+consent. Final combined/broad/shuffled groups include that passing budget case.
+No native constraint, author/permission assertion or no-skips gate was weakened.
+
+The initial broad attempt was interrupted after the 8.8 GiB temporary volume filled
+with retained synthetic test databases (browser crashes and SQLite disk-full setup
+errors; 1982 reported cases, 2 failures/229 errors). Its report is retained separately
+as `/tmp/telegram-comment-edit-regressions-disk-full-interrupted.xml` and is not
+acceptance evidence. Removed only completed/interrupted synthetic pytest directories,
+preserving XML reports, and reran the entire unchanged broad command with
+`--basetemp=/workspace/office-test-tmp/comment-edit-regressions` on the larger
+workspace volume. The passing broad count above is from that clean rerun.
+`docs/CLOUD_WORKSPACE.md` now records capacity checks, separate larger-volume
+pytest scratch paths for concurrent runs, report preservation and clean reruns.
+
+Reports: `/tmp/telegram-comment-edit-regressions.xml`,
+`/tmp/telegram-comment-edit-shuffled.xml`, `/tmp/telegram-comment-edit-verified.xml`,
+`/tmp/telegram-comment-edit-focused.xml` and
+`/tmp/telegram-comment-edit-phone-wiring.xml`; all pass the JUnit no-skips gate.
+Candidate 9.77 metadata over actual main 9.59, dependency locks/vendor integrity,
+installed compatibility, AI contract 1.12.0, Python compilation, local Markdown
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push; prior-head evidence is not current acceptance.
+
+See [editing behavior](TELEGRAM_COMMENT_EDITING.md) and
+[pending live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live rows
+remain Pending. No real Telegram message/provider registration, production data,
+scheduler/monitor execution, deployment, preview publication or activation occurred.
+Initial prior-head `6a83c07` inspection found metadata/dependency audit/avatar
+functional checks passing and full normal/shuffled checks running; those are not
+new-head acceptance.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI and continue only the next explicitly requested feature.
+Main merge/release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+## Colleague mentions in comments and replies — 2026-11-01
+
+Owner explicitly approved colleague mentions in work/task comments and replies.
+Added optional explicit selection to the existing `/work_comment`, `/task_comment`,
+`/work_reply` and `/task_reply` forms/preview/confirmation protocols on branch
+`feat/telegram-private-work-lookup`, draft PR #572, candidate **9.78**. Actual main
+remains `a7b9b38` (released 9.59), preserved on this branch. Deployment, preview
+publication, activation and personal/live testing remain explicitly deferred.
+
+Independent default-off `CSS_TELEGRAM_WORK_MENTIONS_ENABLED` / `work.mentions`
+requires work-read consent plus the applicable existing post/reply permission and
+pilot. Auxiliary consent alone cannot post/reply/edit or grant source access; one
+posting grant alone cannot select colleagues. Unmentioned posts remain available
+without auxiliary consent. Existing text edits retain their original strict fields
+and preserve existing mention metadata using native current eligibility checks.
+
+New source-only GET loader within the signed-in forms accepts original private
+request/source IDs, never draft text, CSRF/action keys or selected people in the
+URL. It prepares/posts nothing. Current work/task/optional-parent scope is verified
+before native `work_updates.candidates` returns only active current readers of
+that work and every linked document. No directory before selection, on unavailable
+source, or without mention consent/pilot. No person is preselected. Main POST fields,
+CSRF/key/origin checks remain separate. Optional repeated mentions are declared
+only for these comment/reply routes; other keys stay single-valued/allowlisted and
+unrelated shared forms retain their contracts. Body/field limits bound selection.
+
+Up to 20 distinct strict account IDs normalize in sorted order; malformed,
+duplicate, over-limit, inactive and nonreader selections are refused. Full selected
+account/role/active/resource/display-name snapshots bind the exact private preview.
+Message plus each selected name/account are displayed, with native notice/no-access
+effects. Any name/current source eligibility change before pull/confirmation
+requires a fresh preview, including document-access loss without revision change.
+Stored parent/discussion/submission contents remain in Office Connect. Oversized
+Unicode previews refuse rather than silently dropping people or message text.
+
+Existing unchanged native `work_discussion.post_in_transaction` receives validated
+IDs. Message/revision/structured mentions, normal permitted notices/author-read
+marker, consumed preview, receipt and private handoff commit atomically. Notice/
+receipt/handoff failure rolls back all; duplicate/concurrent confirmation posts
+once. Native parent/follower/mention priority deduplicates one person/message;
+self mention records metadata without a self-notice. No follow/notification setting,
+source membership/access, external destination or scheduler/digest/provider execution
+is added. Existing independent digest policies remain separate. Task/work/document
+state, revisions, ownership, submissions, blockers, dependencies, deadlines, events
+and formal review/approvals stay unchanged; native informal terminal/formal discussion
+behavior is preserved.
+
+Current auxiliary/base/read scopes and pilots, source rights/modules, recipient
+names/eligibility, expiry and original account/bot/chat/context are rechecked.
+Revoking auxiliary consent cancels/scrubs pending previews in all four posting flows
+conservatively, including unmentioned pending previews; fresh unmentioned posting
+remains available under its own grants. Existing edit previews/committed messages
+keep their own permissions. Pause, disconnect, restore and context loss cannot
+produce stale selected-mention creation. Core receipts remain source/thread/author
+bound, report original post/current revision without stored recipient names, and
+never replay notices. Existing deletion/retention rules remain intact. No new
+business action, source mutation rule/table or receipt identifier was introduced.
+
+Isolated Python 3.11 verification: **2604 broad regressions passed**
+across Telegram/native work, integration submission API/MCP submissions, audit-chain
+writers, deployment and release checks. **1227 current shuffled
+mention/edit/reply/comment/task/action/menu/phone checks** (seed 311) passed.
+**148 final mention/phone/menu/budget checks** passed,
+alongside **4 dedicated phone flows** and **239
+earlier shared action/menu/unmentioned comment/reply/budget checks**. All groups
+have zero failures/errors/skips and overlap. All final service/phone assertions
+preceded broad/shuffled collection; no application source edits followed these
+passing final groups.
+
+All four posting modes, independent auxiliary/base/read consent/pilots, empty/
+loaded/source-scoped/paused choices, strict/duplicate/20-person selection, current
+name/active/work/every-document eligibility (including permission loss without
+source revision), revoke/pause/expiry/disconnect/restore, native mention/follower/
+parent notice priority/deduplication and self behavior, unchanged source/access/
+preferences, atomic notice/receipt/handoff rollback and concurrent/repeated
+confirmation pass. Four 390×844 JavaScript-disabled phone cases verify exact consent,
+source-ID-only loader URLs with no prepared/posting effects, blank default choices,
+CSRF/allowlists, invalid recipients, full message/name/account preview, confirmation/
+retry, unchanged work/tasks, native mention/notice rows, no outgoing calls and
+expired sessions. Existing unmentioned posts/replies, mention-preserving text edits
+and unrelated shared-form defaults remain protected by regressions.
+
+Initial new-test assertions expected a text reply after disconnect/restore and
+used an ambiguous selector for the new GET+POST forms. They now explicitly assert
+no inline response/no source mutation after context loss, and select the POST form
+for its CSRF/origin/key; native no-response and strict field behavior were preserved.
+No native constraint, permission/eligibility assertion or no-skips gate was weakened.
+
+Reports: `/tmp/telegram-mentions-regressions.xml`,
+`/tmp/telegram-mentions-shuffled.xml`, `/tmp/telegram-mentions-verified-complete.xml`,
+`/tmp/telegram-mentions-phone-final.xml` and `/tmp/telegram-mentions-wiring.xml`;
+all pass the JUnit no-skips gate. Long concurrent suites use separate workspace
+`--basetemp` paths per CLOUD_WORKSPACE.md; completed synthetic databases are removed
+after keeping reports. No temporary-volume exhaustion occurred in these runs.
+Candidate 9.78 metadata over actual main 9.59, dependency locks/vendor integrity,
+installed compatibility, AI contract 1.12.0, Python compilation, local Markdown
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push; prior-head evidence is not current acceptance.
+
+See [mention behavior](TELEGRAM_COLLEAGUE_MENTIONS.md) and
+[pending live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live rows
+remain Pending. No real Telegram message/provider registration, production data,
+scheduler/monitor execution, deployment, preview publication or activation occurred.
+Initial prior-head `cb192da` inspection found metadata/dependency audit/avatar
+functional checks passing and full normal/shuffled checks running; those are not
+new-head acceptance.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI and continue only the next explicitly requested feature.
+Main merge/release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+## Private own discussion inbox — 2026-11-02
+
+Owner approved a private inbox for their mentions/unread discussion updates.
+Implemented `/my_updates [all|mentions|replies|following] [BEFORE_ID]` and
+`/update_status NOTICE_ID` on branch `feat/telegram-private-work-lookup`, draft
+PR #572, candidate **9.79**. Deployment, preview publication, activation and
+personal/live testing remain explicitly deferred.
+
+Reconciled current main `adb83b4` (code version 9.60, merged seasonal PR #578)
+into this review branch as merge `1f834c4`. Preserved both runtime feature sets,
+seasonal preparation notes and every main changelog entry exactly (AST comparison).
+Shared release/status/cache conflicts were corrected locally, with no unresolved
+markers pushed. No seasonal/Telegram preview was replaced or feature activated.
+Initial previous draft head `808777d` had all metadata/dependency/full normal/full
+shuffled/required/avatar functional checks passing; that is previous-head evidence,
+not acceptance of the new merged feature head. Main deployment was not inspected.
+
+Independent default-off `CSS_TELEGRAM_WORK_UPDATES_READ_ENABLED` /
+`work.updates.read` requires work-read consent, enabled source work/documents,
+current private inbound/link/delivery/account/bot/chat proof and webhook replies.
+Other task/comment/reply/mention/read grants provide no inbox delegation. Inbox
+consent grants no post/edit/reply/mention/follow/read-marker or source access change.
+Group/topic/direct-worker paths cannot retrieve or replay a private inbox reply.
+
+Queries bind notice recipient to the current linked user. Foreign/missing/hidden
+notice details have the same neutral denial, even for case leads/admins. Current
+native work/every-linked-document visibility and same-work task resolution apply
+on each request. Terminal work/task discussion stays readable if source access
+permits it. Metadata includes own notice ID/reason, work/task ID/title, comment ID,
+notice/current comment revisions, native timestamp/read status and exact source
+link. No comment/parent text, authors, recipient names, submission/output or hidden
+counts are projected. Comment body and task submission/output columns are never
+read; a SQLite authorizer guard executes the real renderer on that same connection.
+
+Unread semantics match native observed revision < notice revision. Later source
+edits show distinct notice/current revisions. Source-managed read status removes
+an entry from the unread list; its own detail can still report already read.
+Telegram lookup marks nothing read and creates no source mutation, prepared action,
+follow/preference, new notice or scheduled/outgoing push. Discussion content and
+read-state management remain Office Connect actions.
+
+Own/unread/category/source-visibility SQL filters precede a bounded 200-candidate
+scan (50-row batches), native current visibility checks and six-entry lookahead.
+Pages show up to five UTF-16-budgeted entries. Last-shown seek IDs preserve category;
+long Unicode pages and bounded scans keep continuation without false global empty
+claims or hidden counts. Each page/detail is rendered from current source, never
+cached private projections. Current scopes/pilots/modules/context/bot are rechecked;
+revoke/pause/disconnect/restore prevent stale reads. Duplicate webhook IDs reply
+once; queries/source names/text are not retained in update/delivery descriptors.
+Existing routing metadata is unchanged. Rendering requires the intake transaction;
+no source or Telegram schema changes were introduced.
+
+Status header/footer wording was shortened to fit the additional feature at the
+maximum supported origin while preserving every availability/missing-consent item.
+The actual main 9.60 seasonal source/appearance checks are included alongside
+Telegram/native work verification on this combined candidate.
+
+Isolated Python 3.11 verification: **2683 broad regressions passed**
+across Telegram/native work, submission API/MCP submissions, audit-chain writers,
+deployment/release and actual-main seasonal/appearance checks. **1283
+current shuffled inbox/comment/task/action/menu/phone/seasonal checks** (seed 311)
+passed. **67 current focused inbox/phone/menu/budget/seasonal checks**
+passed; earlier focused inbox group: **35 passed**. All groups have
+zero failures/errors/skips and overlap. All final SQL-minimization/authorizer and
+service/phone assertions preceded broad/shuffled collection; no application source
+edits followed passing final groups.
+
+Own-recipient isolation against foreign/lead IDs, current work/every-document scope,
+strict filters/IDs, exact source links, native notice-vs-current revision/read state,
+no source/read-marker writes, bounded and Unicode seek continuation, no retained
+query/body projection, no comment-body/task-submission/output SQL reads (real same-
+connection authorizer), terminal visibility, current scopes/pilots/modules/origin/
+account/bot/context, groups/topics/direct/duplicate/no-push paths and link consent
+pass. Three 390×844 JavaScript-disabled phone flows cover mention/reply/follow
+notice creation in synthetic source data, independent read grants/menu/list/detail,
+no Telegram marking, exact source content navigation, native source-managed read
+state, unchanged tasks and disconnect. Initial status budget failure was fixed by
+shortening repeated header/footer wording while preserving every feature/consent
+item; final groups include the passing maximum-origin budget check.
+
+Merge reconciliation preserves actual-main seasonal runtime and all release entries;
+version.py parses, release metadata passes against adb83b4/9.60, and conflict-marker/
+whitespace checks pass. No native read/history/permission assertion or no-skips gate
+was weakened. Reports: `/tmp/telegram-discussion-updates-regressions.xml`,
+`/tmp/telegram-discussion-updates-shuffled.xml`,
+`/tmp/telegram-discussion-updates-current.xml` and
+`/tmp/telegram-discussion-updates-focused.xml`; all pass the JUnit no-skips gate.
+Concurrent long runs use separate workspace --basetemp paths per CLOUD_WORKSPACE.md;
+completed synthetic databases are removed after reports are preserved. No disk-full
+interruption occurred. Candidate 9.79 metadata, locks/vendor integrity, installed
+compatibility, AI contract 1.12.0, compilation, Markdown links and whitespace pass.
+Existing Starlette/httpx deprecation warning remains. New exact-head full repository
+normal/shuffled/dependency/container/aggregate CI still requires inspection after
+push; green previous-head 808777d checks are not new-head acceptance.
+
+See [discussion inbox behavior](TELEGRAM_DISCUSSION_INBOX.md) and
+[pending live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All new live rows
+remain Pending. No real Telegram message/provider registration, production data,
+scheduler/monitor execution, deployment, preview publication or activation occurred.
+
+Next: inspect new exact-head full repository normal/shuffled/dependency/container/
+metadata/aggregate CI, keep main freshness, and continue only the next explicitly
+requested feature. Main merge/release, preview publication, activation and personal/
+live testing remain deferred until the owner's later instruction.

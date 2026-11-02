@@ -1,6 +1,8 @@
 """Signed-in deterministic fields; final approval stays in the linked private bot."""
 import hmac
 import secrets
+import re
+import json
 
 from fastapi import APIRouter,Request
 from fastapi.responses import HTMLResponse,RedirectResponse
@@ -43,7 +45,13 @@ def make_router(templates,get_conn):
                 import telegram_meeting_rooms as combined
                 parent=combined.retry_parent(conn,user,parent_id)
                 values.update(parent_operation_id=parent_id,entry_id=str(parent['result_entry_id']))
-            return templates.TemplateResponse(request,'telegram_room_request.html',{'show_scope':False,'csrf':csrf(request),
+            prepared_operation=request.query_params.get('operation','')
+            operation_row=rows(conn,'SELECT context_json FROM telegram_operation WHERE operation_id=? AND actor_id=? AND action=?',
+                                (prepared_operation,user['id'],'rooms.request'))
+            if not re.fullmatch('[a-f0-9]{32}',prepared_operation) or not operation_row or not operation_row[0]['context_json']:
+                prepared_operation=None
+            return templates.TemplateResponse(request,'telegram_room_request.html',{'show_scope':False,'csrf':csrf(request),'webhook_pull':bot.reply_transport()=='webhook' and (not prepared_operation or json.loads(operation_row[0]['context_json'])['chat_id']>0),
+                'prepared_operation':prepared_operation,
                 'origins':ready,'selected':selected,'values':values or {},'key':secrets.token_hex(16),'slots':rooms.list_slots(conn) if ready else [],'error':error,'queued':bool(request.query_params.get('queued')),'already':bool(request.query_params.get('already'))},status_code=status,headers=PRIVATE)
         except ValueError:
             return HTMLResponse('Room request unavailable. Sign in again or send /room_request in the intended conversation.',status_code=403,headers=PRIVATE)
@@ -79,5 +87,5 @@ def make_router(templates,get_conn):
         except ValueError as error:
             values={k:str(form.get(k,'')) for k in ('origin','entry_id','from_time','to_time','parent_operation_id')} if form else None
             return screen(request,str(error),400,values)
-        return RedirectResponse(room_requests.PATH+('?already=1' if result.get('receipt') else '?queued=1'),status_code=303,headers=PRIVATE)
+        return RedirectResponse(room_requests.PATH+('?already=1' if result.get('receipt') else '?queued=1')+'&operation='+result['operation_id'],status_code=303,headers=PRIVATE)
     return router

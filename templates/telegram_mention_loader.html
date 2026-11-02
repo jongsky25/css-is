@@ -1,0 +1,12 @@
+{% if mentions_available %}
+<form method="get" action="{{ action_path }}">
+<input type="hidden" name="origin" value="{{ selected }}">
+<fieldset style="margin:1rem 0;max-width:100%;box-sizing:border-box"><legend>Find eligible colleagues for this discussion</legend>
+<p><label for="mention-load-work">Work item number for recipient choices</label><br><input id="mention-load-work" type="number" name="case_id" min="1" value="{{ values.get('case_id','') }}" required></p>
+{% if mode == 'task' %}<p><label for="mention-load-task">Task number for recipient choices</label><br><input id="mention-load-task" type="number" name="task_id" min="1" value="{{ values.get('task_id','') }}" required></p>{% endif %}
+{% if 'parent_id' in action_path or '/reply/' in action_path %}<p><label for="mention-load-parent">Parent comment number for recipient choices (optional)</label><br><input id="mention-load-parent" type="number" name="parent_id" min="1" value="{{ values.get('parent_id','') }}"></p>{% endif %}
+<button type="submit">Load eligible colleagues</button>
+<p>This loads names only. No comment or reply is prepared or posted. Message text is not submitted by this form.</p>
+</fieldset>
+</form>
+{% endif %}

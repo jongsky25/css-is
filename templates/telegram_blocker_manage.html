@@ -1,0 +1,36 @@
+{% extends "dash_layout.html" %}
+{% block title %}{{ 'Record' if mode == 'block' else 'Clear' }} a task blocker — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>{{ 'Record a task blocker' if mode == 'block' else 'Clear a recorded task blocker' }}</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/work">Review source work and blocker details</a></p>
+<p>Start with <code>/task_{{ mode }}</code> in your linked private chat. Native task-owner, current follow-up-owner, lead and concerned-officer permissions apply. Completed work, Done/Cancelled tasks and active formal consolidation review amendments stay in Office Connect.</p>
+<p>Task ownership, progress, submission, task deadline and dependencies stay unchanged. Clearing a recorded blocker does not resolve unfinished prerequisites or changed-decision reviews, or automatically permit submission/acceptance.</p>
+{% if mode == 'block' %}
+<p>This records a new blocker only. An existing blocker must be amended in Office Connect or separately cleared first. Choose an exact follow-up date and an active person who already reads this work and every linked document. Other participants may select only themselves; a lead or concerned officer can choose another eligible person. No source access is granted.</p>
+{% else %}
+<p>Review the current blocker details in Office Connect first. Confirmation clears that recorded blocker and its follow-up owner/date. The stored blocker reason is not copied into Telegram; normal source history retains it.</p>
+{% endif %}
+<p><strong>Your entered {{ 'blocker' if mode == 'block' else 'resolution' }} reason appears in the exact private Telegram preview and normal work history.</strong></p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if prepared %}
+<p role="status">{% if prepared.state == 'pending' %}Your preview is prepared. No blocker has changed. Send <code>/task{{ mode }}_preview {{ prepared.operation_id }}</code> in the original private Telegram chat, review the exact operation and confirm before expiry.{% else %}This operation already has a recorded outcome. Send <code>/task{{ mode }}_receipt {{ prepared.operation_id }}</code> in the original private chat. Recovery will not repeat the change.{% endif %}</p>
+{% endif %}
+{% if origins %}
+<form method="post" action="{{ action_path }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="blocker-origin">Starting private conversation</label><br><select id="blocker-origin" name="origin" required>{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
+<p><label for="blocker-work">Work item number</label><br><input id="blocker-work" name="case_id" type="number" min="1" value="{{ values.get('case_id','') }}" required></p>
+<p><label for="blocker-task">Task number</label><br><input id="blocker-task" name="task_id" type="number" min="1" value="{{ values.get('task_id','') }}" required></p>
+{% if mode == 'block' %}
+<p><label for="blocker-person">Follow-up owner</label><br><select id="blocker-person" name="followup_owner_id" required style="max-width:100%"><option value="">Choose an eligible active account</option>{% for person in people %}<option value="{{ person.id }}" {% if values.get('followup_owner_id')|string == person.id|string %}selected{% endif %}>{{ person.name }} (account {{ person.id }})</option>{% endfor %}</select></p>
+<p>The directory lists active accounts. Work/document access and who you may select are checked after selection and again at confirmation.</p>
+<p><label for="blocker-date">Follow-up date</label><br><input id="blocker-date" name="followup_date" type="date" value="{{ values.get('followup_date','') }}" required></p>
+{% endif %}
+<p><label for="blocker-reason">{{ 'Blocker reason' if mode == 'block' else 'Resolution reason' }}</label><br><textarea id="blocker-reason" name="reason" rows="4" maxlength="500" style="box-sizing:border-box;width:100%" required>{{ values.get('reason','') }}</textarea></p>
+<p>The preview expires after five minutes. Changed task, blocker, work, selected account or linked records require a fresh preview. Current source permissions are checked again at confirmation.</p>
+<button type="submit">Prepare exact private preview</button>
+</form>
+{% else %}<p>No current private request is available. Start <code>/task_{{ mode }}</code> after enabling and consenting to its separate pilot and work read permission.</p>{% endif %}
+</div>
+{% endblock %}

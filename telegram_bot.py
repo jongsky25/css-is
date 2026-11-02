@@ -19,12 +19,38 @@ from documents_storage import transaction, rows
 import telegram_storage as storage
 import telegram_transport as transport
 import telegram_links as links
+import telegram_menu as private_menu
+import telegram_brief as brief_reads
+import telegram_search as search_reads
+import telegram_review_queue as review_reads
+import telegram_discussion_updates as update_reads
+import telegram_task_blockers as blocker_reads
 import telegram_groups as groups
 import telegram_calendar as calendar_reads
 import telegram_rooms as room_reads
+import telegram_work as work_lookup
+import telegram_documents as document_reads
+import telegram_supplies as supply_reads
+import telegram_personal as personal_reads
+import telegram_tasks as task_actions
 import telegram_group_reads as shared_reads
 import telegram_actions
 import telegram_meetings as meetings
+import telegram_meeting_manage as meeting_manage
+import telegram_room_manage as room_manage
+import telegram_task_create as task_create
+import telegram_task_deadline as task_deadline
+import telegram_task_review as task_review
+import telegram_task_assign as task_assign
+import telegram_task_reassign as task_reassign
+import telegram_task_reopen as task_reopen
+import telegram_task_cancel as task_cancel
+import telegram_blocker_manage as blocker_manage
+import telegram_dependency_manage as dependency_manage
+import telegram_comment_manage as comment_manage
+import telegram_reply_manage as reply_manage
+import telegram_comment_edit as comment_edit
+import telegram_meeting_webhook as meeting_webhook
 import telegram_notices as notices
 import telegram_reminders as reminders
 import telegram_room_requests
@@ -140,18 +166,29 @@ def normalize(value):
     text = message.get('text', '')
     if not isinstance(text, str) or len(text) > 4096:
         raise ValueError('Invalid text')
-    # No arbitrary text, names, usernames or link arguments are retained.
+    # Only allowlisted command metadata is retained. Document search text stays
+    # ephemeral within the webhook transaction and is never queued.
     if (message['chat'].get('type') == 'private' and clean['chat_id'] == clean['sender_id']
             and message['from'].get('is_bot') is False and clean['topic_id'] is None):
         first = text.split(maxsplit=1)[0] if text.strip() else ''
+        if first == '/menu':
+            clean['command'] = '/help'
         if first in ('/start', '/help', '/status', '/disconnect'):
             clean['command'] = first
         if text in ('/meeting','/room_request'):
             clean['command']=text
+        if first in meeting_manage.COMMANDS + room_manage.COMMANDS + task_create.COMMANDS + task_deadline.COMMANDS + task_review.COMMANDS + task_assign.COMMANDS + task_reassign.COMMANDS + task_reopen.COMMANDS + task_cancel.COMMANDS + blocker_manage.COMMANDS + dependency_manage.COMMANDS + comment_manage.COMMANDS + reply_manage.COMMANDS + comment_edit.COMMANDS:
+            if text in ('/meeting_reschedule','/meeting_cancel','/room_withdraw','/room_move','/new_task','/task_deadline','/task_accept','/task_return','/task_assign','/task_reassign','/task_reopen','/task_cancel','/task_block','/task_unblock','/task_dependency_add','/task_dependency_remove','/work_comment','/task_comment','/work_reply','/task_reply','/work_comment_edit','/task_comment_edit'):
+                clean['command']=text
+            elif len(parts := text.split())==2:
+                if first.endswith('_confirm') and re.fullmatch('[A-Za-z0-9_-]{43}',parts[1]):
+                    clean['command']=first;clean['meeting_argument']=links.digest(parts[1])
+                elif first.endswith(('_preview','_receipt')) and re.fullmatch('[a-f0-9]{32}',parts[1]):
+                    clean['command']=first;clean['meeting_argument']=parts[1]
         parts = text.split()
         if len(parts)==2 and parts[0] in ('/meeting_confirm','/room_confirm') and re.fullmatch('[A-Za-z0-9_-]{43}',parts[1]):
             clean['command']=parts[0];clean['meeting_argument']=links.digest(parts[1])
-        if len(parts)==2 and parts[0] in ('/meeting_receipt','/room_receipt') and re.fullmatch('[a-f0-9]{32}',parts[1]):
+        if len(parts)==2 and parts[0] in ('/meeting_receipt','/room_receipt','/meeting_preview','/room_preview') and re.fullmatch('[a-f0-9]{32}',parts[1]):
             clean['command']=parts[0];clean['meeting_argument']=parts[1]
         if first in ('/calendar', '/calendar_next'):
             clean['command'] = first
@@ -165,6 +202,57 @@ def normalize(value):
                 clean['room_query'] = room_reads.parse(text, now_utc())
             except ValueError:
                 clean['room_query'] = {'error': 'usage'}
+        if first in work_lookup.COMMANDS:
+            clean['command'] = first
+            try:
+                clean['work_query'] = work_lookup.parse(text)
+            except ValueError:
+                clean['work_query'] = {'error': 'usage'}
+        if first in update_reads.COMMANDS:
+            clean['command']=first
+            try:clean['updates_query']=update_reads.parse(text)
+            except ValueError:clean['updates_query']={'error':'usage'}
+        if first in personal_reads.COMMANDS:
+            clean['command'] = first
+            try:
+                clean['personal_query'] = personal_reads.ADAPTERS[first].parse(text)
+            except ValueError:
+                clean['personal_query'] = {'error': 'usage'}
+        if first in brief_reads.COMMANDS:
+            clean['command'] = first
+            clean['brief_query'] = {} if text.split() == ['/brief'] else {'error': 'usage'}
+        if first in blocker_reads.COMMANDS:
+            clean['command']=first
+            try:clean['blocker_query']=blocker_reads.parse(text)
+            except ValueError:clean['blocker_query']={'error':'usage'}
+        if first in review_reads.COMMANDS:
+            clean['command']=first
+            try:clean['review_query']=review_reads.parse(text)
+            except ValueError:clean['review_query']={'error':'usage'}
+        if first in search_reads.COMMANDS:
+            clean['command'] = first
+            try:
+                clean['search_query'] = search_reads.parse(text)
+            except ValueError:
+                clean['search_query'] = {'error': 'usage'}
+        if first in supply_reads.COMMANDS:
+            clean['command'] = first
+            try:
+                clean['supply_query'] = supply_reads.parse(text)
+            except ValueError:
+                clean['supply_query'] = {'error': 'usage'}
+        if first in document_reads.COMMANDS:
+            clean['command'] = first
+            try:
+                clean['document_query'] = document_reads.parse(text)
+            except ValueError:
+                clean['document_query'] = {'error': 'usage'}
+        if first in task_actions.COMMANDS:
+            clean['command'] = first
+            try:
+                clean['task_query'] = task_actions.parse(text)
+            except ValueError:
+                clean['task_query'] = {'error': 'usage'}
         if first == '/confirm' and len(parts) == 2 and re.fullmatch(r'[a-f0-9]{64}', parts[1]):
             clean['command'] = first
             clean['argument_hash'] = links.digest(parts[1])
@@ -210,6 +298,40 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
         if clean.get('group_event'):
             groups.handle_event(conn, clean, bot)
         cid, generation, permitted = identity(conn, clean['sender_id'])
+        inline_meeting=(webhook_reply is not None and meeting_webhook.accepts(conn,clean))
+        if inline_meeting or clean['command'] in task_actions.COMMANDS + document_reads.COMMANDS + supply_reads.COMMANDS + personal_reads.COMMANDS + brief_reads.COMMANDS + search_reads.COMMANDS + review_reads.COMMANDS + update_reads.COMMANDS + blocker_reads.COMMANDS + meeting_manage.COMMANDS + room_manage.COMMANDS + task_create.COMMANDS + task_deadline.COMMANDS + task_review.COMMANDS + task_assign.COMMANDS + task_reassign.COMMANDS + task_reopen.COMMANDS + task_cancel.COMMANDS + blocker_manage.COMMANDS + dependency_manage.COMMANDS + comment_manage.COMMANDS + reply_manage.COMMANDS + comment_edit.COMMANDS:
+            inline = (webhook_reply is not None and storage.enabled('delivery') and storage.enabled('link')
+                      and transport.config()==bot and cid is not None and permitted)
+            conn.execute("""INSERT INTO telegram_update
+                (bot_identity,update_id,sender_id,chat_id,topic_id,connection_id,generation,payload_hash,received_at,state)
+                VALUES (?,?,?,?,?,?,?,?,?,?)""", (bot[0],clean['update_id'],clean['sender_id'],clean['chat_id'],None,
+                    cid,generation,hashlib.sha256(raw).hexdigest(),stamp(now),'processed' if inline else 'ignored'))
+            if inline:
+                adapter=(update_reads if clean['command'] in update_reads.COMMANDS else
+                         blocker_reads if clean['command'] in blocker_reads.COMMANDS else
+                         review_reads if clean['command'] in review_reads.COMMANDS else
+                         search_reads if clean['command'] in search_reads.COMMANDS else
+                         brief_reads if clean['command'] in brief_reads.COMMANDS else
+                         document_reads if clean['command'] in document_reads.COMMANDS else
+                         supply_reads if clean['command'] in supply_reads.COMMANDS else personal_reads.ADAPTERS.get(clean['command']))
+                text=(meeting_webhook.handle(conn,clean,bot,now) if inline_meeting else
+                      adapter.render(conn,clean,bot,now) if adapter else task_actions.handle(conn,clean,bot,now))
+                if adapter:
+                    context={'connection_id':cid,'generation':generation,'chat_id':clean['chat_id'],
+                             'topic_id':None,'registration_id':None}
+                    if (transport.config()!=bot or not storage.enabled('inbound') or not storage.enabled('delivery')
+                            or adapter.actor(conn,context,bot) is None):
+                        return 200
+                if not text:
+                    return 200
+                conn.execute("""INSERT INTO telegram_delivery
+                    (dedupe_key,event_key,connection_id,generation,chat_id,projection_json,expires_at,created_at,updated_at,state,attempts,error_code)
+                    VALUES (?,?,?,?,?,'{}',?,?,?,'uncertain',1,'webhook_response')""",
+                    ('task-response:'+str(bot[0])+':'+str(clean['update_id']),str(bot[0]),cid,generation,
+                     clean['chat_id'],stamp(now+timedelta(minutes=5)),stamp(now),stamp(now)))
+                webhook_reply.append({'method':'sendMessage','chat_id':clean['chat_id'],'text':text,
+                                      'link_preview_options':{'is_disabled':True}})
+            return 200
         if clean['command'] in ('/meeting','/room_request','/meeting_confirm','/meeting_receipt','/room_confirm','/room_receipt'):
             projection=None;state='ignored'
             try:
@@ -236,6 +358,8 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
         if command == '/status' and links.pending_confirmation(conn, clean['sender_id'], bot, now):
             special = True
         supported = command is not None and (permitted or special)
+        if command in ('/meeting_preview','/room_preview'):
+            supported = False  # New pull commands are private webhook-only.
         if command in ('/register','/group_status','/group_calendar','/group_rooms'):
             supported = group_route is not None
         projection = {'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]}
@@ -253,6 +377,11 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
                        'topic_id': clean['topic_id'], 'registration_id': None}
             supported = cid is not None and permitted and room_reads.actor(conn, context, bot) is not None
             projection = {'kind': 'rooms', 'bot': bot[0], 'fingerprint': bot[2], 'query': clean['room_query']}
+        if command in work_lookup.COMMANDS:
+            context = {'connection_id': cid, 'generation': generation, 'chat_id': clean['chat_id'],
+                       'topic_id': clean['topic_id'], 'registration_id': None}
+            supported = cid is not None and permitted and work_lookup.actor(conn, context, bot) is not None
+            projection = {'kind': 'work', 'bot': bot[0], 'fingerprint': bot[2], 'query': clean['work_query']}
         if group_route:
             projection = {'kind': 'group_status', 'bot': bot[0], 'fingerprint': bot[2]}
         immediate_disconnect = supported and command == '/disconnect'
@@ -340,7 +469,8 @@ def prepare_webhook_reply(conn, clean, bot, now):
             or transport.config() != bot or clean['chat_id'] != clean['sender_id']
             or not clean['chat_id'] or clean['chat_id'] < 0 or clean['topic_id'] is not None
             or clean['command'] not in ('/start', '/help', '/status', '/confirm',
-                '/calendar', '/calendar_next', '/room_slots', '/my_rooms', '/room_status')):
+                '/calendar', '/calendar_next', '/room_slots', '/my_rooms', '/room_status',
+                *work_lookup.COMMANDS)):
         return None
     found = rows(conn, 'SELECT * FROM telegram_update WHERE bot_identity=? AND update_id=?',
                  (bot[0], clean['update_id']))
@@ -467,6 +597,12 @@ def _process_update_in_transaction(conn, update, bot, now):
         valid = (cid is not None and cid == update['connection_id'] and generation == update['generation']
                  and update['received_at'] > stamp(now-timedelta(hours=24))
                  and room_reads.actor(conn, context, bot) is not None)
+    if work_lookup.descriptor(projection, bot):
+        context = {'connection_id': cid, 'generation': generation, 'chat_id': update['chat_id'],
+                   'topic_id': update['topic_id'], 'registration_id': None}
+        valid = (cid is not None and cid == update['connection_id'] and generation == update['generation']
+                 and update['received_at'] > stamp(now-timedelta(hours=24))
+                 and work_lookup.actor(conn, context, bot) is not None)
     if valid:
         conn.execute('''INSERT INTO telegram_delivery
             (dedupe_key,event_key,connection_id,generation,chat_id,projection_json,expires_at,created_at,updated_at)
@@ -495,7 +631,9 @@ def eligible(conn, delivery, bot, now=None):
     cid, generation, permitted = identity(conn, delivery['chat_id'])
     calendar_lookup = calendar_reads.descriptor(projection, bot) and calendar_reads.actor(conn, delivery, bot) is not None
     room_lookup = room_reads.descriptor(projection, bot) and room_reads.actor(conn, delivery, bot) is not None
-    meeting_lookup = meetings.delivery_context(conn,delivery,projection,now or now_utc()) is not None
+    work_read = work_lookup.descriptor(projection, bot) and work_lookup.actor(conn, delivery, bot) is not None
+    meeting_context = meetings.delivery_context(conn,delivery,projection,now or now_utc())
+    meeting_lookup = bool(meeting_context and (reply_transport()=='direct' or meeting_context[0]['chat_id']<0))
     linking = projection.get('kind') in ('link_code','link_confirm') if isinstance(projection, dict) else False
     if linking:
         permitted = links.render(conn, projection, delivery['chat_id'], bot, now or now_utc()) is not None
@@ -505,7 +643,7 @@ def eligible(conn, delivery, bot, now=None):
         (delivery['chat_id'], delivery['created_at'])).fetchone()
     return (not rejected and delivery['chat_id'] > 0 and delivery['topic_id'] is None and delivery['registration_id'] is None
             and permitted and cid == delivery['connection_id'] and generation == delivery['generation']
-            and (meeting_lookup or room_lookup or calendar_lookup or linking or projection in ({'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]},
+            and (work_read or meeting_lookup or room_lookup or calendar_lookup or linking or projection in ({'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]},
                                           {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]})))
 
 
@@ -523,6 +661,8 @@ def render_delivery(conn, delivery, projection, bot, now, *, commit=True):
     elif projection['kind'] == 'calendar':
         message = (calendar_reads.render(conn, delivery, projection, bot, now) if commit else
                    calendar_reads.render(conn, delivery, projection, bot, now, commit=False))
+    elif projection['kind'] == 'work':
+        message = work_lookup.render(conn, delivery, projection, bot, now, commit=commit)
     elif projection['kind'] == 'rooms':
         message = (room_reads.render(conn, delivery, projection, bot, now) if commit else
                    room_reads.render(conn, delivery, projection, bot, now, commit=False))
@@ -531,13 +671,9 @@ def render_delivery(conn, delivery, projection, bot, now, *, commit=True):
     elif projection['kind'] == 'group_status':
         message = groups.STATUS
     elif projection['kind'] == 'help':
-        message = (HELP if not storage.enabled('link') else
-            'Office Connect private commands: /start to link, /status to check your connection, '
-            '/disconnect to revoke it. Never send your Office Connect password here.'
-            + (' Private calendar lookup: /calendar (Asia/Manila).' if storage.enabled('calendar_read') else '')
-            + (' Private room lookup: /room_slots, /my_rooms, /room_status REFERENCE.' if storage.enabled('rooms_read') else '')
-            + (' Guided meeting pilot: /meeting (separate read/create consent required).' if storage.enabled('calendar_create') else '')
-            + (' Linked room request pilot: /room_request (separate room request/read and calendar read consent).' if storage.enabled('rooms_request') else ''))
+        message = HELP if not storage.enabled('link') else private_menu.render(conn,delivery,bot,now)
+    elif projection['kind'] == 'status':
+        message = private_menu.status(conn,delivery,bot,now)
     else:
         message = links.render(conn, projection, delivery['chat_id'], bot, now)
     return message

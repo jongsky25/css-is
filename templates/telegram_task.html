@@ -1,0 +1,27 @@
+{% extends "dash_layout.html" %}
+{% block title %}Prepare task submission — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:700px;margin:auto;overflow-wrap:anywhere">
+<h1>Prepare task submission</h1>
+{% if operation_id %}
+<p role="status">Preview prepared. No task has been submitted yet.</p>
+<p>In your original private Telegram chat, send <code>/task_preview {{ operation_id }}</code>. Review the exact output and send its confirmation command within five minutes.</p>
+<p>Recover the outcome with <code>/task_receipt {{ operation_id }}</code>.</p>
+{% else %}
+<p>Task {{ task_id }} · Work {{ case_id }}: <strong>{{ title }}</strong></p>
+<p>This prepares a preview. Submission happens only after you confirm that preview in your linked private Telegram chat. Your output will be shown in that private preview.</p>
+<form method="post" action="/account/telegram/task">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="key" value="{{ key }}">
+<input type="hidden" name="case_id" value="{{ case_id }}">
+<input type="hidden" name="task_id" value="{{ task_id }}">
+<input type="hidden" name="revision" value="{{ revision }}">
+<input type="hidden" name="case_revision" value="{{ case_revision }}">
+<p><label for="task-output">Output or evidence for review</label><br><textarea id="task-output" name="submission" maxlength="1800" rows="9" required style="box-sizing:border-box;width:100%;font:inherit"></textarea></p>
+<p><label for="task-note">Submission note</label><br><textarea id="task-note" name="reason" maxlength="500" rows="3" required style="box-sizing:border-box;width:100%;font:inherit"></textarea></p>
+<button type="submit">Prepare private preview</button>
+</form>
+{% endif %}
+<p><a href="/account/telegram">Private Telegram connection</a></p>
+</div>
+{% endblock %}

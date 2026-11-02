@@ -1,6 +1,8 @@
 """Signed-in deterministic fields; final approval stays in the linked private bot."""
 import hmac
 import secrets
+import re
+import json
 
 from fastapi import APIRouter,Request
 from fastapi.responses import HTMLResponse,RedirectResponse
@@ -37,7 +39,13 @@ def make_router(templates,get_conn):
                     ctx=meetings.origin(conn,user,item['id'],bot.now_utc())
                     ready.append({'id':item['id'],'label':'Private chat' if ctx['chat_id']>0 else 'Group '+str(ctx['chat_id'])+' · topic '+str(ctx['topic_id'] or 0)})
                 except ValueError:pass
-            return templates.TemplateResponse(request,'telegram_meeting.html',{'show_scope':False,'csrf':csrf(request),
+            prepared_operation=request.query_params.get('operation','')
+            operation_row=rows(conn,'SELECT context_json FROM telegram_operation WHERE operation_id=? AND actor_id=? AND action=?',
+                                (prepared_operation,user['id'],'calendar.create'))
+            if not re.fullmatch('[a-f0-9]{32}',prepared_operation) or not operation_row or not operation_row[0]['context_json']:
+                prepared_operation=None
+            return templates.TemplateResponse(request,'telegram_meeting.html',{'show_scope':False,'csrf':csrf(request),'webhook_pull':bot.reply_transport()=='webhook' and (not prepared_operation or json.loads(operation_row[0]['context_json'])['chat_id']>0),
+                'prepared_operation':prepared_operation,
                 'origins':ready,'selected':selected,'values':values or {},'key':secrets.token_hex(16),'people':oc.people_choices(conn) if ready else [],
                 'units':oc.unit_choices(conn) if ready else [],
                 'room_ready':bool(ready) and all(links.authorized(conn,user['id'],scope) for scope in ('rooms.read','rooms.request')),
@@ -80,5 +88,5 @@ def make_router(templates,get_conn):
             values={k:str(form.get(k,'')) for k in ('origin','title','day','start_time','end_time','venue','audience','owner_org_id','room_request','room_from','room_to')} if form else None
             if values is not None:values['people']=form.getlist('people')
             return screen(request,str(error),400,values)
-        return RedirectResponse(meetings.PATH+('?already=1' if result.get('receipt') else '?queued=1'),status_code=303,headers=PRIVATE)
+        return RedirectResponse(meetings.PATH+('?already=1' if result.get('receipt') else '?queued=1')+'&operation='+result['operation_id'],status_code=303,headers=PRIVATE)
     return router

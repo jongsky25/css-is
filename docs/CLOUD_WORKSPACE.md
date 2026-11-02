@@ -31,6 +31,16 @@ and an actual headless Chromium page. For the complete suite use:
 CI additionally runs shuffled order (`--shuffle-seed=311`), release metadata,
 container/dependency audits, and other gates. These commands do not replace CI.
 
+Large or concurrent suites can fill a small `/tmp` volume with synthetic pytest
+databases. Check available space before those runs and place their pytest scratch
+data on a larger workspace volume when needed, for example by adding
+`--basetemp=/workspace/office-test-tmp/your-run` to the isolated test command.
+Reserve a separate path for each concurrent run: pytest removes any existing
+contents at its `--basetemp` path. Keep JUnit/evaluation reports outside scratch
+directories and preserve them before removing only completed synthetic test data.
+Do not count an interrupted disk-full run as passing verification; rerun the
+affected command from clean data after restoring capacity.
+
 ## Temporary development server
 
 ```bash
