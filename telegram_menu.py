@@ -25,6 +25,7 @@ FEATURES=(
  ('rooms.move','Calendar','Room date moves','/room_move — change your own request’s date; approved bookings require a new approval.',('rooms.read',),None,True),
  ('work.read','Tasks and work','Work lookup','/my_summary; /my_tasks; /my_work; /task_status WORK_ID TASK_ID; /work_status WORK_ID.\nExample: /my_tasks overdue (also upcoming or review).',(),work.enabled,False),
  ('tasks.create','Tasks and work','Task proposals','/new_task — propose a task in permitted work; officer confirmation remains required.',('work.read',),work.enabled,True),
+ ('work.updates.read','Tasks and work','Discussion inbox','/my_updates — unread mentions/replies/followed discussions; /update_status NOTICE_ID.',('work.read',),work.enabled,True),
  ('work.mentions','Tasks and work','Colleague mentions','Select colleagues in your separately enabled comment/reply forms.',('work.read',),work.enabled,True),
  ('work.comment_edit','Tasks and work','Work comment edits','/work_comment_edit — edit your own comment after confirmation.',('work.read',),work.enabled,True),
  ('tasks.comment_edit','Tasks and work','Task comment edits','/task_comment_edit — edit your own comment after confirmation.',('work.read',),work.enabled,True),
@@ -123,11 +124,11 @@ def status(conn,delivery,bot,now):
     ready=[f['label'] for f in features if not f['reason']]
     blocked=[f['label']+': '+(f['reason'] if f['scope']=='work.read' else f['reason'].replace(links.SCOPES['work.read'],'work read').removesuffix(', work read'))
              for f in features if f['reason']]
-    text='Office Connect Telegram connection: active.\nAvailable for you: '+(', '.join(ready) or 'no business features yet')
+    text='Telegram connection: active.\nAvailable: '+(', '.join(ready) or 'none yet')
     if blocked:text+='\n\nOther features\n'+'\n'.join(blocked)
     if any(f['reason'].endswith(', '+links.SCOPES['work.read']) for f in features):
         text+='\nTask/work features also need work read consent.'
-    return text+'\n\nUse /menu for your available commands.'+account_link()+'\nRelink only to add explicit consent; no record access is granted automatically.'
+    return text+'\n\nCommands: /menu.'+account_link()+'\nRelinking adds consent, never source access.'
 
 
 def task_next(conn,actor,item,task, *, detail=False):

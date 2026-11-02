@@ -1,6 +1,6 @@
 # Colleague mentions in private work/task comments and replies
 
-Draft PR #572, candidate 9.78. Optional colleague selection is implemented in the
+Draft PR #572, candidate 9.79. Optional colleague selection is implemented in the
 existing comment and reply forms for later activation. Deployment, preview
 publication, activation and personal/live testing remain deferred. Local checks
 use synthetic data and blocked providers.

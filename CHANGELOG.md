@@ -1,4 +1,6 @@
-## 9.78 — November 1, 2026
+## 9.79 — November 2, 2026
+
+- Add an independently consented private discussion inbox for own unread mention/reply/following notice metadata, bounded current-access paging and source links; stored discussion and read-state changes stay in Office Connect.
 
 - Add separately consented colleague mentions in existing work/task comment and reply flows, with current source-scoped choices, exact message/recipient previews and native atomic mention/notices; selection grants no access and changes no task or approval.
 

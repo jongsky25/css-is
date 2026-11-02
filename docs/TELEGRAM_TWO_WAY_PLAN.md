@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.78) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.79) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -2191,3 +2191,109 @@ Next: inspect fresh exact-head full repository normal/shuffled/dependency/
 container/aggregate CI and continue only the next explicitly requested feature.
 Main merge/release, preview publication, activation and personal/live testing
 remain deferred until the owner's later instruction.
+
+
+## Private own discussion inbox — 2026-11-02
+
+Owner approved a private inbox for their mentions/unread discussion updates.
+Implemented `/my_updates [all|mentions|replies|following] [BEFORE_ID]` and
+`/update_status NOTICE_ID` on branch `feat/telegram-private-work-lookup`, draft
+PR #572, candidate **9.79**. Deployment, preview publication, activation and
+personal/live testing remain explicitly deferred.
+
+Reconciled current main `adb83b4` (code version 9.60, merged seasonal PR #578)
+into this review branch as merge `1f834c4`. Preserved both runtime feature sets,
+seasonal preparation notes and every main changelog entry exactly (AST comparison).
+Shared release/status/cache conflicts were corrected locally, with no unresolved
+markers pushed. No seasonal/Telegram preview was replaced or feature activated.
+Initial previous draft head `808777d` had all metadata/dependency/full normal/full
+shuffled/required/avatar functional checks passing; that is previous-head evidence,
+not acceptance of the new merged feature head. Main deployment was not inspected.
+
+Independent default-off `CSS_TELEGRAM_WORK_UPDATES_READ_ENABLED` /
+`work.updates.read` requires work-read consent, enabled source work/documents,
+current private inbound/link/delivery/account/bot/chat proof and webhook replies.
+Other task/comment/reply/mention/read grants provide no inbox delegation. Inbox
+consent grants no post/edit/reply/mention/follow/read-marker or source access change.
+Group/topic/direct-worker paths cannot retrieve or replay a private inbox reply.
+
+Queries bind notice recipient to the current linked user. Foreign/missing/hidden
+notice details have the same neutral denial, even for case leads/admins. Current
+native work/every-linked-document visibility and same-work task resolution apply
+on each request. Terminal work/task discussion stays readable if source access
+permits it. Metadata includes own notice ID/reason, work/task ID/title, comment ID,
+notice/current comment revisions, native timestamp/read status and exact source
+link. No comment/parent text, authors, recipient names, submission/output or hidden
+counts are projected. Comment body and task submission/output columns are never
+read; a SQLite authorizer guard executes the real renderer on that same connection.
+
+Unread semantics match native observed revision < notice revision. Later source
+edits show distinct notice/current revisions. Source-managed read status removes
+an entry from the unread list; its own detail can still report already read.
+Telegram lookup marks nothing read and creates no source mutation, prepared action,
+follow/preference, new notice or scheduled/outgoing push. Discussion content and
+read-state management remain Office Connect actions.
+
+Own/unread/category/source-visibility SQL filters precede a bounded 200-candidate
+scan (50-row batches), native current visibility checks and six-entry lookahead.
+Pages show up to five UTF-16-budgeted entries. Last-shown seek IDs preserve category;
+long Unicode pages and bounded scans keep continuation without false global empty
+claims or hidden counts. Each page/detail is rendered from current source, never
+cached private projections. Current scopes/pilots/modules/context/bot are rechecked;
+revoke/pause/disconnect/restore prevent stale reads. Duplicate webhook IDs reply
+once; queries/source names/text are not retained in update/delivery descriptors.
+Existing routing metadata is unchanged. Rendering requires the intake transaction;
+no source or Telegram schema changes were introduced.
+
+Status header/footer wording was shortened to fit the additional feature at the
+maximum supported origin while preserving every availability/missing-consent item.
+The actual main 9.60 seasonal source/appearance checks are included alongside
+Telegram/native work verification on this combined candidate.
+
+Isolated Python 3.11 verification: **2683 broad regressions passed**
+across Telegram/native work, submission API/MCP submissions, audit-chain writers,
+deployment/release and actual-main seasonal/appearance checks. **1283
+current shuffled inbox/comment/task/action/menu/phone/seasonal checks** (seed 311)
+passed. **67 current focused inbox/phone/menu/budget/seasonal checks**
+passed; earlier focused inbox group: **35 passed**. All groups have
+zero failures/errors/skips and overlap. All final SQL-minimization/authorizer and
+service/phone assertions preceded broad/shuffled collection; no application source
+edits followed passing final groups.
+
+Own-recipient isolation against foreign/lead IDs, current work/every-document scope,
+strict filters/IDs, exact source links, native notice-vs-current revision/read state,
+no source/read-marker writes, bounded and Unicode seek continuation, no retained
+query/body projection, no comment-body/task-submission/output SQL reads (real same-
+connection authorizer), terminal visibility, current scopes/pilots/modules/origin/
+account/bot/context, groups/topics/direct/duplicate/no-push paths and link consent
+pass. Three 390×844 JavaScript-disabled phone flows cover mention/reply/follow
+notice creation in synthetic source data, independent read grants/menu/list/detail,
+no Telegram marking, exact source content navigation, native source-managed read
+state, unchanged tasks and disconnect. Initial status budget failure was fixed by
+shortening repeated header/footer wording while preserving every feature/consent
+item; final groups include the passing maximum-origin budget check.
+
+Merge reconciliation preserves actual-main seasonal runtime and all release entries;
+version.py parses, release metadata passes against adb83b4/9.60, and conflict-marker/
+whitespace checks pass. No native read/history/permission assertion or no-skips gate
+was weakened. Reports: `/tmp/telegram-discussion-updates-regressions.xml`,
+`/tmp/telegram-discussion-updates-shuffled.xml`,
+`/tmp/telegram-discussion-updates-current.xml` and
+`/tmp/telegram-discussion-updates-focused.xml`; all pass the JUnit no-skips gate.
+Concurrent long runs use separate workspace --basetemp paths per CLOUD_WORKSPACE.md;
+completed synthetic databases are removed after reports are preserved. No disk-full
+interruption occurred. Candidate 9.79 metadata, locks/vendor integrity, installed
+compatibility, AI contract 1.12.0, compilation, Markdown links and whitespace pass.
+Existing Starlette/httpx deprecation warning remains. New exact-head full repository
+normal/shuffled/dependency/container/aggregate CI still requires inspection after
+push; green previous-head 808777d checks are not new-head acceptance.
+
+See [discussion inbox behavior](TELEGRAM_DISCUSSION_INBOX.md) and
+[pending live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All new live rows
+remain Pending. No real Telegram message/provider registration, production data,
+scheduler/monitor execution, deployment, preview publication or activation occurred.
+
+Next: inspect new exact-head full repository normal/shuffled/dependency/container/
+metadata/aggregate CI, keep main freshness, and continue only the next explicitly
+requested feature. Main merge/release, preview publication, activation and personal/
+live testing remain deferred until the owner's later instruction.

@@ -1,6 +1,6 @@
 # Private officer cancellation of unfinished tasks
 
-Draft PR #572, candidate 9.78. The owner explicitly requested task cancellation.
+Draft PR #572, candidate 9.79. The owner explicitly requested task cancellation.
 Deployment, preview publication, activation and personal/live testing remain
 deferred. Local checks use synthetic records and blocked outgoing providers.
 

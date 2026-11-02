@@ -1,6 +1,6 @@
 # Private internal task deadline changes
 
-Draft PR #572, candidate 9.78. Deployment, preview publication, activation and
+Draft PR #572, candidate 9.79. Deployment, preview publication, activation and
 personal/live acceptance remain deferred. Synthetic local checks send no real
 Telegram messages and use no production records.
 

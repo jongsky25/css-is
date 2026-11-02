@@ -1,6 +1,6 @@
 # Private work and task comments
 
-Draft PR #572, candidate 9.78. Work/task discussion posts are implemented for later
+Draft PR #572, candidate 9.79. Work/task discussion posts are implemented for later
 activation. Deployment, preview publication, activation and personal/live testing
 remain deferred. Automated verification uses synthetic data and blocked providers.
 

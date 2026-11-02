@@ -1,6 +1,6 @@
 # Private replies to work and task comments
 
-Draft PR #572, candidate 9.78. Work/task discussion replies are implemented for
+Draft PR #572, candidate 9.79. Work/task discussion replies are implemented for
 later activation. Deployment, preview publication, activation and personal/live
 testing remain deferred. Local verification uses synthetic data and blocked providers.
 
