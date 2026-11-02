@@ -75,6 +75,18 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Christmas companion candidate published for review — November 2, 2026.**
+Source `a9441df` on `feat/christmas-companion-refinements` is RUNNING on the
+existing private CPU Basic preview, Space commit `d98f59e4aa973dfba99c67e1a0a5b7c17eb90cb2`.
+Manifest matches; authorized health/login and new assets return 200; preview
+banner/header present; sampled new assets match source SHA-256. Anonymous
+health/login return 404. Password unchanged; hosted signed-in phone review pending.
+[Review images, checks and build handoff](CHRISTMAS_COMPANION_BUILD.md).
+Next: owner sets/names a synthetic companion in Profile if needed, chooses Follow
+seasonal appearance and a Christmas outfit in Appearance, then reviews the private
+view. Production stays 9.60; no release number or Telegram code was changed.
+Release preparation/full CI and merge-order reconciliation follow preview feedback.
+
 **Christmas companion refinement candidate — November 2, 2026.** Owner requested
 implementation of the plan while preserving ongoing Telegram work. Separate branch
 `feat/christmas-companion-refinements`, based on main `adb83b4` (9.60): five

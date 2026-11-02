@@ -80,6 +80,21 @@ No release-ready CI claim is made for this build candidate.
 
 ## Parallel work and preview
 
+**Published preview:** source `a9441df0d1869ac9e99c716cc47e359e98232f6b`,
+Space commit `d98f59e4aa973dfba99c67e1a0a5b7c17eb90cb2`. The existing private
+CPU Basic preview is RUNNING and its manifest matches that exact source. Authorized
+health/login return 200; login has the PREVIEW banner/header. The new companion
+stylesheet, courtyard SVG and editor script return 200 and match source SHA-256.
+Anonymous health/login return 404. The existing password secret was unchanged.
+Hosted app sign-in/owner phone acceptance are pending; the password is not available
+in this process. Local staged login/mobile verification passed as recorded above.
+
+Open [the private preview](https://huggingface.co/spaces/equityinhealth/office-connect-preview)
+in Safari signed into Hugging Face, then use `preview@example.invalid` with the
+saved preview password. Publication reset the synthetic profile and session.
+Set a companion name/species in Profile if needed and choose Follow seasonal
+appearance; then pick a Christmas outfit in Appearance and update the private view.
+
 Latest compared main remains `adb83b4`; Telegram branch
 `feat/telegram-private-work-lookup` is at `af51001`, candidate 9.79. Before adding
 this handoff/status entry, there are **no shared changed paths**. Adding the required
