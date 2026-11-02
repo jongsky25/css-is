@@ -123,7 +123,7 @@ def render(conn,clean,bot,now):
         try:entry=detail(conn,user,query['id'])
         except ValueError:return DENIED
         return (line(entry)+'\nOpen discussion: '+source(entry)
-                +'\nBack: /my_updates\nMetadata only. Read discussion and manage read status in Office Connect; this lookup marks nothing read.')
+                +'\nBack: /my_updates\nMetadata only; this lookup marks nothing read. Read discussion in Office Connect; /menu lists separately permitted actions.')
     entries,continuation=page(conn,user,query['category'],query['before'])
     text='My unread discussion updates · '+query['category']+' · newest notice first\nMetadata only; lookup does not mark messages read.'
     shown=[]
@@ -134,4 +134,4 @@ def render(conn,clean,bot,now):
     if not shown:text+='\nNo unread updates found on this page.'
     if shown and len(shown)<len(entries):text+='\nNext page: /my_updates '+query['category']+' '+str(shown[-1]['id'])
     elif continuation:text+='\nMore source candidates remain. Continue: /my_updates '+query['category']+' '+str(continuation)
-    return text+'\nFilters: /my_updates mentions · /my_updates replies · /my_updates following\nDiscussion text and read-state changes stay in Office Connect; other recipients and counts are not disclosed.'
+    return text+'\nFilters: /my_updates mentions · /my_updates replies · /my_updates following\nDiscussion text stays in Office Connect. Lookup marks nothing read; /menu lists separately permitted actions. Other recipients and counts are not disclosed.'

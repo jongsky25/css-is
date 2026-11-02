@@ -71,7 +71,7 @@ def test_status_explains_missing_consent_without_advertising_hidden_commands(men
     st.set_setting(menu_env[0],'documents.enabled','1')
     text=command(menu_env,'/status')['text']
     assert 'connection: active' in text
-    assert 'Calendar lookup' in text and 'Document lookup: missing consent' in text
+    assert 'Calendar lookup' in text and 'Document lookup: needs: '+links.SCOPES['documents.read'] in text and 'needs = missing consent' in text
     assert '/documents' not in text and '/task_submit' not in text
     monkeypatch.setenv('CSS_TELEGRAM_DOCUMENTS_READ_ENABLED','0')
     assert 'Document lookup: host pilot' in command(menu_env,'/status',11)['text']

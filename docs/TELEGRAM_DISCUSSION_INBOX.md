@@ -1,6 +1,6 @@
 # Private mentions and unread discussion inbox
 
-Draft PR #572, candidate 9.79. Telegram can list your own unread discussion notice
+Draft PR #572, candidate 9.80. Telegram can list your own unread discussion notice
 metadata and open the correct work/task discussion. Deployment, preview publication,
 activation and personal/live testing remain deferred. Local verification uses
 synthetic data and blocked providers.
@@ -49,7 +49,7 @@ Details label it already read and still report the current revision. This preser
 native notice semantics rather than inventing a new read/unread model.
 
 **Telegram lookup marks nothing read.** Open the source discussion to read its
-content and manage read state in Office Connect. No acknowledgement, follow change,
+content and manage read state in Office Connect. A separately consented [explicit acknowledgement](TELEGRAM_UPDATE_READ.md) can mark one selected notice revision read after a private preview and confirmation. No acknowledgement, follow change,
 new comment, mention, edit, task action, approval or notification preference is
 created by inbox lookup.
 
@@ -76,8 +76,9 @@ needed; the native notice/history/read model remains unchanged.
 
 ## Main reconciliation and verification
 
-Current main `adb83b4` (code version 9.60, merged seasonal PR #578) was merged into
-the review branch before this addition. Both runtime feature sets and every actual
+The inbox increment first merged main `adb83b4` (code version 9.60, seasonal
+PR #578). The later acknowledgement increment also merges `25fe812` (code version
+9.61, companion refinements PR #579). Both runtime feature sets and every actual
 main changelog entry are retained. Shared release/status/cache conflicts were
 resolved locally and checked for markers; the seasonal source/appearance checks
 run with this candidate. No preview was replaced or feature activated as part of

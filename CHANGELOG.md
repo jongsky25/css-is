@@ -1,4 +1,6 @@
-## 9.79 — November 2, 2026
+## 9.80 — November 2, 2026
+
+- Add independently consented own-notice read acknowledgement with exact notice/current revision previews, current source checks, atomic native monotonic read markers and replay-safe receipts; lookup itself remains read-only.
 
 - Add an independently consented private discussion inbox for own unread mention/reply/following notice metadata, bounded current-access paging and source links; stored discussion and read-state changes stay in Office Connect.
 

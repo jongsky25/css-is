@@ -77,7 +77,8 @@ access remains necessary in a fresh chat.
 
 **Current Telegram feature work — November 2, 2026:** continue draft
 [PR #572](https://github.com/jongsky25/css-is/pull/572), branch
-`feat/telegram-private-work-lookup`, candidate **9.79**. The latest addition is
+`feat/telegram-private-work-lookup`, candidate **9.80**. The latest addition is
+[explicit own-notice read acknowledgement](TELEGRAM_UPDATE_READ.md), following the
 [private discussion inbox](TELEGRAM_DISCUSSION_INBOX.md), following colleague mentions, author-owned comment editing, replies and comment posting, dependency management, blocker recording/clearing and lookup, review queue, cancellation and task reopening/reassignment,
 initial assignment, submitted-task review, deadline changes and guided proposals. Inspect exact-head CI and continue the next requested feature.
 Deployment, preview publication, activation and personal/live testing remain
@@ -2590,3 +2591,77 @@ Next: inspect new exact-head full repository normal/shuffled/dependency/containe
 metadata/aggregate CI, keep main freshness, and continue only the next explicitly
 requested feature. Main merge/release, preview publication, activation and personal/
 live testing remain deferred until the owner's later instruction.
+
+
+## Explicit own-notice read acknowledgement — 2026-11-02
+
+Owner: Office Connect maintainers; implementation agent Codex. Status: in review
+on `feat/telegram-private-work-lookup`, draft PR #572, candidate **9.80**.
+User approved building the next Telegram feature; all deployment, preview publication,
+activation and personal/live testing remain deferred.
+
+Added `/update_read` with a signed-in no-script form taking one own notice ID and
+exact notice revision, private `/updateread_preview`, five-minute confirmation and
+`/updateread_receipt` recovery. Independent `work.updates.acknowledge` and default-off
+`CSS_TELEGRAM_WORK_UPDATES_ACKNOWLEDGE_ENABLED` require both work/inbox read scopes
+and pilots. Own recipient, current work/every-linked-document/thread, source metadata,
+read marker and latest comment revision are rechecked. Revoke of either prerequisite
+scrubs pending previews. Current private account/bot/context/module/reply-mode guards
+apply throughout. Main companion refinements #579 (`25fe812`, 9.61) are merged into
+the review branch; actual released entries and runtime changes are preserved.
+
+Native `mark_read_in_transaction` advances only the selected notice revision using
+the existing monotonic per-comment/per-account read marker. Notice 1/current comment
+2 records read 1: the native unread notice leaves the list, while revision 2 is not
+acknowledged. Changed source/read markers require a fresh preview. Already-read
+notices need no new action. Preview/receipt metadata contains no discussion bodies,
+author identities or task submissions. Source/read marker, operation receipt and
+webhook handoff share one transaction; faults roll back and retries do not replay.
+Receipt distinguishes recorded acknowledgement from current comment/read revision.
+No bulk read, other-recipient changes, comment/notice/history/task/event/approval,
+follow or notification-preference changes. Reading lookups still mark nothing read;
+their footer now points to /menu for separately permitted actions.
+
+Behavior: [read acknowledgement](TELEGRAM_UPDATE_READ.md). Live checklist includes
+two new acknowledgement rows, both Pending. Local verification is synthetic and
+blocks outgoing providers. Final verification evidence follows.
+No live data, real messages/provider registration, host changes, scheduler execution,
+preview replacement, activation, main push/merge or deployment.
+
+
+Isolated verification: **2788 broad checks passed**, zero failures/errors, across
+Telegram/native work, submission API/MCP, audit-chain writes, deployment/release,
+seasonal/appearance and companion changes. That raw report also records **one
+intentional opt-in companion browser skip** because its file was manually selected.
+The exact skipped check was then explicitly enabled and **passed separately (1)**
+through the same credential-filtered wrapper using a temporary early pytest hook
+that sets only CSS_AVATAR_BASELINE; that hook was removed. The broad raw report is
+not claimed as a passing no-skips gate. The fresh standard affected shuffled group
+(seed 311) has **955 passed, zero failures/errors/skips**, and passes the JUnit gate.
+Earlier focused **114**, lookup/acknowledgement **189**, and final status-budget/phone
+**17** checks pass their no-skips gates; groups overlap. All final application edits
+precede the completed broad/current shuffled runs. Reports:
+`/tmp/telegram-update-read-broad-current.xml`,
+`/tmp/telegram-update-read-shuffle-clean.xml`,
+`/tmp/telegram-update-read-final-focus.xml`,
+`/tmp/telegram-update-read-wording-final.xml`,
+`/tmp/telegram-update-read-budget-final.xml` and
+`/tmp/telegram-update-read-avatar-optin.xml`.
+
+The maximum-origin status test initially found 4247 UTF-16 units; repeated
+permission wording was shortened with an explicit “needs = missing consent” legend,
+retaining every feature/permission and the unchanged 4096-unit assertion. The
+registered-adapter expectation now includes the new action. Exploratory interrupted
+runs are not counted as passing evidence. No disk-full interruption occurred;
+separate workspace scratch directories were used and completed synthetic databases
+are removed after reports are preserved. The existing Starlette/httpx deprecation
+warning remains. Candidate 9.80 release metadata against main 25fe812/9.61,
+lock inputs, all five vendor integrity groups, installed compatibility, AI contract
+1.12.0, compilation, actual-main released-entry preservation and whitespace pass.
+Markdown link checks cover the changed handoff/behavior documents.
+
+Next: inspect new exact-head complete repository normal/shuffled/dependency/container/
+metadata/aggregate CI after remote save, keep main freshness and continue only the
+next requested feature. Earlier af51001 checks are green but are not acceptance for
+this new head. Main push/merge/release, preview publication, activation and personal/
+live testing remain deferred. All new live checklist rows remain Pending.
