@@ -405,7 +405,7 @@
      care=true adds the water/feed button; drag=true lets it be moved around
      its .av-play container (wellness hub). --#}
 {% macro avatar(kind, stage, name="", size=170, interactive=false, mood="", care=false, drag=false,
-                person="", care_streak=0, last_care="", drag_key="", chase=false, preferences=none) %}
+                person="", care_streak=0, last_care="", drag_key="", chase=false, preferences=none, edit_url="") %}
 {% set fam = "fam-animal" if avatar_family(kind) == "animal" else "fam-plant" %}
 {% set verb = avatar_care_verb(kind) %}
 <span class="avwrap {{ fam }}" data-kind="{{ kind }}" data-stage="{{ [[stage|int, 6]|min, 1]|max }}"
@@ -441,5 +441,6 @@
     {% if kind == 'rabbit' %}<a class="av-audio-credits" href="/static/audio/avatars/credits.html">Sound credits</a>{% endif %}
   </span>
   {% endif %}
+  {% if edit_url %}<a class="oc-pet-edit" href="{{ edit_url }}">Change companion →</a>{% endif %}
 </span>
 {% endmacro %}

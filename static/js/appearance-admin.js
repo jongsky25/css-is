@@ -11,6 +11,24 @@
       form.elements.outfit.dispatchEvent(new Event('change',{bubbles:true}));
     });
   });
+  function showOutfits(form){
+    var theme=form.querySelector('[name="theme"]:checked').value;
+    var outfit=form.elements.outfit.value;
+    var mismatch=form.querySelector('[data-outfit-mismatch]');
+    if(mismatch)mismatch.hidden=!((theme==='christmas' && outfit.startsWith('halloween')) || (theme==='halloween' && outfit.startsWith('christmas')));
+    if(form===editor){
+      document.querySelectorAll('[data-outfit-group]').forEach(function(group){
+        group.open=group.dataset.outfitGroup===theme || group.dataset.outfitGroup==='default';
+        group.style.order=group.dataset.outfitGroup===theme?'0':'1';
+      });
+    }
+  }
+  document.querySelectorAll('[data-pick-outfit]').forEach(function(button){
+    button.addEventListener('click',function(){editor.elements.outfit.value=button.dataset.pickOutfit;editor.elements.outfit.dispatchEvent(new Event('change',{bubbles:true}));});
+  });
+  document.querySelectorAll('form:has([data-match-outfit])').forEach(function(form){
+    showOutfits(form);form.addEventListener('change',function(event){if(event.target.name==='theme'||event.target.name==='outfit')showOutfits(form);});
+  });
   function updatePreview(){
     var params=new URLSearchParams({appearance_preview:'1',view:'me',
       theme:editor.querySelector('[name="theme"]:checked').value,
