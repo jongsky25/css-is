@@ -323,9 +323,8 @@
       {#-- Bumped again from 108: the per-stage artwork carries real detail
            (a leaf count, a shell pattern) that was still hard to make out. --#}
       {{ avatar(profile.avatar_kind, (wstats.stage if wstats else 1), name=profile.avatar_name,
-                size=150, interactive=true, mood=profile.avatar_mood, drag=true, drag_key="css-av-pos-home", chase=true) }}
+                size=150, interactive=true, mood=profile.avatar_mood, drag=true, drag_key="css-av-pos-home", chase=true, edit_url="/me#companion") }}
       {% if bday_greet %}<span class="oc-pet-party">🎉 {{ profile.avatar_name }} is celebrating with you!</span>{% endif %}
-      <a class="oc-pet-edit" href="/me#companion">Change companion →</a>
     </div>
     </div>
     {% endif %}

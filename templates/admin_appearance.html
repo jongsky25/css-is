@@ -2,8 +2,8 @@
 {% from "_avatars.html" import avatar_defs, avatar_svg %}
 {% block title %}Appearance{% endblock %}
 {% block head %}
-<link rel="stylesheet" href="/static/css/appearance-admin.css?v=1">
-<script src="/static/js/appearance-admin.js?v=3" defer></script>
+<link rel="stylesheet" href="/static/css/appearance-admin.css?v=2">
+<script src="/static/js/appearance-admin.js?v=4" defer></script>
 {% endblock %}
 
 {% macro fields() %}
@@ -27,6 +27,7 @@
 {% for key, outfit in outfits.items() %}<option value="{{ key }}" {{ 'selected' if key == value.outfit }}>{{ outfit.name }}</option>{% endfor %}
 </select>
 <button type="button" class="btn ghost" data-match-outfit>Use matching outfit</button>
+<p class="appearance-warning" data-outfit-mismatch hidden>The page theme and outfit are different seasons. Choose a matching outfit above, or keep this combination.</p>
 <input type="hidden" name="artwork_present" value="1">
 <label class="appearance-check"><input type="checkbox" name="artwork" value="1" {{ 'checked' if value.artwork }}> Illustrated scenery and seasonal banner</label>
 <label class="appearance-check"><input type="checkbox" name="effects" value="1" {{ 'checked' if value.effects }}> Ambient animation · mist, bats, lantern glow or New Year confetti</label>
@@ -61,11 +62,14 @@
 <h2 id="editor-heading">Choose an appearance</h2><p class="muted">Outfits style everyone’s existing companion. Their species, name, and growth stay personal.</p>
 <form method="post" action="/admin/appearance" id="appearance-editor" data-dirty-track>
 {{ fields() }}{{ picks(selected, 'editor', true) }}
-<div class="appearance-outfit-gallery" data-appearance-sample aria-label="Outfit examples">
-{% for key in ['default', 'halloween', 'halloween_vampire', 'halloween_pumpkin', 'christmas'] %}
-<div><div class="appearance-example">{{ avatar_svg('cat', 3, outfits[key].month, key) }}{{ avatar_svg('plant', 3, outfits[key].month, key) }}</div><small>{{ outfits[key].name }}</small></div>
-{% endfor %}
-</div>
+<section data-appearance-sample aria-label="Seasonal outfit examples">
+{% for group, title in [('default', 'Everyday outfit'), ('christmas', 'Christmas outfits'), ('halloween', 'Halloween outfits')] %}
+<details class="appearance-outfit-group" data-outfit-group="{{ group }}" {{ 'open' if group == selected.theme or group == 'default' }}>
+<summary>{{ title }}</summary><div class="appearance-outfit-gallery">
+{% for key, option in outfits.items() if (key.startswith(group) if group != 'default' else key == 'default') %}
+<div class="appearance-outfit-example"><div class="appearance-example">{{ avatar_svg(sample_kind, 3, option.month, key, preferences=false) }}{{ avatar_svg('plant' if sample_kind != 'plant' else 'rabbit', 3, option.month, key, preferences=false) }}</div><small>{{ option.name }}</small><button type="button" data-pick-outfit="{{ key }}" class="btn ghost">Choose {{ option.name.split(' · ')[-1] }}</button></div>
+{% endfor %}</div></details>
+{% endfor %}</section>
 <label for="override-expires">Manual override ends (Asia/Manila)</label>
 <input type="datetime-local" name="expires" id="override-expires" value="{{ override_expires }}">
 <p class="muted">Leave blank to keep it active until you turn it off. This expiry applies to “Publish now”.</p>
