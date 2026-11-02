@@ -49,7 +49,9 @@ def install_context(app, get_conn):
                                               request.query_params.get("outfit", "monthly"),
                                               request.query_params.get("effects") == "1",
                                               request.query_params.get("artwork") == "1" if "artwork" in request.query_params else None,
-                                              request.query_params.get("banner", "")))
+                                              request.query_params.get("banner", ""),
+                                              request.query_params.get("target_year", "2027")))
+                active["newyear_target"] = rules.newyear_target(active["target_year"])
                 active.update(month=rules.accessory_month(active["outfit"]), preview=True)
             except ValueError:
                 return HTMLResponse("Choose a valid preview theme and outfit.", status_code=400, headers=PRIVATE)

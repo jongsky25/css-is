@@ -75,6 +75,97 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Seasonal release PR opened — November 1, 2026.**
+[Draft PR #578](https://github.com/jongsky25/css-is/pull/578) prepares 9.60.
+Owner accepted the richer preview design and requested checks/release preparation;
+production approval remains pending. Local release/appearance/preview group:
+67 passed in 44.60s, no failures/skips. Metadata, lock-input and AI contract checks
+passed. Required CI is running on the PR; exact final-head status must be read
+from GitHub before claiming release readiness. Do not enable auto-merge.
+Post-metadata merge-tree simulation against Telegram `cb192da` confirms conflicts
+only in CHANGELOG.md, version.py, static/js/sw.js and docs/SETUP_STATUS.md.
+These are release history/cache/status reconciliation, with no seasonal/Telegram
+runtime source conflict observed. Proposed order remains seasonal first; if main
+advances, update/reconcile and rerun all required checks. Keep the accepted preview
+at `f4438aa` while CI runs; no republish or production change is needed.
+Next: inspect full exact-head normal/shuffled/dependency/metadata/aggregate results,
+resolve failures if any, and ask for explicit merge/deployment approval only once
+the candidate passes. Final CI evidence belongs in PR #578 to avoid restarting
+the verified source commit solely to record check results.
+
+**Seasonal release preparation authorized — November 1, 2026.** Owner accepted
+the richer design and requested release preparation/PR/checks, with merge and
+production deployment explicitly left for final approval. Candidate 9.60 on
+`feat/seasonal-theme-design`, based on current main `a7b9b38` (9.59).
+Proposed order: seasonal first while Telegram continues independently at candidate
+9.77/head `cb192da`. This is not a lock on the other thread: if main advances,
+refresh/reconcile versions and repeat required checks before release. Initial
+merge-tree simulation against Telegram found only the shared status-document
+conflict. Metadata/cache/changelog now synchronized for seasonal 9.60; final
+metadata adds the expected shared release-file reconciliation work.
+Phone design acceptance applies to preview source `f4438aa`; release metadata is
+the only subsequent application-facing preparation change. No feature activation,
+schedule installation, preview replacement, merge or production deployment.
+Next: open the release PR and observe complete normal/shuffled, dependency/container,
+metadata and aggregate CI on its exact candidate head; fix failures without bypass.
+
+**Richer seasonal design revision — November 1, 2026.** Owner requested stronger
+festivities after the first preview. Added fuller Christmas tree/parol/gift artwork,
+garlands, New Year fireworks/skyline/year display and bunting, decorated companion
+settings, gold Home card details and festive footers. Phone hero artwork now stays
+visible. Sound remains deferred; accessibility controls retained. Initial focused
+group 19 passed; final seasonal group after refinements 13 passed, no failures/skips,
+JUnit gate passed. [Screenshots and implementation notes](SEASONAL_THEME_IMPLEMENTATION.md).
+Published source `f4438aaf361e527bb73747f87fb3ed9b1084dae9` to the existing
+private preview; Space commit `62e72b31bec9cfa0c1d26c9a7e683278dab6b35f`
+is RUNNING. Authorized health/login and new festive assets return 200; login has
+PREVIEW banner. This replaces our original seasonal preview. Password unchanged;
+phone review pending. Next: owner reloads/signs in, enables artwork and reviews
+both richer themes. No production release, merge or Telegram publication.
+
+**Seasonal private preview published — November 1, 2026.**
+Owner requested publication. Source `5f6a18c2f5171dc17e6ee7462db2a8e77fe9ac64`
+is RUNNING on the existing private CPU Basic preview; Space commit
+`d5ed25c6bc88f4b7e194ca5c8ed8b463135b3071`. Remote manifest matches; authorized
+health/login and seasonal assets return 200, login has PREVIEW banner/header;
+anonymous health/login return 404. Isolated preview-bundle tests: 3 passed,
+JUnit gate passed with zero failures/skips. Existing password secret unchanged;
+no hosted app sign-in is claimed because the password is unavailable here.
+The replaced preview was old collaboration source `f03125c2`; Telegram's latest
+handoff explicitly defers preview publication. No Telegram build was overwritten.
+[Phone review instructions and evidence](SEASONAL_THEME_IMPLEMENTATION.md).
+Next: owner reviews Christmas/New Year on phone, then resolve feedback and reconcile
+release order with Telegram. Shared preview now holds the seasonal candidate;
+serialize future publishes. No production merge/deployment or version change.
+
+**Seasonal application integration candidate — November 1, 2026.**
+`feat/seasonal-theme-design` now implements Christmas/New Year palettes and parol
+scenes, Home countdown to a validated target year in Asia/Manila, static midnight
+greeting, optional bounded effects and generalized Appearance controls. No sound.
+[Implementation, real-page screenshots and coordination handoff](SEASONAL_THEME_IMPLEMENTATION.md).
+Existing appearance checks: 22 passed; combined checks: 34 passed; expanded seasonal
+checks: 13 passed (overlapping groups), zero failures/skips, JUnit gates pass.
+Final focused browser/new-season run after the admin-copy change: 16 passed,
+zero failures/skips; JUnit gate passed.
+No event published, Telegram message, preview overwrite, PR, merge or deployment.
+Version metadata is intentionally deferred until release order with Telegram is
+known; full required CI/release checks and hosted phone acceptance remain pending.
+Latest compared Telegram branch head: `6a83c07`; only this status file overlaps by
+changed path. Next: coordinate the shared preview slot and review on phone, then
+refresh both feature branches and validate the eventual combined release.
+
+**Seasonal build started in isolation — November 1, 2026.**
+Branch `feat/seasonal-theme-design` starts from main `a7b9b38` in a separate
+worktree. [Interactive mockups, screenshots and merge-coordination notes](design/seasonal/README.md)
+cover Christmas/New Year Home, light/dark, a working form and simulated midnight.
+32 browser layout combinations, draft retention and countdown transition/reset
+passed. No application/runtime tests, integration, preview, release metadata,
+Telegram messages, merge or deployment. Open Telegram draft PR #572 remains
+independent; the current shared changed path is this status document only.
+Next: refresh both branches, then integrate dedicated seasonal assets/tokens and
+the configured server-synchronized countdown from
+[the build handoff](SEASONAL_THEME_BUILD_HANDOFF.md). Sound remains deferred.
+
 **Monitoring release deployed; automatic trigger and phone receipt pending — November 1, 2026.**
 
 [PR #575](https://github.com/jongsky25/css-is/pull/575) merged as
