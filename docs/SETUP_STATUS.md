@@ -75,6 +75,16 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Companion 9.61 merge/deployment approved — November 2, 2026.** Owner explicitly
+approved production release. PR #579 merged cleanly as `25fe812` after all exact-head
+checks passed (8,448 tests in each full order, plus audits/metadata/avatar/aggregate).
+Production [run 41393018082](https://github.com/jongsky25/css-is/actions/runs/41393018082)
+is rerunning complete merge-commit checks before backup/deploy. No completion is
+claimed yet. [Release record](COMPANION_961_RELEASE.md) is saved separately on
+`docs/companion-961-release-handoff` to avoid another deployment for documentation.
+Next: observe all gates, then independently verify live version/source/assets.
+Live appearance settings and Telegram's branch remain unchanged by this operation.
+
 **Christmas companion release preparation — November 2, 2026.** Owner requested
 the next preparation/verification step. Candidate 9.61 on
 `feat/christmas-companion-refinements`, based on main `adb83b4` (9.60), with
