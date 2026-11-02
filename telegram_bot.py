@@ -25,6 +25,7 @@ import telegram_search as search_reads
 import telegram_review_queue as review_reads
 import telegram_discussion_updates as update_reads
 import telegram_followed_discussions as follow_reads
+import telegram_discussion_search as discussion_search
 import telegram_task_blockers as blocker_reads
 import telegram_groups as groups
 import telegram_calendar as calendar_reads
@@ -211,6 +212,10 @@ def normalize(value):
                 clean['work_query'] = work_lookup.parse(text)
             except ValueError:
                 clean['work_query'] = {'error': 'usage'}
+        if first in discussion_search.COMMANDS:
+            clean['command']=first
+            try:clean['discussion_search_query']=discussion_search.parse(text)
+            except ValueError:clean['discussion_search_query']={'error':'usage'}
         if first in follow_reads.COMMANDS:
             clean['command']=first
             try:clean['follows_query']=follow_reads.parse(text)
@@ -306,7 +311,7 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
             groups.handle_event(conn, clean, bot)
         cid, generation, permitted = identity(conn, clean['sender_id'])
         inline_meeting=(webhook_reply is not None and meeting_webhook.accepts(conn,clean))
-        if inline_meeting or clean['command'] in task_actions.COMMANDS + document_reads.COMMANDS + supply_reads.COMMANDS + personal_reads.COMMANDS + brief_reads.COMMANDS + search_reads.COMMANDS + review_reads.COMMANDS + update_reads.COMMANDS + follow_reads.COMMANDS + blocker_reads.COMMANDS + meeting_manage.COMMANDS + room_manage.COMMANDS + task_create.COMMANDS + task_deadline.COMMANDS + task_review.COMMANDS + task_assign.COMMANDS + task_reassign.COMMANDS + task_reopen.COMMANDS + task_cancel.COMMANDS + blocker_manage.COMMANDS + dependency_manage.COMMANDS + comment_manage.COMMANDS + reply_manage.COMMANDS + comment_edit.COMMANDS + update_read.COMMANDS + discussion_follow.COMMANDS:
+        if inline_meeting or clean['command'] in task_actions.COMMANDS + document_reads.COMMANDS + supply_reads.COMMANDS + personal_reads.COMMANDS + brief_reads.COMMANDS + search_reads.COMMANDS + review_reads.COMMANDS + update_reads.COMMANDS + follow_reads.COMMANDS + discussion_search.COMMANDS + blocker_reads.COMMANDS + meeting_manage.COMMANDS + room_manage.COMMANDS + task_create.COMMANDS + task_deadline.COMMANDS + task_review.COMMANDS + task_assign.COMMANDS + task_reassign.COMMANDS + task_reopen.COMMANDS + task_cancel.COMMANDS + blocker_manage.COMMANDS + dependency_manage.COMMANDS + comment_manage.COMMANDS + reply_manage.COMMANDS + comment_edit.COMMANDS + update_read.COMMANDS + discussion_follow.COMMANDS:
             inline = (webhook_reply is not None and storage.enabled('delivery') and storage.enabled('link')
                       and transport.config()==bot and cid is not None and permitted)
             conn.execute("""INSERT INTO telegram_update
@@ -314,7 +319,8 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
                 VALUES (?,?,?,?,?,?,?,?,?,?)""", (bot[0],clean['update_id'],clean['sender_id'],clean['chat_id'],None,
                     cid,generation,hashlib.sha256(raw).hexdigest(),stamp(now),'processed' if inline else 'ignored'))
             if inline:
-                adapter=(follow_reads if clean['command'] in follow_reads.COMMANDS else
+                adapter=(discussion_search if clean['command'] in discussion_search.COMMANDS else
+                         follow_reads if clean['command'] in follow_reads.COMMANDS else
                          update_reads if clean['command'] in update_reads.COMMANDS else
                          blocker_reads if clean['command'] in blocker_reads.COMMANDS else
                          review_reads if clean['command'] in review_reads.COMMANDS else

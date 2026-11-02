@@ -1,4 +1,6 @@
-## 9.82 — November 2, 2026
+## 9.83 — November 2, 2026
+
+- Add independently consented exact-thread discussion text search with current native source checks, literal Unicode matching, bounded excerpts/current revisions and source links; queries/excerpts stay ephemeral and no read state or records change.
 
 - Add independently consented saved discussion follow lookup with current own/source checks, explicit work-wide versus task coverage, bounded composite-key seek pages and conditional source-prefilled follow controls; listing and opening links change no follows or read markers.
 

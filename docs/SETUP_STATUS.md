@@ -77,7 +77,8 @@ access remains necessary in a fresh chat.
 
 **Current Telegram feature work — November 2, 2026:** continue draft
 [PR #572](https://github.com/jongsky25/css-is/pull/572), branch
-`feat/telegram-private-work-lookup`, candidate **9.82**. The latest addition is
+`feat/telegram-private-work-lookup`, candidate **9.83**. The latest addition is
+[exact-thread discussion text search](TELEGRAM_DISCUSSION_SEARCH.md), following
 [my followed discussions lookup](TELEGRAM_FOLLOWED_DISCUSSIONS.md), following
 [own discussion following](TELEGRAM_DISCUSSION_FOLLOWING.md), following
 [explicit own-notice read acknowledgement](TELEGRAM_UPDATE_READ.md), following the
@@ -2801,3 +2802,71 @@ deployment was changed. Next: inspect new exact-head complete repository normal/
 shuffled/dependency/container/metadata/aggregate CI after remote save, retain main
 freshness and continue only the next requested feature. Publication, activation and
 personal/live testing remain deferred; both new live checklist rows stay Pending.
+
+
+## Private exact-thread discussion text search — 2026-11-02
+
+Owner: Office Connect maintainers; implementation agent Codex. Status: in review
+on `feat/telegram-private-work-lookup`, draft PR #572, candidate **9.83**. User
+approved searching comments/replies with limited text excerpts and source links.
+Independent work.discussion.search consent and default-off
+CSS_TELEGRAM_WORK_DISCUSSION_SEARCH_ENABLED require separate work read. One exact
+work-level discussion or task thread is selected before any body search; only current
+revisions match a literal 2–80-character Unicode-casefold phrase. Queries/excerpts
+are ephemeral; no read state, follow, notice, source record, draft/operation or
+provider/scheduler is changed. Deployment, preview publication, activation and
+personal/live testing remain deferred. Final verification and next action follow.
+
+
+Final isolated Python 3.11 verification: **1386 regressions passed** across discussion
+search/followed lists/follow management/inbox/read acknowledgement, discussion writers/
+mentions, metadata search, action/link/menu/private meeting webhook/bot/task/dependency
+flows, native work/channels, submission API/MCP, audit-chain writes, deployment bundle
+and release checks. **1081 affected shuffled checks passed** (seed 311). Both reports
+have zero failures/errors/skips and pass the JUnit gate; groups overlap. Initial
+search service group **48 passed**, phone/metadata-search/menu group **34 passed**,
+and maximum-origin menu group **11 passed**, each passing the no-skips JUnit gate.
+All final application/test changes preceded the completed final groups; only
+handoff/behavior/PR documentation changed afterward.
+
+Exact work-level versus task/reply scope, current-only revision refresh, literal
+SQL metacharacters and Unicode casefold expansion, bounded late-match excerpts,
+strict source/phrase/SQLite seek grammar, preserved scope/query continuation and
+max-origin Unicode reply budgets pass. Native hidden/missing/cross-work denial is
+proved before any body query with a SQLite body-read denial authorizer. A separate
+authorizer on the actual renderer connection forbids author-ID, task submission/
+output and notice/read/follow table reads; returned match rows contain only ID,
+reply indicator, current revision and bounded excerpt. Metadata/inbox/follow/write
+scopes do not grant text search, and /find remains metadata-only. Source snapshots
+and Telegram descriptors prove no read/preference/source writes, origin/draft/
+operation creation, queued push or retained plaintext query/excerpt. Current source/
+document/grant/pilot/module/account/bot/restore/disconnect/private/context and
+duplicate-update guards pass. Two 390×844 JavaScript-disabled phone cases cover
+explicit text consent, work/task current parent/reply excerpts, omitted history/
+other threads, exact full-source navigation, unchanged read/notice/follow/source
+state, metadata isolation and disconnect. Source discussion pages retain their
+normal native read behavior; search itself marks nothing read.
+
+Reports: `/tmp/telegram-discussion-search-regressions.xml`,
+`/tmp/telegram-discussion-search-shuffled.xml`,
+`/tmp/telegram-discussion-search-focus.xml`,
+`/tmp/telegram-discussion-search-phone.xml` and
+`/tmp/telegram-discussion-search-budget.xml`. Separate workspace scratch paths keep
+synthetic data off small /tmp; completed databases are removed after reports are
+preserved. No interrupted/disk-full test run or skipped check occurred. Candidate
+9.83 release metadata against actual main 25fe812/9.61, lock inputs, five vendor
+integrity groups, installed compatibility, AI contract 1.12.0, compilation, exact
+actual-main released-entry preservation, Markdown links and whitespace pass. The
+existing Starlette/httpx deprecation warning remains. At start, prior head 487633e
+functional/metadata/dependency checks were green and full normal/shuffled CI were
+running; those are not acceptance for this new head.
+
+See [discussion search behavior](TELEGRAM_DISCUSSION_SEARCH.md) and the updated
+pending live checklist. App query/excerpt processing is ephemeral; text already
+sent to Telegram remains in that chat and cannot be retracted by scope revocation.
+No real provider registration/message, production source/host/secret/configuration,
+scheduler, preview, activation, main push/merge or deployment changed. Next: inspect
+new exact-head complete repository normal/shuffled/dependency/container/metadata/
+aggregate CI after remote save, keep current main and continue only the next requested
+feature. Publication, activation and personal/live testing remain deferred. Both
+new live acceptance rows remain Pending.
