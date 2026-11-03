@@ -124,7 +124,7 @@ def test_source_and_selected_message_denials_precede_body_sql(read_env,target):
         return sqlite3.SQLITE_DENY if op==sqlite3.SQLITE_READ and table=='work_comment_revision' and column=='body' else sqlite3.SQLITE_OK
     c.set_authorizer(deny_body)
     try:
-        for n,kind in enumerate(reader.COMMANDS,10):
+        for n,kind in enumerate(('/discussion_thread','/discussion_message'),10):
             assert ask((read_env,root,task['id']),kind,number=n,comment_id=chosen_comment,case_id=chosen_case,task_id=chosen_task)['text']==reader.DENIED
     finally:c.set_authorizer(None)
 
@@ -133,6 +133,8 @@ def test_source_and_selected_message_denials_precede_body_sql(read_env,target):
     '/discussion_thread 1 all 1','/discussion_thread 1 work 0','/discussion_thread 1 work 01','/discussion_thread 1 work 1 before:0',
     '/discussion_thread 1 work 1 part:1:1','/discussion_thread 1 work 1 extra extra','/discussion_message 1 work 1 before:2',
     '/discussion_message 1 work 1 part:0:1','/discussion_message 1 work 1 part:1:0','/discussion_message 1 work 1 part:1:6',
+    '/discussion_browse','/discussion_browse 1','/discussion_browse 1 work before:0','/discussion_browse 1 work before:01',
+    '/discussion_browse 1 work 2','/discussion_browse 1 all','/discussion_browse 1 work before:2 extra',
     '/discussion_message 1 work 1 part:01:1','/discussion_message 9223372036854775808 work 1','/discussion_message 1 work 1 part:9223372036854775808:1'])
 def test_strict_source_cursor_and_revision_part_grammar(read_env,text):
     env,*_=read_env;before=snapshot(env[0])
@@ -152,7 +154,7 @@ def test_existing_search_and_metadata_grants_do_not_grant_thread_or_full_message
     cid=discussion.post(c,users[3],item['id'],'needle SelectedPrivateText')
     before=snapshot(c)
     for n,kind in enumerate(reader.COMMANDS,10):assert 'method' not in ask((deadline_env,cid,None),kind,number=n)
-    text=command(env,'/discussion_search '+str(item['id'])+' work needle',12)['text']
+    text=command(env,'/discussion_search '+str(item['id'])+' work needle',14)['text']
     assert 'SelectedPrivateText' in text and 'View thread:' not in text and before==snapshot(c)
 
 
@@ -273,3 +275,44 @@ def test_terminal_source_and_maximum_seek_remain_readable(thread_env):
     c.execute("UPDATE work_case SET status='completed' WHERE id=?",(item['id'],));c.execute("UPDATE work_task SET status='done' WHERE id=?",(task['id'],));c.commit()
     assert 'StoredSelectedText' in ask(thread_env,extra='before:9223372036854775807')['text']
     assert 'StoredSelectedText' in ask(thread_env,'/discussion_message',number=11)['text']
+
+
+def test_browse_seek_pages_current_roots_only_and_navigation_are_read_only(thread_env,monkeypatch):
+    source,cid,target=thread_env;env,item,task=source;c,users,*_=env
+    origin='https://'+'a'*60+'.'+'b'*60+'.'+'c'*60+'.example12'
+    monkeypatch.setenv('CSS_BASE_URL',origin)
+    grant(env,'tasks.reply' if target is not None else 'work.reply',monkeypatch)
+    c.execute('UPDATE work_case SET title=? WHERE id=?',('🌿'*300,item['id']));c.commit()
+    expected=[cid]+[discussion.post(c,users[3],item['id'],'🌺'*1000,task_id=target) for _ in range(8)]
+    discussion.edit(c,users[3],item['id'],target,cid,1,'CurrentBrowseRoot')
+    discussion.post(c,users[3],item['id'],'ExcludedReply',task_id=target,parent_id=cid)
+    discussion.post(c,users[3],item['id'],'ExcludedScope',task_id=None if target else task['id'])
+    before=snapshot(c);text=ask(thread_env,'/discussion_browse')['text'];seen=[]
+    for n in range(11,30):
+        assert reader.common.units(text)<=4096
+        assert 'ExcludedReply' not in text and 'ExcludedScope' not in text and 'StoredSelectedText' not in text
+        ids=[int(v) for v in re.findall(r'(?:^|\n)Comment ([0-9]+) · Revision',text)]
+        assert ids and 'View thread:' in text and 'Read message:' in text and 'Reply form:' in text
+        seen.extend(ids)
+        next_=re.search(r'Older comments: (.*)',text)
+        if not next_:break
+        text=command(env,next_[1],n)['text']
+    assert seen==list(reversed(expected)) and 'CurrentBrowseRoot' in text and 'Revision 2' in text
+    empty=command(env,reader.browse_command({'case_id':item['id'],'task_id':target})+' before:'+str(cid),30)['text']
+    assert 'No current top-level comments' in empty and before==snapshot(c)
+    for table in ('telegram_operation','telegram_preview','telegram_meeting_origin'):assert not rows(c,'SELECT * FROM '+table)
+    for table,column in (('telegram_update','payload_json'),('telegram_delivery','projection_json')):
+        for row in rows(c,'SELECT '+column+' FROM '+table):
+            assert 'CurrentBrowseRoot' not in (row[column] or '') and 'discussion_read_query' not in (row[column] or '')
+
+
+@pytest.mark.parametrize('target',['hidden','missing_work','cross_work_task'])
+def test_browse_checks_source_before_reading_any_body(read_env,target):
+    env,item,task=read_env;c,users,*_=env
+    other=case(c,users[3],item['unit_id'])
+    query={'case_id':999999 if target=='missing_work' else other['id'],'task_id':task['id'] if target=='cross_work_task' else None}
+    def deny_body(op,table,column,*_):
+        return sqlite3.SQLITE_DENY if op==sqlite3.SQLITE_READ and table=='work_comment_revision' and column=='body' else sqlite3.SQLITE_OK
+    c.set_authorizer(deny_body)
+    try:assert command(env,reader.browse_command(query),10)['text']==reader.DENIED
+    finally:c.set_authorizer(None)

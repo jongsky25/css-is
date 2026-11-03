@@ -95,3 +95,6 @@ views, complete message parts, an intervening native edit, refused old continuat
 current reopen/source navigation and unchanged native read state. All data/providers
 are synthetic/blocked. See [verification](SETUP_STATUS.md) and
 [pending live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md).
+
+Use [discussion browsing](TELEGRAM_DISCUSSION_BROWSING.md) to discover top-level
+comments without a search phrase or known comment ID under the same read consent.

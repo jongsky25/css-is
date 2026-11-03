@@ -140,3 +140,10 @@ webhook previews have no outgoing push to revive after switching modes.
 After the later pilot, update this checklist and the plan with actual observed
 results and remaining limits. Nothing here authorizes an external message,
 provider registration, secret/configuration change, merge or deployment now.
+
+## Private discussion browsing — Pending
+
+After separate activation approval, check independent reading consent, work/task
+top-level pages, older navigation, thread/full-message/source/reply navigation,
+empty/denied/revoked cases and unchanged notices/read/follow state. Local synthetic
+browser evidence is not hosted or personal acceptance.

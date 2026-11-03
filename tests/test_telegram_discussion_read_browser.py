@@ -62,7 +62,10 @@ def test_phone_thread_nested_replies_and_current_revision_parts_without_read_mar
             command(re.search(r'/confirm [a-f0-9]{64}',command('/status')['text'])[0])
             assert {r[0] for r in c.execute('SELECT action FROM telegram_grant WHERE revoked_at IS NULL')}=={'work.read',reader.ACTION}
             menu=command('/menu')['text'];assert '/discussion_thread' in menu and '/discussion_search' not in menu
-            text=command(reader.command(query,root))['text']
+            listing=command(reader.browse_command(query))['text']
+            assert 'Current long root' in listing and 'Direct reply text' not in listing and 'OtherThreadText' not in listing
+            assert 'View thread: '+reader.command(query,root) in listing and '/discussion_browse' in menu
+            text=command(re.search(r'View thread: (.*)',listing)[1])['text']
             assert 'Current long root' in text and 'Direct reply text' in text and 'Nested reply text' not in text
             assert 'PrivateTailEnd' not in text and 'OtherThreadText' not in text and other['username'] not in text
             text=command(reader.command(query,root,'/discussion_message'))['text'];collected=[]

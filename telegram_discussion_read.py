@@ -1,4 +1,4 @@
-"""Private current comment/direct-reply views and revision-bound message parts."""
+"""Private top-level browsing, selected replies and revision-bound message parts."""
 import os
 import re
 import unicodedata
@@ -11,8 +11,8 @@ import work
 import work_discussion as discussion
 
 ACTION='work.discussion.read'
-COMMANDS=('/discussion_thread','/discussion_message')
-USAGE='Use /discussion_thread WORK_ID work|TASK_ID COMMENT_ID [before:REPLY_ID], or /discussion_message WORK_ID work|TASK_ID COMMENT_ID [part:REVISION:NUMBER]. Current text is copied into this private chat; read status stays unchanged.'
+COMMANDS=('/discussion_thread','/discussion_message','/discussion_browse')
+USAGE='Use /discussion_browse WORK_ID work|TASK_ID [before:COMMENT_ID], /discussion_thread WORK_ID work|TASK_ID COMMENT_ID [before:REPLY_ID], or /discussion_message WORK_ID work|TASK_ID COMMENT_ID [part:REVISION:NUMBER]. Current text is copied into this private chat; read status stays unchanged.'
 DENIED='Discussion message unavailable to this account. Open Office Connect to check current source access.'
 PAGE_SIZE=3
 ROOT_PREVIEW=300
@@ -28,6 +28,13 @@ def number(value):
 
 def parse(text):
     parts=text.split()
+    if parts and parts[0]=='/discussion_browse':
+        if len(parts) not in (3,4):raise ValueError(USAGE)
+        query={'command':parts[0],'case_id':number(parts[1]),'task_id':None if parts[2]=='work' else number(parts[2]),'before':0}
+        if len(parts)==4:
+            if not parts[3].startswith('before:'):raise ValueError(USAGE)
+            query['before']=number(parts[3][7:])
+        return query
     if len(parts) not in (4,5) or parts[0] not in COMMANDS:raise ValueError(USAGE)
     query={'command':parts[0],'case_id':number(parts[1]),'task_id':None if parts[2]=='work' else number(parts[2]),'comment_id':number(parts[3])}
     if parts[0]=='/discussion_thread':
@@ -69,7 +76,35 @@ def source(query,identifier):
 
 
 def command(query,identifier,kind='/discussion_thread'):
+    if kind=='/discussion_browse':return browse_command(query)
     return kind+' '+str(query['case_id'])+' '+(str(query['task_id']) if query['task_id'] is not None else 'work')+' '+str(identifier)
+
+
+def browse_command(query):
+    return '/discussion_browse '+str(query['case_id'])+' '+(str(query['task_id']) if query['task_id'] is not None else 'work')
+
+
+def browse(conn,query,item,task,reply_mode):
+    found=rows(conn,'''SELECT c.id,r.revision,
+        telegram_discussion_part(r.body,1,:size) AS text,telegram_discussion_length(r.body) AS length
+        FROM work_comment c JOIN work_comment_revision r ON r.comment_id=c.id
+          AND r.revision=(SELECT MAX(v.revision) FROM work_comment_revision v WHERE v.comment_id=c.id)
+        WHERE c.case_id=:case_id AND c.task_id IS :task_id AND c.parent_id IS NULL
+          AND (:before=0 OR c.id<:before) ORDER BY c.id DESC LIMIT :limit''',
+        {**query,'size':REPLY_PREVIEW,'limit':PAGE_SIZE+1})
+    text='Discussion comments · current revisions · newest ID first\n'+header(item,task)
+    shown=[]
+    for comment in found[:PAGE_SIZE]:
+        block=('Comment '+str(comment['id'])+' · Revision '+str(comment['revision'])
+               +'\nPreview: '+preview(comment['text'],comment['length'],REPLY_PREVIEW)
+               +'\n'+source(query,comment['id'])+'\nView thread: '+command(query,comment['id'])
+               +'\nRead message: '+command(query,comment['id'],'/discussion_message')
+               +reply_shortcut(query,comment['id'],reply_mode))
+        if common.units(text+'\n\n'+block)>3000:break
+        text+='\n\n'+block;shown.append(comment)
+    if not found:text+='\nNo current top-level comments on this page. Replies are available inside their threads.'
+    if shown and len(shown)<len(found):text+='\nOlder comments: '+browse_command(query)+' before:'+str(shown[-1]['id'])
+    return text+'\nTop-level comments only; open a thread for replies. No totals or author labels are shown.'
 
 
 def reply_shortcut(query,identifier,mode):
@@ -147,12 +182,17 @@ def render(conn,clean,bot,now):
     if not user:return None
     query=clean['discussion_read_query']
     if query=={'error':'usage'}:return USAGE
-    try:item,task,selected=metadata(conn,user,query)
+    try:
+        if query['command']=='/discussion_browse':
+            _,item,task=discussion.scope(conn,user,query['case_id'],query['task_id'])
+        else:item,task,selected=metadata(conn,user,query)
     except ValueError:return DENIED
     text_functions(conn)
     mode='task' if query['task_id'] is not None else 'work'
     reply_mode=mode if links.authorized(conn,user['id'],'tasks.reply' if mode=='task' else 'work.reply') else None
-    text=thread(conn,query,item,task,selected,reply_mode) if query['command']=='/discussion_thread' else message(conn,query,item,task,selected,reply_mode)
+    if query['command']=='/discussion_browse':text=browse(conn,query,item,task,reply_mode)
+    elif query['command']=='/discussion_thread':text=thread(conn,query,item,task,selected,reply_mode)
+    else:text=message(conn,query,item,task,selected,reply_mode)
     if reply_mode and '\nReply form: ' in text:
         text+='\nTo use Reply links, first send /'+reply_mode+'_reply. Source IDs are prefilled; enter your text, preview and confirm privately.'
     return text+'\nText is copied into this private chat. Reading here marks nothing read and changes no records or preferences. Source discussion behavior remains native.'

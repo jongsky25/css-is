@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.85) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.86) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-03.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -2664,3 +2664,45 @@ Final isolated Python 3.11 verification: **873 regressions** and **832 shuffled 
 Reports: `/tmp/telegram-reply-shortcuts-regressions.xml`, `/tmp/telegram-reply-shortcuts-shuffled.xml`, `/tmp/telegram-reply-shortcuts-focus.xml` and `/tmp/telegram-reply-shortcuts-phone.xml`. Release metadata 9.85 against main 25fe812/9.61, dependency locks, vendor integrity, pip compatibility, AI contract, compilation, main release history, links and whitespace pass. Existing Starlette/httpx deprecation warning remains. Prior head d2f999f CI was green, which does not establish acceptance for the new head.
 
 Next: inspect CI for the new head and continue the next requested feature. Deployment, activation, preview publication and personal/live testing remain deferred. New live checklist rows remain Pending. See [reply shortcuts](TELEGRAM_REPLY_SHORTCUTS.md).
+
+### Private discussion browsing — November 3, 2026
+
+In progress, Codex, draft PR #572, `feat/telegram-private-work-lookup`, candidate
+9.86. Owner approved bounded top-level work/task discussion browsing. Reuse
+`work.discussion.read` and work read consent/pilots; current native source scope
+precedes body SQL. Current revisions only, three comments plus lookahead, seek
+pages, existing thread/message/reply navigation. No state changes or new grants.
+Verification pending. Deployment, previews, activation, main merge and live tests
+remain deferred. Chromium setup blocker is being investigated separately.
+
+### Discussion browsing delivered — November 3, 2026
+
+- Codex, draft PR #572, review branch `feat/telegram-private-work-lookup`,
+  candidate **9.86**, based on main `25fe812`. Owner approved implementation.
+- Added [discussion browsing](TELEGRAM_DISCUSSION_BROWSING.md):
+  `/discussion_browse WORK_ID work|TASK_ID [before:COMMENT_ID]`, current top-level
+  comments only, three bounded previews plus lookahead, older seek pages and
+  existing thread/message/source/conditional reply navigation. Reuses reading
+  consent/pilot and native source checks before body SQL. No new grant, storage,
+  notices/read/follow changes or outgoing activation.
+- **291 regressions passed**, including **6 phone flows**; **285 shuffled checks
+  passed** (seed 311), no failures/errors/skips. Groups overlap. Reports:
+  `/workspace/browse-regressions.xml`, `/workspace/browse-shuffled.xml` (local).
+  Extended shared guard/projection tests cover browsing; dedicated cases cover
+  strict grammar, current revisions, exact scope, root-only seek completeness,
+  maximum-origin Unicode budgets with reply links, empty pages, source checks
+  before body SQL and no persisted text/state changes. Two existing no-script
+  phone flows now enter through browsing. Earlier attempts had a missing scratch
+  parent and then a test update-ID collision; corrected before passing reruns.
+- Release increase/metadata, locks, vendor integrity, compatibility, AI contract,
+  compilation, YAML/relative documentation links and whitespace passed. Existing
+  Starlette/httpx deprecation warning remains. No full local repository suite run.
+- Avatar workflow setup now installs the fixed browser revision selected by the
+  hashed Playwright lock and exposes its executable as `chromium` for existing
+  scripts. The unavailable rolling Debian Chromium pin is removed. A local
+  alias/version/headless launch passed with Chrome for Testing 151.0.7922.34;
+  all functional/visual gates remain. Actual Python 3.12 container setup and avatar
+  acceptance require fresh CI; this is not a claim those tests passed locally.
+- Next: inspect new exact-head normal/shuffled/dependency/container/metadata/
+  aggregate and avatar acceptance CI after push. Deployment, previews, activation,
+  real messages, personal/live testing and main merge remain deferred.

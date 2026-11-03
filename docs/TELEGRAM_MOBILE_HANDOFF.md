@@ -23,9 +23,9 @@ verified again in that session.
 ## Current work and owner preferences
 
 - Draft [PR #572](https://github.com/jongsky25/css-is/pull/572); branch
-  `feat/telegram-private-work-lookup`; candidate **9.85**. The last application
-  commit before this handoff is `222f13b` (reply shortcuts). This handoff is
-  saved in a subsequent documentation commit; check the current PR head.
+  `feat/telegram-private-work-lookup`; candidate **9.86**. The prior application
+  baseline was `222f13b` (reply shortcuts). Discussion browsing is the approved
+  next increment; see the latest progress entry below and check the PR head.
 - The owner has linked Telegram and reported pulling calendar information. That
   report does not establish that the new draft features have been deployed or
   tested live. The owner wants more capabilities added first, then will do
@@ -131,3 +131,15 @@ message and reply navigation. Reuse independent read consent and preserve all
 read/notice/follow state. No feature implementation has started. Publication,
 activation, deployment, main merge and personal/live testing remain deferred.
 These results describe the inspected head; inspect fresh checks after this save.
+
+## Approved browsing implementation — November 3, 2026
+
+Discussion browsing is now implemented in draft candidate 9.86, with
+`/discussion_browse WORK_ID work|TASK_ID [before:COMMENT_ID]` and existing
+thread/message/source/reply navigation. [Behavior](TELEGRAM_DISCUSSION_BROWSING.md).
+291 regressions (6 phone flows) and 285 shuffled checks passed without skips;
+groups overlap. See SETUP_STATUS.md for scope, reports and metadata checks.
+Avatar CI setup uses the hashed Playwright lock's fixed browser revision instead
+of the unavailable Debian Chromium pin; local alias launch passed, fresh actual
+CI remains required. Inspect the new PR head and all checks. No deployment,
+preview, activation, main merge, real send or personal/live testing occurred.

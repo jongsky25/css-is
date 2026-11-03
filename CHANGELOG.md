@@ -1,4 +1,6 @@
-## 9.85 — November 3, 2026
+## 9.86 — November 3, 2026
+
+- Browse current top-level work/task discussion comments with bounded seek pages and existing thread/message/reply navigation under independent reading consent; no read state changes.
 
 - Add permission-checked Reply form shortcuts for selected comments, displayed direct replies and current message parts, prefilled with source IDs only; existing private-origin, preview, source and confirmation checks remain authoritative.
 

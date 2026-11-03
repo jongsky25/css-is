@@ -79,7 +79,7 @@ For a fresh phone session, use the [Telegram mobile handoff](TELEGRAM_MOBILE_HAN
 
 **Current Telegram feature work — November 3, 2026:** continue draft
 [PR #572](https://github.com/jongsky25/css-is/pull/572), branch
-`feat/telegram-private-work-lookup`, candidate **9.85**. The latest addition is
+`feat/telegram-private-work-lookup`, candidate **9.86**. The latest addition is
 [reply shortcuts from discussion views](TELEGRAM_REPLY_SHORTCUTS.md), following
 [selected discussion thread/message reading](TELEGRAM_DISCUSSION_READING.md), following
 [exact-thread discussion text search](TELEGRAM_DISCUSSION_SEARCH.md), following
@@ -2988,3 +2988,35 @@ Next: inspect CI for the new head and continue the next requested feature. Deplo
   and main merge remain deferred. Fix browser availability without weakening
   gates before claiming complete acceptance. This documentation save starts fresh
   checks; the results above belong only to `3cea8f5`.
+
+### Discussion browsing delivered — November 3, 2026
+
+- Codex, draft PR #572, review branch `feat/telegram-private-work-lookup`,
+  candidate **9.86**, based on main `25fe812`. Owner approved implementation.
+- Added [discussion browsing](TELEGRAM_DISCUSSION_BROWSING.md):
+  `/discussion_browse WORK_ID work|TASK_ID [before:COMMENT_ID]`, current top-level
+  comments only, three bounded previews plus lookahead, older seek pages and
+  existing thread/message/source/conditional reply navigation. Reuses reading
+  consent/pilot and native source checks before body SQL. No new grant, storage,
+  notices/read/follow changes or outgoing activation.
+- **291 regressions passed**, including **6 phone flows**; **285 shuffled checks
+  passed** (seed 311), no failures/errors/skips. Groups overlap. Reports:
+  `/workspace/browse-regressions.xml`, `/workspace/browse-shuffled.xml` (local).
+  Extended shared guard/projection tests cover browsing; dedicated cases cover
+  strict grammar, current revisions, exact scope, root-only seek completeness,
+  maximum-origin Unicode budgets with reply links, empty pages, source checks
+  before body SQL and no persisted text/state changes. Two existing no-script
+  phone flows now enter through browsing. Earlier attempts had a missing scratch
+  parent and then a test update-ID collision; corrected before passing reruns.
+- Release increase/metadata, locks, vendor integrity, compatibility, AI contract,
+  compilation, YAML/relative documentation links and whitespace passed. Existing
+  Starlette/httpx deprecation warning remains. No full local repository suite run.
+- Avatar workflow setup now installs the fixed browser revision selected by the
+  hashed Playwright lock and exposes its executable as `chromium` for existing
+  scripts. The unavailable rolling Debian Chromium pin is removed. A local
+  alias/version/headless launch passed with Chrome for Testing 151.0.7922.34;
+  all functional/visual gates remain. Actual Python 3.12 container setup and avatar
+  acceptance require fresh CI; this is not a claim those tests passed locally.
+- Next: inspect new exact-head normal/shuffled/dependency/container/metadata/
+  aggregate and avatar acceptance CI after push. Deployment, previews, activation,
+  real messages, personal/live testing and main merge remain deferred.
