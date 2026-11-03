@@ -70,6 +70,15 @@ CHANGELOG = [
         ]
     },
     {
+        "version": "9.62",
+        "date": "November 3, 2026",
+        "summary": "Keep companion release checks reliable.",
+        "changes": [
+            "Give the companion browser checks enough shared memory to complete reliably.",
+            "Keep browser diagnostics available when a release check fails."
+        ]
+    },
+    {
         "version": "9.61",
         "date": "November 2, 2026",
         "summary": "Dress your companion for Christmas in a wider festive setting.",

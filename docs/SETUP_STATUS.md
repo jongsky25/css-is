@@ -104,6 +104,22 @@ explicitly deferred. Monitoring follow-ups below remain separately tracked and
 are not the active Telegram task. See the latest evidence at the end of this file.
 
 
+## Preserved standalone CI preparation notes
+
+**Standalone avatar CI repair — November 3, 2026.** Candidate 9.62 on
+`fix/avatar-ci-standalone`, based on main `25fe812` (9.61), contains only browser
+acceptance provisioning/diagnostics and required version/cache/changelog metadata.
+It includes no unpublished Telegram feature code and does not modify PR #572's
+branch. The same browser source/1 GiB configuration passed 137 interaction/frame
+tests, 432 rig cases and six contact sheets on Telegram head `e7bea14` in
+[run 41607212977](https://github.com/jongsky25/css-is/actions/runs/41607212977);
+that earlier result is not acceptance for this standalone candidate.
+Next: inspect this candidate's complete exact-head CI and avatar acceptance before
+merge. Main merge triggers the existing gated production deployment. Preserve
+all gates. Telegram can continue independently, then update from main and retain
+the released 9.62 history; expected coordination concerns release/status metadata,
+not Telegram runtime code. Do not merge PR #572 as part of this repair.
+
 ## Preserved seasonal preparation notes
 
 Main companion refinements #579 are merged at `25fe812` (9.61). The following incoming notes are preserved as historical preparation; Telegram publication remains deferred.
@@ -3201,3 +3217,10 @@ Next: inspect CI for the new head and continue the next requested feature. Deplo
   metadata/aggregate and avatar checks after push. Deployment, preview publication,
   activation, real messages, personal/live testing and main merge remain deferred.
   Hosted acceptance remains Pending.
+
+### Main freshness — November 3, 2026
+
+Merged actual main `625c60f` (released 9.62, standalone avatar CI repair PR #580)
+into the Telegram review branch. Preserved its exact released changelog/version
+entry and CI provisioning/diagnostics; review candidate remains 9.90 until the
+next increment. No push/merge to main, deployment or activation performed.
