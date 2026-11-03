@@ -75,6 +75,26 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Standalone avatar CI repair merged — November 3, 2026.** Owner explicitly
+requested the independent merge. [PR #580](https://github.com/jongsky25/css-is/pull/580)
+merged at 10:20:45 UTC as `625c60f2fc91ddf98519a9084a5c4217fd1f2e56` after
+rechecking unchanged candidate `5782b5e`, unchanged main `25fe812`, clean
+mergeability and every successful required check. Full normal/shuffled suites,
+dependency audit, metadata and aggregate passed in
+[CI 41612679495](https://github.com/jongsky25/css-is/actions/runs/41612679495).
+[Avatar run 41612679498](https://github.com/jongsky25/css-is/actions/runs/41612679498)
+passed 137 tests with zero failures/skips, strict JUnit, 432 rig cases and the
+six themed contact sheets. No gate was bypassed; automatic merge stays disabled.
+Telegram PR #572 was independently read after merge: still OPEN at unchanged
+`585a9cb1a0fd5bf9eaa6c47e362bd94a72922b8f`. No Telegram branch, runtime code,
+pilot settings, message delivery or preview was modified by this merge.
+[Production workflow 41618491872](https://github.com/jongsky25/css-is/actions/runs/41618491872)
+was observed queued for the exact merge commit. **9.62 is not yet verified live.**
+Next: observe that workflow's full verification, fresh backup, deployment/version
+and diagnostics gates. Telegram can continue independently and later reconcile
+only its shared release/status metadata with main 9.62. This evidence is saved
+on `docs/avatar-standalone-handoff` without a second production-triggering commit.
+
 **Independent avatar repair PR opened — November 3, 2026.**
 [PR #580](https://github.com/jongsky25/css-is/pull/580) at `5782b5e` is the
 standalone 9.62 repair based on main `25fe812`. No Telegram feature code is
