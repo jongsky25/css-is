@@ -75,6 +75,8 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+For a fresh phone session, use the [Telegram mobile handoff](TELEGRAM_MOBILE_HANDOFF.md). The prior application head `222f13b` has a functional CI setup failure: its pinned Debian Chromium version was unavailable; inspect fresh-head checks and the handoff before proceeding.
+
 **Current Telegram feature work — November 3, 2026:** continue draft
 [PR #572](https://github.com/jongsky25/css-is/pull/572), branch
 `feat/telegram-private-work-lookup`, candidate **9.85**. The latest addition is
