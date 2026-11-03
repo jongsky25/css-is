@@ -6,6 +6,16 @@ Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
 Owner: Office Connect maintainers. Delivery agent: Sol or another assigned coding agent.
 
+## Current completion priority — November 3, 2026
+
+The owner requested a handoff to finish the current private-feature batch through
+three stages. Optional feature additions are frozen; use the
+[finishing handoff](TELEGRAM_FINISHING_HANDOFF.md) for exact-head CI/fixes,
+explicitly approved pilot/acceptance and separately approved production release/
+activation. Live/deployment deferrals remain until scoped approval. Later backlog
+items are not prerequisites to closing this batch, and unverified T4.4 remains
+separate.
+
 ## Start here in any chat
 
 Read this entire file, applicable repository instructions, and the current source before working. This file is the durable scope, progress ledger, and handoff for the Telegram integration.

@@ -5,9 +5,13 @@ The owner has explicitly deferred deployment, activation and live testing. Every
 case below is **Pending**. Do not execute it, merge main or change live controls
 without the owner's later release/testing instruction.
 
+Use the [finishing handoff](TELEGRAM_FINISHING_HANDOFF.md) for the current stage
+sequence, preview limitations and approval boundaries. This checklist remains
+Pending until actual agreed hosted/personal evidence is recorded.
+
 ## Before the later pilot
 
-1. Identify the reviewed PR/source commit and candidate version (currently 9.79).
+1. Identify the reviewed PR/source commit and candidate version (currently 9.91; reverify the actual head).
    Verify the actual candidate's required metadata/dependency/full normal/shuffled/
    aggregate CI, main freshness and synchronized versions. Old-head checks do not
    establish readiness. Follow existing release and verified-backup gates.

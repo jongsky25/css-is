@@ -2,6 +2,15 @@
 
 Updated: November 3, 2026. This document is a handoff, not release approval.
 
+## Current priority: close the batch
+
+The owner now requests completion of the three stages, with optional features
+frozen. Use [TELEGRAM_FINISHING_HANDOFF.md](TELEGRAM_FINISHING_HANDOFF.md) as the
+current startup prompt, exact source/check snapshot, pilot planning and release
+authority guide. Earlier feature recommendations below are historical. The
+handoff request did not itself authorize deployment, publication, activation,
+real messages or main merge.
+
 ## Start the next chat
 
 Attach or select repository **`jongsky25/css-is`** and branch

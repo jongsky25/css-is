@@ -75,6 +75,15 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Latest owner direction — finish the current batch:** feature additions are
+frozen. Use the [three-stage finishing handoff](TELEGRAM_FINISHING_HANDOFF.md):
+(1) finish exact-head CI/fixes, (2) prepare and perform an explicitly approved
+test pilot/personal acceptance, (3) perform only an explicitly approved production
+release/selected activation through canonical gates. Publication, activation, real
+messages and main merge are still deferred until that scoped approval. This
+supersedes earlier next-feature recommendations and mobile startup prompts.
+
+
 Standalone avatar CI repair #580 is merged in actual main `625c60f` (9.62) and
 has been incorporated into this review branch with released history preserved.
 Previous feature head `585a9cb` passed avatar acceptance; its full CI found a
@@ -3282,3 +3291,14 @@ next increment. No push/merge to main, deployment or activation performed.
 - Next: inspect fresh exact-head complete CI and avatar checks after push.
   Deployment, preview publication, activation, real messages, personal/live testing
   and main merge remain deferred. Hosted acceptance stays Pending.
+
+### Three-stage finishing handoff saved — November 3, 2026
+
+Owner requested a full handoff to finish checks, acceptance and authorized release.
+Added TELEGRAM_FINISHING_HANDOFF.md with current feature/source evidence, exact-head
+CI requirements, private-preview integration limitation, isolated test-bot/target
+planning, acceptance batches, approval boundaries, canonical backup/deploy/activation
+steps and rollback/completion criteria. No new feature or hosted action performed.
+At application head `1f25bbd`, avatar acceptance 41634542442 passed; CI 41634542460
+metadata/dependency passed while normal/shuffled suites were still running. This
+documentation push creates a new head: inspect its fresh checks, not old evidence.
