@@ -52,6 +52,15 @@ jobs:
           mkdir -p avatar-release-evidence
           .venv/bin/python -m pytest --maxfail=1 --tb=short --junitxml=avatar-release-evidence/functional.xml tests/test_companion_wardrobe.py tests/test_companion_customizer_browser.py tests/test_avatar_care.py tests/test_avatar_audio.py tests/test_onboarding_storage.py tests/test_avatar_geometry_browser.py tests/test_avatar_pointer_browser.py tests/test_avatar_motion_preference_browser.py tests/test_avatar_animal_batch_browser.py tests/test_avatar_static_preview_browser.py tests/test_avatar_container_resize_browser.py tests/test_avatar_chase_writes_browser.py tests/test_avatar_pagehide_browser.py tests/test_home_search_boot_browser.py tests/test_avatar_visibility_browser.py tests/test_avatar_frame_budget_browser.py tests/test_appearance_browser.py::test_publish_private_preview_mobile_and_live_outfit_without_form_reload
           .venv/bin/python scripts/check_release.py junit avatar-release-evidence/functional.xml
+      - name: Report native browser diagnostics
+        if: always()
+        run: |
+          for file in /tmp/avatar-release/application/native-browser-environment.json /tmp/avatar-release/application/native-browser-stderr.log; do
+            if [ -f "$file" ]; then cat "$file"; fi
+          done
+          for file in /sys/fs/cgroup/memory.events /sys/fs/cgroup/memory.max /sys/fs/cgroup/memory.peak; do
+            if [ -f "$file" ]; then cat "$file"; fi
+          done
       - name: Verify animal rigs and actual themed contact sheets
         run: |
           .venv/bin/python scripts/avatar_release/animal_motion.py --out avatar-release-evidence/rigs
