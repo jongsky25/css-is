@@ -117,6 +117,14 @@ def navigation(entry,can_read):
     return '\nView current thread: '+reader.command(query,notice['comment_id'])
 
 
+def acknowledgement(entry,can_acknowledge):
+    notice,_,_=entry
+    if not can_acknowledge or notice['read_revision']>=notice['revision'] or not 1<=notice['revision']<=notice['current_revision']:return ''
+    return ('\nMark this update read form: '+links.origin()+'/account/telegram/update/read?notice_id='+str(notice['id'])
+            +'&revision='+str(notice['revision'])
+            +'\nFirst send /update_read privately, then open the form. Review the exact preview and confirm; opening this link marks nothing read.')
+
+
 def render(conn,clean,bot,now):
     if not conn.in_transaction:raise RuntimeError('Discussion inbox requires the intake transaction')
     found=rows(conn,"SELECT * FROM telegram_connection WHERE telegram_user_id=? AND state='active'",(clean['sender_id'],))
@@ -132,6 +140,7 @@ def render(conn,clean,bot,now):
         try:entry=detail(conn,user,query['id'])
         except ValueError:return DENIED
         return (line(entry)+'\nOpen discussion: '+source(entry)+navigation(entry,can_read)
+                +acknowledgement(entry,links.authorized(conn,user['id'],'work.updates.acknowledge'))
                 +'\nBack: /my_updates\nMetadata only; this lookup marks nothing read. Thread commands open current text with separate reading permission; /menu lists permitted actions.')
     entries,continuation=page(conn,user,query['category'],query['before'])
     text='My unread discussion updates · '+query['category']+' · newest notice first\nMetadata only; lookup does not mark messages read.'

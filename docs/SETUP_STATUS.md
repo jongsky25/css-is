@@ -76,13 +76,14 @@ access remains necessary in a fresh chat.
 ## Next action
 
 For a fresh phone session, use the [Telegram mobile handoff](TELEGRAM_MOBILE_HANDOFF.md).
-The previous head `df55759` passed full CI and browser installation; separate avatar
+The previous head `3dc7600` passed full CI and browser installation; separate avatar
 acceptance then encountered a native Chromium page crash after 131 passing tests.
 Inspect fresh exact-head checks and the latest evidence below before proceeding.
 
 **Current Telegram feature work — November 3, 2026:** continue draft
 [PR #572](https://github.com/jongsky25/css-is/pull/572), branch
-`feat/telegram-private-work-lookup`, candidate **9.87**. The latest addition is
+`feat/telegram-private-work-lookup`, candidate **9.88**. The latest addition is
+[inbox acknowledgement shortcuts](TELEGRAM_UPDATE_READ.md), following
 [inbox/follow discussion navigation](TELEGRAM_DISCUSSION_NAVIGATION.md), following
 [discussion browsing](TELEGRAM_DISCUSSION_BROWSING.md), following
 [reply shortcuts from discussion views](TELEGRAM_REPLY_SHORTCUTS.md), following
@@ -3061,3 +3062,40 @@ Next: inspect CI for the new head and continue the next requested feature. Deplo
   save; investigate any continuing native browser crash before promotion.
   Deployment, preview publication, activation, real messages, personal/live
   testing and main merge remain deferred.
+
+### Inbox acknowledgement shortcut delivered — November 3, 2026
+
+- Codex, draft PR #572, `feat/telegram-private-work-lookup`, candidate **9.88**,
+  main `25fe812`. Owner approved this increment.
+- Unread `/update_status` details offer a [notice-prefilled acknowledgement
+  form](TELEGRAM_UPDATE_READ.md) only with current independent acknowledgement
+  consent/pilot. URL contains notice ID and notice revision only. No private
+  origin, operation, preview or read marker is created by listing/opening it.
+  Start `/update_read`, prepare the signed-in CSRF-protected form, then review
+  and confirm the exact private preview. Notice revision remains distinct from
+  newer current text. Existing authority, stale checks, atomic native markers and
+  retry/receipt behavior are unchanged. Already-read details hide the shortcut.
+- **400 regressions passed**, including **6 phone flows**; **394 shuffled checks
+  passed** (seed 311), no failures/errors/skips. **5 supplementary shortcut checks
+  passed** after strengthening maximum-origin/Unicode coverage. Groups overlap.
+  Reports (local): `/workspace/ack-shortcuts-regressions.xml`,
+  `/workspace/ack-shortcuts-shuffled.xml`, `/workspace/ack-shortcuts-budgets.xml`.
+  Six no-script 390×844 work/task mention/reply/following flows cover no-origin
+  GET, source-only prefill, CSRF/strict fields, unchanged pre-confirmation state,
+  exact confirmation, retry/receipt, hidden shortcut after acknowledgement and
+  already-read/revoked cached forms. Expanded phone fixtures were corrected for
+  test rate-limit isolation and the existing forbidden-response behavior before
+  the final passing rerun; no application limits or guards were changed.
+- Release metadata/increase, locks, vendor integrity, compatibility, AI contract,
+  compilation, relative documentation links and whitespace passed. Release
+  metadata/changelog/service-worker cache synchronized at 9.88. No dependencies,
+  schema, native write service, new permission or pilot added. Existing
+  Starlette/httpx deprecation warning remains. Full local repository suites unrun.
+- Prior head `3dc7600` [full CI](https://github.com/jongsky25/css-is/actions/runs/41593251822)
+  passed. [Avatar acceptance](https://github.com/jongsky25/css-is/actions/runs/41593251795)
+  again passed installation and 131 tests before the native visibility test
+  reported `Page.evaluate: Target crashed`. Root cause remains unproven; no
+  avatar gate or resource setting changed in this increment.
+- Next: inspect fresh exact-head complete CI and avatar acceptance after push.
+  Deployment, previews, activation, real messages, personal/live testing and
+  main merge remain deferred. Hosted acceptance checklist remains Pending.

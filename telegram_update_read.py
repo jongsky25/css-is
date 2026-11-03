@@ -50,7 +50,7 @@ class Adapter(review.Adapter):
     def text(self,summary):
         return ('Discussion read acknowledgement preview\n'+summary['metadata']
                 +'\nMark only notice revision '+str(summary['revision'])+' as read for your account.\n'+summary['url']
-                +'\nRead the discussion in Office Connect before confirming; its text stays there.'
+                +'\nRead the discussion before confirming; this preview contains metadata only.'
                 +'\nA newer comment revision is not acknowledged. Native read markers apply to this comment for your account; this notice leaves the unread list.'
                 +'\nNo other recipient, discussion text, task progress or notification preference changes.')
 

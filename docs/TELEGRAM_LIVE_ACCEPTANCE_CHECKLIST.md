@@ -155,3 +155,11 @@ work/task comment thread, and saved work/task follow → corresponding browse pa
 Check independent reading consent, pause/revocation/source loss on cached commands,
 notice versus current revision wording and unchanged notices/read/follows.
 Synthetic automated phone checks do not establish hosted/personal acceptance.
+
+## Inbox acknowledgement shortcuts — Pending
+
+After separate activation approval, verify unread detail → notice ID/revision
+prefill, no-origin GET, private start, exact preview/confirmation, updated inbox
+and retry-safe receipt. Check notice versus current revision, wrong/foreign IDs,
+already-read cached forms, lost grants/pilots/source and unchanged state before
+confirmation. Six synthetic phone flows do not establish hosted acceptance.

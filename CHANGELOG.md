@@ -1,4 +1,6 @@
-## 9.87 — November 3, 2026
+## 9.88 — November 3, 2026
+
+- Offer an independently permitted acknowledgement shortcut from unread update details with notice ID/revision prefill; opening the form marks nothing read and existing exact private confirmation remains required.
 
 - Open current discussion threads from private inbox metadata and browse comments from saved follows with current independent reading consent; all lookups preserve read and follow state.
 

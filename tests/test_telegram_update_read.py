@@ -242,3 +242,40 @@ def test_native_terminal_source_visibility_allows_own_read_acknowledgement(ack_e
     after=snapshot(c)
     for table in before:
         if table!='work_comment_read':assert before[table]==after[table]
+
+
+@pytest.mark.parametrize('guard',['grant','pilot'])
+def test_update_detail_ack_shortcut_is_source_only_independent_and_current(ack_env,monkeypatch,guard):
+    from urllib.parse import urlparse,parse_qs
+    source,notice=ack_env;env,item,task=source;c,users,*_=env
+    origin='https://'+'a'*60+'.'+'b'*60+'.'+'c'*60+'.example12'
+    monkeypatch.setenv('CSS_BASE_URL',origin)
+    grant(env,'work.discussion.read',monkeypatch)
+    c.execute('UPDATE work_case SET title=? WHERE id=?',('🌿'*300,item['id']))
+    c.execute('UPDATE work_task SET title=? WHERE id=?',('🌼'*300,task['id']));c.commit()
+    # Current message changes must not silently replace the notice's exact revision.
+    discussion.edit(c,users[3],item['id'],notice['task_id'],notice['comment_id'],1,'CurrentPrivateShortcutText')
+    before=snapshot(c)
+    def deny_body(op,table,column,*_):
+        return sqlite3.SQLITE_DENY if op==sqlite3.SQLITE_READ and table=='work_comment_revision' and column=='body' else sqlite3.SQLITE_OK
+    c.set_authorizer(deny_body)
+    try:text=command(env,'/update_status '+str(notice['id']),10)['text']
+    finally:c.set_authorizer(None)
+    assert manage.inbox.common.units(text)<=4096
+    url=re.search(r'Mark this update read form: (.*)',text)[1]
+    parsed=urlparse(url)
+    assert parsed.path==manage.PATH+'read' and parse_qs(parsed.query)=={'notice_id':[str(notice['id'])],'revision':['1']}
+    assert 'Notice revision 1 · Current revision 2' in text and 'CurrentPrivateShortcutText' not in text
+    assert '/update_read privately' in text and before==snapshot(c)
+    for table in ('telegram_operation','telegram_preview','telegram_meeting_origin'):assert not rows(c,'SELECT * FROM '+table)
+    if guard=='grant':c.execute('UPDATE telegram_grant SET revoked_at=? WHERE action=?',(links.stamp(NOW),manage.ACTION));c.commit()
+    else:monkeypatch.setenv('CSS_TELEGRAM_WORK_UPDATES_ACKNOWLEDGE_ENABLED','0')
+    assert 'Mark this update read form:' not in command(env,'/update_status '+str(notice['id']),11)['text']
+    assert before==snapshot(c)
+
+
+def test_reading_or_inbox_consent_alone_never_offers_acknowledgement_shortcut(inbox_env,monkeypatch):
+    env,*_=inbox_env;notice=seed(inbox_env)
+    grant(env,'work.discussion.read',monkeypatch)
+    monkeypatch.setenv('CSS_TELEGRAM_WORK_UPDATES_ACKNOWLEDGE_ENABLED','1')
+    assert 'Mark this update read form:' not in command(env,'/update_status '+str(notice['id']),10)['text']

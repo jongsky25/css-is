@@ -4,7 +4,7 @@
 <div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
 <h1>Mark one discussion update read</h1>
 <p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/work">Read the source discussion</a></p>
-<p>Start <code>/update_read</code> in your linked private chat. Use your notice number and notice revision from <code>/update_status NOTICE_ID</code>. Read the discussion in Office Connect before confirming.</p>
+<p>Start <code>/update_read</code> in your linked private chat. A shortcut from the update details can prefill the notice number and notice revision; otherwise use <code>/update_status NOTICE_ID</code>. Read the discussion before confirming. Opening this form marks nothing read.</p>
 <p>The preview identifies your notice, exact work/task thread and notice revision separately from the current comment revision. Confirmation updates only your native read marker for that notice revision. This notice leaves your unread inbox; a newer comment revision is not acknowledged. Other recipients and notification preferences stay unchanged.</p>
 {% if error %}<p role="alert">{{ error }}</p>{% endif %}
 {% if prepared %}<p role="status">{% if prepared.state == 'pending' %}Your preview is prepared. Nothing has been marked read. Send <code>/updateread_preview {{ prepared.operation_id }}</code> in the original private chat and confirm the exact notice and revision before expiry.{% else %}This operation has a recorded outcome. Send <code>/updateread_receipt {{ prepared.operation_id }}</code> in the original private chat. Recovery never marks a newer revision read.{% endif %}</p>{% endif %}

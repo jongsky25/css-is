@@ -102,3 +102,8 @@ and later [live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md) remain separa
 [Private discussion navigation](TELEGRAM_DISCUSSION_NAVIGATION.md) adds conditional
 current-thread/browse commands with separate reading consent. Metadata lookup
 still projects no body and changes no read/follow state.
+
+Unread update details can offer a separately permitted
+[notice-prefilled acknowledgement form](TELEGRAM_UPDATE_READ.md). Listing or
+opening it marks nothing read; fresh private origin, exact preview and
+confirmation remain required.

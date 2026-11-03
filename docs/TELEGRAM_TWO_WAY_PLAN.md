@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.87) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.88) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-03.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -2753,3 +2753,50 @@ but native visibility browser crashed during evaluation after 131 passing tests.
   save; investigate any continuing native browser crash before promotion.
   Deployment, preview publication, activation, real messages, personal/live
   testing and main merge remain deferred.
+
+### Inbox acknowledgement shortcuts — November 3, 2026
+
+In progress, Codex, draft PR #572, `feat/telegram-private-work-lookup`, candidate
+9.88. Owner approved a notice ID/revision prefilled form shortcut from unread
+`/update_status` details with current independent acknowledgement grant/pilot.
+No implicit origin, preview or read marking; original `/update_read`, signed-in
+strict form, exact private preview and confirmation remain authoritative.
+Verification pending; deployment, previews, activation, main merge and live testing
+remain deferred. Prior head `3dc7600` full CI passed; avatar acceptance failed.
+
+### Inbox acknowledgement shortcut delivered — November 3, 2026
+
+- Codex, draft PR #572, `feat/telegram-private-work-lookup`, candidate **9.88**,
+  main `25fe812`. Owner approved this increment.
+- Unread `/update_status` details offer a [notice-prefilled acknowledgement
+  form](TELEGRAM_UPDATE_READ.md) only with current independent acknowledgement
+  consent/pilot. URL contains notice ID and notice revision only. No private
+  origin, operation, preview or read marker is created by listing/opening it.
+  Start `/update_read`, prepare the signed-in CSRF-protected form, then review
+  and confirm the exact private preview. Notice revision remains distinct from
+  newer current text. Existing authority, stale checks, atomic native markers and
+  retry/receipt behavior are unchanged. Already-read details hide the shortcut.
+- **400 regressions passed**, including **6 phone flows**; **394 shuffled checks
+  passed** (seed 311), no failures/errors/skips. **5 supplementary shortcut checks
+  passed** after strengthening maximum-origin/Unicode coverage. Groups overlap.
+  Reports (local): `/workspace/ack-shortcuts-regressions.xml`,
+  `/workspace/ack-shortcuts-shuffled.xml`, `/workspace/ack-shortcuts-budgets.xml`.
+  Six no-script 390×844 work/task mention/reply/following flows cover no-origin
+  GET, source-only prefill, CSRF/strict fields, unchanged pre-confirmation state,
+  exact confirmation, retry/receipt, hidden shortcut after acknowledgement and
+  already-read/revoked cached forms. Expanded phone fixtures were corrected for
+  test rate-limit isolation and the existing forbidden-response behavior before
+  the final passing rerun; no application limits or guards were changed.
+- Release metadata/increase, locks, vendor integrity, compatibility, AI contract,
+  compilation, relative documentation links and whitespace passed. Release
+  metadata/changelog/service-worker cache synchronized at 9.88. No dependencies,
+  schema, native write service, new permission or pilot added. Existing
+  Starlette/httpx deprecation warning remains. Full local repository suites unrun.
+- Prior head `3dc7600` [full CI](https://github.com/jongsky25/css-is/actions/runs/41593251822)
+  passed. [Avatar acceptance](https://github.com/jongsky25/css-is/actions/runs/41593251795)
+  again passed installation and 131 tests before the native visibility test
+  reported `Page.evaluate: Target crashed`. Root cause remains unproven; no
+  avatar gate or resource setting changed in this increment.
+- Next: inspect fresh exact-head complete CI and avatar acceptance after push.
+  Deployment, previews, activation, real messages, personal/live testing and
+  main merge remain deferred. Hosted acceptance checklist remains Pending.

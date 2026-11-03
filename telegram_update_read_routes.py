@@ -5,4 +5,4 @@ import telegram_update_read as manage
 
 def make_router(templates,get_conn):
     return forms.make_router(templates,get_conn,manager=manage,template='telegram_update_read.html',
-                             field_sets=manage.FIELDS,resource='Read acknowledgement',max_body=4096,max_fields=5)
+                             query_fields=('notice_id','revision'),field_sets=manage.FIELDS,resource='Read acknowledgement',max_body=4096,max_fields=5)
