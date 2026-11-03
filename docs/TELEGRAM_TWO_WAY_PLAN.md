@@ -8,6 +8,12 @@ Owner: Office Connect maintainers. Delivery agent: Sol or another assigned codin
 
 ## Current completion priority — November 3, 2026
 
+Stage 2 is now explicitly authorized by “do stage 2”. See the
+[operator runbook](TELEGRAM_PILOT_OPERATOR.md) and the current status entry for
+implemented tooling, protected target creation, 101 regression / 14 shuffled pilot
+checks, credential blockers and fresh-head CI. No hosted acceptance is claimed;
+production release remains separately deferred.
+
 The owner requested a handoff to finish the current private-feature batch through
 three stages. Optional feature additions are frozen; use the
 [finishing handoff](TELEGRAM_FINISHING_HANDOFF.md) for exact-head CI/fixes,

@@ -1,9 +1,12 @@
 # Telegram stage-2 isolated pilot and acceptance plan
 
 Prepared 2026-11-03 for draft [PR #572](https://github.com/jongsky25/css-is/pull/572).
-Status: **plan prepared; publication, activation and real messages not authorized**.
+Status: **stage 2 authorized and in progress** following the owner’s “do stage 2” instruction.
+The scoped isolated pilot is authorized; production/stage 3 remains deferred.
+See the [operator runbook](TELEGRAM_PILOT_OPERATOR.md) for actual preparation and blockers.
 Optional features are frozen. This is the concrete proposed test scope, not a
-claim that a target, bot, pilot launcher or hosted acceptance already exists.
+claim that hosted acceptance has passed. Earlier planning text below is superseded
+where the operator runbook records actual implementation/provisioning.
 
 ## Candidate and evidence boundary
 
@@ -97,8 +100,9 @@ verify the following isolated tooling before asking to publish that bundle:
    Use Python 3.11, hashed locks and the cloud wrapper. Test real browser flows
    with fake webhook responses; label them local, not provider receipt.
 
-This session prepares the plan only. None of this new pilot tooling is claimed
-implemented or tested. The existing reviewed application remains unchanged.
+The separate launcher, native synthetic fixture seed and guarded publisher are now
+implemented; see the operator runbook and PR evidence. Production application
+runtime remains unchanged. Local tests do not establish hosted acceptance.
 
 ## Accounts, fixture allowlist and secrets
 
@@ -240,14 +244,14 @@ See [finishing handoff](TELEGRAM_FINISHING_HANDOFF.md#stage-3--explicitly-approv
 
 ## Decisions and current blockers
 
-- Owner has not approved creation/publication/visibility, test activation, bot
-  registration or real replies. No approval is inferred from this plan.
+- Owner explicitly authorized stage 2. The scoped isolated pilot may proceed;
+  production release/activation remains deferred. Do not ask again for this scope.
 - Existing account Pro entitlement and documented protected mode are verified;
   target availability, actual protected-mode provisioning, webhook reachability
   and scoped create/write access remain unverified. No purchase is authorized.
 - Dedicated bot, participant identities and account secrets are not configured
   or verified. Obtain them through supported secret configuration, never chat.
-- Separate isolated launcher/bundler and its local checks must be completed
-  before publication. Existing preview cannot substitute.
+- Separate isolated launcher/bundler is implemented. Its final exact-head checks,
+  credentials and hosted verification are required before pilot acceptance.
 - Hosted and phone acceptance are all Pending. No current provider connectivity,
   receipt, production persistence or release readiness claim is made here.

@@ -75,6 +75,55 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Stage 2 authorized and prepared — November 3, 2026.** Owner instructed “do
+stage 2”, authorizing the saved isolated pilot scope. Production/stage 3 remains
+deferred. [Operator runbook](TELEGRAM_PILOT_OPERATOR.md) records exact credentials,
+publication/registration procedure, fixtures, acceptance and remaining limits.
+
+Created only `equityinhealth/office-connect-telegram-pilot`, protected Docker /
+CPU Basic: API `visibility=protected`, `private=true`, expected app origin;
+anonymous source README returns 401. Empty creation commit `e2d291524f61103636baeb65b68ec82185c9556b`
+reports NO_APP_FILE. New session/webhook secret names exist and batch is `off`.
+No bundle upload, registration, real message, shared-preview change or production
+change has occurred. Dedicated bot cloud binding and test passwords/participants
+are not configured; owner setup questions are pending. Never obtain these values
+from production or ask for secrets in chat.
+
+Added separate test-only launcher/publisher/native fixture seed. They preserve
+the production runtime and version 9.91. Publisher fixes the exact protected
+target, requires a clean source and secret-name presence, defaults to dry-run,
+and emits source/version/per-file SHA-256 manifest. Launcher precreates a fresh
+synthetic DB, clears inherited providers/persistence, disables schedulers/direct
+sends and limits intake to authenticated allowed private senders. Pre-boot updates
+are ignored after a disposable reset. Signed-in fixture index and PILOT banner
+support actual phone testing. It is not a persistent recovery environment or an
+OS-level sandbox. Specialized native-review/fault cases still need source setup
+or explicitly labelled local evidence; all hosted checklist cases remain Pending.
+
+Final local regression group: **101 passed** in 37.74s, no failures/errors/skips.
+Seed-311 shuffled pilot group: **14 passed**, clean JUnit (groups overlap).
+Includes staged actual app/390×844 no-script sign-in, linking via message-visible
+codes, calendar/menu and duplicate handling; secret/body/allowlist/stale-update
+fences; native fixture roles/ownership/restricted-source checks and inherited
+provider/persistence isolation; existing preview, webhook/bot and release/bundle
+regressions. Test providers are synthetic. Existing Starlette/httpx warning only.
+Early fixture runs exposed a missing scratch parent, native comment ID return type
+and the test runner's fixed clock versus the subprocess real clock; corrected
+without changing application behavior or weakening timestamp rejection.
+Release metadata, lock inputs, AI contract, compilation and whitespace passed;
+local Markdown links checked before save. Dry-run stages 1,029 code-only files.
+Fresh full exact-head CI/avatar gates remain required for this tooling save;
+final results belong in PR #572 without another source-only evidence push.
+
+Next: save/verify final-head CI, obtain dedicated bot credential through supported
+cloud secrets and passwords/allowlisted participant setup, then publish the paused
+protected pilot, verify actual build/isolation, register only the test bot and
+execute owner phone batch A. Continue approved B–F and lifecycle cases only with
+recorded evidence; stage 2 cannot close until actual receipt and owner acceptance.
+No further approval of this already-authorized test scope is needed. Stage 3 still
+requires explicit production release/selected activation and canonical gates.
+
+
 **Finishing session — November 3, 2026:** optional features remain frozen.
 Inspected head `edcc4375c5dfa044251726ab1ba8a968f9cc2e8c` (9.91) matches remote
 and draft PR #572; actual main `625c60f2fc91ddf98519a9084a5c4217fd1f2e56` (9.62)

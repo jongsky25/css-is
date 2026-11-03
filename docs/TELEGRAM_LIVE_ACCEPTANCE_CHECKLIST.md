@@ -1,9 +1,9 @@
 # Pending private Telegram live-acceptance checklist
 
 This is a reviewable plan for later execution, not evidence of live acceptance.
-The owner has explicitly deferred deployment, activation and live testing. Every
-case below is **Pending**. Do not execute it, merge main or change live controls
-without the owner's later release/testing instruction.
+The owner authorized stage 2 on 2026-11-03: execute only the isolated test scope
+in the [operator runbook](TELEGRAM_PILOT_OPERATOR.md). Every case below remains
+**Pending** until actual evidence is recorded. Production and main merge stay deferred.
 
 Use the [finishing handoff](TELEGRAM_FINISHING_HANDOFF.md) for the current stage
 sequence, preview limitations and approval boundaries. This checklist remains
@@ -12,8 +12,9 @@ Pending until actual agreed hosted/personal evidence is recorded.
 The [concrete isolated pilot plan](TELEGRAM_STAGE2_PILOT_PLAN.md) maps these cases
 to proposed batches, synthetic roles, switch/consent prerequisites, provider
 reachability and evidence fields. No case was executed in this finishing session.
-The proposed test-only launcher is not yet implemented and the target/visibility,
-dedicated bot and scoped external actions require resolution before publication.
+The test-only launcher is implemented and the protected target created. Dedicated
+bot/participant/password configuration, exact-head checks and hosted verification
+remain required. Stage-2 authorization does not authorize production changes.
 
 ## Before the later pilot
 

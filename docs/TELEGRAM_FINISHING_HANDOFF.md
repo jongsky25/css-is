@@ -7,6 +7,12 @@ Candidate application version: **9.91**.
 
 ## Current finishing-session result
 
+**New owner instruction: “do stage 2”.** The isolated test scope is authorized;
+follow the [operator runbook](TELEGRAM_PILOT_OPERATOR.md). Do not request this
+authorization again. Dedicated bot/participant/password setup and actual receipt
+are still prerequisites. Stage 3/production remains deferred. Earlier blanket
+stage-2 deferrals below describe historical instructions and are superseded.
+
 See [status](SETUP_STATUS.md#next-action) for inspected-head CI/rules evidence and
 [the concrete stage-2 pilot plan](TELEGRAM_STAGE2_PILOT_PLAN.md) for the proposed
 HF target, test bot, visibility decision, fixtures, switch batches and blockers.
