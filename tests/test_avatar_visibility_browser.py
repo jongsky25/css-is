@@ -10,9 +10,18 @@ def test_native_visibility_and_touch(baseline_server, tmp_path):
     from playwright.sync_api import sync_playwright
     origin,cookie,_=baseline_server
     out=Path(os.getenv('CSS_AVATAR_OUT','docs/avatars/application'));out.mkdir(parents=True,exist_ok=True)
+    # Preserve native renderer diagnostics in the existing acceptance artifact.
+    # A CDP "Target crashed" alone cannot distinguish a browser defect from
+    # container resource exhaustion. Do not change native visibility flags.
+    diagnostics = {'browser': subprocess.check_output([shutil.which('chromium'), '--version'], text=True).strip()}
+    for name in ['/dev/shm', '/tmp']:
+        usage = shutil.disk_usage(name)
+        diagnostics[name] = {'total': usage.total, 'free': usage.free}
+    (out/'native-browser-environment.json').write_text(json.dumps(diagnostics, indent=2))
+    stderr_log = (out/'native-browser-stderr.log').open('w')
     sock=socket.socket();sock.bind(('127.0.0.1',0));port=sock.getsockname()[1];sock.close()
     process=subprocess.Popen([shutil.which('chromium'),'--headless','--no-sandbox',f'--remote-debugging-port={port}',
-                              f'--user-data-dir={tmp_path / "native-profile"}','about:blank'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                              f'--user-data-dir={tmp_path / "native-profile"}','about:blank'],stdout=subprocess.DEVNULL,stderr=stderr_log)
     try:
         import urllib.request
         for attempt in range(100):
@@ -64,5 +73,6 @@ def test_native_visibility_and_touch(baseline_server, tmp_path):
             browser.close()
     finally:
         process.terminate();process.wait(timeout=10)
+        stderr_log.close()
 
 

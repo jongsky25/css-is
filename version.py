@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.61"
+APP_VERSION = "9.62"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.62",
+        "date": "November 3, 2026",
+        "summary": "Keep companion release checks reliable.",
+        "changes": [
+            "Give the companion browser checks enough shared memory to complete reliably.",
+            "Keep browser diagnostics available when a release check fails."
+        ]
+    },
     {
         "version": "9.61",
         "date": "November 2, 2026",
