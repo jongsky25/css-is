@@ -75,6 +75,14 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Avatar crash investigation — November 3, 2026.** PR #572 latest avatar run
+41600573915 completed with 131 passes and a native Chromium renderer crash at
+the profile animation query. Root cause remains unproven. Separate branch
+`investigate/avatar-native-crash` preserves native stderr/browser/storage
+diagnostics without changing launch flags, assertions or application behavior.
+See [evidence and next diagnostic step](AVATAR_CRASH_INVESTIGATION.md).
+No production change or Telegram feature branch modification.
+
 **Christmas companion release preparation — November 2, 2026.** Owner requested
 the next preparation/verification step. Candidate 9.61 on
 `feat/christmas-companion-refinements`, based on main `adb83b4` (9.60), with
