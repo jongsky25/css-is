@@ -2965,3 +2965,26 @@ Final isolated Python 3.11 verification: **873 regressions** and **832 shuffled 
 Reports: `/tmp/telegram-reply-shortcuts-regressions.xml`, `/tmp/telegram-reply-shortcuts-shuffled.xml`, `/tmp/telegram-reply-shortcuts-focus.xml` and `/tmp/telegram-reply-shortcuts-phone.xml`. Release metadata 9.85 against main 25fe812/9.61, dependency locks, vendor integrity, pip compatibility, AI contract, compilation, main release history, links and whitespace pass. Existing Starlette/httpx deprecation warning remains. Prior head d2f999f CI was green, which does not establish acceptance for the new head.
 
 Next: inspect CI for the new head and continue the next requested feature. Deployment, activation, preview publication and personal/live testing remain deferred. New live checklist rows remain Pending. See [reply shortcuts](TELEGRAM_REPLY_SHORTCUTS.md).
+
+### Telegram fresh-session review — November 3, 2026
+
+- Inspected draft PR #572 at `3cea8f5`; clean review branch
+  `feat/telegram-private-work-lookup`. Fetched main remains `25fe812` (9.61).
+- Exact-head [CI run 41569265716](https://github.com/jongsky25/css-is/actions/runs/41569265716)
+  passed normal/shuffled Python 3.11 suites and their no-skips/AI evidence gates,
+  dependency/container audit, release metadata and aggregate Required checks.
+- Separate [avatar acceptance run 41569265827](https://github.com/jongsky25/css-is/actions/runs/41569265827)
+  failed in installation: Chromium and chromium-common
+  `156.0.8078.73-1~deb13u1` unavailable (apt exit 100). Functional tests did not
+  run. This confirms the blocker persists on the documentation head.
+- Recommended next feature, awaiting owner approval: bounded private discussion
+  browsing by work/task scope, listing current top-level comments with older-page
+  navigation and links into existing selected threads/message parts/reply forms.
+  Reuse independent discussion-reading consent and current native source checks;
+  browsing must leave notices/read/follow state unchanged. Existing commands need
+  a comment ID or search phrase, so browsing fills the discovery gap.
+- No application/workflow change or local application test in this review.
+  Deployment, preview publication, activation, real messages, personal/live tests
+  and main merge remain deferred. Fix browser availability without weakening
+  gates before claiming complete acceptance. This documentation save starts fresh
+  checks; the results above belong only to `3cea8f5`.

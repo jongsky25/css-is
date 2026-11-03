@@ -117,3 +117,17 @@ any separately authorized promotion.
 Do not put secrets, personal records or raw production logs into the chat or
 repository. Historical seasonal/monitoring notes are preserved in the status file;
 they do not override the owner's current Telegram scope or deferred live work.
+
+## Fresh-session inspection — November 3, 2026
+
+At `3cea8f5`, full normal/shuffled, dependency/container, metadata and aggregate
+CI passed in run 41569265716. Separate avatar functional run 41569265827 again
+failed before tests because the same Chromium pin was unavailable. Main remains
+`25fe812`. See the latest SETUP_STATUS.md entry for links.
+
+Next feature recommendation awaits owner approval: bounded private top-level
+discussion browsing for one work/task, with older pages and existing thread,
+message and reply navigation. Reuse independent read consent and preserve all
+read/notice/follow state. No feature implementation has started. Publication,
+activation, deployment, main merge and personal/live testing remain deferred.
+These results describe the inspected head; inspect fresh checks after this save.
