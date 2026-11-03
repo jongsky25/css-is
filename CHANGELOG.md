@@ -1,3 +1,9 @@
+## 9.62 — November 3, 2026
+
+- Provision 1 GiB shared memory for native companion browser acceptance and retain crash diagnostics.
+- Install the browser revision selected by the hashed Playwright lock instead of an unavailable Debian Chromium pin.
+- Companion behavior and Telegram features are unchanged; no unreleased Telegram code is included.
+
 ## 9.61 — November 2, 2026
 
 - Add five Christmas companion outfits across existing species/growth stages, preserving personal accessory choices and the existing Santa outfit ID.

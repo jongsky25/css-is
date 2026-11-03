@@ -25,7 +25,11 @@ concurrency:
 jobs:
   functional:
     runs-on: ubuntu-24.04
-    container: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+    container:
+      image: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+      # The native visibility probe intentionally omits Playwright's launch
+      # defaults. Provision Chromium shared memory without changing tab behavior.
+      options: --shm-size=1g
     timeout-minutes: 25
     env:
       CSS_AVATAR_BASELINE: '1'
@@ -38,15 +42,29 @@ jobs:
       - name: Install pinned browser and locked requirements
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends chromium=156.0.8078.73-1~deb13u1 chromium-common=156.0.8078.73-1~deb13u1 git procps
+          apt-get install -y --no-install-recommends git procps
           python -m venv .venv
           .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
+          # The hashed Playwright lock selects a fixed browser revision; Debian's
+          # rolling security repository does not retain old Chromium versions.
+          .venv/bin/python -m playwright install --with-deps chromium
+          .venv/bin/python -c 'from playwright.sync_api import sync_playwright; import os; p=sync_playwright().start(); os.symlink(p.chromium.executable_path, "/usr/local/bin/chromium"); p.stop()'
+          chromium --version
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Verify current-main companion interactions and frames
         run: |
           mkdir -p avatar-release-evidence
           .venv/bin/python -m pytest --maxfail=1 --tb=short --junitxml=avatar-release-evidence/functional.xml tests/test_companion_wardrobe.py tests/test_companion_customizer_browser.py tests/test_avatar_care.py tests/test_avatar_audio.py tests/test_onboarding_storage.py tests/test_avatar_geometry_browser.py tests/test_avatar_pointer_browser.py tests/test_avatar_motion_preference_browser.py tests/test_avatar_animal_batch_browser.py tests/test_avatar_static_preview_browser.py tests/test_avatar_container_resize_browser.py tests/test_avatar_chase_writes_browser.py tests/test_avatar_pagehide_browser.py tests/test_home_search_boot_browser.py tests/test_avatar_visibility_browser.py tests/test_avatar_frame_budget_browser.py tests/test_appearance_browser.py::test_publish_private_preview_mobile_and_live_outfit_without_form_reload
           .venv/bin/python scripts/check_release.py junit avatar-release-evidence/functional.xml
+      - name: Report native browser diagnostics
+        if: always()
+        run: |
+          for file in /tmp/avatar-release/application/native-browser-environment.json /tmp/avatar-release/application/native-browser-stderr.log; do
+            if [ -f "$file" ]; then cat "$file"; fi
+          done
+          for file in /sys/fs/cgroup/memory.events /sys/fs/cgroup/memory.max /sys/fs/cgroup/memory.peak; do
+            if [ -f "$file" ]; then cat "$file"; fi
+          done
       - name: Verify animal rigs and actual themed contact sheets
         run: |
           .venv/bin/python scripts/avatar_release/animal_motion.py --out avatar-release-evidence/rigs

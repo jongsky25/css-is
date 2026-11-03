@@ -75,6 +75,20 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Standalone avatar CI repair — November 3, 2026.** Candidate 9.62 on
+`fix/avatar-ci-standalone`, based on main `25fe812` (9.61), contains only browser
+acceptance provisioning/diagnostics and required version/cache/changelog metadata.
+It includes no unpublished Telegram feature code and does not modify PR #572's
+branch. The same browser source/1 GiB configuration passed 137 interaction/frame
+tests, 432 rig cases and six contact sheets on Telegram head `e7bea14` in
+[run 41607212977](https://github.com/jongsky25/css-is/actions/runs/41607212977);
+that earlier result is not acceptance for this standalone candidate.
+Next: inspect this candidate's complete exact-head CI and avatar acceptance before
+merge. Main merge triggers the existing gated production deployment. Preserve
+all gates. Telegram can continue independently, then update from main and retain
+the released 9.62 history; expected coordination concerns release/status metadata,
+not Telegram runtime code. Do not merge PR #572 as part of this repair.
+
 **Christmas companion release preparation — November 2, 2026.** Owner requested
 the next preparation/verification step. Candidate 9.61 on
 `feat/christmas-companion-refinements`, based on main `adb83b4` (9.60), with
