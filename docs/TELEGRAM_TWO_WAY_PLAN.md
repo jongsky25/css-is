@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.90) adds private task/document/supplies/personal reads, confirmed own supplies drafts and task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.91) adds private task/document/supplies/personal reads, confirmed own supplies drafts/submissions and task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-03.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -2919,3 +2919,74 @@ and personal/live testing remain deferred.
   metadata/aggregate and avatar checks after push. Deployment, preview publication,
   activation, real messages, personal/live testing and main merge remain deferred.
   Hosted acceptance remains Pending.
+
+### Own supplies submission — November 3, 2026
+
+In progress, Codex, PR #572, `feat/telegram-private-work-lookup`, candidate 9.91.
+Owner requested the next feature after draft creation; selected independent own
+draft/returned submission. New default-off `supplies.submit` plus supplies read,
+exact current request revision, complete purpose/date/items/quantities/requester/
+approver-routing private preview and explicit confirmation. Native control number,
+submitted version, approval mail queue and receipt commit atomically. No approval,
+stock hold or direct provider send. Draft consent does not grant submission.
+CI repair: shorten fully enabled menu descriptions, retaining every command,
+after previous head exceeded 4096 UTF-16 units. Actual main 625c60f/9.62 merged
+into review branch with released history retained. Verification pending.
+Deployment, publication, activation, real messages and main merge stay deferred.
+
+### Own supplies submission delivered — November 3, 2026
+
+- Codex, draft PR #572, `feat/telegram-private-work-lookup`, candidate **9.91**.
+  Owner requested the next bounded feature after draft creation. Incorporated
+  actual main `625c60f` (9.62 / standalone avatar CI repair #580) into this review
+  branch at `78a160c`; all **661** actual-main release entries remain exact.
+  No push/merge to main, deployment or activation performed by this work.
+- [Own submission](TELEGRAM_SUPPLY_SUBMISSION.md): new independent default-off
+  `supplies.submit` / `CSS_TELEGRAM_SUPPLIES_SUBMIT_ENABLED`, plus supplies read.
+  `/supply_submit` opens a signed-in no-script request/revision form; own draft/
+  returned `/supply_status` details offer a source-only shortcut with no implicit
+  origin or write. Complete exact private preview includes purpose/date/all
+  items/quantities, requester/unit, status/revision, retained/allocation-at-confirm
+  numbering and current eligible approver count. Zero approvers gives a warning
+  while preserving native submission policy. Draft consent grants no submission.
+- Confirmation reuses `submit_in_transaction`: numbering, immutable submitted
+  version, source state/revision, canonical history/audit, normal approval-mail
+  queue, consumed preview/outcome and incoming reply handoff are atomic. Native
+  requestability is rechecked; no approval, reservation, issue or direct provider
+  send. Submitted demand still participates in native requestable calculations.
+  Returned requests retain their number. Receipts bind original native operation/
+  immutable version/history and report original routing separately from current
+  status, never resubmitting or overwriting later changes. Added source-deletion
+  and prerequisite-grant fences; no new table/column or dependency.
+- Previous exact-head full CI (`585a9cb`, run **41611545208**) had one maximum-
+  origin menu failure: **4121 > 4096 UTF-16 units** in both normal/shuffled suites
+  (10,483 passes each before that failure). Shortened descriptions retain all
+  commands/examples; status uses concise prerequisite names and paused reasons
+  without dropping feature labels. The original max-origin regression and seven
+  ready/revoked/inbound/delivery/pilot/module/direct status states now pass.
+  The previous head's [avatar run 41611545551](https://github.com/jongsky25/css-is/actions/runs/41611545551)
+  passed. These previous-head results are not acceptance for the new head.
+- **483 regressions passed**, including **five 390×844 no-script phone flows**
+  (three submission, two draft), and **478 shuffled checks passed** (seed 311),
+  no failures/errors/skips. **77 action/release/bundle/diagnostic checks passed**.
+  Groups overlap. Local reports: `/workspace/supply-submit-regressions.xml`,
+  `/workspace/supply-submit-shuffled.xml`, `/workspace/supply-submit-release.xml`;
+  `/workspace/supply-submit-phone.xml`, `/workspace/supply-submit-status-budgets.xml`.
+  Coverage includes exact/foreign ownership, independent/revoked scopes/pilots,
+  request/catalog/identity/routing (including same count/different approvers)/stock/
+  year changes, number exhaustion, zero approvers, returned resubmission, original
+  versus current receipt, concurrency, deletion/ID reuse, control/length bounds,
+  expiry/restore and audit/handoff rollback including numbers/versions/mail.
+  Phone flows cover no-origin prefill, strict CSRF/fields, stale revision/fresh
+  review, exact confirmation, one submission, source navigation and receipt retry.
+- Fixture corrections use native role revocation and the required submitted-
+  version argument; old-schema simulation now removes/reinstalls the new deletion
+  trigger before asserting preserved old operations. No gate weakened. The local
+  merge's metadata syntax was corrected and gated before publication.
+- Release metadata/increase, locks, vendor integrity, compatibility, AI contract,
+  compilation, main release history, Markdown links and whitespace passed. Version/
+  changelog/cache synchronized at 9.91. Existing Starlette/httpx deprecation warning
+  remains. Full local repository suites were not run.
+- Next: inspect fresh exact-head complete CI and avatar checks after push.
+  Deployment, preview publication, activation, real messages, personal/live testing
+  and main merge remain deferred. Hosted acceptance stays Pending.

@@ -17932,6 +17932,8 @@ import telegram_reply_manage_routes
 app.include_router(telegram_reply_manage_routes.make_router(templates, get_conn))
 import telegram_discussion_follow_routes
 app.include_router(telegram_discussion_follow_routes.make_router(templates, get_conn))
+import telegram_supply_submit_routes
+app.include_router(telegram_supply_submit_routes.make_router(templates, get_conn))
 import telegram_supply_draft_routes
 app.include_router(telegram_supply_draft_routes.make_router(templates, get_conn))
 import telegram_update_read_routes

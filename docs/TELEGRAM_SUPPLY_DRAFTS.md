@@ -84,3 +84,10 @@ See [status](SETUP_STATUS.md), [plan](TELEGRAM_TWO_WAY_PLAN.md),
 [native requester workflow](SUPPLIES_MANAGEMENT_S2_1.md) and the
 [pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). Hosted acceptance
 remains Pending; isolated checks do not establish personal/live receipt.
+
+## Separate next action
+
+[Own submission](TELEGRAM_SUPPLY_SUBMISSION.md) is an optional independently
+consented capability after draft review. Draft consent does not grant submission;
+creating a draft still performs none of its numbering, submitted-version or
+approval-notice effects. The native UI remains available for review/submission.

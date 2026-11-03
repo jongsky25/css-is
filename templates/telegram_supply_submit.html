@@ -1,0 +1,22 @@
+{% extends "dash_layout.html" %}
+{% block title %}Submit my supply request — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>Submit my supply request for approval</h1>
+<p><a href="/account/telegram">Telegram permissions</a> · <a href="/supplies/requests">Review my requests</a></p>
+<p>Start <code>/supply_submit</code> privately. Use the request number and exact current revision from <code>/supply_status ID</code> or its submission shortcut. Only your own draft or returned request can be submitted. Edit its fields in Office Connect first.</p>
+<p>Opening this form submits nothing. Review the complete purpose, date, every item and quantity, current requester/unit and approver routing in the private preview, then explicitly confirm. A number is allocated only at confirmation; returned requests retain their number. Native approval notices are queued. Approval, reservation and issue remain separate.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if prepared %}<p role="status">{% if prepared.state == 'pending' %}Preview prepared. Your request has not been submitted. Send <code>/supplysubmit_preview {{ prepared.operation_id }}</code> privately and confirm the exact request before expiry.{% else %}This operation has a recorded outcome. Send <code>/supplysubmit_receipt {{ prepared.operation_id }}</code> privately. Recovery will not submit again.{% endif %}</p>{% endif %}
+{% if origins %}
+<form method="post" action="{{ action_path }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="submit-origin">Starting private conversation</label><select id="submit-origin" name="origin" required style="max-width:100%">{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
+<p><label for="submit-request">Request number</label><input id="submit-request" name="request_id" type="number" min="1" max="2147483647" value="{{ values.get('request_id','') }}" required></p>
+<p><label for="submit-revision">Current request revision</label><input id="submit-revision" name="revision" type="number" min="1" max="2147483646" value="{{ values.get('revision','') }}" required></p>
+<p>The preview expires after five minutes. Changed request, catalog, requester, stock availability or routing requires fresh review. No request fields, owner, decision or stock settings can be changed here.</p>
+<button type="submit">Prepare exact private preview</button>
+</form>
+{% else %}<p>No current private request. Enable and consent to the separate submission pilot and supplies read permission, then start <code>/supply_submit</code>. Draft-creation consent does not authorize submission.</p>{% endif %}
+</div>
+{% endblock %}

@@ -28,6 +28,7 @@ ACTIONS = {'calendar.create':'calendar_create','rooms.request':'rooms_request', 
 ACTIONS.update({'calendar.reschedule':'calendar_reschedule','calendar.cancel':'calendar_cancel'})
 ACTIONS.update({'rooms.withdraw':'rooms_withdraw','rooms.move':'rooms_move'})
 ACTIONS['supplies.draft']='supplies_draft'
+ACTIONS['supplies.submit']='supplies_submit'
 ACTIONS['work.follow']='work_follow'
 ACTIONS['work.updates.acknowledge']='work_updates_acknowledge'
 ACTIONS['tasks.create']='tasks_create'
@@ -104,9 +105,9 @@ def authority(conn,context,action):
     if action in ('calendar.reschedule','calendar.cancel','rooms.withdraw','rooms.move','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply','work.comment_edit','tasks.comment_edit','work.updates.acknowledge','work.follow') and (context['chat_id']<0 or not switches.enabled('delivery')
             or len(links.origin() or '')>200 or os.environ.get('CSS_TELEGRAM_REPLY_TRANSPORT')=='direct'):
         raise Unavailable('Meeting management requires private webhook replies.')
-    if action=='supplies.draft' and (context['chat_id']<0 or not switches.enabled('delivery') or len(links.origin() or '')>200 or os.environ.get('CSS_TELEGRAM_REPLY_TRANSPORT')=='direct'):
+    if action in ('supplies.draft','supplies.submit') and (context['chat_id']<0 or not switches.enabled('delivery') or len(links.origin() or '')>200 or os.environ.get('CSS_TELEGRAM_REPLY_TRANSPORT')=='direct'):
         raise Unavailable('Supply drafts require private webhook replies.')
-    read_scope = 'supplies.read' if action=='supplies.draft' else 'work.read' if (action.startswith('tasks.') or action in ('work.comment','work.reply','work.comment_edit','work.updates.acknowledge','work.follow')) else ('calendar.read' if action.startswith('calendar.') else 'rooms.read')
+    read_scope = 'supplies.read' if action in ('supplies.draft','supplies.submit') else 'work.read' if (action.startswith('tasks.') or action in ('work.comment','work.reply','work.comment_edit','work.updates.acknowledge','work.follow')) else ('calendar.read' if action.startswith('calendar.') else 'rooms.read')
     if not links.authorized(conn,found[0]['id'],read_scope):
         raise Unavailable('Current read consent is required for this action.')
     if action=='rooms.request' and not links.authorized(conn,found[0]['id'],'calendar.read'):
@@ -116,7 +117,7 @@ def authority(conn,context,action):
         if not work.enabled(conn):raise Unavailable('Task actions are paused with the source work module.')
     if action=='work.updates.acknowledge' and (not switches.enabled('work_updates_read') or not links.authorized(conn,found[0]['id'],'work.updates.read')):
         raise Unavailable('Current discussion inbox read consent and pilot are required.')
-    if action=='supplies.draft':
+    if action in ('supplies.draft','supplies.submit'):
         import supplies
         import supplies_requests
         supplies.require_enabled(conn);supplies_requests.requester(conn,found[0])

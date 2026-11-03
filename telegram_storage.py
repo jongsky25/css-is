@@ -5,7 +5,7 @@ import os
 # Deliberately independent of Apprise's private discussion digest switch.
 SWITCHES = (
     'inbound', 'delivery', 'link', 'groups', 'calendar_read', 'rooms_read',
-    'calendar_create', 'calendar_reschedule', 'calendar_cancel', 'rooms_request', 'rooms_withdraw', 'rooms_move', 'change_notices', 'reminders', 'work_read', 'tasks_acknowledge', 'tasks_submit', 'tasks_create', 'tasks_deadline', 'tasks_accept', 'tasks_return', 'tasks_assign', 'tasks_reassign', 'tasks_reopen', 'tasks_cancel', 'tasks_block', 'tasks_unblock', 'tasks_dependency_add', 'tasks_dependency_remove', 'work_comment', 'tasks_comment', 'work_reply', 'tasks_reply', 'work_comment_edit', 'tasks_comment_edit', 'work_mentions', 'work_updates_read', 'work_updates_acknowledge', 'work_follow', 'work_follows_read', 'work_discussion_search', 'work_discussion_read', 'tasks_review_read', 'tasks_blockers_read', 'documents_read', 'supplies_read', 'supplies_draft', 'travel_read', 'meals_read', 'arrangements_read',
+    'calendar_create', 'calendar_reschedule', 'calendar_cancel', 'rooms_request', 'rooms_withdraw', 'rooms_move', 'change_notices', 'reminders', 'work_read', 'tasks_acknowledge', 'tasks_submit', 'tasks_create', 'tasks_deadline', 'tasks_accept', 'tasks_return', 'tasks_assign', 'tasks_reassign', 'tasks_reopen', 'tasks_cancel', 'tasks_block', 'tasks_unblock', 'tasks_dependency_add', 'tasks_dependency_remove', 'work_comment', 'tasks_comment', 'work_reply', 'tasks_reply', 'work_comment_edit', 'tasks_comment_edit', 'work_mentions', 'work_updates_read', 'work_updates_acknowledge', 'work_follow', 'work_follows_read', 'work_discussion_search', 'work_discussion_read', 'tasks_review_read', 'tasks_blockers_read', 'documents_read', 'supplies_read', 'supplies_draft', 'supplies_submit', 'travel_read', 'meals_read', 'arrangements_read',
 )
 
 
@@ -270,6 +270,14 @@ def install(conn):
       UPDATE telegram_operation SET target_id=NULL,expected_revision=NULL,result_code='supply_deleted'
         WHERE action='supplies.draft' AND target_id=OLD.id;
     END;
+    CREATE TRIGGER IF NOT EXISTS telegram_supply_submit_delete BEFORE DELETE ON supply_request
+    BEGIN
+      UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
+        WHERE state='pending' AND operation_id IN (SELECT operation_id FROM telegram_operation WHERE action='supplies.submit' AND target_id=OLD.id);
+      UPDATE telegram_operation SET target_id=NULL,expected_revision=NULL,result_code='supply_deleted',
+        state=CASE WHEN state='pending' THEN 'cancelled' ELSE state END
+        WHERE action='supplies.submit' AND target_id=OLD.id;
+    END;
     DROP TRIGGER IF EXISTS telegram_preview_grant;
     CREATE TRIGGER telegram_preview_grant AFTER UPDATE OF revoked_at ON telegram_grant
     WHEN NEW.revoked_at IS NOT NULL
@@ -280,7 +288,7 @@ def install(conn):
           OR (NEW.action='rooms.read' AND action IN ('rooms.request','rooms.withdraw','rooms.move'))
           OR (NEW.action='calendar.read' AND action='rooms.move'
               AND json_extract(CASE WHEN json_valid(expected_json) THEN expected_json ELSE '{}' END,'$.entry_id') IS NOT NULL)
-          OR (NEW.action='supplies.read' AND action='supplies.draft')
+          OR (NEW.action='supplies.read' AND action IN ('supplies.draft','supplies.submit'))
           OR (NEW.action='work.updates.read' AND action='work.updates.acknowledge')
           OR (NEW.action='work.mentions' AND action IN ('work.comment','tasks.comment','work.reply','tasks.reply'))
           OR (NEW.action='work.read' AND action IN ('tasks.acknowledge','tasks.submit','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply','work.comment_edit','tasks.comment_edit','work.updates.acknowledge','work.follow')));

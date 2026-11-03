@@ -23,9 +23,9 @@ verified again in that session.
 ## Current work and owner preferences
 
 - Draft [PR #572](https://github.com/jongsky25/css-is/pull/572); branch
-  `feat/telegram-private-work-lookup`; candidate **9.90**. The prior application
-  baseline was `e7bea14` (own-message edit shortcuts plus CI investigation).
-  Guided own supplies drafts are now implemented; see the latest progress entry below and check the PR head.
+  `feat/telegram-private-work-lookup`; candidate **9.91**. The prior application
+  baseline was `585a9cb` (own supplies drafts), with actual main `625c60f`
+  (9.62) merged into review. Own supplies submission is now implemented; see the latest progress entry below and check the PR head.
 - The owner has linked Telegram and reported pulling calendar information. That
   report does not establish that the new draft features have been deployed or
   tested live. The owner wants more capabilities added first, then will do
@@ -211,3 +211,23 @@ Avatar acceptance passed on that head after diagnostics/shared-memory changes;
 full CI was still running at last inspection. Inspect the new feature head's own
 CI/acceptance. Deployment, previews, activation, real messages, personal/live
 testing and main merge remain deferred.
+
+## Latest own submission increment — November 3, 2026
+
+Candidate 9.91 adds independent `/supply_submit` for one own draft/returned request.
+Supplies read is required; draft consent is neither sufficient nor required.
+Source-only request/revision form → exact full private preview → confirmation
+uses native numbering, immutable submitted version and approval mail queue, with
+original/current receipt recovery. Approval and inventory effects stay separate.
+[Behavior](TELEGRAM_SUPPLY_SUBMISSION.md). Real messages remain deferred.
+
+483 regressions (five no-script phone flows), 478 shuffled checks and 77 action/
+release/bundle checks passed without failures/skips; groups overlap. Menu/status
+wording now fits maximum origin length while retaining every command/label and
+permission; this fixes the prior full-CI failure. See latest status/plan evidence.
+
+Actual main `625c60f` (released 9.62 avatar repair #580) was merged into review
+with all 661 released changelog entries preserved. Previous feature head passed
+avatar acceptance but failed full CI on menu size. Inspect new exact-head checks
+before promotion. Deployment, previews, activation, personal/live testing and
+main merge remain deferred; no production action occurred in this work.

@@ -17,7 +17,7 @@ import work_tasks
 FEATURES=(
  ('calendar.read','Calendar','Calendar lookup','/calendar — next seven days; /calendar YYYY-MM-DD — one day.',(),None,False),
  ('calendar.create','Calendar','Meeting creation','/meeting — guided form, then exact private preview and confirmation.',('calendar.read',),None,False),
- ('calendar.reschedule','Calendar','Meeting rescheduling','/meeting_reschedule — change your own meeting’s date/time after preview and confirmation.',('calendar.read',),None,True),
+ ('calendar.reschedule','Calendar','Meeting rescheduling','/meeting_reschedule — reschedule my meeting with private confirmation.',('calendar.read',),None,True),
  ('calendar.cancel','Calendar','Meeting cancellation','/meeting_cancel — cancel your own meeting after preview and confirmation.',('calendar.read',),None,True),
  ('rooms.read','Calendar','Room lookup','/room_slots — today’s slots; /my_rooms; /room_status REFERENCE.',(),None,False),
  ('rooms.request','Calendar','Room requests','/room_request — an existing meeting; preview and confirmation; pending approval.',('calendar.read','rooms.read'),None,False),
@@ -25,7 +25,7 @@ FEATURES=(
  ('rooms.move','Calendar','Room date moves','/room_move — change your own request’s date; approved bookings require a new approval.',('rooms.read',),None,True),
  ('work.read','Tasks and work','Work lookup','/my_summary; /my_tasks; /my_work; /task_status WORK_ID TASK_ID; /work_status WORK_ID.\nExample: /my_tasks overdue (also upcoming or review).',(),work.enabled,False),
  ('tasks.create','Tasks and work','Task proposals','/new_task — propose a task in permitted work; officer confirmation remains required.',('work.read',),work.enabled,True),
- ('work.discussion.read','Tasks and work','Discussion threads','/discussion_browse WORK_ID work|TASK_ID — recent comments; /discussion_thread WORK_ID work|TASK_ID COMMENT_ID — replies.',('work.read',),work.enabled,True),
+ ('work.discussion.read','Tasks and work','Discussion threads','/discussion_browse WORK_ID work|TASK_ID; /discussion_thread WORK_ID work|TASK_ID COMMENT_ID.',('work.read',),work.enabled,True),
  ('work.discussion.search','Tasks and work','Discussion search','/discussion_search WORK_ID work|TASK_ID WORDS — current text excerpts.',('work.read',),work.enabled,True),
  ('work.follows.read','Tasks and work','Followed discussions','/my_follows [all|work|tasks] — your saved discussion follows.',('work.read',),work.enabled,True),
  ('work.follow','Tasks and work','Discussion follows','/discussion_follow — follow or unfollow a work/task discussion after confirmation.',('work.read',),work.enabled,True),
@@ -38,22 +38,23 @@ FEATURES=(
  ('tasks.reply','Tasks and work','Task replies','/task_reply — reply to a task comment after confirmation.',('work.read',),work.enabled,True),
  ('work.comment','Tasks and work','Work comments','/work_comment — post a work comment after confirmation.',('work.read',),work.enabled,True),
  ('tasks.comment','Tasks and work','Task comments','/task_comment — post a task comment after confirmation.',('work.read',),work.enabled,True),
- ('tasks.dependency_add','Tasks and work','Add task prerequisite','/task_dependency_add — add a same-work prerequisite after confirmation.',('work.read',),work.enabled,True),
- ('tasks.dependency_remove','Tasks and work','Remove task prerequisite','/task_dependency_remove — remove one prerequisite after confirmation.',('work.read',),work.enabled,True),
- ('tasks.block','Tasks and work','Record task blocker','/task_block — record a blocker, follow-up person and date after confirmation.',('work.read',),work.enabled,True),
- ('tasks.unblock','Tasks and work','Clear task blocker','/task_unblock — clear a recorded blocker with a resolution reason after confirmation.',('work.read',),work.enabled,True),
+ ('tasks.dependency_add','Tasks and work','Add task prerequisite','/task_dependency_add — add a same-work prerequisite.',('work.read',),work.enabled,True),
+ ('tasks.dependency_remove','Tasks and work','Remove task prerequisite','/task_dependency_remove — remove one prerequisite.',('work.read',),work.enabled,True),
+ ('tasks.block','Tasks and work','Record task blocker','/task_block — blocker reason, follow-up person and date.',('work.read',),work.enabled,True),
+ ('tasks.unblock','Tasks and work','Clear task blocker','/task_unblock — clear a blocker with a resolution reason.',('work.read',),work.enabled,True),
  ('tasks.blockers.read','Tasks and work','Task blockers','/task_blockers WORK_ID TASK_ID — prerequisite status and follow-up owner/date.',('work.read',),work.enabled,True),
  ('tasks.review.read','Tasks and work','Task review queue','/review_queue — tasks you can review; /review_task WORK_ID TASK_ID for permitted next actions.',('work.read',),work.enabled,True),
  ('tasks.cancel','Tasks and work','Task cancellation','/task_cancel — officer cancellation after preview and confirmation.',('work.read',),work.enabled,True),
- ('tasks.reopen','Tasks and work','Task reopening','/task_reopen — officer/work-lead return of a Done task to In progress.',('work.read',),work.enabled,True),
- ('tasks.reassign','Tasks and work','Task reassignment','/task_reassign — officer transfer to another owner; status returns to To do.',('work.read',),work.enabled,True),
+ ('tasks.reopen','Tasks and work','Task reopening','/task_reopen — officer/work-lead reopening of a Done task.',('work.read',),work.enabled,True),
+ ('tasks.reassign','Tasks and work','Task reassignment','/task_reassign — officer reassignment; status returns to To do.',('work.read',),work.enabled,True),
  ('tasks.assign','Tasks and work','Task assignment','/task_assign — officer confirmation of proposed task ownership.',('work.read',),work.enabled,True),
  ('tasks.accept','Tasks and work','Task acceptance','/task_accept — review and accept a submitted task.',('work.read',),work.enabled,True),
  ('tasks.return','Tasks and work','Task return','/task_return — return a submitted task for changes.',('work.read',),work.enabled,True),
- ('tasks.deadline','Tasks and work','Task deadlines','/task_deadline — officer/work-lead deadline changes after preview and confirmation.',('work.read',),work.enabled,True),
+ ('tasks.deadline','Tasks and work','Task deadlines','/task_deadline — officer/work-lead deadline changes.',('work.read',),work.enabled,True),
  ('tasks.acknowledge','Tasks and work','Task acknowledgement','/task_ack WORK_ID TASK_ID — preview taking your task into progress.',('work.read',),work.enabled,True),
  ('tasks.submit','Tasks and work','Task submission','/task_submit WORK_ID TASK_ID — prepare output, preview, then confirm review submission.',('work.read',),work.enabled,True),
  ('documents.read','Documents','Document lookup','/documents; /find_documents WORDS; /document_status ID.\nExample: /find_documents budget',(),documents.enabled,True),
+ ('supplies.submit','Requests','Supply submission','/supply_submit — submit my draft/returned request for approval.',('supplies.read',),supplies.enabled,True),
  ('supplies.draft','Requests','Supply drafts','/supply_draft — create my draft after private confirmation.',('supplies.read',),supplies.enabled,True),
  ('supplies.read','Requests','Supplies','/my_supplies; /supply_status ID. Example: /my_supplies needs_action',(),supplies.enabled,True),
  ('travel.read','Requests','Travel','/my_travel; /travel_status ID — deadline, checklist and paper-review status.',(),travel.enabled,True),
@@ -80,11 +81,11 @@ def availability(conn,delivery,bot):
     for scope,group,label,commands,dependencies,module,pull_only in FEATURES:
         if not actor:reason='link or reconnect your own account'
         elif not switches.enabled('inbound') or not switches.enabled('delivery') or not links.available() or len(links.origin() or '')>200:
-            reason='private connection or host delivery is paused/not configured; contact your administrator'
-        elif module is not None and not module(conn):reason='source module is paused; contact your administrator'
+            reason='private connection or host delivery is paused/not configured'
+        elif module is not None and not module(conn):reason='source module is paused'
         elif any(not switches.enabled(s.replace('.','_')) for s in (scope,*dependencies)):
-            reason='host pilot or a prerequisite is paused; contact your administrator'
-        elif pull_only and not webhook():reason='this delivery mode does not support the feature; contact your administrator'
+            reason='host pilot or a prerequisite is paused'
+        elif pull_only and not webhook():reason='this delivery mode does not support the feature'
         elif any(not links.authorized(conn,actor['id'],s) for s in (scope,*dependencies)):
             missing=[links.SCOPES[s] for s in (scope,*dependencies) if not links.authorized(conn,actor['id'],s)]
             reason='missing consent: '+', '.join(missing)
@@ -128,8 +129,14 @@ def status(conn,delivery,bot,now):
     if not actor:return 'Office Connect Telegram connection: not linked or needs reconnection. Use /start to link your own account.'+account_link()
     features=availability(conn,delivery,bot)
     ready=[f['label'] for f in features if not f['reason']]
-    blocked=[f['label']+': '+(f['reason'] if f['scope']=='work.read' else f['reason'].replace(links.SCOPES['work.read'],'work read').removesuffix(', work read'))
-             for f in features if f['reason']]
+    blocked=[]
+    for feature in features:
+        if not feature['reason']:continue
+        reason=feature['reason']
+        for scope,label in (('work.read','work read'),('calendar.read','calendar read'),('rooms.read','room read'),('supplies.read','supplies read'),('work.updates.read','discussion inbox read')):
+            if feature['scope']!=scope:reason=reason.replace(links.SCOPES[scope],label)
+        reason=reason.removesuffix(', work read')
+        blocked.append(feature['label']+': '+reason)
     text='Telegram connection: active.\nAvailable: '+(', '.join(ready) or 'none yet')
     if blocked:text+='\n\nOther features (needs = missing consent)\n'+'\n'.join(line.replace('missing consent: ','needs: ') for line in blocked)
     if any(f['reason'].endswith(', '+links.SCOPES['work.read']) for f in features):

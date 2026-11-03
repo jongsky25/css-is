@@ -153,3 +153,28 @@ def test_meeting_menu_requires_current_calendar_read_prerequisite(menu_env,monke
     monkeypatch.setenv('CSS_TELEGRAM_CALENDAR_READ_ENABLED','0')
     assert '/meeting' not in command(menu_env,number=11)['text']
     assert 'Meeting creation: host pilot or a prerequisite is paused' in command(menu_env,'/status',12)['text']
+
+
+@pytest.mark.parametrize('state',['ready','revoked','inbound','delivery','pilots','modules','direct'])
+def test_all_feature_status_states_preserve_every_label_at_maximum_origin(menu_env,monkeypatch,state):
+    c,users,*_=menu_env
+    connection=dict(zip([d[0] for d in c.execute('SELECT * FROM telegram_connection').description],c.execute('SELECT * FROM telegram_connection').fetchone()))
+    for scope in links.SCOPES:
+        if scope=='calendar.read':continue
+        c.execute('INSERT INTO telegram_grant(connection_id,account_id,action,generation,bot_identity,bot_fingerprint,consented_at) VALUES (?,?,?,?,?,?,?)',
+            (connection['id'],users[0]['id'],scope,connection['generation'],bot.transport.config()[0],bot.transport.config()[2],links.stamp(NOW)))
+    c.commit()
+    for flag in bot.storage.SWITCHES:monkeypatch.setenv('CSS_TELEGRAM_'+flag.upper()+'_ENABLED','1')
+    for module in ('documents','work','supplies'):st.set_setting(c,module+'.enabled','1')
+    monkeypatch.setenv('CSS_BASE_URL','https://'+'a'*60+'.'+'b'*60+'.'+'c'*60+'.example12')
+    if state=='revoked':c.execute('UPDATE telegram_grant SET revoked_at=?',(links.stamp(NOW),));c.commit()
+    elif state in ('inbound','delivery'):monkeypatch.setenv('CSS_TELEGRAM_'+state.upper()+'_ENABLED','0')
+    elif state=='pilots':
+        for scope in links.SCOPES:monkeypatch.setenv('CSS_TELEGRAM_'+scope.replace('.','_').upper()+'_ENABLED','0')
+    elif state=='modules':
+        for module in ('documents','work','supplies'):st.set_setting(c,module+'.enabled','0')
+    elif state=='direct':monkeypatch.setenv('CSS_TELEGRAM_REPLY_TRANSPORT','direct')
+    delivery={'connection_id':connection['id'],'generation':connection['generation'],'chat_id':connection['private_chat_id'],'topic_id':None,'registration_id':None}
+    text=menu.status(c,delivery,bot.transport.config(),NOW)
+    assert menu.common.units(text)<=4096
+    for scope,group,label,*_ in menu.FEATURES:assert label in text

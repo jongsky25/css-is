@@ -1,4 +1,6 @@
-## 9.90 — November 3, 2026
+## 9.91 — November 3, 2026
+
+- Add independently consented own draft/returned supplies submission with exact request/line/requester/routing previews, native atomic numbering/version/mail/outcome and non-replaying historical receipts; approval and inventory remain separate.
 
 - Add independently consented own supplies-draft creation through a bounded catalog form, exact private preview and native atomic draft/receipt save; submission, numbering, approval, stock reservation and approver notifications remain separate.
 

@@ -182,3 +182,14 @@ availability denial and fresh preparation. Confirm one own draft, retained recei
 after later native edits, revocation/restore/cached-context denial and unchanged
 numbering/submission/approval/stock/approver mail. Two synthetic phone flows do not
 establish hosted/personal acceptance.
+
+## Own supplies submission — Pending
+
+After separate activation approval, verify own draft/returned source selection,
+independent submission/read consent without draft consent, exact full preview,
+requester/unit/current routing, zero-approver warning, current request/catalog/
+identity/stock/year fencing and no pre-confirmation submission or numbering.
+Confirm one submitted version/number and native approval-mail queue; returned
+resubmission retains its number. Check original versus current receipt states,
+concurrency/retry, no approval/reservation/ledger effect, and atomic failure rollback.
+Any actual provider delivery needs separately authorized live testing.

@@ -75,17 +75,18 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-Avatar crash investigation continues separately on `investigate/avatar-native-crash`; see [diagnostic evidence](AVATAR_CRASH_INVESTIGATION.md).
-
-For a fresh phone session, use the [Telegram mobile handoff](TELEGRAM_MOBILE_HANDOFF.md).
-Incoming CI-investigation head `e7bea14` passed avatar acceptance after shared-memory
-provisioning. Its full CI was still running at last inspection. Preserve these
-commits and inspect fresh exact-head checks for the new supplies increment.
-Inspect fresh exact-head checks and the latest evidence below before proceeding.
+Standalone avatar CI repair #580 is merged in actual main `625c60f` (9.62) and
+has been incorporated into this review branch with released history preserved.
+Previous feature head `585a9cb` passed avatar acceptance; its full CI found a
+maximum-origin menu overflow (4121 UTF-16 units). This increment repairs menu and
+status wording while retaining all commands, feature labels and permissions.
+Inspect fresh exact-head complete CI before any promotion. For a fresh phone
+session, use the [Telegram mobile handoff](TELEGRAM_MOBILE_HANDOFF.md).
 
 **Current Telegram feature work — November 3, 2026:** continue draft
 [PR #572](https://github.com/jongsky25/css-is/pull/572), branch
-`feat/telegram-private-work-lookup`, candidate **9.90**. The latest addition is
+`feat/telegram-private-work-lookup`, candidate **9.91**. The latest addition is
+[own supplies submission](TELEGRAM_SUPPLY_SUBMISSION.md), following
 [guided own supplies drafts](TELEGRAM_SUPPLY_DRAFTS.md), following
 [own-message edit shortcuts](TELEGRAM_COMMENT_EDITING.md), following
 [inbox acknowledgement shortcuts](TELEGRAM_UPDATE_READ.md), following
@@ -3224,3 +3225,60 @@ Merged actual main `625c60f` (released 9.62, standalone avatar CI repair PR #580
 into the Telegram review branch. Preserved its exact released changelog/version
 entry and CI provisioning/diagnostics; review candidate remains 9.90 until the
 next increment. No push/merge to main, deployment or activation performed.
+
+### Own supplies submission delivered — November 3, 2026
+
+- Codex, draft PR #572, `feat/telegram-private-work-lookup`, candidate **9.91**.
+  Owner requested the next bounded feature after draft creation. Incorporated
+  actual main `625c60f` (9.62 / standalone avatar CI repair #580) into this review
+  branch at `78a160c`; all **661** actual-main release entries remain exact.
+  No push/merge to main, deployment or activation performed by this work.
+- [Own submission](TELEGRAM_SUPPLY_SUBMISSION.md): new independent default-off
+  `supplies.submit` / `CSS_TELEGRAM_SUPPLIES_SUBMIT_ENABLED`, plus supplies read.
+  `/supply_submit` opens a signed-in no-script request/revision form; own draft/
+  returned `/supply_status` details offer a source-only shortcut with no implicit
+  origin or write. Complete exact private preview includes purpose/date/all
+  items/quantities, requester/unit, status/revision, retained/allocation-at-confirm
+  numbering and current eligible approver count. Zero approvers gives a warning
+  while preserving native submission policy. Draft consent grants no submission.
+- Confirmation reuses `submit_in_transaction`: numbering, immutable submitted
+  version, source state/revision, canonical history/audit, normal approval-mail
+  queue, consumed preview/outcome and incoming reply handoff are atomic. Native
+  requestability is rechecked; no approval, reservation, issue or direct provider
+  send. Submitted demand still participates in native requestable calculations.
+  Returned requests retain their number. Receipts bind original native operation/
+  immutable version/history and report original routing separately from current
+  status, never resubmitting or overwriting later changes. Added source-deletion
+  and prerequisite-grant fences; no new table/column or dependency.
+- Previous exact-head full CI (`585a9cb`, run **41611545208**) had one maximum-
+  origin menu failure: **4121 > 4096 UTF-16 units** in both normal/shuffled suites
+  (10,483 passes each before that failure). Shortened descriptions retain all
+  commands/examples; status uses concise prerequisite names and paused reasons
+  without dropping feature labels. The original max-origin regression and seven
+  ready/revoked/inbound/delivery/pilot/module/direct status states now pass.
+  The previous head's [avatar run 41611545551](https://github.com/jongsky25/css-is/actions/runs/41611545551)
+  passed. These previous-head results are not acceptance for the new head.
+- **483 regressions passed**, including **five 390×844 no-script phone flows**
+  (three submission, two draft), and **478 shuffled checks passed** (seed 311),
+  no failures/errors/skips. **77 action/release/bundle/diagnostic checks passed**.
+  Groups overlap. Local reports: `/workspace/supply-submit-regressions.xml`,
+  `/workspace/supply-submit-shuffled.xml`, `/workspace/supply-submit-release.xml`;
+  `/workspace/supply-submit-phone.xml`, `/workspace/supply-submit-status-budgets.xml`.
+  Coverage includes exact/foreign ownership, independent/revoked scopes/pilots,
+  request/catalog/identity/routing (including same count/different approvers)/stock/
+  year changes, number exhaustion, zero approvers, returned resubmission, original
+  versus current receipt, concurrency, deletion/ID reuse, control/length bounds,
+  expiry/restore and audit/handoff rollback including numbers/versions/mail.
+  Phone flows cover no-origin prefill, strict CSRF/fields, stale revision/fresh
+  review, exact confirmation, one submission, source navigation and receipt retry.
+- Fixture corrections use native role revocation and the required submitted-
+  version argument; old-schema simulation now removes/reinstalls the new deletion
+  trigger before asserting preserved old operations. No gate weakened. The local
+  merge's metadata syntax was corrected and gated before publication.
+- Release metadata/increase, locks, vendor integrity, compatibility, AI contract,
+  compilation, main release history, Markdown links and whitespace passed. Version/
+  changelog/cache synchronized at 9.91. Existing Starlette/httpx deprecation warning
+  remains. Full local repository suites were not run.
+- Next: inspect fresh exact-head complete CI and avatar checks after push.
+  Deployment, preview publication, activation, real messages, personal/live testing
+  and main merge remain deferred. Hosted acceptance stays Pending.
