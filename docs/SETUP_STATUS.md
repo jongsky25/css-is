@@ -75,6 +75,47 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Finishing session — November 3, 2026:** optional features remain frozen.
+Inspected head `edcc4375c5dfa044251726ab1ba8a968f9cc2e8c` (9.91) matches remote
+and draft PR #572; actual main `625c60f2fc91ddf98519a9084a5c4217fd1f2e56` (9.62)
+is already an ancestor. No reconciliation/runtime fix was needed at inspection.
+[CI 41637847706](https://github.com/jongsky25/css-is/actions/runs/41637847706):
+normal and seed-311 shuffled suites each **10,538 passed**, zero failures/skips;
+both JUnit and **447-case offline AI gates passed**. Metadata, dependency/container
+audit and aggregate Required checks passed. [Avatar 41637847714](https://github.com/jongsky25/css-is/actions/runs/41637847714)
+passed: **137 functional tests**, clean JUnit and rig/contact-sheet steps. These results
+belong only to `edcc437`, not the later documentation commit containing this note.
+
+Fresh API reads confirm active main ruleset 26274179, no bypass actors, required
+PR/resolved threads, zero required approvals, strict up-to-date required check
+`verification / Required checks` (Actions 15368), and deletion/force-push blocks.
+PR reviews and review threads are empty; no approval is implied. GitHub connector
+and shell fetch/API access work. Runtime reports enforced unrestricted HTTP;
+configured `HF_TOKEN` readiness is not proof of a pilot-target permission.
+
+Prepared [the concrete stage-2 plan](TELEGRAM_STAGE2_PILOT_PLAN.md): proposed
+separate HF target/test bot, visibility/reachability decision, test-only isolation
+prerequisites, account/fixture matrix, exact switch/consent batches, evidence,
+pause and release gates. All live checklist cases remain Pending. The dedicated
+launcher/bundle is not yet implemented and needs local verification before
+publication review. Read-only HF identity reports the intended owner and Pro;
+HF documents protected visibility (private source/public app) as included. That
+is the preferred pilot profile. Proposed target lookup returned 404 (not proof
+of availability/create permission); shared preview is untouched, private/Docker,
+SLEEPING at Space commit `d98f59e`. No purchase is needed by the proposal.
+No application behavior/version,
+provider registration, hosting configuration, real message or deployment changed.
+
+Next: finish checking CI on this save's exact final head, record final run/job
+results in PR #572 (avoiding another evidence-only source push), and freeze that
+candidate. Stage 1 is complete only when its full normal/shuffled/JUnit/AI,
+metadata/dependencies/Required checks and avatar acceptance are green. Then
+resolve the plan's target/visibility and participant/secret prerequisites before
+requesting publication/activation/message approval. Stage 2 execution and stage 3
+production release remain deferred. Documentation-only validation: local links,
+flag/scope inventory and whitespace; no local application-suite claim.
+
+
 **Latest owner direction — finish the current batch:** feature additions are
 frozen. Use the [three-stage finishing handoff](TELEGRAM_FINISHING_HANDOFF.md):
 (1) finish exact-head CI/fixes, (2) prepare and perform an explicitly approved
@@ -108,7 +149,7 @@ session, use the [Telegram mobile handoff](TELEGRAM_MOBILE_HANDOFF.md).
 [own discussion following](TELEGRAM_DISCUSSION_FOLLOWING.md), following
 [explicit own-notice read acknowledgement](TELEGRAM_UPDATE_READ.md), following the
 [private discussion inbox](TELEGRAM_DISCUSSION_INBOX.md), following colleague mentions, author-owned comment editing, replies and comment posting, dependency management, blocker recording/clearing and lookup, review queue, cancellation and task reopening/reassignment,
-initial assignment, submitted-task review, deadline changes and guided proposals. Inspect exact-head CI and continue the next requested feature.
+initial assignment, submitted-task review, deadline changes and guided proposals. Freeze optional features; finish current-head CI and the agreed acceptance plan.
 Deployment, preview publication, activation and personal/live testing remain
 explicitly deferred. Monitoring follow-ups below remain separately tracked and
 are not the active Telegram task. See the latest evidence at the end of this file.

@@ -5,6 +5,15 @@ Review branch: `feat/telegram-private-work-lookup`.
 Draft [PR #572](https://github.com/jongsky25/css-is/pull/572).
 Candidate application version: **9.91**.
 
+## Current finishing-session result
+
+See [status](SETUP_STATUS.md#next-action) for inspected-head CI/rules evidence and
+[the concrete stage-2 pilot plan](TELEGRAM_STAGE2_PILOT_PLAN.md) for the proposed
+HF target, test bot, visibility decision, fixtures, switch batches and blockers.
+Final checks for the documentation save belong to its actual SHA and are recorded
+in PR #572. Do not transfer `edcc437` results to that new head. Publication,
+activation, real messages and stage-3 production release remain deferred.
+
 ## Latest owner direction and authorization
 
 The owner asked how much remained, accepted the three-stage completion framing,

@@ -16,6 +16,26 @@ activation. Live/deployment deferrals remain until scoped approval. Later backlo
 items are not prerequisites to closing this batch, and unverified T4.4 remains
 separate.
 
+## Finishing evidence and pilot proposal — November 3, 2026
+
+Review head `edcc437` / 9.91 matches PR #572; actual main `625c60f` / 9.62 is
+already incorporated. CI run 41637847706 passed 10,538 tests in each normal and
+seed-311 shuffled order, clean JUnit and 447 offline AI cases in each order;
+metadata, dependency/container audit and aggregate Required checks passed.
+Avatar run 41637847714 passed 137 functional tests, clean JUnit and rig/contact-sheet steps. No new runtime defect was
+observed and no gate was changed. These are inspected-head results; the later
+documentation commit needs its own complete CI. Final evidence is recorded in
+PR #572 without repeatedly moving the candidate to record check conclusions.
+
+The [stage-2 isolated pilot plan](TELEGRAM_STAGE2_PILOT_PLAN.md) specifies the
+separate proposed HF target, dedicated bot, source-visibility/reachability choice,
+local pilot-tooling prerequisites, synthetic accounts/fixtures, switch/consent
+batches, per-case actual receipt and pause/release gates. It does not provision a
+target or claim the separate launcher exists. All hosted acceptance remains
+Pending, including T4.4. No publication, activation, real messages, production
+merge/deploy or optional feature work occurred. Next: finish final-head stage 1,
+then resolve the concrete target/access prerequisites before stage-2 approval.
+
 ## Start here in any chat
 
 Read this entire file, applicable repository instructions, and the current source before working. This file is the durable scope, progress ledger, and handoff for the Telegram integration.

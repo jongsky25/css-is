@@ -9,6 +9,12 @@ Use the [finishing handoff](TELEGRAM_FINISHING_HANDOFF.md) for the current stage
 sequence, preview limitations and approval boundaries. This checklist remains
 Pending until actual agreed hosted/personal evidence is recorded.
 
+The [concrete isolated pilot plan](TELEGRAM_STAGE2_PILOT_PLAN.md) maps these cases
+to proposed batches, synthetic roles, switch/consent prerequisites, provider
+reachability and evidence fields. No case was executed in this finishing session.
+The proposed test-only launcher is not yet implemented and the target/visibility,
+dedicated bot and scoped external actions require resolution before publication.
+
 ## Before the later pilot
 
 1. Identify the reviewed PR/source commit and candidate version (currently 9.91; reverify the actual head).
