@@ -75,7 +75,15 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-Avatar crash investigation continues separately on `investigate/avatar-native-crash`; see [diagnostic evidence](AVATAR_CRASH_INVESTIGATION.md).
+**Avatar CI crash resolved — November 3, 2026.** PR #572 now points to
+`e7bea14`: its CI container provisions 1 GiB shared memory instead of 64 MiB,
+with native browser diagnostics retained. One-variable hosted comparison:
+64 MiB reproduced the crash after 131 passes; 1 GiB passed all 137 tests,
+strict no-failures/no-skips JUnit, 432 real rig cases and six contact sheets.
+[Exact-head avatar run 41607212977](https://github.com/jongsky25/css-is/actions/runs/41607212977)
+passed. [Detailed evidence and limits](AVATAR_CRASH_INVESTIGATION.md) is saved
+on `docs/avatar-crash-resolution`. Ordinary full release CI remains separate;
+no main merge, deployment or application behavior change. No gate weakened.
 
 For a fresh phone session, use the [Telegram mobile handoff](TELEGRAM_MOBILE_HANDOFF.md).
 The prior head `c14c205` still had full CI in progress when inspected; separate

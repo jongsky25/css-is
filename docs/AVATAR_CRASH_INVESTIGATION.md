@@ -43,3 +43,43 @@ Next: run acceptance on the failing PR head with these diagnostics, distinguish
 resource exhaustion from a Chromium regression, then verify any proposed remedy
 with the complete avatar gate. Local success is not hosted acceptance. No merge,
 deployment or production data access is authorized by this investigation.
+
+## Hosted diagnostic comparison
+
+On candidate `c31fc95`, diagnostic head `58c82da` reproduced the same failure
+after 131 passes in [run 41606656187](https://github.com/jongsky25/css-is/actions/runs/41606656187).
+Chromium was 151.0.7922.34. The container had 67,108,864 bytes (64 MiB) of
+shared memory, initially empty; `/tmp` had 88,688,689,152 bytes available.
+Cgroup memory events reported zero `oom` and `oom_kill`, with a peak of
+2,894,008,320 bytes and no cgroup memory limit. Stderr captured Crashpad activity
+at the failure, but no explicit cause. This rules out a recorded cgroup OOM kill,
+not every possible memory failure.
+
+Comparison head `e7bea14` changes only the job container's shared-memory size
+to 1 GiB, leaving the exact image, browser, tests, timing and native tab flags
+unchanged. Diagnostics remain in the existing artifact and workflow log.
+
+## Verified resolution
+
+[Run 41607212977](https://github.com/jongsky25/css-is/actions/runs/41607212977)
+passed on exact head `e7bea14f9f23919ed1ac39ca3b5aa6b17d3a2d84`:
+
+- 137 interaction/frame tests passed in 278.15 seconds; strict JUnit gate
+  confirmed no failures or skips, including the native visibility/touch test.
+- 432 real rig/stage/mood/theme cases passed.
+- Six themed contact sheets rendered, containing 1,170 cards.
+- Captured shared-memory capacity was 1,073,741,824 bytes; no cgroup OOM kills.
+
+The one-variable hosted comparison supports insufficient container shared-memory
+capacity as the operational cause and verifies provisioning 1 GiB as the remedy.
+The precise native Chromium allocation/signal was not captured; no stronger
+browser-internal diagnosis is claimed. No test assertion, browser flag, timeout,
+rendered content, application code or acceptance gate was weakened.
+
+The verified head was fast-forwarded into PR #572's feature branch after checking
+that it still pointed at `c31fc95`; the remote accepted the fast-forward.
+PR head was independently read back as `e7bea14`. Its usual full release CI
+is separate from this completed exact-head avatar workflow; do not infer that
+the entire release is ready from avatar acceptance. No main merge or deployment.
+This final evidence is saved on `docs/avatar-crash-resolution` so it does not
+change the tested PR source merely to record its result.
