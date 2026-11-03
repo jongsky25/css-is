@@ -25,7 +25,11 @@ concurrency:
 jobs:
   functional:
     runs-on: ubuntu-24.04
-    container: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+    container:
+      image: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+      # The native visibility probe intentionally omits Playwright's launch
+      # defaults. Provision Chromium shared memory without changing tab behavior.
+      options: --shm-size=1g
     timeout-minutes: 25
     env:
       CSS_AVATAR_BASELINE: '1'
