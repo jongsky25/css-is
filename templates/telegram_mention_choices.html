@@ -1,0 +1,10 @@
+{% if mentions_available %}
+<fieldset style="margin:1rem 0;max-width:100%;box-sizing:border-box"><legend>Mention colleagues (optional, up to 20)</legend>
+{% if mention_error %}<p role="alert">{{ mention_error }}</p>{% endif %}
+{% if mention_loaded %}
+<p>Only active colleagues who can currently read this work and every linked document are listed. Access and selected names are checked again at confirmation.</p>
+{% for person in mention_people %}<p><label style="overflow-wrap:anywhere"><input type="checkbox" name="mentions" value="{{ person.id }}" {% if person.id|string in mention_selected %}checked{% endif %}> {{ person.name }} (account {{ person.id }})</label></p>{% else %}<p>No eligible colleagues are available for this work.</p>{% endfor %}
+{% else %}<p>Use “Load eligible colleagues” above after choosing the work item{% if mode == 'task' %} and task{% endif %}. No colleague is selected automatically.</p>{% endif %}
+<p>The exact private preview shows the selected names and account numbers. Mentions create normal permitted in-app notices and grant no access. Literal <code>@name</code> text does not select anyone.</p>
+</fieldset>
+{% else %}<p>Colleague mentions need their separate permission and host pilot in addition to this comment or reply permission. You can still prepare an unmentioned message.</p>{% endif %}

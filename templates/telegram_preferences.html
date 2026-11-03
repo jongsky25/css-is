@@ -29,6 +29,22 @@
 <p>Interactive replies and confirmations stay immediate. Existing email reminders, approval alerts, account mail and discussion digests keep their existing controls. Messages already in flight cannot be recalled.</p>
 <button type="submit">Save notification settings</button>
 </form>
+<h2>Daily work brief</h2>
+<p>Send <code>/brief</code> in your linked private Telegram chat for a current summary. Choose which sections to include; each still requires its existing permission and an enabled pilot.</p>
+{% if brief_saved %}<p role="status">Daily brief choices saved. Scheduled delivery is not active.</p>{% endif %}
+<form method="post" action="/account/telegram/notifications/brief">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ brief.revision }}">
+<fieldset><legend>Include in my brief</legend>
+{% for key,label in [('calendar','My calendar for the next seven days'),('work','My task deadlines and work awaiting review'),('requests','My request statuses')] %}
+<p><label><input type="checkbox" name="{{ key }}" value="1" {% if brief[key] %}checked{% endif %}> {{ label }}</label></p>
+{% endfor %}
+<p>Select at least one section. Changing this selection does not grant access to records.</p>
+</fieldset>
+<p><label><input type="checkbox" name="reminder_requested" value="1" {% if brief.reminder_requested %}checked{% endif %}> Save my preference for a daily brief reminder when delivery becomes available</label></p>
+<p><label for="brief-time">Preferred daily brief time (Asia/Manila)</label><br><input id="brief-time" type="time" name="local_time" step="60" value="{{ brief.local_time }}" required></p>
+<p>These are saved preferences only. Scheduled daily brief delivery is not active, and saving does not send a message or enable reminders. Activation and live testing are deferred. Existing calendar and room reminder choices below remain separate.</p>
+<button type="submit">Save daily brief choices</button>
+</form>
 <h2>Private Telegram reminders</h2>
 <p>Optional pilot: {{ 'available' if reminders_ready else 'paused' }}. These reminders also require your current read permissions and Telegram enabled in the channel choices above. They do not add email reminders or messages to groups.</p>
 <form method="post" action="/account/telegram/notifications/reminders">

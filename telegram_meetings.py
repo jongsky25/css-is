@@ -1,6 +1,8 @@
 """Guided single-meeting creation; full previews and receipts are private only."""
 from datetime import date,datetime,timedelta
 import json
+import os
+from contextlib import nullcontext
 import re
 import secrets
 from uuid import uuid4
@@ -25,6 +27,14 @@ COMMAND_ACTION={command:action for action,meta in META.items() for command in (m
 KINDS={meta['prefix']+'_'+suffix:action for action,meta in META.items() for suffix in ('guide','preview','receipt','error')}
 
 
+def register(action,meta,adapter):
+    """Register another guided action using the same private preview/receipt contract."""
+    META[action]=meta
+    COMMAND_ACTION.update({meta[key]:action for key in ('confirm','receipt')})
+    KINDS.update({meta['prefix']+'_'+suffix:action for suffix in ('guide','preview','receipt','error')})
+    actions.ADAPTERS[action]=adapter
+
+
 
 def context_from_preview(p):
     conn_sender=p.get('sender_id')
@@ -38,6 +48,9 @@ def original_context(conn,p):
 
 
 def queue(conn,ctx,kind,identifier,now,*,key=None,expiry=None):
+    # Private webhook actions are pulled explicitly; never enqueue a push.
+    if ctx['chat_id']>0 and os.environ.get('CSS_TELEGRAM_REPLY_TRANSPORT')!='direct':
+        return
     bot=transport.config()
     projection={'kind':kind,'id':identifier,'bot':bot[0],'fingerprint':bot[2]}
     conn.execute('''INSERT INTO telegram_delivery
@@ -164,6 +177,7 @@ def observe(conn,clean,connection,bot,now,action=ACTION):
         (id,account_id,connection_id,generation,context_json,bot_identity,bot_fingerprint,created_at,expires_at,action)
         VALUES (?,?,?,?,?,?,?,?,?,?)''',(identifier,user['id'],ctx['connection_id'],ctx['generation'],actions.packed(ctx),bot[0],bot[2],links.stamp(now),expires,action))
     queue(conn,ctx,META[action]['prefix']+'_guide',identifier,now,expiry=expires)
+    return identifier
 
 
 def origin(conn,user,identifier,now,action=ACTION):
@@ -202,8 +216,10 @@ def delivery_context(conn,d,p,now):
     except (ValueError,IndexError,KeyError,TypeError):return None
 
 
-def render(conn,d,p,now):
-    with transaction(conn):
+def render(conn,d,p,now, *, commit=True):
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Caller-owned meeting rendering requires a transaction')
+    with transaction(conn) if commit else nullcontext():
         allowed=delivery_context(conn,d,p,now)
         if not allowed:return None
         ctx,user=allowed;action=KINDS[p['kind']];meta=META[action];adapter=actions.ADAPTERS[action]

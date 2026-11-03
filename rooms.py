@@ -297,8 +297,18 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
     if not commit:
         if not conn.in_transaction:
             raise RuntimeError("Room request requires a caller-owned writer transaction.")
-        if requester_user_id is None or ext or meals_requested or standby or series_id or moves_reservation_id or event_id or source:
+        plain_move = source == 'move' and moves_reservation_id is not None
+        if requester_user_id is None or ext or meals_requested or standby or series_id or event_id or ((moves_reservation_id or source) and not plain_move):
             raise RoomError("Transactional requests support an internal plain request only.")
+        if plain_move:
+            original = get_reservation(conn, moves_reservation_id)
+            transactional_plain(conn, original, requester_user_id)
+            if (original['status'] != 'approved' or original['day'] == _d(day).isoformat()
+                    or sorted(slot_ids) != sorted(original['slot_ids'])
+                    or (title, purpose, attendees, modality, calendar_entry_id) !=
+                       (original['title'], original['purpose'], original['attendees'], original['modality'], original['calendar_entry_id'])
+                    or conn.execute("SELECT 1 FROM room_reservation WHERE moves_reservation_id=? AND source='move' AND status='requested'",(original['id'],)).fetchone()):
+                raise RoomError('The original booking changed or already has a pending move.')
     title = (title or "").strip()
     if not title:
         raise RoomError("Please give the meeting a title.")
@@ -511,9 +521,25 @@ def _is_owner(res, user_id, guest):
     return res["requester_user_id"] is not None and res["requester_user_id"] == user_id
 
 
-def withdraw(conn, rid, user_id, reason=None, actor=None, guest=False):
+def transactional_plain(conn, res, user_id):
+    """Strict subset whose native writes/notices can share a caller transaction."""
+    if (not res or res['requester_user_id'] != user_id or res['requester_user_id'] is None
+            or res['series_id'] or res['standby'] or res['meals_requested'] or res['event_id'] or res['on_behalf_of']
+            or res['source'] not in ('internal','encoded','move')
+            or conn.execute('SELECT 1 FROM room_meal WHERE reservation_id=?',(res['id'],)).fetchone()):
+        raise RoomError('Use Office Connect for guests, meals, repeating, standby, activity-linked or on-behalf-of bookings.')
+
+
+def withdraw(conn, rid, user_id, reason=None, actor=None, guest=False, *, commit=True):
     """The requester takes their own request back (requested or approved). Frees the hours."""
     res = get_reservation(conn, rid)
+    if not commit:
+        if not conn.in_transaction:
+            raise RuntimeError('Room withdrawal requires a caller-owned writer transaction.')
+        if guest:raise RoomError('Transactional withdrawals require an internal requester.')
+        transactional_plain(conn,res,user_id)
+        for child in conn.execute("SELECT id FROM room_reservation WHERE moves_reservation_id=? AND source='move' AND status='requested'",(rid,)):
+            transactional_plain(conn,get_reservation(conn,child[0]),user_id)
     if res is None:
         raise RoomError("That reservation no longer exists.")
     if not _is_owner(res, user_id, guest):
@@ -525,17 +551,22 @@ def withdraw(conn, rid, user_id, reason=None, actor=None, guest=False):
                  "updated_at=? WHERE id=?", ((reason or "").strip() or None, _stamp(), rid))
     conn.execute("UPDATE room_reservation SET status='withdrawn', decide_note='The booking it would have moved was withdrawn.', "
                  "updated_at=? WHERE moves_reservation_id=? AND source='move' AND status='requested'", (_stamp(), rid))
-    conn.commit()
+    if commit:
+        conn.commit()
     st.audit(conn, actor or (f"guest:{res['ref_code']}" if guest else f"user:{user_id}"), "room_withdraw", target_type="room_reservation",
-             target_id=rid, summary=f"{res['title']} on {res['day']}", before=before, after="withdrawn")
+             target_id=rid, summary=f"{res['title']} on {res['day']}", before=before, after="withdrawn",commit=commit)
     first = conn.execute("SELECT MIN(s.start_time) FROM room_reservation_slot rs "
                          "JOIN room_slot s ON s.id=rs.slot_id WHERE rs.reservation_id=?", (rid,)).fetchone()[0]
     start = datetime.fromisoformat(f"{res['day']}T{first or '00:00'}:00")
     late = before == "approved" and start - tz.now_local() < timedelta(hours=24)
     out = get_reservation(conn, rid)
     out["late_withdrawal"] = late
-    _meals_over(conn, rid, "The room booking was withdrawn.")
-    _emit("withdrawn", conn, out, late)
+    if commit:
+        _meals_over(conn, rid, "The room booking was withdrawn.")
+        _emit("withdrawn", conn, out, late)
+    else:
+        import rooms_notify
+        rooms_notify.on_withdrawn(conn,out,late,commit=False)
     return out
 
 
@@ -1288,11 +1319,15 @@ def _event_archived(conn, event_id):
     return bool(r and r[0])
 
 
-def request_move(conn, rid, new_day, user, today=None):
+def request_move(conn, rid, new_day, user, today=None, *, commit=True):
     """Re-date a reservation to follow its activity. A request nobody has decided yet simply changes
     day. An APPROVED booking is kept until the new day is approved: a new `move` request is filed for
     the same hours and the old one is released in the same step that approves it."""
     res = get_reservation(conn, rid)
+    if not commit:
+        if not conn.in_transaction:
+            raise RuntimeError('Room moves require a caller-owned writer transaction.')
+        transactional_plain(conn,res,user.get('id'))
     if res is None or res["status"] not in ("requested", "approved"):
         raise RoomError("That reservation can't be moved.")
     if not (_is_owner(res, user.get("id"), False) or is_room_admin(conn, user)):
@@ -1316,18 +1351,19 @@ def request_move(conn, rid, new_day, user, today=None):
         before = res["day"]
         conn.execute("UPDATE room_reservation SET day=?, updated_at=? WHERE id=?", (new_day_iso, _stamp(), rid))
         conn.execute("UPDATE room_reservation_slot SET day=? WHERE reservation_id=?", (new_day_iso, rid))
-        conn.commit()
+        if commit:
+            conn.commit()
         st.audit(conn, user.get("username") or "system", "room_move", target_type="room_reservation", target_id=rid,
-                 summary=f"{res['title']}: request moved from {before} to {new_day_iso}")
+                 summary=f"{res['title']}: request moved from {before} to {new_day_iso}",commit=commit)
         return get_reservation(conn, rid)
     new = request(conn, title=res["title"], day=new_day, slot_ids=slot_ids, requester_user_id=res["requester_user_id"],
                   ext=({"name": res["ext_name"], "org": res["ext_org"], "email": res["ext_email"], "phone": res["ext_phone"]}
                        if res["requester_user_id"] is None else None),
                   purpose=res["purpose"], attendees=res["attendees"], modality=res["modality"],
                   meals_requested=bool(res["meals_requested"]), actor=user.get("username") or "system", today=today,
-                  event_id=res["event_id"], calendar_entry_id=res["calendar_entry_id"], source="move", moves_reservation_id=rid)
+                  event_id=res["event_id"], calendar_entry_id=res["calendar_entry_id"], source="move", moves_reservation_id=rid,commit=commit)
     st.audit(conn, user.get("username") or "system", "room_move", target_type="room_reservation", target_id=new["id"],
-             summary=f"{res['title']}: move from {res['ref_code']} ({res['day']}) to {new_day_iso} requested")
+             summary=f"{res['title']}: move from {res['ref_code']} ({res['day']}) to {new_day_iso} requested",commit=commit)
     return new
 
 

@@ -159,7 +159,7 @@ def on_expired(conn, res):
     _to_requester(conn, res, "expired", f"Your conference room request expired undecided: {res['title']}, {_when(conn, res)}.")
 
 
-def on_withdrawn(conn, res, late):
+def on_withdrawn(conn, res, late, *, commit=True):
     """A booking withdrawn the day before (or sooner): meals and setup may be arranged, so the
     section is told."""
     if not late:
@@ -168,7 +168,7 @@ def on_withdrawn(conn, res, late):
     who, _u, _e = rooms.requester_label(conn, res)
     for a in approver_accounts(conn):
         _add(conn, kind="withdrawn_late", reservation_id=res["id"], user_id=a["id"], bell=True, url="/approvals#rooms",
-             text=f"{who} withdrew {res['title']} ({_when(conn, res)}) at short notice.")
+             text=f"{who} withdrew {res['title']} ({_when(conn, res)}) at short notice.",commit=commit)
 
 
 # ----------------------------------------------------------- bell ---

@@ -38,9 +38,14 @@ jobs:
       - name: Install pinned browser and locked requirements
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends chromium=156.0.8078.73-1~deb13u1 chromium-common=156.0.8078.73-1~deb13u1 git procps
+          apt-get install -y --no-install-recommends git procps
           python -m venv .venv
           .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
+          # The hashed Playwright lock selects a fixed browser revision; Debian's
+          # rolling security repository does not retain old Chromium versions.
+          .venv/bin/python -m playwright install --with-deps chromium
+          .venv/bin/python -c 'from playwright.sync_api import sync_playwright; import os; p=sync_playwright().start(); os.symlink(p.chromium.executable_path, "/usr/local/bin/chromium"); p.stop()'
+          chromium --version
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Verify current-main companion interactions and frames
         run: |
