@@ -122,13 +122,15 @@ def test_strict_usage_has_no_retained_query(inbox_env,text):
 
 def test_paging_unicode_and_source_visibility_without_hidden_counts(inbox_env,monkeypatch):
     env,item,task=inbox_env;c,users,*_=env
+    grant(env,'work.discussion.read',monkeypatch)
+    monkeypatch.setenv('CSS_BASE_URL','https://'+'a'*60+'.'+'b'*60+'.'+'c'*60+'.example12')
     c.execute('UPDATE work_case SET title=? WHERE id=?',('📌'*110,item['id']))
     c.execute('UPDATE work_task SET title=? WHERE id=?',('🔒'*110,task['id']));c.commit()
     expected={seed(inbox_env)['id'] for _ in range(9)}
     seen=[];query='/my_updates mentions'
     for n in range(10,20):
         text=command(env,query,n)['text'];seen+=ids(text)
-        assert inbox.common.units(text)<=4096 and 'StoredPrivate' not in text
+        assert inbox.common.units(text)<=4096 and 'StoredPrivate' not in text and 'View current thread:' in text
         next_=re.search(r'/my_updates mentions ([0-9]+)',text)
         if not next_:break
         query=next_[0]
@@ -207,3 +209,35 @@ def test_only_read_consent_exposes_no_post_reply_edit_or_mention_controls(inbox_
     for command_ in ('/work_comment','/task_comment','/work_reply','/task_reply','/work_comment_edit','/task_comment_edit'):
         assert command_ not in text
     assert not rows(c,'SELECT * FROM telegram_operation')
+
+
+@pytest.mark.parametrize('task_level',[True,False])
+@pytest.mark.parametrize('guard',['grant','pilot'])
+def test_inbox_thread_shortcuts_require_separate_current_reading_and_recheck_at_open(inbox_env,monkeypatch,task_level,guard):
+    import sqlite3
+    import telegram_discussion_read as reader
+    env,item,task=inbox_env;c,users,*_=env
+    notice=seed(inbox_env,task_level=task_level)
+    query={'case_id':item['id'],'task_id':task['id'] if task_level else None}
+    target=reader.command(query,notice['comment_id'])
+    monkeypatch.setenv('CSS_TELEGRAM_WORK_DISCUSSION_READ_ENABLED','1')
+    assert 'View current thread:' not in command(env,'/my_updates',10)['text']
+    grant(env,reader.ACTION,monkeypatch)
+    discussion.edit(c,users[3],item['id'],query['task_id'],notice['comment_id'],1,'CurrentShortcutText')
+    before=snapshot(c)
+    def deny_body(op,table,column,*_):
+        return sqlite3.SQLITE_DENY if op==sqlite3.SQLITE_READ and table=='work_comment_revision' and column=='body' else sqlite3.SQLITE_OK
+    c.set_authorizer(deny_body)
+    try:
+        for n,cmd in enumerate(('/my_updates','/update_status '+str(notice['id'])),11):
+            text=command(env,cmd,n)['text']
+            assert 'View current thread: '+target in text
+            assert 'Notice revision 1 · Current revision 2' in text and 'CurrentShortcutText' not in text
+    finally:c.set_authorizer(None)
+    assert 'CurrentShortcutText' in command(env,target,13)['text'] and before==snapshot(c)
+    if guard=='grant':c.execute('UPDATE telegram_grant SET revoked_at=? WHERE action=?',(links.stamp(NOW),reader.ACTION));c.commit()
+    else:monkeypatch.setenv('CSS_TELEGRAM_WORK_DISCUSSION_READ_ENABLED','0')
+    for n,cmd in enumerate(('/my_updates','/update_status '+str(notice['id'])),14):
+        assert 'View current thread:' not in command(env,cmd,n)['text']
+    assert 'method' not in command(env,target,16) and before==snapshot(c)
+    for table in ('telegram_operation','telegram_preview','telegram_meeting_origin'):assert not rows(c,'SELECT * FROM '+table)

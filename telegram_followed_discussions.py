@@ -6,6 +6,7 @@ import documents_permissions as permissions
 from documents_storage import rows
 import telegram_calendar as common
 import telegram_links as links
+import telegram_discussion_read as reader
 import telegram_storage as switches
 import work
 import work_discussion as discussion
@@ -76,7 +77,7 @@ def page(conn,user,category,before):
     return found,continuation
 
 
-def line(entry,controls):
+def line(entry,controls,can_read=False):
     follow,item,task,wide=entry
     source=links.origin()+'/work/'+str(item['id'])+'/discussion'
     if task:source+='?task_id='+str(task['id'])
@@ -85,6 +86,7 @@ def line(entry,controls):
             +'\nTask-specific follow · Work-wide also '+('on' if wide else 'off') if task
             else '\nWork-wide follow · Covers work-level and all task discussions.')
           +'\nOpen discussion: '+source)
+    if can_read:text+='\nBrowse comments: '+reader.browse_command({'case_id':item['id'],'task_id':task['id'] if task else None})
     if controls:
         text+='\nFollow controls: '+links.origin()+'/account/telegram/discussion-follow/change?case_id='+str(item['id'])
         if task:text+='&task_id='+str(task['id'])
@@ -103,10 +105,11 @@ def render(conn,clean,bot,now):
     if query=={'error':'usage'}:return USAGE
     entries,continuation=page(conn,user,query['category'],query['before'])
     controls=links.authorized(conn,user['id'],'work.follow')
+    can_read=links.authorized(conn,user['id'],reader.ACTION)
     text='My followed discussions · '+query['category']+'\nSaved follows, ordered by work/task ID descending. Lookup changes nothing.'
     shown=[]
     for entry in entries[:PAGE_SIZE]:
-        block=line(entry,controls)
+        block=line(entry,controls,can_read)
         if common.units(text+'\n\n'+block)>3000:break
         text+='\n\n'+block;shown.append(entry)
     if not shown:text+='\nNo visible saved follows on this page.'

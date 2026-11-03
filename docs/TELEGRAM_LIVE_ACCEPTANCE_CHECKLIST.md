@@ -147,3 +147,11 @@ After separate activation approval, check independent reading consent, work/task
 top-level pages, older navigation, thread/full-message/source/reply navigation,
 empty/denied/revoked cases and unchanged notices/read/follow state. Local synthetic
 browser evidence is not hosted or personal acceptance.
+
+## Inbox and followed-discussion navigation — Pending
+
+After separate activation approval, verify inbox list/detail → exact current
+work/task comment thread, and saved work/task follow → corresponding browse page.
+Check independent reading consent, pause/revocation/source loss on cached commands,
+notice versus current revision wording and unchanged notices/read/follows.
+Synthetic automated phone checks do not establish hosted/personal acceptance.

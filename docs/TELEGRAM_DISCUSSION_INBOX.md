@@ -98,3 +98,7 @@ source-managed read status, unchanged tasks and disconnect behavior.
 
 Exact results are in [SETUP_STATUS.md](SETUP_STATUS.md). New-head full release CI
 and later [live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md) remain separate.
+
+[Private discussion navigation](TELEGRAM_DISCUSSION_NAVIGATION.md) adds conditional
+current-thread/browse commands with separate reading consent. Metadata lookup
+still projects no body and changes no read/follow state.

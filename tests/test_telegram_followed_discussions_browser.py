@@ -9,6 +9,7 @@ from documents_storage import rows
 import storage as st
 import telegram_bot as bot
 import telegram_links as links
+import telegram_discussion_read as reader
 import telegram_discussion_follow as manage
 import telegram_followed_discussions as reads
 import work
@@ -21,11 +22,13 @@ from tests.test_work_channels_browser import live_app
 from tests.test_telegram_bot import TOKEN,SECRET,NOW,update,HEADERS
 
 
+@pytest.mark.parametrize('with_read',[False,True])
 @pytest.mark.parametrize('with_controls',[False,True])
-def test_phone_saved_follows_source_links_and_explicit_separate_controls(grid_browser,app_mod,monkeypatch,with_controls):
+def test_phone_saved_follows_source_links_and_explicit_separate_controls(grid_browser,app_mod,monkeypatch,with_controls,with_read):
     c=st.connect(app_mod.DB);user=st.get_admin_user(c,'viewer@test.local');other=st.get_admin_user(c,'encoder@test.local')
     officer=st.get_admin_user(c,'admin@test.local')
     for flag in ('INBOUND','DELIVERY','LINK','WORK_READ','WORK_FOLLOWS_READ'):monkeypatch.setenv('CSS_TELEGRAM_'+flag+'_ENABLED','1')
+    monkeypatch.setenv('CSS_TELEGRAM_WORK_DISCUSSION_READ_ENABLED','1')
     if with_controls:monkeypatch.setenv('CSS_TELEGRAM_WORK_FOLLOW_ENABLED','1')
     for module in ('documents','work'):st.set_setting(c,module+'.enabled','1')
     monkeypatch.setenv('CSS_TELEGRAM_REPLY_TRANSPORT','webhook');monkeypatch.setenv('CSS_TELEGRAM_BOT_TOKEN',TOKEN)
@@ -53,7 +56,7 @@ def test_phone_saved_follows_source_links_and_explicit_separate_controls(grid_br
         context=grid_browser.new_context(viewport={'width':390,'height':844},java_script_enabled=False)
         context.add_cookies([{'name':auth.COOKIE_NAME,'value':session_token(user),'url':base}]);page=context.new_page()
         try:
-            scopes={'work.read',reads.ACTION}|({manage.ACTION} if with_controls else set())
+            scopes={'work.read',reads.ACTION}|({manage.ACTION} if with_controls else set())|({reader.ACTION} if with_read else set())
             page.goto(base+'/account/telegram');page.get_by_label('Private linking code',exact=True).fill(code)
             for scope in scopes:page.get_by_label(links.SCOPES[scope],exact=True).check()
             page.get_by_label('Link this Office Connect account to my own private Telegram account.',exact=True).check()
@@ -64,6 +67,14 @@ def test_phone_saved_follows_source_links_and_explicit_separate_controls(grid_br
             text=command('/my_follows')['text']
             assert 'Work-wide also on' in text and 'all task discussions' in text and 'StoredPrivate' not in text
             assert ('Follow controls:' in text)==with_controls
+            assert ('Browse comments:' in text)==with_read
+            if with_read:
+                browse=re.search(r'Browse comments: (.*)',text)[1]
+                listing=command(browse)['text'];assert 'StoredPrivateMessage' in listing
+                thread=re.search(r'View thread: (.*)',listing)[1]
+                assert 'StoredPrivateMessage' in command(thread)['text']
+                assert before_follow==list(c.execute('SELECT * FROM work_follow')) and before_read==list(c.execute('SELECT * FROM work_comment_read'))
+                assert before_notice==list(c.execute('SELECT * FROM work_notice'))
             assert not rows(c,'SELECT * FROM telegram_operation') and not rows(c,'SELECT * FROM telegram_meeting_origin')
             source=base+'/work/'+str(item['id'])+'/discussion?task_id='+str(task['id'])
             assert source in text;page.goto(source)

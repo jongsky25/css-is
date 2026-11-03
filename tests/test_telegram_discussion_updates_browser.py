@@ -9,6 +9,7 @@ from documents_storage import rows
 import storage as st
 import telegram_bot as bot
 import telegram_links as links
+import telegram_discussion_read as reader
 import telegram_discussion_updates as inbox
 import work
 import work_discussion as discussion
@@ -20,11 +21,13 @@ from tests.test_work_channels_browser import live_app
 from tests.test_telegram_bot import TOKEN,SECRET,NOW,update,HEADERS
 
 
+@pytest.mark.parametrize('with_read',[False,True])
 @pytest.mark.parametrize('reason',['mention','reply','following'])
-def test_phone_inbox_metadata_links_and_source_managed_read_status(grid_browser,app_mod,monkeypatch,reason):
+def test_phone_inbox_metadata_links_and_source_managed_read_status(grid_browser,app_mod,monkeypatch,reason,with_read):
     c=st.connect(app_mod.DB);user=st.get_admin_user(c,'viewer@test.local');other=st.get_admin_user(c,'encoder@test.local')
     officer=st.get_admin_user(c,'admin@test.local')
     for flag in ('INBOUND','DELIVERY','LINK','WORK_READ','WORK_UPDATES_READ'):monkeypatch.setenv('CSS_TELEGRAM_'+flag+'_ENABLED','1')
+    monkeypatch.setenv('CSS_TELEGRAM_WORK_DISCUSSION_READ_ENABLED','1')
     for module in ('documents','work'):st.set_setting(c,module+'.enabled','1')
     monkeypatch.setenv('CSS_TELEGRAM_REPLY_TRANSPORT','webhook');monkeypatch.setenv('CSS_TELEGRAM_BOT_TOKEN',TOKEN)
     monkeypatch.setenv('CSS_TELEGRAM_WEBHOOK_SECRET',SECRET);monkeypatch.setattr(bot,'now_utc',lambda:NOW)
@@ -51,17 +54,26 @@ def test_phone_inbox_metadata_links_and_source_managed_read_status(grid_browser,
         context.add_cookies([{'name':auth.COOKIE_NAME,'value':session_token(user),'url':base}]);page=context.new_page()
         try:
             page.goto(base+'/account/telegram');page.get_by_label('Private linking code',exact=True).fill(code)
-            for scope in ('work.read',inbox.ACTION):page.get_by_label(links.SCOPES[scope],exact=True).check()
+            scopes={'work.read',inbox.ACTION}|({reader.ACTION} if with_read else set())
+            for scope in scopes:page.get_by_label(links.SCOPES[scope],exact=True).check()
             page.get_by_label('Link this Office Connect account to my own private Telegram account.',exact=True).check()
             page.get_by_role('button',name='Request confirmation in Telegram',exact=True).click()
             command(re.search(r'/confirm [a-f0-9]{64}',command('/status')['text'])[0])
-            assert {r[0] for r in c.execute('SELECT action FROM telegram_grant WHERE revoked_at IS NULL')}=={'work.read',inbox.ACTION}
+            assert {r[0] for r in c.execute('SELECT action FROM telegram_grant WHERE revoked_at IS NULL')}==scopes
             assert '/my_updates' in command('/menu')['text']
             category={'mention':'mentions','reply':'replies','following':'following'}[reason]
             text=command('/my_updates '+category)['text']
             assert 'Update '+str(notice['id']) in text and 'StoredPrivate' not in text
+            assert ('View current thread:' in text)==with_read
             text=command('/update_status '+str(notice['id']))['text']
             assert 'Status: unread' in text and 'StoredPrivate' not in text
+            assert ('View current thread:' in text)==with_read
+            if with_read:
+                thread=re.search(r'View current thread: (.*)',text)[1]
+                current=command(thread)['text'];assert 'StoredPrivateMessage' in current
+                monkeypatch.setenv('CSS_TELEGRAM_WORK_DISCUSSION_READ_ENABLED','0')
+                assert 'View current thread:' not in command('/my_updates '+category)['text']
+                assert 'method' not in command(thread)
             assert work_updates.read_revision(c,user['id'],identifier)==0
             assert not rows(c,'SELECT * FROM telegram_operation')
             url=re.search(re.escape(base)+r'/work/[^\s]+',text)[0]

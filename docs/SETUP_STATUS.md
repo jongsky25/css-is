@@ -75,11 +75,16 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-For a fresh phone session, use the [Telegram mobile handoff](TELEGRAM_MOBILE_HANDOFF.md). The prior application head `222f13b` has a functional CI setup failure: its pinned Debian Chromium version was unavailable; inspect fresh-head checks and the handoff before proceeding.
+For a fresh phone session, use the [Telegram mobile handoff](TELEGRAM_MOBILE_HANDOFF.md).
+The previous head `df55759` passed full CI and browser installation; separate avatar
+acceptance then encountered a native Chromium page crash after 131 passing tests.
+Inspect fresh exact-head checks and the latest evidence below before proceeding.
 
 **Current Telegram feature work — November 3, 2026:** continue draft
 [PR #572](https://github.com/jongsky25/css-is/pull/572), branch
-`feat/telegram-private-work-lookup`, candidate **9.86**. The latest addition is
+`feat/telegram-private-work-lookup`, candidate **9.87**. The latest addition is
+[inbox/follow discussion navigation](TELEGRAM_DISCUSSION_NAVIGATION.md), following
+[discussion browsing](TELEGRAM_DISCUSSION_BROWSING.md), following
 [reply shortcuts from discussion views](TELEGRAM_REPLY_SHORTCUTS.md), following
 [selected discussion thread/message reading](TELEGRAM_DISCUSSION_READING.md), following
 [exact-thread discussion text search](TELEGRAM_DISCUSSION_SEARCH.md), following
@@ -3020,3 +3025,39 @@ Next: inspect CI for the new head and continue the next requested feature. Deplo
 - Next: inspect new exact-head normal/shuffled/dependency/container/metadata/
   aggregate and avatar acceptance CI after push. Deployment, previews, activation,
   real messages, personal/live testing and main merge remain deferred.
+
+### Inbox and followed-discussion navigation delivered — November 3, 2026
+
+- Codex, `feat/telegram-private-work-lookup`, draft PR #572, candidate **9.87**
+  on main `25fe812`. Owner approved this increment.
+- [Navigation guide](TELEGRAM_DISCUSSION_NAVIGATION.md): `/my_updates` and
+  `/update_status` offer exact current-comment thread commands; `/my_follows`
+  offers exact saved-work/task browse commands. Current independent reading
+  consent/pilot is required for shortcuts. Destination commands recheck current
+  source and private context. Work-wide follow coverage does not expand the
+  work-level browse shortcut into task rows. Metadata views query no bodies and
+  change no notices, read markers, follows, origins or operations.
+- **302 regressions passed**, including **10 phone flows**; **292 shuffled
+  checks passed** (seed 311), no failures/errors/skips. Earlier **159 focused**
+  and **10 phone** checks passed. Groups overlap. Local JUnit reports are
+  `/workspace/nav-regressions.xml`, `/workspace/nav-shuffled.xml`,
+  `/workspace/nav-focused.xml`, `/workspace/nav-phone.xml`. Coverage includes
+  independent consent/pilots, grant/pilot removal, current versus notice revision,
+  body-SQL denial on metadata views, source loss on cached commands, work/task
+  scope, unchanged state and Unicode/maximum-origin paging with shortcuts.
+- Release metadata/increase, lock inputs, vendor integrity, compatibility, AI
+  contract, compilation, relative documentation links and whitespace passed.
+  Version/changelog/service-worker cache synchronized at 9.87. No dependencies,
+  schema, runtime module, permission or pilot added. Existing Starlette/httpx
+  deprecation warning remains. Full local repository suites were not run.
+- Inspected previous application head `df55759`: full [CI run 41578060290](https://github.com/jongsky25/css-is/actions/runs/41578060290)
+  passed. [Avatar run 41578060479](https://github.com/jongsky25/css-is/actions/runs/41578060479)
+  installed its locked browser successfully, then passed **131 tests** before
+  `test_native_visibility_and_touch` failed with `Page.evaluate: Target crashed`
+  on the profile animation query. Visual steps were skipped. The log establishes
+  a browser crash, not a failed business assertion or its root cause. No avatar
+  test, gate or resource setting was changed in this navigation increment.
+- Next: inspect fresh exact-head complete CI and avatar acceptance after this
+  save; investigate any continuing native browser crash before promotion.
+  Deployment, preview publication, activation, real messages, personal/live
+  testing and main merge remain deferred.

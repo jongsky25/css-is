@@ -23,9 +23,9 @@ verified again in that session.
 ## Current work and owner preferences
 
 - Draft [PR #572](https://github.com/jongsky25/css-is/pull/572); branch
-  `feat/telegram-private-work-lookup`; candidate **9.86**. The prior application
-  baseline was `222f13b` (reply shortcuts). Discussion browsing is the approved
-  next increment; see the latest progress entry below and check the PR head.
+  `feat/telegram-private-work-lookup`; candidate **9.87**. The prior application
+  baseline was `df55759` (discussion browsing). Inbox/follow navigation is now
+  implemented; see the latest progress entry below and check the PR head.
 - The owner has linked Telegram and reported pulling calendar information. That
   report does not establish that the new draft features have been deployed or
   tested live. The owner wants more capabilities added first, then will do
@@ -143,3 +143,17 @@ Avatar CI setup uses the hashed Playwright lock's fixed browser revision instead
 of the unavailable Debian Chromium pin; local alias launch passed, fresh actual
 CI remains required. Inspect the new PR head and all checks. No deployment,
 preview, activation, main merge, real send or personal/live testing occurred.
+
+## Latest navigation increment — November 3, 2026
+
+Candidate 9.87 adds independently reading-consented inbox → current thread and
+followed scope → browse commands. See [behavior](TELEGRAM_DISCUSSION_NAVIGATION.md)
+and the latest status/plan entries. 302 regressions (including 10 phone flows)
+and 292 shuffled checks passed without failures/skips; groups overlap.
+
+Previous head `df55759` passed full CI and locked-browser installation. Avatar
+acceptance passed 131 tests before the native visibility test's browser crashed
+at the profile animation query; root cause remains unproven. No avatar gate was
+changed in this increment. Inspect fresh-head CI and investigate any continuing
+crash before promotion. Deployment, previews, activation, real sends, main merge
+and personal/live testing remain deferred.

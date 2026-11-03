@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.86) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.87) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-03.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -2706,3 +2706,50 @@ remain deferred. Chromium setup blocker is being investigated separately.
 - Next: inspect new exact-head normal/shuffled/dependency/container/metadata/
   aggregate and avatar acceptance CI after push. Deployment, previews, activation,
   real messages, personal/live testing and main merge remain deferred.
+
+### Inbox/follow discussion navigation — November 3, 2026
+
+In progress, Codex, draft PR #572, `feat/telegram-private-work-lookup`, candidate
+9.87. Owner approved current-thread commands on inbox lists/details and scope-bound
+browse commands on followed discussions. Current independent reading consent/pilot
+controls shortcuts; destination commands recheck native source/context/consent.
+Metadata views still read no body and change no notice/read/follow state.
+Verification pending. Deployment, previews, activation, main merge and live tests
+remain deferred. Prior head `df55759` passed full CI; avatar installation passed
+but native visibility browser crashed during evaluation after 131 passing tests.
+
+### Inbox and followed-discussion navigation delivered — November 3, 2026
+
+- Codex, `feat/telegram-private-work-lookup`, draft PR #572, candidate **9.87**
+  on main `25fe812`. Owner approved this increment.
+- [Navigation guide](TELEGRAM_DISCUSSION_NAVIGATION.md): `/my_updates` and
+  `/update_status` offer exact current-comment thread commands; `/my_follows`
+  offers exact saved-work/task browse commands. Current independent reading
+  consent/pilot is required for shortcuts. Destination commands recheck current
+  source and private context. Work-wide follow coverage does not expand the
+  work-level browse shortcut into task rows. Metadata views query no bodies and
+  change no notices, read markers, follows, origins or operations.
+- **302 regressions passed**, including **10 phone flows**; **292 shuffled
+  checks passed** (seed 311), no failures/errors/skips. Earlier **159 focused**
+  and **10 phone** checks passed. Groups overlap. Local JUnit reports are
+  `/workspace/nav-regressions.xml`, `/workspace/nav-shuffled.xml`,
+  `/workspace/nav-focused.xml`, `/workspace/nav-phone.xml`. Coverage includes
+  independent consent/pilots, grant/pilot removal, current versus notice revision,
+  body-SQL denial on metadata views, source loss on cached commands, work/task
+  scope, unchanged state and Unicode/maximum-origin paging with shortcuts.
+- Release metadata/increase, lock inputs, vendor integrity, compatibility, AI
+  contract, compilation, relative documentation links and whitespace passed.
+  Version/changelog/service-worker cache synchronized at 9.87. No dependencies,
+  schema, runtime module, permission or pilot added. Existing Starlette/httpx
+  deprecation warning remains. Full local repository suites were not run.
+- Inspected previous application head `df55759`: full [CI run 41578060290](https://github.com/jongsky25/css-is/actions/runs/41578060290)
+  passed. [Avatar run 41578060479](https://github.com/jongsky25/css-is/actions/runs/41578060479)
+  installed its locked browser successfully, then passed **131 tests** before
+  `test_native_visibility_and_touch` failed with `Page.evaluate: Target crashed`
+  on the profile animation query. Visual steps were skipped. The log establishes
+  a browser crash, not a failed business assertion or its root cause. No avatar
+  test, gate or resource setting was changed in this navigation increment.
+- Next: inspect fresh exact-head complete CI and avatar acceptance after this
+  save; investigate any continuing native browser crash before promotion.
+  Deployment, preview publication, activation, real messages, personal/live
+  testing and main merge remain deferred.

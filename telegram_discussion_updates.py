@@ -6,6 +6,7 @@ import documents_permissions as permissions
 from documents_storage import rows
 import telegram_calendar as common
 import telegram_links as links
+import telegram_discussion_read as reader
 import telegram_storage as switches
 import work
 
@@ -109,6 +110,13 @@ def source(entry):
             +('&task_id='+str(task['id']) if task else '')+'#message-'+str(notice['comment_id']))
 
 
+def navigation(entry,can_read):
+    if not can_read:return ''
+    notice,item,task=entry
+    query={'case_id':item['id'],'task_id':task['id'] if task else None}
+    return '\nView current thread: '+reader.command(query,notice['comment_id'])
+
+
 def render(conn,clean,bot,now):
     if not conn.in_transaction:raise RuntimeError('Discussion inbox requires the intake transaction')
     found=rows(conn,"SELECT * FROM telegram_connection WHERE telegram_user_id=? AND state='active'",(clean['sender_id'],))
@@ -119,19 +127,20 @@ def render(conn,clean,bot,now):
     if not user:return None
     query=clean['updates_query']
     if query=={'error':'usage'}:return USAGE
+    can_read=links.authorized(conn,user['id'],reader.ACTION)
     if query['command']=='/update_status':
         try:entry=detail(conn,user,query['id'])
         except ValueError:return DENIED
-        return (line(entry)+'\nOpen discussion: '+source(entry)
-                +'\nBack: /my_updates\nMetadata only; this lookup marks nothing read. Read discussion in Office Connect; /menu lists separately permitted actions.')
+        return (line(entry)+'\nOpen discussion: '+source(entry)+navigation(entry,can_read)
+                +'\nBack: /my_updates\nMetadata only; this lookup marks nothing read. Thread commands open current text with separate reading permission; /menu lists permitted actions.')
     entries,continuation=page(conn,user,query['category'],query['before'])
     text='My unread discussion updates · '+query['category']+' · newest notice first\nMetadata only; lookup does not mark messages read.'
     shown=[]
     for entry in entries[:PAGE_SIZE]:
-        block=line(entry)+'\nDetails: /update_status '+str(entry[0]['id'])+'\n'+source(entry)
+        block=line(entry)+'\nDetails: /update_status '+str(entry[0]['id'])+'\n'+source(entry)+navigation(entry,can_read)
         if common.units(text+'\n\n'+block)>3000:break
         text+='\n\n'+block;shown.append(entry[0])
     if not shown:text+='\nNo unread updates found on this page.'
     if shown and len(shown)<len(entries):text+='\nNext page: /my_updates '+query['category']+' '+str(shown[-1]['id'])
     elif continuation:text+='\nMore source candidates remain. Continue: /my_updates '+query['category']+' '+str(continuation)
-    return text+'\nFilters: /my_updates mentions · /my_updates replies · /my_updates following\nDiscussion text stays in Office Connect. Lookup marks nothing read; /menu lists separately permitted actions. Other recipients and counts are not disclosed.'
+    return text+'\nFilters: /my_updates mentions · /my_updates replies · /my_updates following\nThis lookup includes metadata only. Thread commands open current text with separate reading permission. Lookup marks nothing read; /menu lists separately permitted actions. Other recipients and counts are not disclosed.'

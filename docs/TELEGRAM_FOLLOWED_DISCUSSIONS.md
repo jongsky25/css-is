@@ -90,3 +90,7 @@ no preselected change, explicit existing preview/confirmation and refreshed save
 rows. Four existing follow-writer phone flows are rechecked alongside them. All
 data and provider transports are synthetic/blocked. See [evidence](SETUP_STATUS.md)
 and [pending live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md).
+
+[Private discussion navigation](TELEGRAM_DISCUSSION_NAVIGATION.md) adds conditional
+current-thread/browse commands with separate reading consent. Metadata lookup
+still projects no body and changes no read/follow state.

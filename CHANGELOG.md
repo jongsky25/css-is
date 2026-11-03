@@ -1,4 +1,6 @@
-## 9.86 — November 3, 2026
+## 9.87 — November 3, 2026
+
+- Open current discussion threads from private inbox metadata and browse comments from saved follows with current independent reading consent; all lookups preserve read and follow state.
 
 - Browse current top-level work/task discussion comments with bounded seek pages and existing thread/message/reply navigation under independent reading consent; no read state changes.
 

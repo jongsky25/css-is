@@ -144,6 +144,7 @@ def test_composite_seek_pages_preserve_category_and_every_saved_row(follows_env,
 
 def test_unicode_long_origin_and_control_links_keep_budget_and_continuation(follows_env,monkeypatch):
     env,item,task=follows_env;c,users,*_=env;grant(env,'work.follow',monkeypatch)
+    grant(env,'work.discussion.read',monkeypatch)
     origin='https://'+'a'*60+'.'+'b'*60+'.'+'c'*60+'.example12';assert len(origin)==200
     monkeypatch.setenv('CSS_BASE_URL',origin)
     expected={(item['id'],task['id']),(item['id'],0)}
@@ -154,7 +155,7 @@ def test_unicode_long_origin_and_control_links_keep_budget_and_continuation(foll
     query='/my_follows all';seen=[]
     for number in range(10,20):
         text=command(env,query,number)['text'];assert reads.common.units(text)<=4096
-        found=keys(text);assert found and '/account/telegram/discussion-follow/change?case_id=' in text
+        found=keys(text);assert found and '/account/telegram/discussion-follow/change?case_id=' in text and 'Browse comments:' in text
         seen.extend(found);next_=re.search(r'Next page: (/my_follows all [0-9]+:[0-9]+)',text)
         if not next_:break
         query=next_[1]
@@ -203,6 +204,7 @@ def test_live_renderer_connection_never_reads_discussion_or_submission_columns(f
 @pytest.mark.parametrize('guard',['write_scope','write_pilot'])
 def test_control_links_require_current_separate_write_scope_and_pilot(follows_env,monkeypatch,guard):
     env,item,task=follows_env;c,users,*_=env;grant(env,'work.follow',monkeypatch)
+    grant(env,'work.discussion.read',monkeypatch)
     before=snapshot(c);text=command(env,'/my_follows',10)['text']
     assert '/account/telegram/discussion-follow/change?case_id='+str(item['id'])+'&task_id='+str(task['id']) in text
     assert 'first send /discussion_follow' in text and before==snapshot(c)
@@ -244,3 +246,35 @@ def test_legacy_cross_work_task_reference_is_not_projected(follows_env):
     c.execute('INSERT INTO work_follow VALUES (?,?,?,?)',(other['id'],users[0]['id'],task['id'],links.stamp(NOW)));c.commit()
     before=snapshot(c);text=command(env,'/my_follows',10)['text']
     assert keys(text)==[(item['id'],task['id']),(item['id'],0)] and before==snapshot(c)
+
+
+@pytest.mark.parametrize('guard',['grant','pilot','source'])
+def test_follow_browse_shortcuts_keep_exact_saved_scopes_and_current_read_checks(follows_env,monkeypatch,guard):
+    import telegram_discussion_read as reader
+    env,item,task=follows_env;c,users,*_=env
+    monkeypatch.setenv('CSS_TELEGRAM_WORK_DISCUSSION_READ_ENABLED','1')
+    assert 'Browse comments:' not in command(env,'/my_follows',10)['text']
+    grant(env,reader.ACTION,monkeypatch)
+    for target,body in ((None,'WorkShortcutText'),(task['id'],'TaskShortcutText')):
+        discussion.post(c,users[3],item['id'],body,task_id=target)
+    before=snapshot(c)
+    def deny_body(op,table,column,*_):
+        return sqlite3.SQLITE_DENY if op==sqlite3.SQLITE_READ and table=='work_comment_revision' and column=='body' else sqlite3.SQLITE_OK
+    c.set_authorizer(deny_body)
+    try:text=command(env,'/my_follows',11)['text']
+    finally:c.set_authorizer(None)
+    commands=re.findall(r'Browse comments: (.*)',text)
+    assert commands==['/discussion_browse '+str(item['id'])+' '+str(task['id']),'/discussion_browse '+str(item['id'])+' work']
+    assert 'ShortcutText' not in text
+    for n,(cmd,body,excluded) in enumerate(((commands[0],'TaskShortcutText','WorkShortcutText'),(commands[1],'WorkShortcutText','TaskShortcutText')),12):
+        result=command(env,cmd,n)['text'];assert body in result and excluded not in result
+    assert before==snapshot(c)
+    if guard=='grant':c.execute('UPDATE telegram_grant SET revoked_at=? WHERE action=?',(links.stamp(NOW),reader.ACTION));c.commit()
+    elif guard=='pilot':monkeypatch.setenv('CSS_TELEGRAM_WORK_DISCUSSION_READ_ENABLED','0')
+    else:c.execute('UPDATE work_case SET creator_id=?,lead_id=? WHERE id=?',(users[1]['id'],users[1]['id'],item['id']));c.commit()
+    assert 'Browse comments:' not in command(env,'/my_follows',14)['text']
+    for n,cmd in enumerate(commands,15):
+        result=command(env,cmd,n)
+        if guard=='source':assert result['text']==reader.DENIED
+        else:assert 'method' not in result
+    for table in ('telegram_operation','telegram_preview','telegram_meeting_origin'):assert not rows(c,'SELECT * FROM '+table)
