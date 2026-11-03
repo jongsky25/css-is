@@ -1,4 +1,6 @@
-## 9.89 — November 3, 2026
+## 9.90 — November 3, 2026
+
+- Add independently consented own supplies-draft creation through a bounded catalog form, exact private preview and native atomic draft/receipt save; submission, numbering, approval, stock reservation and approver notifications remain separate.
 
 - Offer author-only edit form shortcuts in discussion browsing, threads and message parts with source IDs/current revision prefill, empty replacement text and existing independent edit permission/private confirmation.
 

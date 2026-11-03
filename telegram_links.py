@@ -15,6 +15,7 @@ import telegram_storage as switches
 import telegram_transport as transport
 
 SCOPES = {'calendar.read': 'Read permitted calendar entries', 'rooms.read': 'Read room availability and own requests', 'calendar.create':'Create one meeting after an exact private preview and confirmation', 'rooms.request':'Request a room for my permitted meeting after private confirmation', 'travel.read': 'Read my travel filing checklist and status in private', 'meals.read': 'Read my meal request status in private', 'arrangements.read': 'Read my work-arrangement filing status in private', 'supplies.read': 'Read my supply request approval and collection status in private', 'documents.read': 'Read permitted document metadata and status in private', 'work.read': 'Read my tasks and permitted work status in private', 'tasks.acknowledge': 'Acknowledge my task after private confirmation', 'tasks.submit': 'Submit my task for review after private confirmation'}
+SCOPES['supplies.draft']='Create my supply draft'
 SCOPES.update({'calendar.reschedule':'Reschedule my own meeting after private preview and confirmation',
                'calendar.cancel':'Cancel my own meeting after private preview and confirmation'})
 SCOPES.update({'rooms.withdraw':'Withdraw my own room request after private preview and confirmation',
@@ -118,6 +119,8 @@ def start(conn, sender, bot, now):
 def claim(conn, payload, raw_code, scopes, now):
     if not re.fullmatch(r'[a-f0-9]{64}', raw_code) or not set(scopes) <= SCOPES.keys():
         raise ValueError('That code or permission choice is invalid. Start again in your private bot chat.')
+    if 'supplies.draft' in scopes and ('supplies.read' not in scopes or not switches.enabled('supplies_draft') or not switches.enabled('supplies_read')):
+        raise ValueError('Supply drafts require their pilot and separate supplies read consent/pilot.')
     if 'calendar.create' in scopes and ('calendar.read' not in scopes or not switches.enabled('calendar_create')):
         raise ValueError('Meeting creation requires its pilot and separate calendar read consent.')
     for action in ('calendar.reschedule','calendar.cancel'):
@@ -168,6 +171,8 @@ def confirm(conn, sender, argument_hash, bot, now):
         return None
     if conn.execute('SELECT 1 FROM telegram_connection WHERE revoked_at IS NULL AND (account_id=? OR telegram_user_id=?)',
                     (user['id'], sender)).fetchone():
+        return None
+    if 'supplies.draft' in json.loads(ch['scopes_json']) and (not switches.enabled('supplies_draft') or not switches.enabled('supplies_read')):
         return None
     if 'calendar.create' in json.loads(ch['scopes_json']) and not switches.enabled('calendar_create'):
         return None

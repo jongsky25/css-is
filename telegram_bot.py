@@ -55,6 +55,7 @@ import telegram_reply_manage as reply_manage
 import telegram_comment_edit as comment_edit
 import telegram_update_read as update_read
 import telegram_discussion_follow as discussion_follow
+import telegram_supply_draft as supply_draft
 import telegram_meeting_webhook as meeting_webhook
 import telegram_notices as notices
 import telegram_reminders as reminders
@@ -182,8 +183,8 @@ def normalize(value):
             clean['command'] = first
         if text in ('/meeting','/room_request'):
             clean['command']=text
-        if first in meeting_manage.COMMANDS + room_manage.COMMANDS + task_create.COMMANDS + task_deadline.COMMANDS + task_review.COMMANDS + task_assign.COMMANDS + task_reassign.COMMANDS + task_reopen.COMMANDS + task_cancel.COMMANDS + blocker_manage.COMMANDS + dependency_manage.COMMANDS + comment_manage.COMMANDS + reply_manage.COMMANDS + comment_edit.COMMANDS + update_read.COMMANDS + discussion_follow.COMMANDS:
-            if text in ('/meeting_reschedule','/meeting_cancel','/room_withdraw','/room_move','/new_task','/task_deadline','/task_accept','/task_return','/task_assign','/task_reassign','/task_reopen','/task_cancel','/task_block','/task_unblock','/task_dependency_add','/task_dependency_remove','/work_comment','/task_comment','/work_reply','/task_reply','/work_comment_edit','/task_comment_edit','/update_read','/discussion_follow'):
+        if first in meeting_manage.COMMANDS + room_manage.COMMANDS + task_create.COMMANDS + task_deadline.COMMANDS + task_review.COMMANDS + task_assign.COMMANDS + task_reassign.COMMANDS + task_reopen.COMMANDS + task_cancel.COMMANDS + blocker_manage.COMMANDS + dependency_manage.COMMANDS + comment_manage.COMMANDS + reply_manage.COMMANDS + comment_edit.COMMANDS + update_read.COMMANDS + discussion_follow.COMMANDS + supply_draft.COMMANDS:
+            if text in ('/meeting_reschedule','/meeting_cancel','/room_withdraw','/room_move','/new_task','/task_deadline','/task_accept','/task_return','/task_assign','/task_reassign','/task_reopen','/task_cancel','/task_block','/task_unblock','/task_dependency_add','/task_dependency_remove','/work_comment','/task_comment','/work_reply','/task_reply','/work_comment_edit','/task_comment_edit','/update_read','/discussion_follow','/supply_draft'):
                 clean['command']=text
             elif len(parts := text.split())==2:
                 if first.endswith('_confirm') and re.fullmatch('[A-Za-z0-9_-]{43}',parts[1]):
@@ -316,7 +317,7 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
             groups.handle_event(conn, clean, bot)
         cid, generation, permitted = identity(conn, clean['sender_id'])
         inline_meeting=(webhook_reply is not None and meeting_webhook.accepts(conn,clean))
-        if inline_meeting or clean['command'] in task_actions.COMMANDS + document_reads.COMMANDS + supply_reads.COMMANDS + personal_reads.COMMANDS + brief_reads.COMMANDS + search_reads.COMMANDS + review_reads.COMMANDS + update_reads.COMMANDS + follow_reads.COMMANDS + discussion_search.COMMANDS + discussion_read.COMMANDS + blocker_reads.COMMANDS + meeting_manage.COMMANDS + room_manage.COMMANDS + task_create.COMMANDS + task_deadline.COMMANDS + task_review.COMMANDS + task_assign.COMMANDS + task_reassign.COMMANDS + task_reopen.COMMANDS + task_cancel.COMMANDS + blocker_manage.COMMANDS + dependency_manage.COMMANDS + comment_manage.COMMANDS + reply_manage.COMMANDS + comment_edit.COMMANDS + update_read.COMMANDS + discussion_follow.COMMANDS:
+        if inline_meeting or clean['command'] in task_actions.COMMANDS + document_reads.COMMANDS + supply_reads.COMMANDS + personal_reads.COMMANDS + brief_reads.COMMANDS + search_reads.COMMANDS + review_reads.COMMANDS + update_reads.COMMANDS + follow_reads.COMMANDS + discussion_search.COMMANDS + discussion_read.COMMANDS + blocker_reads.COMMANDS + meeting_manage.COMMANDS + room_manage.COMMANDS + task_create.COMMANDS + task_deadline.COMMANDS + task_review.COMMANDS + task_assign.COMMANDS + task_reassign.COMMANDS + task_reopen.COMMANDS + task_cancel.COMMANDS + blocker_manage.COMMANDS + dependency_manage.COMMANDS + comment_manage.COMMANDS + reply_manage.COMMANDS + comment_edit.COMMANDS + update_read.COMMANDS + discussion_follow.COMMANDS + supply_draft.COMMANDS:
             inline = (webhook_reply is not None and storage.enabled('delivery') and storage.enabled('link')
                       and transport.config()==bot and cid is not None and permitted)
             conn.execute("""INSERT INTO telegram_update

@@ -23,9 +23,9 @@ verified again in that session.
 ## Current work and owner preferences
 
 - Draft [PR #572](https://github.com/jongsky25/css-is/pull/572); branch
-  `feat/telegram-private-work-lookup`; candidate **9.89**. The prior application
-  baseline was `c14c205` (acknowledgement shortcuts). Own-message edit
-  shortcuts are now implemented; see the latest progress entry below and check the PR head.
+  `feat/telegram-private-work-lookup`; candidate **9.90**. The prior application
+  baseline was `e7bea14` (own-message edit shortcuts plus CI investigation).
+  Guided own supplies drafts are now implemented; see the latest progress entry below and check the PR head.
 - The owner has linked Telegram and reported pulling calendar information. That
   report does not establish that the new draft features have been deployed or
   tested live. The owner wants more capabilities added first, then will do
@@ -193,3 +193,21 @@ acceptance again crashed in native visibility after 131 passing tests. Inspect
 fresh exact-head checks; root cause remains unproven. No avatar gate changed.
 Deployment, previews, activation, real messages, main merge and personal/live
 testing remain deferred.
+
+## Latest guided supplies draft increment — November 3, 2026
+
+Candidate 9.90 adds `/supply_draft` with independent default-off creation consent
+and supplies read prerequisite. A signed-in no-script catalog form supports five
+lines and 1000-character purpose; exact private preview and confirmation create
+one own native draft. Submission, control numbers, approval, inventory holds/issues
+and approver mail remain separate. [Behavior](TELEGRAM_SUPPLY_DRAFTS.md).
+
+374 regressions (two phone flows), 372 shuffled checks and 41 release/bundle/
+diagnostic checks passed without failures/skips; groups overlap. See latest status
+and plan for reports, constraints and fixture corrections. No full local suite.
+
+Four incoming avatar CI-investigation commits through `e7bea14` are preserved.
+Avatar acceptance passed on that head after diagnostics/shared-memory changes;
+full CI was still running at last inspection. Inspect the new feature head's own
+CI/acceptance. Deployment, previews, activation, real messages, personal/live
+testing and main merge remain deferred.

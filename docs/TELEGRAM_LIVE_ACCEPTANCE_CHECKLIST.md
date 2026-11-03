@@ -172,3 +172,13 @@ GET and source-only prefill with empty replacement, strict preparation, exact
 private preview/confirmation, retained history/parent, receipt retry and cached
 form rejection after a newer edit. Check paging/message parts with combined
 Reply/Edit controls. Synthetic phone evidence is not hosted/personal acceptance.
+
+## Guided own supplies drafts — Pending
+
+After separate activation approval, verify independent draft/read consent, native
+requester eligibility, catalog search/pages, single/multiple lines, exact purpose/
+date/labels/quantities preview, no pre-confirmation draft, stale directory/catalog/
+availability denial and fresh preparation. Confirm one own draft, retained receipt
+after later native edits, revocation/restore/cached-context denial and unchanged
+numbering/submission/approval/stock/approver mail. Two synthetic phone flows do not
+establish hosted/personal acceptance.

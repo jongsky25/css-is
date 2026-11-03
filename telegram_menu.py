@@ -54,6 +54,7 @@ FEATURES=(
  ('tasks.acknowledge','Tasks and work','Task acknowledgement','/task_ack WORK_ID TASK_ID — preview taking your task into progress.',('work.read',),work.enabled,True),
  ('tasks.submit','Tasks and work','Task submission','/task_submit WORK_ID TASK_ID — prepare output, preview, then confirm review submission.',('work.read',),work.enabled,True),
  ('documents.read','Documents','Document lookup','/documents; /find_documents WORDS; /document_status ID.\nExample: /find_documents budget',(),documents.enabled,True),
+ ('supplies.draft','Requests','Supply drafts','/supply_draft — create my draft after private confirmation.',('supplies.read',),supplies.enabled,True),
  ('supplies.read','Requests','Supplies','/my_supplies; /supply_status ID. Example: /my_supplies needs_action',(),supplies.enabled,True),
  ('travel.read','Requests','Travel','/my_travel; /travel_status ID — deadline, checklist and paper-review status.',(),travel.enabled,True),
  ('meals.read','Requests','Meals','/my_meals; /meal_status ID; /my_room_meals; /room_meal_status ID.',(),None,True),

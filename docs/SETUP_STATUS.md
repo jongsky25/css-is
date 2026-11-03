@@ -78,13 +78,15 @@ access remains necessary in a fresh chat.
 Avatar crash investigation continues separately on `investigate/avatar-native-crash`; see [diagnostic evidence](AVATAR_CRASH_INVESTIGATION.md).
 
 For a fresh phone session, use the [Telegram mobile handoff](TELEGRAM_MOBILE_HANDOFF.md).
-The prior head `c14c205` still had full CI in progress when inspected; separate
-avatar acceptance repeated a native Chromium page crash after 131 passing tests.
+Incoming CI-investigation head `e7bea14` passed avatar acceptance after shared-memory
+provisioning. Its full CI was still running at last inspection. Preserve these
+commits and inspect fresh exact-head checks for the new supplies increment.
 Inspect fresh exact-head checks and the latest evidence below before proceeding.
 
 **Current Telegram feature work — November 3, 2026:** continue draft
 [PR #572](https://github.com/jongsky25/css-is/pull/572), branch
-`feat/telegram-private-work-lookup`, candidate **9.89**. The latest addition is
+`feat/telegram-private-work-lookup`, candidate **9.90**. The latest addition is
+[guided own supplies drafts](TELEGRAM_SUPPLY_DRAFTS.md), following
 [own-message edit shortcuts](TELEGRAM_COMMENT_EDITING.md), following
 [inbox acknowledgement shortcuts](TELEGRAM_UPDATE_READ.md), following
 [inbox/follow discussion navigation](TELEGRAM_DISCUSSION_NAVIGATION.md), following
@@ -3148,3 +3150,54 @@ Next: inspect CI for the new head and continue the next requested feature. Deplo
 - Next: inspect fresh exact-head complete CI and avatar acceptance after push.
   Deployment, previews, activation, real messages, personal/live testing and main
   merge remain deferred. Hosted acceptance remains Pending.
+
+### Guided own supplies drafts delivered — November 3, 2026
+
+- Codex, draft PR #572, `feat/telegram-private-work-lookup`, candidate **9.90**,
+  main `25fe812`. Owner approved draft creation only.
+- [Behavior and boundaries](TELEGRAM_SUPPLY_DRAFTS.md): `/supply_draft`, signed-in
+  no-script searchable active catalog (25-row seek pages), up to five lines and
+  1000-character purpose, optional native date, exact private five-minute preview
+  and confirmation. New independent `supplies.draft` consent/default-off
+  `CSS_TELEGRAM_SUPPLIES_DRAFT_ENABLED` requires current supplies read consent/pilot
+  and native internal-staff/unit eligibility. Current requester/catalog changes
+  invalidate previews; current native requestability is rechecked. No inventory
+  balance/history is exported by catalog choices. No truncation of exact previews.
+- Reuses native `save_draft_in_transaction`, with namespaced operation UUID, atomic
+  own draft/lines/history/audit/outcome and incoming webhook reply handoff. No
+  submission, control number, approval, reservation/issue, alert or approver mail.
+  Receipts distinguish original saved revision from current owner-only state and
+  never overwrite later UI edits. Additive source-deletion and supplies-read grant
+  dependency triggers fence ID reuse and scrub revoked pending previews. No new
+  table/column, dependency or provider is introduced. Runtime bundle includes both
+  new modules; generic action/menu/consent paths retain existing defaults/guards.
+- **374 regressions passed**, including **two 390×844 JavaScript-disabled phone
+  flows**; **372 shuffled checks passed** (seed 311), no failures/errors/skips.
+  **41 release/bundle/diagnostic checks passed**. Groups overlap. Reports (local):
+  `/workspace/supply-draft-regressions.xml`, `/workspace/supply-draft-shuffled.xml`,
+  `/workspace/supply-draft-release.xml`; phone-only final report
+  `/workspace/supply-draft-phone-final.xml`. Coverage includes independent consent,
+  stale catalog/directory/stock/module/grants/context/expiry, strict inputs, exact
+  labels/control/bounds, concurrent/repeated confirmation, later native edits,
+  deleted-source ID reuse, retention, no stock-column SQL for choices, rollback
+  on native audit and webhook handoff failure, and unchanged stock/submission/
+  numbering/approver-mail state. Phone flows cover catalog search/seek pages, one/
+  multiple lines, CSRF, no draft before confirmation, stale rejection and fresh
+  preparation, one own draft, source navigation and receipt retry. Initial fixture
+  corrections used the native stocktake API, expected handoff HTTP 503, explicit
+  catalog re-search after page reset, a genuinely oversized preview fixture and
+  the expanded action registry before the final passing runs. No gate weakened.
+- Release metadata/increase, locks, vendor integrity, compatibility, AI contract,
+  compilation, relative links and whitespace passed; version/changelog/cache
+  synchronized at 9.90. Existing Starlette/httpx deprecation warning remains.
+  Full local repository suites were not run.
+- Preserved four incoming CI-investigation commits by fast-forwarding from
+  `c31fc95` to `e7bea14` before saving this feature. They add browser diagnostics
+  and container shared-memory provisioning. [Avatar acceptance 41608119276](https://github.com/jongsky25/css-is/actions/runs/41608119276)
+  passed on `e7bea14`; its full [CI 41608119291](https://github.com/jongsky25/css-is/actions/runs/41608119291)
+  was still running at last inspection. That previous-head success is not
+  acceptance for this new feature head. Existing investigation notes are preserved.
+- Next: inspect fresh exact-head complete normal/shuffled/dependency/container/
+  metadata/aggregate and avatar checks after push. Deployment, preview publication,
+  activation, real messages, personal/live testing and main merge remain deferred.
+  Hosted acceptance remains Pending.
