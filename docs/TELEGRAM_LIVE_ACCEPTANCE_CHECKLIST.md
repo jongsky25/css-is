@@ -163,3 +163,12 @@ prefill, no-origin GET, private start, exact preview/confirmation, updated inbox
 and retry-safe receipt. Check notice versus current revision, wrong/foreign IDs,
 already-read cached forms, lost grants/pilots/source and unchanged state before
 confirmation. Six synthetic phone flows do not establish hosted acceptance.
+
+## Own-message edit shortcuts — Pending
+
+After separate activation approval, verify own work/task top-level/direct-reply
+controls, hidden controls for other authors/opposite grant/lost pilot, no-origin
+GET and source-only prefill with empty replacement, strict preparation, exact
+private preview/confirmation, retained history/parent, receipt retry and cached
+form rejection after a newer edit. Check paging/message parts with combined
+Reply/Edit controls. Synthetic phone evidence is not hosted/personal acceptance.

@@ -23,9 +23,9 @@ verified again in that session.
 ## Current work and owner preferences
 
 - Draft [PR #572](https://github.com/jongsky25/css-is/pull/572); branch
-  `feat/telegram-private-work-lookup`; candidate **9.88**. The prior application
-  baseline was `3dc7600` (inbox/follow navigation). Notice-prefilled
-  acknowledgement shortcuts are now implemented; see the latest progress entry below and check the PR head.
+  `feat/telegram-private-work-lookup`; candidate **9.89**. The prior application
+  baseline was `c14c205` (acknowledgement shortcuts). Own-message edit
+  shortcuts are now implemented; see the latest progress entry below and check the PR head.
 - The owner has linked Telegram and reported pulling calendar information. That
   report does not establish that the new draft features have been deployed or
   tested live. The owner wants more capabilities added first, then will do
@@ -173,3 +173,23 @@ visibility after installation and 131 passing tests. Inspect fresh-head CI and
 resolve the browser crash before any separately authorized promotion. Deployment,
 previews, activation, real messages, main merge and personal/live tests remain
 deferred. No avatar workflow change in this increment.
+
+## Latest own-message edit shortcuts — November 3, 2026
+
+Candidate 9.89 adds author-only edit form URLs to current reading views under
+matching independent edit permission. Source IDs/revision prefill; replacement
+text stays empty; no origin/operation/edit is created by opening. Existing exact
+private preparation/confirmation and current ownership/source/revision checks
+remain required. [Behavior](TELEGRAM_COMMENT_EDITING.md).
+
+539 regressions (ten phone flows), 529 shuffled checks and 30 combined shortcut/
+phone checks passed without failures/skips; groups overlap. See latest status/
+plan evidence. Combined controls retain nested seek paging and fixed message
+parts at maximum supported IDs/revisions/origin; thread previews are shorter
+when edit controls are enabled.
+
+Prior head `c14c205` full CI was still running at last inspection; avatar
+acceptance again crashed in native visibility after 131 passing tests. Inspect
+fresh exact-head checks; root cause remains unproven. No avatar gate changed.
+Deployment, previews, activation, real messages, main merge and personal/live
+testing remain deferred.

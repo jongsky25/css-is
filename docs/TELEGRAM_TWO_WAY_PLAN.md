@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.88) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.89) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-03.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -2800,3 +2800,59 @@ remain deferred. Prior head `3dc7600` full CI passed; avatar acceptance failed.
 - Next: inspect fresh exact-head complete CI and avatar acceptance after push.
   Deployment, previews, activation, real messages, personal/live testing and
   main merge remain deferred. Hosted acceptance checklist remains Pending.
+
+### Own-message edit shortcuts — November 3, 2026
+
+In progress, Codex, draft PR #572, review branch `feat/telegram-private-work-lookup`,
+candidate 9.89. Owner approved author-only edit form shortcuts in reading views.
+Independent matching edit grant/pilot gates ownership SQL. URLs prefill source
+IDs/current revision only; replacement stays empty. Existing private origin,
+exact preview, current ownership/source/revision and confirmation remain decisive.
+Verification pending. Deployment, previews, activation, real messages, main merge
+and personal/live testing remain deferred.
+
+### Own-message edit shortcuts delivered — November 3, 2026
+
+- Codex, draft PR #572, `feat/telegram-private-work-lookup`, candidate **9.89**,
+  main `25fe812`. Owner approved this increment.
+- [Own-message shortcuts](TELEGRAM_COMMENT_EDITING.md) in browsing, selected
+  threads/direct replies and current message parts require matching independent
+  work/task edit consent/pilot and exact own-author/source/revision predicate.
+  No author ID/label is projected; absent/opposite edit grants avoid author-column
+  SQL. URLs carry source IDs/current revision only; replacement text stays empty.
+  Listing/opening creates no origin, preview, operation or edit. Existing private
+  request, strict signed-in CSRF form, ownership/source/revision revalidation,
+  exact preview, confirmation, native history/mentions/read rules and receipts
+  remain authoritative. Cached forms cannot overwrite newer native edits.
+- With edit controls enabled, selected/direct-reply thread previews are bounded
+  at 60/45 characters to preserve paging with combined Reply/Edit URLs and maximum
+  numeric IDs/revisions/origin. Full 900-character message parts and their revision
+  boundaries are unchanged. Permission changes cannot shift those boundaries.
+- **539 regressions passed**, including **10 phone flows** (four edit work/task
+  top-level/reply flows, two reading and four reply shortcut flows). **529 shuffled
+  checks passed** (seed 311), no failures/errors/skips. **30 combined shortcut/phone
+  checks passed** before the broader runs; groups overlap. Reports (local):
+  `/workspace/edit-shortcuts-regressions.xml`, `/workspace/edit-shortcuts-shuffled.xml`,
+  `/workspace/edit-shortcuts-budgets.xml`. Initial focused checks exposed a native
+  edit/read-marker fixture expectation and combined-control paging exhaustion;
+  corrected state snapshots and bounded previews before final passing runs.
+- Coverage includes current ownership/revision, matching/opposite/revoked grants
+  and pilots, author-column SQL denial without matching edit consent, unchanged
+  read/source state during reading, source-only GET prefill/ignored body query,
+  no-origin GET, strict fields/CSRF, one confirmed edit with retained history/parent,
+  receipt/retry and stale cached forms after newer edits. Maximum 19-digit IDs/
+  revisions and 200-character origins retain nested paging and message parts below
+  Telegram's 4096 UTF-16-unit limit.
+- Release metadata/increase, locks, vendor integrity, compatibility, AI contract,
+  compilation, relative Markdown links and whitespace passed. Version/changelog/
+  service-worker cache synchronized at 9.89. No dependency, schema, native write
+  service, permission or pilot added. Existing Starlette/httpx deprecation warning
+  remains. Full local repository suites were not run.
+- Last inspected previous head `c14c205`: full [CI 41600574241](https://github.com/jongsky25/css-is/actions/runs/41600574241)
+  was still in progress; [avatar acceptance 41600573915](https://github.com/jongsky25/css-is/actions/runs/41600573915)
+  installed successfully and passed 131 tests before the same native visibility
+  `Page.evaluate: Target crashed` failure. Root cause remains unproven; no avatar
+  gate/resource setting changed in this increment.
+- Next: inspect fresh exact-head complete CI and avatar acceptance after push.
+  Deployment, previews, activation, real messages, personal/live testing and main
+  merge remain deferred. Hosted acceptance remains Pending.

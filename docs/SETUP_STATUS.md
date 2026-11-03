@@ -76,13 +76,14 @@ access remains necessary in a fresh chat.
 ## Next action
 
 For a fresh phone session, use the [Telegram mobile handoff](TELEGRAM_MOBILE_HANDOFF.md).
-The previous head `3dc7600` passed full CI and browser installation; separate avatar
-acceptance then encountered a native Chromium page crash after 131 passing tests.
+The prior head `c14c205` still had full CI in progress when inspected; separate
+avatar acceptance repeated a native Chromium page crash after 131 passing tests.
 Inspect fresh exact-head checks and the latest evidence below before proceeding.
 
 **Current Telegram feature work — November 3, 2026:** continue draft
 [PR #572](https://github.com/jongsky25/css-is/pull/572), branch
-`feat/telegram-private-work-lookup`, candidate **9.88**. The latest addition is
+`feat/telegram-private-work-lookup`, candidate **9.89**. The latest addition is
+[own-message edit shortcuts](TELEGRAM_COMMENT_EDITING.md), following
 [inbox acknowledgement shortcuts](TELEGRAM_UPDATE_READ.md), following
 [inbox/follow discussion navigation](TELEGRAM_DISCUSSION_NAVIGATION.md), following
 [discussion browsing](TELEGRAM_DISCUSSION_BROWSING.md), following
@@ -3099,3 +3100,49 @@ Next: inspect CI for the new head and continue the next requested feature. Deplo
 - Next: inspect fresh exact-head complete CI and avatar acceptance after push.
   Deployment, previews, activation, real messages, personal/live testing and
   main merge remain deferred. Hosted acceptance checklist remains Pending.
+
+### Own-message edit shortcuts delivered — November 3, 2026
+
+- Codex, draft PR #572, `feat/telegram-private-work-lookup`, candidate **9.89**,
+  main `25fe812`. Owner approved this increment.
+- [Own-message shortcuts](TELEGRAM_COMMENT_EDITING.md) in browsing, selected
+  threads/direct replies and current message parts require matching independent
+  work/task edit consent/pilot and exact own-author/source/revision predicate.
+  No author ID/label is projected; absent/opposite edit grants avoid author-column
+  SQL. URLs carry source IDs/current revision only; replacement text stays empty.
+  Listing/opening creates no origin, preview, operation or edit. Existing private
+  request, strict signed-in CSRF form, ownership/source/revision revalidation,
+  exact preview, confirmation, native history/mentions/read rules and receipts
+  remain authoritative. Cached forms cannot overwrite newer native edits.
+- With edit controls enabled, selected/direct-reply thread previews are bounded
+  at 60/45 characters to preserve paging with combined Reply/Edit URLs and maximum
+  numeric IDs/revisions/origin. Full 900-character message parts and their revision
+  boundaries are unchanged. Permission changes cannot shift those boundaries.
+- **539 regressions passed**, including **10 phone flows** (four edit work/task
+  top-level/reply flows, two reading and four reply shortcut flows). **529 shuffled
+  checks passed** (seed 311), no failures/errors/skips. **30 combined shortcut/phone
+  checks passed** before the broader runs; groups overlap. Reports (local):
+  `/workspace/edit-shortcuts-regressions.xml`, `/workspace/edit-shortcuts-shuffled.xml`,
+  `/workspace/edit-shortcuts-budgets.xml`. Initial focused checks exposed a native
+  edit/read-marker fixture expectation and combined-control paging exhaustion;
+  corrected state snapshots and bounded previews before final passing runs.
+- Coverage includes current ownership/revision, matching/opposite/revoked grants
+  and pilots, author-column SQL denial without matching edit consent, unchanged
+  read/source state during reading, source-only GET prefill/ignored body query,
+  no-origin GET, strict fields/CSRF, one confirmed edit with retained history/parent,
+  receipt/retry and stale cached forms after newer edits. Maximum 19-digit IDs/
+  revisions and 200-character origins retain nested paging and message parts below
+  Telegram's 4096 UTF-16-unit limit.
+- Release metadata/increase, locks, vendor integrity, compatibility, AI contract,
+  compilation, relative Markdown links and whitespace passed. Version/changelog/
+  service-worker cache synchronized at 9.89. No dependency, schema, native write
+  service, permission or pilot added. Existing Starlette/httpx deprecation warning
+  remains. Full local repository suites were not run.
+- Last inspected previous head `c14c205`: full [CI 41600574241](https://github.com/jongsky25/css-is/actions/runs/41600574241)
+  was still in progress; [avatar acceptance 41600573915](https://github.com/jongsky25/css-is/actions/runs/41600573915)
+  installed successfully and passed 131 tests before the same native visibility
+  `Page.evaluate: Target crashed` failure. Root cause remains unproven; no avatar
+  gate/resource setting changed in this increment.
+- Next: inspect fresh exact-head complete CI and avatar acceptance after push.
+  Deployment, previews, activation, real messages, personal/live testing and main
+  merge remain deferred. Hosted acceptance remains Pending.

@@ -131,3 +131,104 @@ def test_stale_or_unavailable_message_parts_offer_no_reply_link(shortcut_env):
     assert 'This message changed' in stale and not controls(stale) and 'To use Reply links' not in stale
     unavailable=ask(shortcut_env,'/discussion_message',number=11,extra='part:2:5')['text']
     assert 'That part is unavailable' in unavailable and not controls(unavailable)
+
+
+@pytest.mark.parametrize('guard',['grant','pilot'])
+def test_edit_shortcuts_only_current_own_messages_with_matching_grant(thread_env,monkeypatch,guard):
+    source,cid,target=thread_env;env,item,task=source;c,users,*_=env
+    mode='task' if target is not None else 'work';scope='tasks.comment_edit' if target is not None else 'work.comment_edit'
+    own=discussion.post(c,users[0],item['id'],'OwnRootForEdit',task_id=target)
+    own_reply=discussion.post(c,users[0],item['id'],'OwnReplyForEdit',task_id=target,parent_id=cid)
+    discussion.post(c,users[3],item['id'],'OtherReplyForEdit',task_id=target,parent_id=cid)
+    monkeypatch.setenv('CSS_TELEGRAM_'+scope.replace('.','_').upper()+'_ENABLED','1')
+    assert 'Edit my message form:' not in ask(thread_env,comment_id=own)['text']
+    grant(env,scope,monkeypatch);before=snapshot(c)
+    text=ask(thread_env,comment_id=own,number=11)['text']
+    url=re.search(r'Edit my message form: (.*)',text)[1]
+    expected={'case_id':[str(item['id'])],'comment_id':[str(own)],'revision':['1']}
+    if target is not None:expected['task_id']=[str(target)]
+    assert urlparse(url).path=='/account/telegram/comment-edit/'+mode and parse_qs(urlparse(url).query)==expected
+    text=ask(thread_env,number=12)['text'];found=re.findall(r'Edit my message form: (.*)',text)
+    assert len(found)==1 and parse_qs(urlparse(found[0]).query)['comment_id']==[str(own_reply)]
+    listing=ask(thread_env,'/discussion_browse',number=13)['text']
+    assert len(re.findall(r'Edit my message form:',listing))==1 and url in listing
+    part=ask(thread_env,'/discussion_message',number=14,comment_id=own_reply)['text']
+    assert found[0] in part and 'first send /'+mode+'_comment_edit privately' in part
+    assert before==snapshot(c)
+    discussion.edit(c,users[0],item['id'],target,own,1,'OwnEditedRoot')
+    after_edit=snapshot(c)
+    text=ask(thread_env,comment_id=own,number=15)['text']
+    assert '&revision=2' in text and '&revision=1' not in text
+    assert 'Edit my message form:' not in ask(thread_env,'/discussion_message',comment_id=own,number=16,extra='part:1:1')['text']
+    if guard=='grant':c.execute('UPDATE telegram_grant SET revoked_at=? WHERE action=?',(links.stamp(NOW),scope));c.commit()
+    else:monkeypatch.setenv('CSS_TELEGRAM_'+scope.replace('.','_').upper()+'_ENABLED','0')
+    for n,kind in enumerate(reader.COMMANDS,17):assert 'Edit my message form:' not in ask(thread_env,kind,comment_id=own,number=n)['text']
+    for table in ('telegram_operation','telegram_preview','telegram_meeting_origin'):assert not rows(c,'SELECT * FROM '+table)
+    assert after_edit==snapshot(c)
+
+
+def test_edit_and_reply_links_keep_unicode_paging_and_message_parts_bounded(thread_env,monkeypatch):
+    source,cid,target=thread_env;env,item,task=source;c,users,*_=env
+    for scope in ('tasks.comment_edit' if target is not None else 'work.comment_edit','tasks.reply' if target is not None else 'work.reply'):grant(env,scope,monkeypatch)
+    monkeypatch.setenv('CSS_BASE_URL','https://'+'a'*60+'.'+'b'*60+'.'+'c'*60+'.example12')
+    c.execute('UPDATE work_case SET title=? WHERE id=?',('🌿'*300,item['id']))
+    c.execute('UPDATE work_task SET title=? WHERE id=?',('🌼'*300,task['id']));c.commit()
+    root=discussion.post(c,users[0],item['id'],'🌺'*4000,task_id=target)
+    expected=[discussion.post(c,users[0],item['id'],'🌻'*1000,task_id=target,parent_id=root) for _ in range(7)]
+    text=ask(thread_env,comment_id=root)['text'];seen=[]
+    for n in range(11,30):
+        assert reader.common.units(text)<=4096 and 'Edit my message form:' in text and 'Reply form:' in text
+        seen.extend(reply_ids(text));next_=re.search(r'Older direct replies: (.*)',text)
+        if not next_:break
+        text=command(env,next_[1],n)['text']
+    assert seen==list(reversed(expected))
+    for n,kind in enumerate(('/discussion_message','/discussion_browse'),30):
+        text=ask(thread_env,kind,comment_id=root,number=n)['text']
+        assert reader.common.units(text)<=4096 and 'Edit my message form:' in text
+
+
+def test_opposite_edit_grant_does_not_fetch_author_metadata(thread_env,monkeypatch):
+    import sqlite3
+    import telegram_bot as bot
+    from documents_storage import transaction
+    source,cid,target=thread_env;env,item,task=source;c,users,*_=env
+    grant(env,'work.comment_edit' if target is not None else 'tasks.comment_edit',monkeypatch)
+    monkeypatch.setenv('CSS_TELEGRAM_'+('TASKS' if target is not None else 'WORK')+'_COMMENT_EDIT_ENABLED','1')
+    own=discussion.post(c,users[0],item['id'],'OwnPrivateEditText',task_id=target)
+    def deny_author(op,table,column,*_):
+        return sqlite3.SQLITE_DENY if op==sqlite3.SQLITE_READ and table=='work_comment' and column=='author_id' else sqlite3.SQLITE_OK
+    c.set_authorizer(deny_author)
+    try:
+        for kind in reader.COMMANDS:
+            clean=bot.normalize(update(10,text=reader.command({'case_id':item['id'],'task_id':target},own,kind)))
+            with transaction(c):text=reader.render(c,clean,bot.transport.config(),NOW)
+            assert 'OwnPrivateEditText' in text and 'Edit my message form:' not in text
+    finally:c.set_authorizer(None)
+
+
+def test_edit_controls_with_maximum_numeric_ids_revisions_and_origin(thread_env,monkeypatch):
+    source,cid,target=thread_env;env,item,task=source;c,users,*_=env
+    for scope in ('tasks.comment_edit' if target is not None else 'work.comment_edit','tasks.reply' if target is not None else 'work.reply'):grant(env,scope,monkeypatch)
+    monkeypatch.setenv('CSS_BASE_URL','https://'+'a'*60+'.'+'b'*60+'.'+'c'*60+'.example12')
+    maximum=9223372036854775807;case_id=maximum-100;task_id=maximum-90 if target is not None else None
+    def clone(table,values):
+        columns=list(values)
+        c.execute('INSERT INTO '+table+' ('+','.join(columns)+') VALUES ('+','.join('?' for _ in columns)+')',tuple(values.values()))
+    clone('work_case',{**rows(c,'SELECT * FROM work_case WHERE id=?',(item['id'],))[0],'id':case_id,'title':'🌿'*300})
+    if task_id:clone('work_task',{**rows(c,'SELECT * FROM work_task WHERE id=?',(task['id'],))[0],'id':task_id,'case_id':case_id,'title':'🌼'*300})
+    root=maximum-80;revision=maximum-1
+    for identifier,parent in ((maximum-85,None),(root,maximum-85),(maximum-70,root),(maximum-69,root)):
+        c.execute('INSERT INTO work_comment(id,case_id,task_id,parent_id,author_id,created_at) VALUES (?,?,?,?,?,?)',(identifier,case_id,task_id,parent,users[0]['id'],links.stamp(NOW)))
+        c.execute('INSERT INTO work_comment_revision VALUES (?,?,?,?)',(identifier,revision,'🌺'*4000,links.stamp(NOW)))
+    c.commit()
+    text=ask(thread_env,comment_id=root,case_id=case_id,task_id=task_id)['text']
+    seen=[]
+    for n in range(11,16):
+        assert reader.common.units(text)<=4096 and reply_ids(text) and 'Edit my message form:' in text and 'Parent:' in text
+        seen.extend(reply_ids(text));next_=re.search(r'Older direct replies: (.*)',text)
+        if not next_:break
+        text=command(env,next_[1],n)['text']
+    assert seen==[maximum-69,maximum-70]
+    for n,part in enumerate((1,2,5),20):
+        text=ask(thread_env,'/discussion_message',comment_id=root,case_id=case_id,task_id=task_id,extra='part:'+str(revision)+':'+str(part),number=n)['text']
+        assert reader.common.units(text)<=4096 and 'Edit my message form:' in text

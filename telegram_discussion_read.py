@@ -84,7 +84,7 @@ def browse_command(query):
     return '/discussion_browse '+str(query['case_id'])+' '+(str(query['task_id']) if query['task_id'] is not None else 'work')
 
 
-def browse(conn,query,item,task,reply_mode):
+def browse(conn,query,item,task,reply_mode,edit_context=None):
     found=rows(conn,'''SELECT c.id,r.revision,
         telegram_discussion_part(r.body,1,:size) AS text,telegram_discussion_length(r.body) AS length
         FROM work_comment c JOIN work_comment_revision r ON r.comment_id=c.id
@@ -99,7 +99,7 @@ def browse(conn,query,item,task,reply_mode):
                +'\nPreview: '+preview(comment['text'],comment['length'],REPLY_PREVIEW)
                +'\n'+source(query,comment['id'])+'\nView thread: '+command(query,comment['id'])
                +'\nRead message: '+command(query,comment['id'],'/discussion_message')
-               +reply_shortcut(query,comment['id'],reply_mode))
+               +reply_shortcut(query,comment['id'],reply_mode)+edit_shortcut(conn,query,comment,edit_context))
         if common.units(text+'\n\n'+block)>3000:break
         text+='\n\n'+block;shown.append(comment)
     if not found:text+='\nNo current top-level comments on this page. Replies are available inside their threads.'
@@ -112,6 +112,19 @@ def reply_shortcut(query,identifier,mode):
     url=links.origin()+'/account/telegram/reply/'+mode+'?case_id='+str(query['case_id'])
     if query['task_id'] is not None:url+='&task_id='+str(query['task_id'])
     return '\nReply form: '+url+'&parent_id='+str(identifier)
+
+
+def edit_shortcut(conn,query,selected,context):
+    if not context:return ''
+    user_id,mode=context
+    # Check ownership only with the separate edit grant; never project an author ID.
+    own=conn.execute('''SELECT 1 FROM work_comment c WHERE c.id=? AND c.case_id=? AND c.task_id IS ?
+        AND c.author_id=? AND (SELECT MAX(r.revision) FROM work_comment_revision r WHERE r.comment_id=c.id)=?''',
+        (selected['id'],query['case_id'],query['task_id'],user_id,selected['revision'])).fetchone()
+    if not own:return ''
+    url=links.origin()+'/account/telegram/comment-edit/'+mode+'?case_id='+str(query['case_id'])
+    if query['task_id'] is not None:url+='&task_id='+str(query['task_id'])
+    return '\nEdit my message form: '+url+'&comment_id='+str(selected['id'])+'&revision='+str(selected['revision'])
 
 
 def header(item,task):
@@ -129,34 +142,36 @@ def text_functions(conn):
     conn.create_function('telegram_discussion_length',1,lambda value:len(str(value or '')),deterministic=True)
 
 
-def thread(conn,query,item,task,selected,reply_mode=None):
+def thread(conn,query,item,task,selected,reply_mode=None,edit_context=None):
+    root_limit=60 if edit_context else ROOT_PREVIEW
+    reply_limit=45 if edit_context else REPLY_PREVIEW
     root=rows(conn,'SELECT telegram_discussion_part(body,1,?) AS text,telegram_discussion_length(body) AS length FROM work_comment_revision WHERE comment_id=? AND revision=?',
-              (ROOT_PREVIEW,selected['id'],selected['revision']))[0]
+              (root_limit,selected['id'],selected['revision']))[0]
     replies=rows(conn,'''SELECT c.id,r.revision,telegram_discussion_part(r.body,1,:size) AS text,telegram_discussion_length(r.body) AS length
         FROM work_comment c JOIN work_comment_revision r ON r.comment_id=c.id
           AND r.revision=(SELECT MAX(v.revision) FROM work_comment_revision v WHERE v.comment_id=c.id)
         WHERE c.case_id=:case_id AND c.task_id IS :task_id AND c.parent_id=:comment_id AND c.id<>:comment_id
           AND (:before=0 OR c.id<:before) ORDER BY c.id DESC LIMIT :limit''',
-        {**query,'size':REPLY_PREVIEW,'limit':PAGE_SIZE+1})
+        {**query,'size':reply_limit,'limit':PAGE_SIZE+1})
     text=('Discussion thread · current revisions\n'+header(item,task)+'\nSelected '+('reply ' if selected['is_reply'] else 'comment ')
-          +str(selected['id'])+' · Revision '+str(selected['revision'])+'\nPreview: '+preview(root['text'],root['length'],ROOT_PREVIEW)
+          +str(selected['id'])+' · Revision '+str(selected['revision'])+'\nPreview: '+preview(root['text'],root['length'],root_limit)
           +'\n'+source(query,selected['id'])+'\nRead message: '+command(query,selected['id'],'/discussion_message')
-          +reply_shortcut(query,selected['id'],reply_mode))
+          +reply_shortcut(query,selected['id'],reply_mode)+edit_shortcut(conn,query,selected,edit_context))
     if selected['parent_id']:text+='\nParent: '+command(query,selected['parent_id'])
     text+='\n\nDirect replies · newest ID first. Open a reply to view its replies.'
     shown=[]
     for reply in replies[:PAGE_SIZE]:
-        block=('Reply '+str(reply['id'])+' · Revision '+str(reply['revision'])+'\nPreview: '+preview(reply['text'],reply['length'],REPLY_PREVIEW)
+        block=('Reply '+str(reply['id'])+' · Revision '+str(reply['revision'])+'\nPreview: '+preview(reply['text'],reply['length'],reply_limit)
                +'\n'+source(query,reply['id'])+'\nRead message: '+command(query,reply['id'],'/discussion_message')
-               +'\nReplies: '+command(query,reply['id'])+reply_shortcut(query,reply['id'],reply_mode))
-        if common.units(text+'\n\n'+block)>3300:break
+               +'\nReplies: '+command(query,reply['id'])+reply_shortcut(query,reply['id'],reply_mode)+edit_shortcut(conn,query,reply,edit_context))
+        if common.units(text+'\n\n'+block)>(3400 if edit_context else 3300):break
         text+='\n\n'+block;shown.append(reply)
     if not replies:text+='\nNo direct replies in this current discussion.'
     if shown and len(shown)<len(replies):text+='\nOlder direct replies: '+command(query,selected['id'])+' before:'+str(shown[-1]['id'])
     return text+'\nPreviews are bounded; use Read message for numbered parts. No totals or author labels are shown.'
 
 
-def message(conn,query,item,task,selected,reply_mode=None):
+def message(conn,query,item,task,selected,reply_mode=None,edit_context=None):
     base=command(query,selected['id'],'/discussion_message')
     if query['revision'] and query['revision']!=selected['revision']:
         return 'This message changed. Reopen its current first part:\n'+base
@@ -169,7 +184,7 @@ def message(conn,query,item,task,selected,reply_mode=None):
           +' · Part '+str(query['part'])+'/'+str(parts)+'\nText (current part):\n'+content+'\nEnd of message part.\n'+source(query,selected['id']))
     for label,part in (('Previous part',query['part']-1),('Next part',query['part']+1)):
         if 1<=part<=parts:text+='\n'+label+': '+base+' part:'+str(selected['revision'])+':'+str(part)
-    return text+'\nThread: '+command(query,selected['id'])+reply_shortcut(query,selected['id'],reply_mode)
+    return text+'\nThread: '+command(query,selected['id'])+reply_shortcut(query,selected['id'],reply_mode)+edit_shortcut(conn,query,selected,edit_context)
 
 
 def render(conn,clean,bot,now):
@@ -190,9 +205,12 @@ def render(conn,clean,bot,now):
     text_functions(conn)
     mode='task' if query['task_id'] is not None else 'work'
     reply_mode=mode if links.authorized(conn,user['id'],'tasks.reply' if mode=='task' else 'work.reply') else None
-    if query['command']=='/discussion_browse':text=browse(conn,query,item,task,reply_mode)
-    elif query['command']=='/discussion_thread':text=thread(conn,query,item,task,selected,reply_mode)
-    else:text=message(conn,query,item,task,selected,reply_mode)
+    edit_context=(user['id'],mode) if links.authorized(conn,user['id'],'tasks.comment_edit' if mode=='task' else 'work.comment_edit') else None
+    if query['command']=='/discussion_browse':text=browse(conn,query,item,task,reply_mode,edit_context)
+    elif query['command']=='/discussion_thread':text=thread(conn,query,item,task,selected,reply_mode,edit_context)
+    else:text=message(conn,query,item,task,selected,reply_mode,edit_context)
     if reply_mode and '\nReply form: ' in text:
-        text+='\nTo use Reply links, first send /'+reply_mode+'_reply. Source IDs are prefilled; enter your text, preview and confirm privately.'
-    return text+'\nText is copied into this private chat. Reading here marks nothing read and changes no records or preferences. Source discussion behavior remains native.'
+        text+='\nTo use Reply links, first send /'+reply_mode+'_reply. Enter reply text, preview and confirm privately.'
+    if edit_context and '\nEdit my message form: ' in text:
+        text+='\nTo edit, first send /'+mode+'_comment_edit privately. Enter replacement text, preview and confirm.'
+    return text+'\nText is copied into this private chat. Reading here marks nothing read and changes no records or preferences.'

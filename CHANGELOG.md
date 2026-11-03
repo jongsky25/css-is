@@ -1,4 +1,6 @@
-## 9.88 — November 3, 2026
+## 9.89 — November 3, 2026
+
+- Offer author-only edit form shortcuts in discussion browsing, threads and message parts with source IDs/current revision prefill, empty replacement text and existing independent edit permission/private confirmation.
 
 - Offer an independently permitted acknowledgement shortcut from unread update details with notice ID/revision prefill; opening the form marks nothing read and existing exact private confirmation remains required.
 

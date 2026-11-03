@@ -5,4 +5,4 @@ import telegram_comment_edit as manage
 
 def make_router(templates,get_conn):
     return forms.make_router(templates,get_conn,manager=manage,template='telegram_comment_edit.html',
-                             field_sets=manage.FIELDS,resource='Comment edit',max_body=14000,max_fields=8)
+                             query_fields=('case_id','task_id','comment_id','revision'),field_sets=manage.FIELDS,resource='Comment edit',max_body=14000,max_fields=8)

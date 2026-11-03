@@ -5,11 +5,13 @@ import httpx
 import pytest
 
 import auth
+import ratelimit
 from documents_storage import rows
 import storage as st
 import telegram_bot as bot
 import telegram_links as links
 import telegram_comment_edit as manage
+import telegram_discussion_read as reader
 import work
 import work_tasks
 import work_discussion as discussion
@@ -19,10 +21,12 @@ from tests.test_work_channels_browser import live_app
 from tests.test_telegram_bot import TOKEN,SECRET,NOW,update,HEADERS
 
 
+@pytest.mark.parametrize('is_reply',[False,True])
 @pytest.mark.parametrize('mode',['work','task'])
-def test_phone_author_edit_after_exact_private_preview(grid_browser,app_mod,monkeypatch,mode):
+def test_phone_author_edit_after_exact_private_preview(grid_browser,app_mod,monkeypatch,mode,is_reply):
     c=st.connect(app_mod.DB);user=st.get_admin_user(c,'viewer@test.local');officer=st.get_admin_user(c,'admin@test.local')
     for flag in ('INBOUND','DELIVERY','LINK','WORK_READ',manage.MODES[mode].replace('.','_').upper()):monkeypatch.setenv('CSS_TELEGRAM_'+flag+'_ENABLED','1')
+    monkeypatch.setenv('CSS_TELEGRAM_WORK_DISCUSSION_READ_ENABLED','1')
     for module in ('documents','work'):st.set_setting(c,module+'.enabled','1')
     monkeypatch.setenv('CSS_TELEGRAM_REPLY_TRANSPORT','webhook');monkeypatch.setenv('CSS_TELEGRAM_BOT_TOKEN',TOKEN)
     monkeypatch.setenv('CSS_TELEGRAM_WEBHOOK_SECRET',SECRET);monkeypatch.setattr(bot,'now_utc',lambda:NOW)
@@ -32,8 +36,8 @@ def test_phone_author_edit_after_exact_private_preview(grid_browser,app_mod,monk
     item=work.create(c,user,{'title':'Synthetic comment work','outcome':'Shared result','unit_id':unit})
     item=work.confirm_lead(c,officer,item['id'],item['revision'],officer['id'],'Other source lead')
     task=work_tasks.create(c,user,item['id'],{'title':'Synthetic comment task','expected_output':'StoredPrivateOutput','unit_id':unit,'due_date':'2026-10-28'})
-    identifier=discussion.post(c,user,item['id'],'StoredPrivateOriginalText',task_id=task['id'] if mode=='task' else None)
     other_comment=discussion.post(c,officer,item['id'],'StoredPrivateOtherAuthor',task_id=task['id'] if mode=='task' else None)
+    identifier=discussion.post(c,user,item['id'],'StoredPrivateOriginalText',task_id=task['id'] if mode=='task' else None,parent_id=other_comment if is_reply else None)
     comment='Actor-entered '+mode+' comment\n<script>plain text</script> @plain-name'
     with live_app(app_mod.app) as base:
         monkeypatch.setenv('CSS_BASE_URL',base);monkeypatch.setattr(links,'origin',lambda:base)
@@ -48,16 +52,30 @@ def test_phone_author_edit_after_exact_private_preview(grid_browser,app_mod,monk
         context.add_cookies([{'name':auth.COOKIE_NAME,'value':session_token(user),'url':base}]);page=context.new_page()
         try:
             page.goto(base+'/account/telegram');page.get_by_label('Private linking code',exact=True).fill(code)
-            for scope in ('work.read',manage.MODES[mode]):page.get_by_label(links.SCOPES[scope],exact=True).check()
+            for scope in ('work.read',manage.MODES[mode],reader.ACTION):page.get_by_label(links.SCOPES[scope],exact=True).check()
             page.get_by_label('Link this Office Connect account to my own private Telegram account.',exact=True).check()
             page.get_by_role('button',name='Request confirmation in Telegram',exact=True).click()
             command(re.search(r'/confirm [a-f0-9]{64}',command('/status')['text'])[0])
-            assert {r[0] for r in c.execute('SELECT action FROM telegram_grant WHERE revoked_at IS NULL')}=={'work.read',manage.MODES[mode]}
+            assert {r[0] for r in c.execute('SELECT action FROM telegram_grant WHERE revoked_at IS NULL')}=={'work.read',manage.MODES[mode],reader.ACTION}
             text=command('/menu')['text'];assert '/'+mode+'_comment_edit' in text
             other='task' if mode=='work' else 'work';assert '/'+other+'_comment_edit' not in text
             page.goto(base+'/work/'+str(item['id'])+'/discussion'+('?task_id='+str(task['id']) if mode=='task' else ''))
             assert 'Comment '+str(identifier)+' · Revision 1' in page.locator('#message-'+str(identifier)).inner_text()
-            page.goto(command('/'+mode+'_comment_edit')['text'].splitlines()[-1])
+            query={'case_id':item['id'],'task_id':task['id'] if mode=='task' else None}
+            view=command(reader.command(query,other_comment if is_reply else identifier))['text']
+            shortcuts=re.findall(r'Edit my message form: (.*)',view);assert len(shortcuts)==1
+            shortcut=shortcuts[0]
+            assert 'comment_id='+str(identifier)+'&revision=1' in shortcut and 'body=' not in shortcut
+            part=command(reader.command(query,identifier,'/discussion_message'))['text'];assert shortcut in part
+            page.goto(shortcut);assert 'No current private request' in page.locator('body').inner_text()
+            for table in ('telegram_meeting_origin','telegram_operation','telegram_preview'):assert not rows(c,'SELECT * FROM '+table)
+            command('/'+mode+'_comment_edit');page.goto(shortcut+'&body=IgnoredQueryReplacement')
+            assert page.get_by_label('Work item number',exact=True).input_value()==str(item['id'])
+            if mode=='task':assert page.get_by_label('Task number',exact=True).input_value()==str(task['id'])
+            assert page.get_by_label('Comment number',exact=True).input_value()==str(identifier)
+            assert page.get_by_label('Current comment revision',exact=True).input_value()=='1'
+            assert page.get_by_label('Complete replacement text',exact=True).input_value()==''
+            for table in ('telegram_operation','telegram_preview'):assert not rows(c,'SELECT * FROM '+table)
             form=page.locator('form[action="'+manage.PATH+mode+'"]')
             values={k:form.locator('[name='+k+']').input_value() for k in ('csrf','origin','key')}
             values.update(case_id=str(item['id']),comment_id=str(identifier),revision='1',body=comment)
@@ -85,12 +103,24 @@ def test_phone_author_edit_after_exact_private_preview(grid_browser,app_mod,monk
             exact=re.search('/'+mode+r'edit_confirm [A-Za-z0-9_-]{43}',text)[0]
             assert 'Recorded outcome: comment edited.' in command(exact)['text'] and 'Recorded outcome:' in command(exact)['text']
             saved=rows(c,'SELECT * FROM work_comment WHERE id=?',(identifier,));assert len(rows(c,'SELECT * FROM work_comment'))==2
-            assert saved[0]['task_id']==(task['id'] if mode=='task' else None) and saved[0]['parent_id'] is None
+            assert saved[0]['task_id']==(task['id'] if mode=='task' else None) and saved[0]['parent_id']==(other_comment if is_reply else None)
             assert rows(c,'SELECT body FROM work_comment_revision WHERE comment_id=? AND revision=2',(identifier,))[0]['body']==comment
             assert rows(c,'SELECT body FROM work_comment_revision WHERE comment_id=? AND revision=1',(identifier,))[0]['body']=='StoredPrivateOriginalText'
             assert len(rows(c,'SELECT * FROM work_comment_revision WHERE comment_id=?',(identifier,)))==2
             assert rows(c,'SELECT * FROM work_task WHERE id=?',(task['id'],))[0]==task
             assert rows(c,'SELECT * FROM work_case WHERE id=?',(item['id'],))[0]==item
             assert not rows(c,'SELECT * FROM work_mention') and not rows(c,"SELECT * FROM telegram_delivery WHERE state='queued'")
+            refreshed=command(reader.command(query,identifier,'/discussion_message'))['text']
+            cached=re.search(r'Edit my message form: (.*)',refreshed)[1];assert '&revision=2' in cached
+            page.goto(cached)
+            assert page.get_by_label('Current comment revision',exact=True).input_value()=='2'
+            assert page.get_by_label('Complete replacement text',exact=True).input_value()==''
+            discussion.edit(c,user,item['id'],query['task_id'],identifier,2,'Newer native edit')
+            ratelimit.reset()
+            page.get_by_label('Complete replacement text',exact=True).fill('Stale shortcut replacement')
+            page.get_by_role('button',name='Prepare exact private preview',exact=True).click()
+            assert 'edited elsewhere' in page.locator('body').inner_text()
+            assert len(rows(c,'SELECT * FROM telegram_operation'))==1
+            assert rows(c,'SELECT body FROM work_comment_revision WHERE comment_id=? AND revision=3',(identifier,))[0]['body']=='Newer native edit'
             context.clear_cookies();assert page.request.post(url,form=values,headers=headers).status==401
         finally:context.close();c.close()

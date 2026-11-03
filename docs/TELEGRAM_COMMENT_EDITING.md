@@ -1,6 +1,6 @@
 # Private editing of your own work and task comments
 
-Draft PR #572, candidate 9.79. Author-owned comment editing is implemented for
+Draft PR #572, candidate 9.89. Author-owned comment editing is implemented for
 later activation. Deployment, preview publication, activation and personal/live
 testing remain deferred. Local checks use synthetic records and blocked providers.
 
@@ -124,3 +124,41 @@ exercise the retained public wrapper.
 
 Exact evidence is in [SETUP_STATUS.md](SETUP_STATUS.md). All later
 [live acceptance cases](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md) remain Pending.
+
+## Own-message shortcuts from reading views — candidate 9.89
+
+Current discussion browsing, selected threads/direct replies and current message
+parts can show **Edit my message form** for the linked account's own messages,
+including replies. Matching independent `work.comment_edit` or
+`tasks.comment_edit` consent/pilot is required in addition to reading/work read.
+The opposite work/task edit grant does not qualify. Ownership is checked only
+when this matching grant is current, by an exact source/comment/revision predicate.
+No author ID or label is projected into the reply. With no matching edit grant,
+reading still does not query the author column.
+
+The URL carries work ID, optional task ID, comment ID and current revision only.
+Start the matching `/work_comment_edit` or `/task_comment_edit` privately, then
+open the signed-in no-script form. It prefills these numbers, leaves replacement
+text empty, and creates no origin, preview, operation or edit by opening. Body
+query parameters are ignored. Prefilled values are editable suggestions; existing
+strict POST fields/CSRF, current ownership/source/revision, exact private preview
+and confirmation remain required. Cached URLs cannot overwrite newer edits or
+preserve lost permission. A refreshed reading view offers the new current revision;
+a stale message-part request offers no edit control. Native history, retained
+mentions and notice/read-marker/workflow rules are preserved. A confirmed edit
+retains native author read-marker behavior; listing/opening controls writes nothing.
+
+To retain reply paging with both Reply and Edit controls at maximum origin length,
+thread previews use 60 characters for the selected message and 45 for each reply
+when edit controls are enabled. Full text remains available through the same
+900-character revision-bound message parts. Part boundaries do not change with
+consent. Reply/page navigation and the 4096 UTF-16-unit transport limit remain
+required, including maximum numeric IDs/revisions.
+
+Automated verification includes ownership/grant/pilot and opposite-grant SQL
+guards, current revisions, all reading views, unchanged source state, Unicode/
+maximum-origin/maximum-ID paging and complete message parts. Four synthetic
+390×844 no-script phone flows cover work/task top-level comments and own direct
+replies, empty replacement prefill, no-origin GET, strict forms, private preview,
+one native edit with immutable history/retry receipt, and stale cached forms
+after a newer native edit. Hosted/personal acceptance remains Pending.

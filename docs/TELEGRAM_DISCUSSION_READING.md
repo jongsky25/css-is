@@ -98,3 +98,10 @@ are synthetic/blocked. See [verification](SETUP_STATUS.md) and
 
 Use [discussion browsing](TELEGRAM_DISCUSSION_BROWSING.md) to discover top-level
 comments without a search phrase or known comment ID under the same read consent.
+
+[Own-message edit shortcuts](TELEGRAM_COMMENT_EDITING.md) use independent matching
+edit permission and an exact ownership predicate before offering source ID/current
+revision prefill. No author label/ID is projected. Without matching edit consent,
+reading still avoids author-column SQL. Replacement text remains empty in the form;
+existing exact preview/confirmation is required. See that guide for the shorter
+thread preview budgets when editing controls are enabled.
