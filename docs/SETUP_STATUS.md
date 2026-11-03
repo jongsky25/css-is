@@ -1,6 +1,6 @@
 # Cloud/mobile setup status
 
-Updated: 2026-11-02. Repository: `jongsky25/css-is` (Office Connect BLHSD).
+Updated: 2026-11-03. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Integration branch: `setup/cloud-mobile-continuity`; default startup branch after
 merge: `main`.
 
@@ -75,9 +75,10 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-**Current Telegram feature work — November 2, 2026:** continue draft
+**Current Telegram feature work — November 3, 2026:** continue draft
 [PR #572](https://github.com/jongsky25/css-is/pull/572), branch
-`feat/telegram-private-work-lookup`, candidate **9.84**. The latest addition is
+`feat/telegram-private-work-lookup`, candidate **9.85**. The latest addition is
+[reply shortcuts from discussion views](TELEGRAM_REPLY_SHORTCUTS.md), following
 [selected discussion thread/message reading](TELEGRAM_DISCUSSION_READING.md), following
 [exact-thread discussion text search](TELEGRAM_DISCUSSION_SEARCH.md), following
 [my followed discussions lookup](TELEGRAM_FOLLOWED_DISCUSSIONS.md), following
@@ -2942,3 +2943,23 @@ main push/merge or deployment changed. Next: inspect new exact-head complete rep
 normal/shuffled/dependency/container/metadata/aggregate CI after remote save, retain
 main freshness and continue only the next requested feature. Publication, activation
 and personal/live testing remain deferred. Both new live checklist rows stay Pending.
+
+
+## Reply shortcuts from private discussion views — 2026-11-03
+
+Owner: Office Connect maintainers; implementation agent Codex. Status: in review
+on `feat/telegram-private-work-lookup`, draft PR #572, candidate **9.85**. User
+approved opening existing reply forms from thread views with work/task/parent IDs
+prefilled. Links require the matching current work.reply or tasks.reply grant/pilot
+in addition to the view's existing read/work access. No new scope, command, origin,
+draft, write helper or permission expansion is introduced. Existing private request,
+empty entered text/mentions, CSRF, exact preview/current parent revision and native
+confirmation/receipt rules remain required. Deployment, preview publication, activation
+and personal/live testing stay deferred. Final verification follows.
+
+
+Final isolated Python 3.11 verification: **873 regressions** and **832 shuffled checks** (seed 311) passed with zero failures, errors or skips; both JUnit gates pass and groups overlap. Focused checks: 77 passed; phone flows: 8 passed. Four new 390×844 no-script cases cover work/task and selected/direct-reply shortcuts, source-only prefill, no implicit origin or operation, CSRF/strict fields, exact preview and one confirmed native post with retry safety. Service checks cover current matching grants/pilots, opposite-scope denial, lost document access, parent changes before and after preview, unchanged read/source state and maximum-origin Unicode paging/part budgets. No final application/test changes followed the completed groups.
+
+Reports: `/tmp/telegram-reply-shortcuts-regressions.xml`, `/tmp/telegram-reply-shortcuts-shuffled.xml`, `/tmp/telegram-reply-shortcuts-focus.xml` and `/tmp/telegram-reply-shortcuts-phone.xml`. Release metadata 9.85 against main 25fe812/9.61, dependency locks, vendor integrity, pip compatibility, AI contract, compilation, main release history, links and whitespace pass. Existing Starlette/httpx deprecation warning remains. Prior head d2f999f CI was green, which does not establish acceptance for the new head.
+
+Next: inspect CI for the new head and continue the next requested feature. Deployment, activation, preview publication and personal/live testing remain deferred. New live checklist rows remain Pending. See [reply shortcuts](TELEGRAM_REPLY_SHORTCUTS.md).

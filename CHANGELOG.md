@@ -1,4 +1,6 @@
-## 9.84 — November 2, 2026
+## 9.85 — November 3, 2026
+
+- Add permission-checked Reply form shortcuts for selected comments, displayed direct replies and current message parts, prefilled with source IDs only; existing private-origin, preview, source and confirmation checks remain authoritative.
 
 - Add independently consented selected discussion comment/direct-reply views with bounded previews, nested/parent navigation, current-revision message parts and exact source links; reading changes no read state, follows or records.
 

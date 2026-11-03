@@ -72,6 +72,13 @@ def command(query,identifier,kind='/discussion_thread'):
     return kind+' '+str(query['case_id'])+' '+(str(query['task_id']) if query['task_id'] is not None else 'work')+' '+str(identifier)
 
 
+def reply_shortcut(query,identifier,mode):
+    if not mode:return ''
+    url=links.origin()+'/account/telegram/reply/'+mode+'?case_id='+str(query['case_id'])
+    if query['task_id'] is not None:url+='&task_id='+str(query['task_id'])
+    return '\nReply form: '+url+'&parent_id='+str(identifier)
+
+
 def header(item,task):
     return ('Work '+str(item['id'])+' · '+common.clip(item['title'],80)
             +('\nTask '+str(task['id'])+' · '+common.clip(task['title'],80) if task else '\nWork-level discussion only.'))
@@ -87,7 +94,7 @@ def text_functions(conn):
     conn.create_function('telegram_discussion_length',1,lambda value:len(str(value or '')),deterministic=True)
 
 
-def thread(conn,query,item,task,selected):
+def thread(conn,query,item,task,selected,reply_mode=None):
     root=rows(conn,'SELECT telegram_discussion_part(body,1,?) AS text,telegram_discussion_length(body) AS length FROM work_comment_revision WHERE comment_id=? AND revision=?',
               (ROOT_PREVIEW,selected['id'],selected['revision']))[0]
     replies=rows(conn,'''SELECT c.id,r.revision,telegram_discussion_part(r.body,1,:size) AS text,telegram_discussion_length(r.body) AS length
@@ -98,22 +105,23 @@ def thread(conn,query,item,task,selected):
         {**query,'size':REPLY_PREVIEW,'limit':PAGE_SIZE+1})
     text=('Discussion thread · current revisions\n'+header(item,task)+'\nSelected '+('reply ' if selected['is_reply'] else 'comment ')
           +str(selected['id'])+' · Revision '+str(selected['revision'])+'\nPreview: '+preview(root['text'],root['length'],ROOT_PREVIEW)
-          +'\n'+source(query,selected['id'])+'\nRead message: '+command(query,selected['id'],'/discussion_message'))
+          +'\n'+source(query,selected['id'])+'\nRead message: '+command(query,selected['id'],'/discussion_message')
+          +reply_shortcut(query,selected['id'],reply_mode))
     if selected['parent_id']:text+='\nParent: '+command(query,selected['parent_id'])
     text+='\n\nDirect replies · newest ID first. Open a reply to view its replies.'
     shown=[]
     for reply in replies[:PAGE_SIZE]:
         block=('Reply '+str(reply['id'])+' · Revision '+str(reply['revision'])+'\nPreview: '+preview(reply['text'],reply['length'],REPLY_PREVIEW)
                +'\n'+source(query,reply['id'])+'\nRead message: '+command(query,reply['id'],'/discussion_message')
-               +'\nReplies: '+command(query,reply['id']))
-        if common.units(text+'\n\n'+block)>3000:break
+               +'\nReplies: '+command(query,reply['id'])+reply_shortcut(query,reply['id'],reply_mode))
+        if common.units(text+'\n\n'+block)>3300:break
         text+='\n\n'+block;shown.append(reply)
     if not replies:text+='\nNo direct replies in this current discussion.'
     if shown and len(shown)<len(replies):text+='\nOlder direct replies: '+command(query,selected['id'])+' before:'+str(shown[-1]['id'])
     return text+'\nPreviews are bounded; use Read message for numbered parts. No totals or author labels are shown.'
 
 
-def message(conn,query,item,task,selected):
+def message(conn,query,item,task,selected,reply_mode=None):
     base=command(query,selected['id'],'/discussion_message')
     if query['revision'] and query['revision']!=selected['revision']:
         return 'This message changed. Reopen its current first part:\n'+base
@@ -126,7 +134,7 @@ def message(conn,query,item,task,selected):
           +' · Part '+str(query['part'])+'/'+str(parts)+'\nText (current part):\n'+content+'\nEnd of message part.\n'+source(query,selected['id']))
     for label,part in (('Previous part',query['part']-1),('Next part',query['part']+1)):
         if 1<=part<=parts:text+='\n'+label+': '+base+' part:'+str(selected['revision'])+':'+str(part)
-    return text+'\nThread: '+command(query,selected['id'])
+    return text+'\nThread: '+command(query,selected['id'])+reply_shortcut(query,selected['id'],reply_mode)
 
 
 def render(conn,clean,bot,now):
@@ -142,5 +150,9 @@ def render(conn,clean,bot,now):
     try:item,task,selected=metadata(conn,user,query)
     except ValueError:return DENIED
     text_functions(conn)
-    text=thread(conn,query,item,task,selected) if query['command']=='/discussion_thread' else message(conn,query,item,task,selected)
+    mode='task' if query['task_id'] is not None else 'work'
+    reply_mode=mode if links.authorized(conn,user['id'],'tasks.reply' if mode=='task' else 'work.reply') else None
+    text=thread(conn,query,item,task,selected,reply_mode) if query['command']=='/discussion_thread' else message(conn,query,item,task,selected,reply_mode)
+    if reply_mode and '\nReply form: ' in text:
+        text+='\nTo use Reply links, first send /'+reply_mode+'_reply. Source IDs are prefilled; enter your text, preview and confirm privately.'
     return text+'\nText is copied into this private chat. Reading here marks nothing read and changes no records or preferences. Source discussion behavior remains native.'
