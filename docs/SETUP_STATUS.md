@@ -75,6 +75,24 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Independent avatar repair PR opened — November 3, 2026.**
+[PR #580](https://github.com/jongsky25/css-is/pull/580) at `5782b5e` is the
+standalone 9.62 repair based on main `25fe812`. No Telegram feature code is
+included; PR #572 remains independent at inspected head `585a9cb`.
+Local release checks: 29 passed, strict JUnit passed. Release metadata, locked
+inputs, AI contract, compilation and whitespace passed. Hosted release metadata
+passed; [full CI 41612679495](https://github.com/jongsky25/css-is/actions/runs/41612679495)
+and [avatar acceptance 41612679498](https://github.com/jongsky25/css-is/actions/runs/41612679498)
+were still running at handoff. No merge or deployment yet. Automatic merge is
+disabled on this repository; it was not enabled or bypassed. Required-check rule
+26274179 is active and enforces the aggregate gate with strict freshness.
+A merge-tree simulation against Telegram confirms conflicts only in CHANGELOG.md,
+version.py, static/js/sw.js and this status file, with no runtime conflict.
+Next: inspect all final-head checks, merge only #580 once green under the owner's
+independent-repair merge request, and observe the existing production gates.
+Never merge #572 as part of this repair. This status-only handoff is saved on
+`docs/avatar-standalone-handoff` to avoid restarting the candidate checks.
+
 **Standalone avatar CI repair — November 3, 2026.** Candidate 9.62 on
 `fix/avatar-ci-standalone`, based on main `25fe812` (9.61), contains only browser
 acceptance provisioning/diagnostics and required version/cache/changelog metadata.
