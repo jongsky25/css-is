@@ -1,3 +1,8 @@
+## 9.92 — November 4, 2026
+
+- Include all retained UX events in the selected date range, with a version filter and explicit observed coverage across dashboard, exports and AI analysis.
+- Clarify exact wellness time selection, explain unavailable slots on touch and keyboard, and preflight filing through the same authoritative validation without saving or notifying.
+
 ## 9.91 — November 3, 2026
 
 - Add independently consented own draft/returned supplies submission with exact request/line/requester/routing previews, native atomic numbering/version/mail/outcome and non-replaying historical receipts; approval and inventory remain separate.

@@ -1201,3 +1201,30 @@ def test_http_late_filing(app_mod, wellness_org, viewer, wed_afternoon):
     assert r.status_code == 303 and r.headers["location"].startswith("/wellness/late?ok=")
     hub = _client_for_id(app_mod, wellness_org["emp"]).get("/wellness").text
     assert "Filed late by W-Test Chief: Away from desk" in hub
+
+
+def test_wellness_preflight_read_only_and_write_rechecks(wellness_org, app_mod, future_weekday):
+    conn, uid = wellness_org["conn"], wellness_org["emp"]
+    client = _client_for_id(app_mod, uid)
+    data = {"break_date": future_weekday, "start_time": "09:11",
+            "hours": "1", "activity": "exercise", "note": "Synthetic retained note"}
+    before = conn.execute("SELECT count(*) FROM wellness_claim").fetchone()[0]
+    assert client.post("/wellness/apply/validate", data=data).json() == {"ok": True}
+    assert conn.execute("SELECT count(*) FROM wellness_claim").fetchone()[0] == before
+    st.create_wellness_claim(conn, uid, future_weekday, "09:00", "exercise")
+    invalid = client.post("/wellness/apply/validate", data=data).json()
+    assert not invalid["ok"] and invalid["field"] == "start_time"
+    assert "overlaps" in invalid["message"]
+    response = client.post("/wellness/apply", data=data)
+    assert response.status_code == 400
+    assert "09:11" in response.text and "Synthetic retained note" in response.text
+    assert 'data-error-field="start_time"' in response.text
+    assert conn.execute("SELECT count(*) FROM wellness_claim").fetchone()[0] == before + 1
+
+
+def test_wellness_preflight_rejects_invalid_date_length_and_activity(wellness_org, app_mod, future_weekday):
+    client = _client_for_id(app_mod, wellness_org["emp"])
+    base = {"break_date": future_weekday, "start_time": "09:11", "hours": "1", "activity": "exercise"}
+    for field, value in [("break_date", "bad"), ("hours", "7"), ("start_time", "25:00"), ("activity", "bad")]:
+        result = client.post("/wellness/apply/validate", data={**base, field: value}).json()
+        assert not result["ok"] and result["field"] == field

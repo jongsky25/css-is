@@ -186,3 +186,18 @@ def test_analyze_never_leaks_raw_input_into_prompt(admin, viewer, db_path, monke
     assert "90210" not in prompt
     assert "/directory/person/482/edit" not in prompt
     conn = st.connect(db_path); _reset(conn); conn.close()
+
+
+def test_analyze_uses_full_filtered_period(admin, db_path, monkeypatch):
+    conn = st.connect(db_path)
+    _reset(conn)
+    _configure(conn, monkeypatch)
+    event = {"user_id": 1, "role": "viewer", "session_id": "synthetic",
+             "event_type": "pageview", "route": "/calendar", "meta": {"v": "9.92"}}
+    st.create_ui_events(conn, [event] * 5011 + [{**event, "meta": {"v": "9.61"}}])
+    _mock_analysis(monkeypatch, text="Review the calendar.")
+    result = admin.post("/admin/ux-insights/analyze?days=30&version=9.92").json()
+    assert result["ok"] is True
+    assert result["event_count"] == 5011 and not result["truncated"]
+    _reset(conn)
+    conn.close()

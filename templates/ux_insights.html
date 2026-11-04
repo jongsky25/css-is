@@ -63,15 +63,26 @@
   {% if err %}<div class="flash err">{{ err }}</div>{% endif %}
   {% if truncated %}<div class="flash note">This window has more events than fit in one read (showing the most recent {{ digest.totals.events }}) — the ranking below is based on that subset, not literally every event in the window.</div>{% endif %}
 
+  <p>Requested: {{ coverage.requested_from }} → {{ coverage.requested_to }} (Asia/Manila).
+    Recorded events: {{ coverage.observed_from or 'none' }} → {{ coverage.observed_to or 'none' }}.
+    {{ coverage.note }}</p>
+  {% if coverage.retention_may_limit %}<div class="flash note">The requested period exceeds the current retention setting; older events may have been deleted.</div>{% endif %}
+  <form method="get" action="/admin/ux-insights" class="retform">
+    <input type="hidden" name="days" value="{{ days }}">
+    <label for="ux-version">App version</label>
+    <input id="ux-version" name="version" value="{{ version_filter }}" maxlength="40" placeholder="All versions">
+    <button type="submit">Apply</button>
+    <span class="hint">Leave blank for all versions; use unknown for unstamped events.</span>
+  </form>
   <div class="windowbar">
     <span class="hint" style="color:var(--soft); font-size:.86rem;">Window:</span>
     {% for d in (7, 30, 90) %}
-    <a href="/admin/ux-insights?days={{ d }}" class="{{ 'active' if days == d }}">{{ d }} days</a>
+    <a href="/admin/ux-insights?days={{ d }}&version={{ version_filter|urlencode }}" class="{{ 'active' if days == d }}">{{ d }} days</a>
     {% endfor %}
     <span class="handoff-links">
-      <button type="button" id="ai-analyze-btn" data-days="{{ days }}">✨ Analyze now</button>
-      <a href="/admin/ux-insights/handoff?days={{ days }}" download>⤓ Download handoff for AI analysis</a>
-      <a href="/admin/ux-insights/handoff?days={{ days }}&fmt=json" download>JSON</a>
+      <button type="button" id="ai-analyze-btn" data-days="{{ days }}" data-version="{{ version_filter }}">✨ Analyze now</button>
+      <a href="/admin/ux-insights/handoff?days={{ days }}&version={{ version_filter|urlencode }}" download>⤓ Download handoff for AI analysis</a>
+      <a href="/admin/ux-insights/handoff?days={{ days }}&version={{ version_filter|urlencode }}&fmt=json" download>JSON</a>
     </span>
   </div>
   <p class="hint" style="color:var(--soft); font-size:.84rem; margin:-.4rem 0 1rem;">
@@ -278,7 +289,7 @@
     var origText = btn.textContent;
     btn.textContent = "Analyzing…";
     var days = btn.dataset.days || "30";
-    fetch("/admin/ux-insights/analyze?days=" + encodeURIComponent(days), { method: "POST" })
+    fetch("/admin/ux-insights/analyze?days=" + encodeURIComponent(days) + "&version=" + encodeURIComponent(btn.dataset.version || ""), { method: "POST" })
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data.ok) {
@@ -286,7 +297,7 @@
             '<h2>AI analysis</h2>' +
             '<p class="hint">Based on ' + esc(data.event_count) + ' recorded event(s) in the last ' +
             esc(data.window_days) + ' day(s)' + (data.truncated ? ' (recent sample)' : '') +
-            '. Review suggestions against the handoff before acting.</p>' +
+            ' · version ' + esc(btn.dataset.version || 'all') + '. Review suggestions against the handoff before acting.</p>' +
             '<p class="ai-result">' + esc(data.text) + '</p>' +
             '<div class="ai-result-actions"><span class="ai-fb">' +
             '<button type="button" class="fb-btn" data-r="up" aria-label="Helpful">👍</button>' +

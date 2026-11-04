@@ -75,6 +75,29 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 4, 2026: UX coverage and wellness filing implementation.**
+User authorized the proposed improvements. Candidate 9.92 on
+`feat/ux-coverage-wellness` includes complete retained-event date-range reads,
+version filtering on dashboard/export/AI analysis, requested/observed coverage
+and retention caveats, and a separately capped 200-event export appendix.
+Wellness filing shares read-only preflight rules with authoritative creation,
+explains unavailable slots on touch/keyboard, preserves entries and directs
+focus to invalid fields. Preflight attempts do not count as form submissions.
+Synthetic phone flow covers overlap rejection, network failure/retry and one
+successful filing. No production configuration/data or deployment changed.
+See [implementation notes](UX_COVERAGE_WELLNESS.md) for checks and limitations.
+Next: review the branch and its full CI results; production release is separate.
+
+
+**November 4, 2026: requested UX review completed.** See
+[UX evidence and recommendations](UX_REVIEW_2026_11_04.md). Live 9.91 export
+succeeded, but the requested 30-day window is truncated to 5,000 events from
+October 27–November 4 (45 users, 357 sessions). Priorities: complete-period
+reporting, wellness time selection/validation, version-specific filing error
+investigation and check-in search discovery. Analysis only; no application,
+deployment or configuration changes. Saved on `docs/ux-review-2026-11-04`.
+Earlier Telegram operational instructions below remain separate from this review.
+
 **November 4, 2026 (Asia/Manila): production testing replaces isolated pilot.**
 Owner explicitly cancelled the isolated pilot and requested production testing
 with @blhsd_bot, reporting Telegram has not been launched. Follow the

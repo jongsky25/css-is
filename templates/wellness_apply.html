@@ -54,9 +54,9 @@
   .slotpill.disabled { opacity:.4; cursor:not-allowed; text-decoration:line-through; }
   .slotgrid:empty::before { content:"Pick a date first to see available times.";
                              color:var(--soft); font-size:.85rem; font-weight:400; }
-  .customtime { display:flex; align-items:center; gap:.4rem; margin-top:.5rem; }
+  .customtime { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; margin-top:.5rem; }
   .customtime label { font-weight:400; font-size:.85rem; color:var(--soft); margin:0; }
-  .customtime input[type="radio"] { position:absolute; opacity:0; width:1px; height:1px; }
+  .customtime input[type="radio"] { width:auto; accent-color:var(--accent); }
   .customtime input[type="time"] { width:auto; }
 </style>
 
@@ -68,10 +68,14 @@
   <div class="left-note" id="leftNote"
        data-week-used='{{ week_used|tojson }}' data-weekly="{{ weekly_hours }}">{{ left }} hour{{ 's' if left != 1 }} left that week.</div>
 
-  <form method="post" action="/wellness/apply">
+  <form method="post" action="/wellness/apply" id="wellnessApplyForm" data-error-field="{{ error_field }}">
     <div class="field">
       <label>Date</label>
       <div class="datestrip" role="radiogroup" aria-label="Date">
+        {% if form.get('break_date') and form.get('break_date') not in (date_pills|map(attribute='iso')|list) %}
+        <label class="datepill"><input type="radio" name="break_date" value="{{ form.get('break_date') }}" checked required>
+          {{ form.get('break_date') }} — choose a date this week</label>
+        {% endif %}
         {% for p in date_pills %}
         <label class="datepill" title="{{ p.iso }}">
           <input type="radio" name="break_date" value="{{ p.iso }}" required
@@ -110,10 +114,11 @@
            data-slots='{{ slots_by_date|tojson }}' data-initial="{{ form.get('start_time', '') }}"></div>
       <div class="customtime">
         <input type="radio" name="start_time" id="customTimeRadio" value="" required>
-        <label for="customTimeInput">Need a specific minute?</label>
-        <input type="time" id="customTimeInput" aria-label="Exact start time">
+        <label for="customTimeRadio">Choose an exact time</label>
+        <input type="time" id="customTimeInput" aria-label="Exact start time" aria-describedby="timeStatus">
       </div>
-      <div class="help">File it at least {{ min_lead }} minutes ahead so your approver has time to see it. Times marked 🍴 cross lunch — coordinate with your section so service isn't disrupted. Greyed-out times don't fit the rules; hover one for why. An exact time you type isn't pre-checked — it's validated the same way when you submit.</div>
+      <p id="timeStatus" role="status" aria-live="polite" class="help"></p>
+      <div class="help">File it at least {{ min_lead }} minutes ahead so your approver has time to see it. Times marked 🍴 cross lunch — coordinate with your section so service isn't disrupted. Greyed-out times don't fit the rules; tap one for why. Your selection is checked before sending; availability is checked again when you file.</div>
     </div>
 
     <div class="field">
@@ -189,15 +194,12 @@
     if (note) note.textContent = left + " hour" + (left === 1 ? "" : "s") + " left that week.";
     if (hours2Input) {
       var disable = left < 2;
-      hours2Input.disabled = disable;
+      hours2Input.disabled = disable && !hours2Input.checked;
       if (hours2Label) {
         hours2Label.classList.toggle("disabled", disable);
         hours2Label.title = disable ? "Only " + left + " hour left that week" : "";
       }
-      if (disable && hours2Input.checked) {
-        var one = document.querySelector('input[name="hours"][value="1"]');
-        if (one) one.checked = true;
-      }
+
     }
   }
 
@@ -220,7 +222,17 @@
       input.name = "start_time";
       input.value = slot.time;
       input.required = true;
-      if (!slot.ok) input.disabled = true;
+      if (!slot.ok) {
+        input.disabled = true;
+        label.tabIndex = 0;
+        label.setAttribute("role", "button");
+        label.setAttribute("aria-label", slot.time + ": " + slot.reason);
+        function explain() { document.getElementById("timeStatus").textContent = slot.time + ": " + slot.reason; }
+        label.addEventListener("click", explain);
+        label.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); explain(); }
+        });
+      }
       else if (slot.time === preserveTime) input.checked = true;
       input.addEventListener("change", refresh);
       label.appendChild(input);
@@ -243,13 +255,21 @@
   var customInput = document.getElementById("customTimeInput");
   var customRadio = document.getElementById("customTimeRadio");
   if (customInput && customRadio) {
+    customRadio.addEventListener("change", function () {
+      customRadio.value = customInput.value;
+      customInput.required = true;
+      customInput.focus();
+    });
     customInput.addEventListener("input", function () {
       customRadio.value = customInput.value;
-      customRadio.checked = !!customInput.value;
+      customRadio.checked = true;
+      customInput.required = true;
     });
     document.addEventListener("change", function (e) {
       if (e.target.name === "start_time" && e.target !== customRadio) {
         customInput.value = "";
+        customInput.required = false;
+        customRadio.value = "";
       }
     });
   }
@@ -277,7 +297,61 @@
     customRadio.value = initialStartTime;
     customRadio.checked = true;
   }
+  customInput.required = customRadio.checked;
   syncOther();
+
+  var form = document.getElementById("wellnessApplyForm");
+  form.dataset.submitPreflight = "pending";
+  var status = document.getElementById("timeStatus");
+  if (form.dataset.errorField) {
+    var errorTarget = form.dataset.errorField === "start_time" ? customInput :
+      (form.querySelector('[name="' + form.dataset.errorField + '"]:checked') || form.querySelector('[name="' + form.dataset.errorField + '"]'));
+    if (errorTarget) { errorTarget.setAttribute("aria-invalid", "true"); errorTarget.focus(); }
+  }
+  var revision = 0, submitting = false, validated = false, timer;
+  function showError(data) {
+    status.textContent = data.message;
+    var name = data.field || "start_time";
+    form.querySelectorAll("[aria-invalid]").forEach(function (el) { el.removeAttribute("aria-invalid"); });
+    var target = name === "start_time" ? customInput : (form.querySelector('[name="' + name + '"]:checked') || form.querySelector('[name="' + name + '"]'));
+    if (target) { target.setAttribute("aria-invalid", "true"); target.focus(); }
+  }
+  async function check() {
+    var response = await fetch("/wellness/apply/validate", {method:"POST", body:new URLSearchParams(new FormData(form))});
+    if (!response.ok) throw new Error("Validation unavailable");
+    return response.json();
+  }
+  form.addEventListener("input", function () { revision++; validated = false; form.dataset.submitPreflight = "pending"; status.textContent = ""; });
+  form.addEventListener("change", function () {
+    revision++; validated = false; form.dataset.submitPreflight = "pending";
+    clearTimeout(timer);
+    var captured = revision;
+    timer = setTimeout(async function () {
+      if (!form.checkValidity()) return;
+      try {
+        var data = await check();
+        if (captured === revision) status.textContent = data.ok ? "Time is available. It will be checked again when you send." : data.message;
+      } catch (_) { /* The normal submit still validates on the server. */ }
+    }, 250);
+  });
+  form.addEventListener("submit", async function (event) {
+    if (validated) return;
+    event.preventDefault();
+    if (submitting) return;
+    submitting = true;
+    var captured = revision;
+    try {
+      status.textContent = "Checking your break…";
+      var data = await check();
+      if (captured !== revision) { status.textContent = "Your choices changed. Review them and send again."; return; }
+      if (!data.ok) { showError(data); return; }
+      validated = true;
+      form.dataset.submitPreflight = "ready";
+      form.requestSubmit(event.submitter);
+    } catch (_) {
+      status.textContent = "Could not check availability. Your entries are kept. Please try sending again.";
+    } finally { submitting = false; }
+  });
 })();
 </script>
 {% endblock %}
