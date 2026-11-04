@@ -1,5 +1,13 @@
 # Isolated Telegram pilot — operator runbook
 
+**Latest owner direction — November 4, 2026:** the isolated pilot is cancelled.
+The owner requested testing in production using @blhsd_bot. Follow the
+[production test and release plan](TELEGRAM_PRODUCTION_TEST_PLAN.md), including
+canonical verification/backup gates and selected feature/account consent.
+Earlier isolated-pilot requirements and production deferrals below are historical
+where they conflict with this newer instruction. No blanket feature activation
+or actual live acceptance is implied.
+
 Stage 2 authorized by the owner's **“do stage 2”** instruction on 2026-11-03.
 This authorizes the isolated protected target, owner-selected bot setup, selected
 private feature batches and real test replies described in the

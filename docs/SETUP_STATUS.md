@@ -75,6 +75,27 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 4, 2026 (Asia/Manila): production testing replaces isolated pilot.**
+Owner explicitly cancelled the isolated pilot and requested production testing
+with @blhsd_bot, reporting Telegram has not been launched. Follow the
+[production test/release plan](TELEGRAM_PRODUCTION_TEST_PLAN.md). This supersedes
+prior production deferrals and pilot-restoration/password/sender prerequisites.
+No webhook redirect or secret copy/rotation is needed. The isolated Space stays
+unpublished/off. Prepare PR #572 release through fresh exact-head CI, current
+main/rules/reviews, canonical full verification and fresh backup/version gates;
+then verify actual deployed source/version/health/diagnostics. Initial personal
+checks use the owner's existing link/menu/status/calendar reads. Subsequent
+feature activation/consent scope and actual receipt remain to be established.
+
+Fresh production: RUNNING/CPU Basic, login **9.62**, health 200/ok; writable
+bucket mount `/data` and CSS_PERSIST_DIR verified. Existing inbound/delivery/link/
+calendar_read variables are on. No production configuration or record changed.
+Inspected review head `d7ab3c6` has avatar/metadata/dependencies passing; full
+normal/shuffled checks are still running. New documentation save requires its
+own checks before merge; prior results cannot certify it. Main is `625c60f`.
+No merge/deploy or personal acceptance has yet occurred. Earlier preflight
+blockers below are retained as history, not prerequisites for this new path.
+
 **November 4, 2026 (Asia/Manila): stage-2 reuse preflight resumed.**
 Owner selected **@blhsd_bot** and configured cloud
 `OFFICE_TELEGRAM_PILOT_BOT_TOKEN`. Fresh managed readiness reports this binding

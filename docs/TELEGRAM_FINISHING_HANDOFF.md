@@ -1,5 +1,13 @@
 # Finish the current Telegram feature batch — three-stage handoff
 
+**Latest owner direction — November 4, 2026:** the isolated pilot is cancelled.
+The owner requested testing in production using @blhsd_bot. Follow the
+[production test and release plan](TELEGRAM_PRODUCTION_TEST_PLAN.md), including
+canonical verification/backup gates and selected feature/account consent.
+Earlier isolated-pilot requirements and production deferrals below are historical
+where they conflict with this newer instruction. No blanket feature activation
+or actual live acceptance is implied.
+
 **November 4 owner update:** reuse the existing bot; a new bot is not required.
 The [operator reuse preflight](TELEGRAM_PILOT_OPERATOR.md#existing-bot-reuse--november-4-2026-asiamanila)
 supersedes earlier dedicated-bot requirements. Production release remains deferred.

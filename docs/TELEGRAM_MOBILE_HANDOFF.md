@@ -1,5 +1,13 @@
 # Office Connect Telegram — mobile handoff
 
+**Latest owner direction — November 4, 2026:** the isolated pilot is cancelled.
+The owner requested testing in production using @blhsd_bot. Follow the
+[production test and release plan](TELEGRAM_PRODUCTION_TEST_PLAN.md), including
+canonical verification/backup gates and selected feature/account consent.
+Earlier isolated-pilot requirements and production deferrals below are historical
+where they conflict with this newer instruction. No blanket feature activation
+or actual live acceptance is implied.
+
 Updated: November 3, 2026. This document is a handoff, not release approval.
 
 ## Current priority: close the batch
