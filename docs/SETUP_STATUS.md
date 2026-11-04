@@ -75,6 +75,18 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 4, 2026: learned rules assessed, read-only.**
+See [learned rules review](LEARNED_RULES_REVIEW_2026_11_04.md), saved on
+`docs/learned-rules-review-2026-11-04`. Live FAQ: 57 enabled seed rules,
+six lifetime hits, 27 retained-history candidates. Visible October 5–November 4
+routing sample: 14 successes, one rule-served. Priorities are unavailable
+encoding-help target, wellness navigation/balance ambiguity, calendar-month
+semantics, then a small tested phrase set. No live rule or setting was changed.
+The preceding UX implementation PR #581 merged as `d93eb737` after complete
+CI and avatar acceptance passed; deployment availability remains unverified
+in this assessment. Implementation of learned-rule changes remains a next task.
+
+
 **November 4, 2026: UX coverage and wellness filing implementation.**
 User authorized the proposed improvements. Candidate 9.92 on
 `feat/ux-coverage-wellness` includes complete retained-event date-range reads,
