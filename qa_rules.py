@@ -119,24 +119,38 @@ def match(query, rules):
     `rules` is an iterable of dicts with at least `pattern` (normalized) and
     `kind`/`target_key`; an optional `keywords` string widens matching. Exact
     normalized-string equality wins immediately (score 1.0). Otherwise the
-    highest keyword-coverage score that clears MATCH_THRESHOLD wins; ties break
-    toward the earlier rule so seed/admin ordering is stable. Returns the rule
+    highest keyword-coverage score that clears MATCH_THRESHOLD wins; ties across
+    different targets fall through rather than guessing. Returns the rule
     dict (unmodified except for a cached `_tokens` key) or None.
     """
     norm = normalize(query)
     if not norm:
         return None
     qtokens = tokens(query)
-
-    best = None
-    best_score = 0.0
-    for rule in rules:
-        if rule.get("enabled") is False:
+    enabled = [r for r in rules if r.get("enabled") is not False]
+    exact = [r for r in enabled if normalize(r.get("pattern") or "") == norm]
+    if exact:
+        # Conflicting exact rules must not be decided by lifetime hit ordering.
+        return exact[0] if len({(r.get("kind"), r.get("target_key")) for r in exact}) == 1 else None
+    # Vague fragments such as "what do I have" must not scavenge one word
+    # from an unrelated personal answer. Explicit one-word rules still work.
+    if len(qtokens) < 2:
+        return None
+    scope = set(norm.split())
+    best, best_score, tied_targets = None, 0.0, set()
+    for rule in enabled:
+        pattern_words = set(normalize(rule.get("pattern") or "").split())
+        personal_answer = rule.get("kind") == "answer" and rule.get("target_key") in {
+            "todo_summary", "approvals_waiting", "wellness_left", "awa_status",
+            "my_room_bookings", "calendar_today", "calendar_tomorrow",
+            "calendar_this_week", "calendar_next_week", "calendar_next_item"}
+        if scope & {"our", "their", "team", "bureau", "everyone"} and (
+                personal_answer or pattern_words & {"my", "i", "me", "ko", "ako"}):
             continue
-        if normalize(rule.get("pattern") or "") == norm:
-            return rule                                   # exact match wins outright
         s = score(qtokens, _rule_tokens(rule))
         if s >= MATCH_THRESHOLD and s > best_score:
-            best_score = s
-            best = rule
-    return best
+            best, best_score = rule, s
+            tied_targets = {(rule.get("kind"), rule.get("target_key"))}
+        elif s >= MATCH_THRESHOLD and s == best_score:
+            tied_targets.add((rule.get("kind"), rule.get("target_key")))
+    return best if len(tied_targets) == 1 else None

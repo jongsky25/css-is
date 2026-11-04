@@ -26,7 +26,7 @@
   .row-link { text-align:right; white-space:nowrap; }
 </style>
 
-<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap;">
+<div data-tour="encode-intro" style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap;">
   <div>
     {{ page_header("Paper entry") }}
     <p class="lede">Key in responses transcribed from paper forms. Pick the form a stack of papers belongs to,
@@ -50,7 +50,7 @@
 {% endif %}
 
 {% if walkin_ctx %}
-<div class="panel walkin">
+<div class="panel walkin" data-tour="encode-walkin">
   <div>
     <div class="subj" style="font-size:1.05rem;">Walk-in service feedback (CO-CSM)</div>
     <div class="meta">The standing bureau-wide form. <strong>{{ walkin_ctx.form_id }}</strong> ·
@@ -68,7 +68,7 @@
 {% endif %}
 
 <div class="panel">
-  <form class="searchbar" method="get" action="/encode">
+  <form data-tour="encode-search" class="searchbar" method="get" action="/encode">
     <input type="search" name="q" value="{{ q }}" placeholder="Find an event or speaker form — topic, name, venue, or form ID"
            aria-label="Search event and speaker forms">
     <button type="submit">Search</button>

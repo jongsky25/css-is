@@ -18,10 +18,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.92"
+APP_VERSION = "9.93"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.93",
+        "date": "November 4, 2026",
+        "summary": "Common questions open the right pages, and monthly answers follow the calendar.",
+        "changes": [
+            "Questions about this month use the current calendar month, while last-30-days questions keep their own totals.",
+            "Paper entry has a guide, and common wellness, room booking, AWA and supply phrases can answer without an AI call.",
+            "Vague questions and conflicting rules fall through instead of choosing an unrelated personal answer.",
+            "The rule update preserves administrator edits, paused rules and later deletions."
+        ]
+    },
     {
         "version": "9.92",
         "date": "November 4, 2026",
