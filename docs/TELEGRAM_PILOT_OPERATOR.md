@@ -15,9 +15,10 @@ pilot; creating a new bot is no longer a prerequisite. This supersedes earlier
 “dedicated/new bot only” wording in the plan and handoff. It does not authorize
 production application deployment, main merge or expanded participant access.
 
-The expected @username and token binding are still unavailable. Configure the
-existing token as cloud `OFFICE_TELEGRAM_PILOT_BOT_TOKEN`; do not paste it into
-chat or extract credentials from production. Use `getMe` and `getWebhookInfo`
+The owner selected **@blhsd_bot** and configured cloud
+`OFFICE_TELEGRAM_PILOT_BOT_TOKEN`. November 4 fresh readiness and `getMe` verified
+the binding and expected bot identity. Do not paste the token into chat or extract
+credentials from production. Use `getMe` and `getWebhookInfo`
 before mutation. Record the current registration and a viable restoration path
 privately before redirecting it to the verified pilot. Telegram cannot read back
 an existing webhook secret: an old URL alone does not establish rollback readiness.
@@ -26,8 +27,22 @@ run competing consumers, discard updates or process production messages as fixtu
 If inspection reveals an unresolved interruption/restoration issue, report that
 concrete blocker. The reuse decision itself needs no repeated approval.
 
+November 4 preflight found the bot registered at the production callback
+`https://equityinhealth-office-connect.hf.space/integrations/telegram/webhook`,
+with zero pending updates and no reported last delivery error. Preserve its
+existing allowed update types (`message`, `callback_query`, `my_chat_member`,
+`chat_member`) for restoration. The existing secret must be available securely
+before redirect; Telegram cannot retrieve it. No polling consumer exists in the
+inspected repository; this does not rule out an external consumer. No getUpdates
+or mutation was attempted. Pilot metadata remains protected Docker/CPU Basic,
+NO_APP_FILE and batch off; only the session and webhook secret names exist.
+Password, sender allowlist and bot-token host names remain missing. The owner
+confirmed the old registration secret is unavailable or uncertain and that
+password/sender setup is still needed. Stage 2 is blocked at this reuse boundary;
+do not rotate production secrets or redirect the bot to resolve it implicitly.
+
 All synthetic data, sender allowlist, selected-batch, explicit consent and receipt
-requirements remain. This session changed no bot registration or hosted app.
+requirements remain. This preflight changed no bot registration or hosted app.
 
 ## Target and current boundary
 

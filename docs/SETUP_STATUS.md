@@ -75,6 +75,45 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 4, 2026 (Asia/Manila): stage-2 reuse preflight resumed.**
+Owner selected **@blhsd_bot** and configured cloud
+`OFFICE_TELEGRAM_PILOT_BOT_TOKEN`. Fresh managed readiness reports this binding
+and `HF_TOKEN` ready, current observations and enforced unrestricted HTTP policy.
+`getMe` confirms the expected bot. `getWebhookInfo` reports the existing
+production callback, zero pending updates, no last delivery error and allowed
+updates `message`, `callback_query`, `my_chat_member`, `chat_member`.
+No webhook mutation, polling/getUpdates, dropped updates or real message occurred.
+The repository has no polling consumer; external consumers are not established
+by this source inspection. The production registration remains intact.
+
+**Concrete blockers:** the existing webhook secret is not readable through
+Telegram, so restoration must be possible through the owner's secure store
+before redirecting this bot. The protected pilot currently has only
+`CSS_SESSION_SECRET` and `CSS_TELEGRAM_WEBHOOK_SECRET`; password, sender allowlist
+and bot-token host secret names are absent. Do not extract production credentials.
+Owner confirmed the restoration secret is unavailable or uncertain and that
+password/sender setup is still needed. No repeated stage-2 authorization is required. Next: resolve these setup facts,
+securely configure the four distinct test passwords and nominated sender IDs,
+complete secret-name/configuration checks, then publish the paused protected pilot
+and follow the runbook's build/auth/reachability checks before any redirect.
+All hosted acceptance remains Pending; production/stage 3 remains deferred.
+
+Fresh GitHub read/write access is verified. Starting local/remote/PR head
+`6dd70e8fedc5d699b0568c66b6b43c15c4c2cf0e` matches and the tree was clean.
+Main remains `625c60f2fc91ddf98519a9084a5c4217fd1f2e56` (9.62).
+Exact-head [CI 41749159550](https://github.com/jongsky25/css-is/actions/runs/41749159550)
+and [avatar 41749159725](https://github.com/jongsky25/css-is/actions/runs/41749159725)
+completed successfully, including normal/shuffled, dependency, metadata and
+aggregate gates. A fresh network-free bundle dry run passed: **1,029 files**,
+version **9.91**, source `6dd70e8`. These green checks certify that inspected head;
+this subsequent documentation save requires its own exact-head checks before
+publication. No application-suite rerun is needed for these documentation edits.
+
+Pilot metadata remains protected/private-source Docker, requested CPU Basic,
+`NO_APP_FILE`, Space commit `e2d291524f61103636baeb65b68ec82185c9556b`, batch off.
+No upload, target secret mutation, shared-preview change or production action
+was performed during this preflight.
+
 **November 4, 2026 (Asia/Manila): reuse the existing bot.** Owner explicitly
 selected reuse; a new bot is no longer required. Follow the updated
 [reuse preflight](TELEGRAM_PILOT_OPERATOR.md#existing-bot-reuse--november-4-2026-asiamanila).
