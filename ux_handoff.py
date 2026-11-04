@@ -348,6 +348,13 @@ def render_handoff_markdown(payload):
         f"window: last {w['days']} day(s) ({w['from'] or '—'} → {w['to'] or '—'}) · "
         f"{p['totals']['events']} event(s) from {p['totals']['sessions']} session(s) / "
         f"{p['totals']['users']} signed-in user(s) · retention {p['retention_days']} day(s).")
+    if p.get("coverage"):
+        c = p["coverage"]
+        add(f"\nRequested dates (Asia/Manila): {c['requested_from']} → {c['requested_to']}. "
+            f"Observed events: {c['observed_from'] or 'none'} → {c['observed_to'] or 'none'}. "
+            f"Version filter: {c['version']}. {c['note']}")
+        if c['retention_may_limit']:
+            add("\n> Requested period exceeds current retention; older events may have been deleted.")
     if p["truncated"]:
         add("\n> **Note:** the window holds more events than one read returns — "
             "everything below is computed from the most recent "

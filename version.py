@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.91"
+APP_VERSION = "9.92"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.92",
+        "date": "November 4, 2026",
+        "summary": "UX reports cover the full selected period, and wellness filing explains time choices sooner.",
+        "changes": [
+            "UX Insights includes all retained events in your selected dates and can focus on one app version.",
+            "Reports show requested dates, recorded dates and possible retention gaps while keeping example events limited.",
+            "Wellness filing explains unavailable times on tap and checks your choices before sending without losing your entries."
+        ]
+    },
     {
         "version": "9.91",
         "date": "November 3, 2026",

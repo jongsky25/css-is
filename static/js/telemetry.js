@@ -453,6 +453,9 @@
     document.addEventListener("change", markDirty, true);
     document.addEventListener("submit", function (e) {
       var form = e.target;
+      // A preflight submit only checks the draft. Keep it dirty and count the
+      // subsequent validated submit once, when it actually goes to the server.
+      if (form && form.dataset.submitPreflight === "pending") return;
       if (form) dirtyForms.delete(form);
       // form_submit — the other half of form_abandon, so a screen's abandon
       // RATE can be read. Same opt-outs (search/filter forms, our own UI).

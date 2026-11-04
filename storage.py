@@ -3731,21 +3731,32 @@ def _ui_event_row(r):
             "meta": meta}
 
 
-def list_ui_events(conn, since=None, limit=500):
+def list_ui_events(conn, since=None, limit=500, *, until=None, version=""):
     """UX telemetry events, newest first. `since` (an ISO timestamp, same naive
     local format as created_at) scopes to a rolling window — the ux_insights
     digest passes one; a plain read-back for debugging omits it. meta_json is
     parsed back into `meta`."""
     sql = ("SELECT id, created_at, user_id, role, session_id, event_type, route, "
            "component, element_selector, element_text, meta_json FROM ui_event")
-    params = []
+    params, filters = [], []
     if since:
-        sql += " WHERE created_at >= ?"
+        filters.append("created_at >= ?")
         params.append(since)
-    sql += " ORDER BY id DESC LIMIT ?"
-    params.append(limit)
-    rows = conn.execute(sql, params).fetchall()
-    return [_ui_event_row(r) for r in rows]
+    if until:
+        filters.append("created_at <= ?")
+        params.append(until)
+    if version:
+        filters.append("COALESCE(CASE WHEN json_valid(meta_json) THEN "
+                       "json_extract(meta_json, '$.v') END, '') = ?")
+        params.append("" if version == "unknown" else version)
+    if filters:
+        sql += " WHERE " + " AND ".join(filters)
+    sql += " ORDER BY id DESC"
+    # Reports read the full bounded date range; debug callers retain a limit.
+    if limit is not None:
+        sql += " LIMIT ?"
+        params.append(limit)
+    return [_ui_event_row(r) for r in conn.execute(sql, params)]
 
 
 def purge_stale_ui_events(conn, cutoff_iso):
@@ -8163,11 +8174,9 @@ def _wellness_check_room(conn, user_id, d, start_time, hours):
         raise ValueError("You already have a break that overlaps that time.")
 
 
-def create_wellness_claim(conn, user_id, break_date, start_time, activity,
-                          note=None, hours=1, activity_other=None):
-    """File a break request of `hours` hours (1 or 2 — the DM allows the whole
-    weekly entitlement in one sitting). Validates the DM's rules and raises
-    ValueError with a human-readable reason; returns the new claim id."""
+def validate_wellness_claim(conn, user_id, break_date, start_time, activity,
+                            hours=1, activity_other=None):
+    """Read-only preflight; creation rechecks these same rules authoritatively."""
     d, start_time, hours, activity_other = _wellness_parse_claim(
         break_date, start_time, activity, hours, activity_other)
     if d < tz.today_local():
@@ -8189,6 +8198,16 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity,
             f"File a break at least {WELLNESS_MIN_LEAD_MINUTES} minutes before it "
             "starts, so your approver has time to see it.")
     _wellness_check_room(conn, user_id, d, start_time, hours)
+    return d, start_time, hours, activity_other
+
+
+def create_wellness_claim(conn, user_id, break_date, start_time, activity,
+                          note=None, hours=1, activity_other=None):
+    """File a break request of `hours` hours (1 or 2 — the DM allows the whole
+    weekly entitlement in one sitting). Validates the DM's rules and raises
+    ValueError with a human-readable reason; returns the new claim id."""
+    d, start_time, hours, activity_other = validate_wellness_claim(
+        conn, user_id, break_date, start_time, activity, hours, activity_other)
     # The Director has nobody above them to decide their own claim (see
     # get_approvers_for) — rather than leave it pending on the admin fallback,
     # it's approved the moment it's filed.

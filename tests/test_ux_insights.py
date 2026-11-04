@@ -201,3 +201,57 @@ def test_handoff_writes_audit_row(admin, db_path):
     assert row[0] == "export"
     assert row[1] == "ui_event"
     assert "UX telemetry handoff" in row[2]
+
+
+def test_full_period_over_cap_version_and_coverage(admin, db_path):
+    """An older hotspot must survive more than 5,000 newer events."""
+    import json
+    from datetime import timedelta
+    import tzutil as tz
+    conn = st.connect(db_path)
+    _reset(conn)
+    now = tz.now_local()
+    old = (now - timedelta(days=20)).isoformat(timespec="seconds")
+    recent = (now - timedelta(days=1)).isoformat(timespec="seconds")
+    def row(at, version, event="pageview", route="/calendar"):
+        return (at, 1, "viewer", "synthetic", event, route, "#target", "#target",
+                "Open", json.dumps({"v": version}) if version else None)
+    sql = '''INSERT INTO ui_event(created_at,user_id,role,session_id,event_type,
+             route,component,element_selector,element_text,meta_json)
+             VALUES (?,?,?,?,?,?,?,?,?,?)'''
+    conn.executemany(sql, [row(old, "9.61", "dead_click", "/older-hotspot")] * 10)
+    conn.executemany(sql, [row(recent, "9.92")] * 5010)
+    conn.execute(sql, row(recent, None))
+    conn.execute(sql, row((now + timedelta(days=1)).isoformat(), "9.92"))
+    conn.execute(sql, row((now - timedelta(days=31)).isoformat(), "9.92"))
+    conn.commit()
+    conn.close()
+    p = admin.get("/admin/ux-insights/handoff?days=30&fmt=json").json()
+    assert p["totals"]["events"] == 5021
+    assert not p["truncated"]
+    assert p["opportunities"][0]["route"] == "/older-hotspot"
+    assert len(p["sample_events"]) == 200
+    assert p["coverage"]["observed_from"] == old
+    assert p["coverage"]["observed_to"] == recent
+    assert p["coverage"]["requested_from"] < old
+    filtered = admin.get("/admin/ux-insights/handoff?days=30&fmt=json&version=9.61").json()
+    assert filtered["totals"]["events"] == 10
+    assert filtered["coverage"]["version"] == "9.61"
+    assert admin.get("/admin/ux-insights/handoff?fmt=json&version=unknown").json()["totals"]["events"] == 1
+    body = admin.get("/admin/ux-insights?days=30&version=9.61").text
+    assert "Recorded events:" in body and "9.61" in body
+    assert "Events <b>10</b>" in body
+    assert "version=9.61" in body
+    assert "Requested dates" in admin.get("/admin/ux-insights/handoff?version=9.61").text
+
+
+def test_coverage_empty_retention_and_version_validation(admin, db_path):
+    conn = st.connect(db_path)
+    _reset(conn)
+    st.set_setting(conn, "ui_telemetry_retention_days", "7")
+    conn.close()
+    p = admin.get("/admin/ux-insights/handoff?days=30&fmt=json&version=99.99").json()
+    assert p["totals"]["events"] == 0
+    assert p["coverage"]["observed_from"] is None
+    assert p["coverage"]["retention_may_limit"]
+    assert admin.get("/admin/ux-insights?version=invalid").status_code == 422

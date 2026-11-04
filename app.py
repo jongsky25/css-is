@@ -65,7 +65,7 @@ import companion_wardrobe as wardrobe
 import appearance_routes
 
 import qrcode
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Query
 from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse,
                                RedirectResponse, Response, StreamingResponse)
 from fastapi.templating import Jinja2Templates
@@ -4254,16 +4254,29 @@ async def telemetry_ingest(request: Request):
 # ---------------------------------------------------------------------
 
 UI_INSIGHTS_WINDOW_DAYS_DEFAULT = 30
-_UI_EVENT_FETCH_CAP = 5000   # digest fetch safety valve; log-worthy volume on its own
+# The date window (maximum 365 days) scopes complete retained-event reports.
+
+
+def _ux_coverage(events, since, until, retention_days, version):
+    times = [e["created_at"] for e in events]
+    return {"requested_from": since, "requested_to": until,
+            "observed_from": min(times) if times else None,
+            "observed_to": max(times) if times else None,
+            "version": version or "all",
+            "retention_may_limit": since < (_now_local() - timedelta(days=retention_days)).isoformat(timespec="seconds"),
+            "note": "All retained events matching these dates and version are included. "
+                    "Missing events do not prove a lack of usage; purged or unrecorded data cannot be recovered."}
+
 
 
 @app.get("/admin/ux-insights", response_class=HTMLResponse)
-def ux_insights(request: Request, days: int = UI_INSIGHTS_WINDOW_DAYS_DEFAULT, err: str = ""):
+def ux_insights(request: Request, days: int = UI_INSIGHTS_WINDOW_DAYS_DEFAULT, err: str = "", version: str = Query("", max_length=40, pattern=r"^(?:[0-9]+\.[0-9]+|unknown)?$")):
     days = max(1, min(days, 365))
     conn = get_conn()
     try:
         since = (_now_local() - timedelta(days=days)).isoformat(timespec="seconds")
-        events = st.list_ui_events(conn, since=since, limit=_UI_EVENT_FETCH_CAP)
+        until = _now_local().isoformat(timespec="seconds")
+        events = st.list_ui_events(conn, since=since, until=until, version=version, limit=None)
         feedback = st.list_spot_feedback(conn)
         retention_days = int(st.get_setting(
             conn, "ui_telemetry_retention_days", str(ret.UI_EVENT_RETENTION_DAYS_DEFAULT)))
@@ -4271,10 +4284,12 @@ def ux_insights(request: Request, days: int = UI_INSIGHTS_WINDOW_DAYS_DEFAULT, e
         conn.close()
     digest = ui_tel.build_digest(events, feedback, window_days=days,
                                  now=_now_local().isoformat(timespec="seconds"))
-    truncated = len(events) >= _UI_EVENT_FETCH_CAP
+    truncated = False
     return templates.TemplateResponse(request, "ux_insights.html", {
         "digest": digest, "days": days, "retention_days": retention_days,
         "truncated": truncated, "err": err,
+        "version_filter": version,
+        "coverage": _ux_coverage(events, since, until, retention_days, version),
         "show_scope": False, "nav_active": "ux_insights",
     })
 
@@ -4306,7 +4321,7 @@ async def ux_insights_save_retention(request: Request):
 
 @app.get("/admin/ux-insights/handoff")
 def ux_insights_handoff(request: Request, days: int = UI_INSIGHTS_WINDOW_DAYS_DEFAULT,
-                        fmt: str = "md"):
+                        fmt: str = "md", version: str = Query("", max_length=40, pattern=r"^(?:[0-9]+\.[0-9]+|unknown)?$")):
     """The downloadable AI-analysis handoff (ux_handoff.py): one self-describing
     Markdown (or JSON) file over the same window as the digest view, meant to be
     handed to an AI assistant for interface-improvement analysis. Admin-gated
@@ -4318,7 +4333,8 @@ def ux_insights_handoff(request: Request, days: int = UI_INSIGHTS_WINDOW_DAYS_DE
     conn = get_conn()
     try:
         since = (_now_local() - timedelta(days=days)).isoformat(timespec="seconds")
-        events = st.list_ui_events(conn, since=since, limit=_UI_EVENT_FETCH_CAP)
+        until = _now_local().isoformat(timespec="seconds")
+        events = st.list_ui_events(conn, since=since, until=until, version=version, limit=None)
         feedback = st.list_spot_feedback(conn)
         retention_days = int(st.get_setting(
             conn, "ui_telemetry_retention_days", str(ret.UI_EVENT_RETENTION_DAYS_DEFAULT)))
@@ -4338,8 +4354,9 @@ def ux_insights_handoff(request: Request, days: int = UI_INSIGHTS_WINDOW_DAYS_DE
         app_version=ver.APP_VERSION,
         generated_at=now.isoformat(timespec="seconds"),
         retention_days=retention_days,
-        truncated=len(events) >= _UI_EVENT_FETCH_CAP,
+        truncated=False,
         nav_destinations=nav_destinations, app_routes=app_routes)
+    payload["coverage"] = _ux_coverage(events, since, until, retention_days, version)
     stamp = now.strftime("%Y%m%d_%H%M%S")
     if fmt == "json":
         return Response(content=json.dumps(payload, ensure_ascii=False, indent=1),
@@ -4380,21 +4397,21 @@ def _validated_ux_analysis(text, prompt):
     return text
 
 
-def _ux_analysis_current(request, conn, user, since, events, feedback, retention_days):
+def _ux_analysis_current(request, conn, user, since, events, feedback, retention_days, until=None, version=""):
     payload = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
     current = st.session_actor(conn, payload) if payload else None
     return (current is not None
             and all(current[key] == user[key] for key in ("id", "username", "role"))
             and auth.can(current["role"], "manage_users")
             and ai.ai_mode(conn) != "off" and ai.feature_enabled(conn, "ux_analysis")
-            and st.list_ui_events(conn, since=since, limit=_UI_EVENT_FETCH_CAP) == events
+            and st.list_ui_events(conn, since=since, until=until, version=version, limit=None) == events
             and st.list_spot_feedback(conn) == feedback
             and int(st.get_setting(conn, "ui_telemetry_retention_days",
                                    str(ret.UI_EVENT_RETENTION_DAYS_DEFAULT))) == retention_days)
 
 
 @app.post("/admin/ux-insights/analyze")
-async def ux_insights_analyze(request: Request, days: int = UI_INSIGHTS_WINDOW_DAYS_DEFAULT):
+async def ux_insights_analyze(request: Request, days: int = UI_INSIGHTS_WINDOW_DAYS_DEFAULT, version: str = Query("", max_length=40, pattern=r"^(?:[0-9]+\.[0-9]+|unknown)?$")):
     """docs/AI_INTEGRATION_PLAN.md Phase 3: an in-page "Analyze now" that builds
     the identical payload as the handoff download above and hands it to Gemini
     instead of asking the admin to paste it elsewhere by hand. Same zero-PII
@@ -4408,7 +4425,8 @@ async def ux_insights_analyze(request: Request, days: int = UI_INSIGHTS_WINDOW_D
     conn = get_conn()
     try:
         since = (_now_local() - timedelta(days=days)).isoformat(timespec="seconds")
-        events = st.list_ui_events(conn, since=since, limit=_UI_EVENT_FETCH_CAP)
+        until = _now_local().isoformat(timespec="seconds")
+        events = st.list_ui_events(conn, since=since, until=until, version=version, limit=None)
         feedback = st.list_spot_feedback(conn)
         retention_days = int(st.get_setting(
             conn, "ui_telemetry_retention_days", str(ret.UI_EVENT_RETENTION_DAYS_DEFAULT)))
@@ -4423,8 +4441,9 @@ async def ux_insights_analyze(request: Request, days: int = UI_INSIGHTS_WINDOW_D
             app_version=ver.APP_VERSION,
             generated_at=now.isoformat(timespec="seconds"),
             retention_days=retention_days,
-            truncated=len(events) >= _UI_EVENT_FETCH_CAP,
+            truncated=False,
             nav_destinations=nav_destinations, app_routes=app_routes)
+        payload["coverage"] = _ux_coverage(events, since, until, retention_days, version)
         # The handoff masks IDs and long digit runs. Free-text feedback can
         # still contain an email address, so remove it before provider I/O.
         prompt = re.sub(r"[\w.+-]+@[\w-]+\.[\w.-]+", "[email]",
@@ -4446,7 +4465,7 @@ async def ux_insights_analyze(request: Request, days: int = UI_INSIGHTS_WINDOW_D
             return JSONResponse({"ok": False, "notice": "AI analysis could not be verified — use the download link below instead."})
         conn.execute("BEGIN IMMEDIATE")
         try:
-            if not _ux_analysis_current(request, conn, user, since, events, feedback, retention_days):
+            if not _ux_analysis_current(request, conn, user, since, events, feedback, retention_days, until, version):
                 return JSONResponse({"ok": False, "notice": "Access or UX data changed while AI was working — reload and try again."})
             st.audit(conn, user["username"], "export", target_type="ui_event", target_id="all",
                      summary=f"Ran AI analysis on UX telemetry handoff ({days}-day window, "
@@ -16351,6 +16370,17 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
     })
 
 
+def _wellness_error_field(message):
+    lower = message.lower()
+    if "activity" in lower or "activities" in lower or "others" in lower:
+        return "activity_other" if "others" in lower else "activity"
+    if "entitlement" in lower or "length" in lower or "hours long" in lower:
+        return "hours"
+    if any(word in lower for word in ("date", "work week", "friday", "scheduled ahead")):
+        return "break_date"
+    return "start_time"
+
+
 def _wellness_apply_page(request, err="", form=None):
     user = request.state.user
     conn = get_conn()
@@ -16391,6 +16421,7 @@ def _wellness_apply_page(request, err="", form=None):
         "week_used": week_used,
         "date_pills": date_pills,
         "slots_by_date": slots_by_date,
+        "error_field": _wellness_error_field(err) if err else "",
         "err": err, "form": form or {},
     }, status_code=400 if err else 200)
 
@@ -16411,6 +16442,23 @@ def wellness_leaderboard(request: Request, period: str = "", scope: str = ""):
 @app.get("/wellness/apply", response_class=HTMLResponse)
 def wellness_apply_form(request: Request):
     return _wellness_apply_page(request)
+
+
+@app.post("/wellness/apply/validate")
+async def wellness_apply_validate(request: Request):
+    """Validate the signed-in person's proposed break without saving or notifying."""
+    p = await _posted(request)
+    conn = get_conn()
+    try:
+        try:
+            st.validate_wellness_claim(conn, request.state.user["id"],
+                p.get("break_date", ""), p.get("start_time", ""),
+                p.get("activity", ""), p.get("hours", "1"), p.get("activity_other"))
+        except ValueError as exc:
+            return JSONResponse({"ok": False, "message": str(exc), "field": _wellness_error_field(str(exc))})
+        return JSONResponse({"ok": True})
+    finally:
+        conn.close()
 
 
 @app.post("/wellness/apply")
