@@ -1,0 +1,28 @@
+{% extends "dash_layout.html" %}
+{% block title %}Cancel an unfinished task — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>Cancel an unfinished task</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/work">Review tasks and dependencies</a></p>
+<p>Start with <code>/task_cancel</code> in your linked private chat. The concerned officer for the task's contributing unit must have the source cancellation authority. Work-lead, task-owner or Telegram consent alone grants no such authority.</p>
+<p><strong>Cancellation removes this task from outstanding-contribution checks.</strong> This includes required contributions. Cancellation does not accept output; dependent tasks awaiting this task's acceptance remain blocked. Work completion and official document decisions still require their separate source workflows.</p>
+<p>Proposed, To do, In progress and For review tasks may be cancelled. Owner fields, previous submission, expected output, deadline and history are retained. Cancelled tasks cannot use task reopening. Review submissions and dependencies in Office Connect first; stored submission contents stay there. Normal membership rules apply, so an owner may lose work access without another source right.</p>
+<p>Done/cancelled tasks, completed work and active formal consolidation review amendments stay in Office Connect. This action does not delete a task, cancel a whole work case or alter an official document.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if prepared %}
+<p role="status">{% if prepared.state == 'pending' %}Your preview is prepared. No task has been cancelled. Send <code>/taskcancel_preview {{ prepared.operation_id }}</code> in the original private Telegram chat, review the identified task, current state, reason and contribution/dependency effects, then confirm before expiry.{% else %}This operation already has a recorded outcome. Send <code>/taskcancel_receipt {{ prepared.operation_id }}</code> in the original private chat. Recovery will not repeat the action.{% endif %}</p>
+{% endif %}
+{% if origins %}
+<form method="post" action="{{ action_path }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="cancel-origin">Starting private conversation</label><br><select id="cancel-origin" name="origin" required>{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
+<p><label for="cancel-work">Work item number</label><br><input id="cancel-work" name="case_id" type="number" min="1" value="{{ values.get('case_id','') }}" required></p>
+<p><label for="cancel-task">Task number</label><br><input id="cancel-task" name="task_id" type="number" min="1" value="{{ values.get('task_id','') }}" required></p>
+<p>Use IDs from your results or the signed-in work page. The exact private preview identifies the work and task before confirmation.</p>
+<p><label for="cancel-reason">Cancellation reason</label><br><textarea id="cancel-reason" name="reason" rows="4" maxlength="500" style="box-sizing:border-box;width:100%" required>{{ values.get('reason','') }}</textarea></p>
+<p>Your reason appears in Telegram and task history. The preview expires after five minutes. Changed task, submission, work or linked records require a fresh preview; current officer permissions are checked again at confirmation.</p>
+<button type="submit">Prepare exact private preview</button>
+</form>
+{% else %}<p>No current private cancellation request is available. Start <code>/task_cancel</code> after enabling and consenting to its separate pilot and work read permission.</p>{% endif %}
+</div>
+{% endblock %}

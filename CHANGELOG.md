@@ -1,3 +1,84 @@
+## 9.91 — November 3, 2026
+
+- Add independently consented own draft/returned supplies submission with exact request/line/requester/routing previews, native atomic numbering/version/mail/outcome and non-replaying historical receipts; approval and inventory remain separate.
+
+- Add independently consented own supplies-draft creation through a bounded catalog form, exact private preview and native atomic draft/receipt save; submission, numbering, approval, stock reservation and approver notifications remain separate.
+
+- Offer author-only edit form shortcuts in discussion browsing, threads and message parts with source IDs/current revision prefill, empty replacement text and existing independent edit permission/private confirmation.
+
+- Offer an independently permitted acknowledgement shortcut from unread update details with notice ID/revision prefill; opening the form marks nothing read and existing exact private confirmation remains required.
+
+- Open current discussion threads from private inbox metadata and browse comments from saved follows with current independent reading consent; all lookups preserve read and follow state.
+
+- Browse current top-level work/task discussion comments with bounded seek pages and existing thread/message/reply navigation under independent reading consent; no read state changes.
+
+- Add permission-checked Reply form shortcuts for selected comments, displayed direct replies and current message parts, prefilled with source IDs only; existing private-origin, preview, source and confirmation checks remain authoritative.
+
+- Add independently consented selected discussion comment/direct-reply views with bounded previews, nested/parent navigation, current-revision message parts and exact source links; reading changes no read state, follows or records.
+
+- Add independently consented exact-thread discussion text search with current native source checks, literal Unicode matching, bounded excerpts/current revisions and source links; queries/excerpts stay ephemeral and no read state or records change.
+
+- Add independently consented saved discussion follow lookup with current own/source checks, explicit work-wide versus task coverage, bounded composite-key seek pages and conditional source-prefilled follow controls; listing and opening links change no follows or read markers.
+
+- Add independently consented own work-wide or task-specific discussion follow/unfollow changes with exact private previews, native future-notice coverage, atomic source/receipt writes and current-state recovery; existing notices, read markers, other accounts and delivery preferences stay unchanged.
+
+- Add independently consented own-notice read acknowledgement with exact notice/current revision previews, current source checks, atomic native monotonic read markers and replay-safe receipts; lookup itself remains read-only.
+
+- Add an independently consented private discussion inbox for own unread mention/reply/following notice metadata, bounded current-access paging and source links; stored discussion and read-state changes stay in Office Connect.
+
+- Add separately consented colleague mentions in existing work/task comment and reply flows, with current source-scoped choices, exact message/recipient previews and native atomic mention/notices; selection grants no access and changes no task or approval.
+
+- Add independently consented author-only work/task comment edits with exact revision/replacement previews, retained immutable history/mentions and atomic native edit/receipt writes; newer edits, source permissions and approvals remain protected.
+
+- Add separately consented work/task discussion replies with exact parent number/revision previews, current thread/source checks and atomic native reply/receipt writes; parent text stays in Office Connect and progress/approvals remain unchanged.
+
+- Add separately consented work/task discussion posts through exact private previews and atomic native comment/receipt writes; current discussion visibility, immutable history and normal follower notices are preserved without changing task progress or approvals.
+
+- Add separately consented prerequisite addition and removal with current coordinator authority, exact dependency direction previews, cycle prevention and atomic native source/receipt writes; task progress, blockers, submissions and deadlines remain unchanged.
+
+- Add independently consented blocker recording and clearing with actor-entered reasons, eligible follow-up person/date, native participant/coordinator permissions and atomic source/receipt writes; deadlines, dependencies and formal-review protections remain preserved.
+
+- Add separately consented private blocker/prerequisite metadata lookup with current source visibility, permitted follow-up owner/date, bounded paging and source resolution links; notes, submissions and workflow changes remain in Office Connect.
+
+- Add a separately consented private task review queue with current officer/work-lead eligibility, bounded metadata paging, owner/deadline details and independently permitted accept/return guidance; stored submissions remain in Office Connect.
+
+- Add separately consented officer task cancellation with exact state/reason previews, visible contribution/dependency effects and atomic native cancellation/receipt writes; history, submissions and formal-review protections remain enforced.
+
+- Add separately consented task reopening through current case-officer/work-lead authority, exact Done-to-In-progress previews and atomic native task/receipt writes; ownership, submissions and deadlines remain preserved.
+
+- Add separately consented officer task reassignment with exact old/new owner and status previews, current contributor-access checks and atomic native transfer/receipt writes; existing submissions and deadlines remain preserved.
+
+- Add separately consented initial task assignment through contributing-unit officer authority, exact private previews and atomic native assignment/receipt writes; contributor access, source deadlines and formal-review protections remain enforced.
+
+- Add separately consented private task acceptance and return for changes through current officer/work-lead authority, exact expiring previews and atomic native review/receipt writes; blockers and formal approvals retain source rules.
+
+- Add separately consented internal task deadline setting/explicit clearing through officer/work-lead authority, exact private previews and atomic native milestone/receipt writes; official dates and formal-review amendments remain in Office Connect.
+
+- Add separately consented /new_task proposals through signed-in forms and exact private confirmation, preserving source deadlines/access/open-work rules and officer-only assignment; atomic task/event/audit/receipt and deletion recovery remain protected.
+
+- Add separately consented private room withdrawal and date moves with exact previews, ownership/current-source checks and atomic source/notice/audit/receipt writes; approved moves retain the old booking until normal approval.
+
+- Add separately consented private meeting rescheduling/cancellation with signed-in forms, exact expiring previews, stale-source checks and atomic source/audit/receipt handling; linked room/managed video/recurring cases stay in Office Connect.
+
+- Add private /find metadata search across independently permitted tasks, work titles, document numbers/subjects and meetings within the next 31 days, with bounded detail commands and no retained search text.
+
+- Add an on-demand private /brief combining permitted calendar, task and request summaries, with per-account section choices and staged reminder preferences; scheduled delivery stays inactive.
+
+- Add a private personalized /menu and /help, availability explanations in /status, and record-specific detail/back/allowed-action guidance.
+
+- Complete private guided meeting/room actions through webhook guide, preview, confirmation and recovery replies, including partial room failure without recreating the saved meeting.
+
+- Add separately consented private travel checklist/status, standalone and room-linked meal status, and work-arrangement filing lookup.
+
+- Add separately consented private supplies-request lookup with source approval, collection and receipt-confirmation stages.
+
+- Add separately consented private document number/subject search and workflow/routing/review status lookup.
+- Add a private work summary combining overdue tasks, upcoming deadlines and work awaiting review.
+
+- Add optional private Telegram task and work-status lookups with separate consent and current record access checks.
+- Support bounded pages, overdue/upcoming/review filters, deadlines, task progress and signed-in source links through private webhook replies.
+- With separate consent, preview and confirm task acknowledgement or output submission for review; no automatic notifications.
+
 ## 9.62 — November 3, 2026
 
 - Provision 1 GiB shared memory for native companion browser acceptance and retain crash diagnostics.

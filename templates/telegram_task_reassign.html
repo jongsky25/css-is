@@ -1,0 +1,29 @@
+{% extends "dash_layout.html" %}
+{% block title %}Reassign an active task — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>Reassign an active task</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/work">Review tasks and submissions</a></p>
+<p>Start with <code>/task_reassign</code> in your linked private chat. Only the concerned officer for the task's contributing unit may transfer a To do, In progress or For review task. Work-lead or task-owner status alone is insufficient.</p>
+<p><strong>Reassignment returns the task to To do for the new owner.</strong> This includes tasks previously In progress or For review. The current submission, expected output, original proposal, blockers, history and deadline are preserved. Review the submission in Office Connect first; stored submission contents stay there.</p>
+<p>Select a different active person explicitly. They must already read every linked document. No document access is granted; ownership follows normal work membership rules. Proposed, done/cancelled tasks, completed work and active formal consolidation review amendments stay in Office Connect.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if prepared %}
+<p role="status">{% if prepared.state == 'pending' %}Your preview is prepared. No task has been reassigned. Send <code>/taskreassign_preview {{ prepared.operation_id }}</code> in the original private Telegram chat, check old/new owner, status reset and unchanged deadline, then confirm before expiry.{% else %}This operation already has a recorded outcome. Send <code>/taskreassign_receipt {{ prepared.operation_id }}</code> in the original private chat. Recovery will not repeat the transfer.{% endif %}</p>
+{% endif %}
+{% if origins %}
+<form method="post" action="{{ action_path }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="reassign-origin">Starting private conversation</label><br><select id="reassign-origin" name="origin" required>{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
+<p><label for="reassign-work">Work item number</label><br><input id="reassign-work" name="case_id" type="number" min="1" value="{{ values.get('case_id','') }}" required></p>
+<p><label for="reassign-task">Task number</label><br><input id="reassign-task" name="task_id" type="number" min="1" value="{{ values.get('task_id','') }}" required></p>
+<p>Use IDs from the signed-in work page. Check the exact work and task in the private preview.</p>
+<p><label for="reassign-owner">New task owner</label><br><select id="reassign-owner" name="owner_id" required style="max-width:100%"><option value="">Choose a different active account</option>{% for person in people %}<option value="{{ person.id }}" {% if values.get('owner_id')|string == person.id|string %}selected{% endif %}>{{ person.name }} (account {{ person.id }})</option>{% endfor %}</select></p>
+<p>The directory lists active accounts; this task's contributor eligibility is checked after selection and again at confirmation.</p>
+<p><label for="reassign-reason">Reassignment reason</label><br><textarea id="reassign-reason" name="reason" rows="4" maxlength="500" style="box-sizing:border-box;width:100%" required>{{ values.get('reason','') }}</textarea></p>
+<p>The selected account and reason appear in Telegram and normal history. Preview expires after five minutes. Changed task, submission, account or linked records require a fresh preview; current permissions are checked again at confirmation.</p>
+<button type="submit">Prepare exact private preview</button>
+</form>
+{% else %}<p>No current private reassignment request is available. Start <code>/task_reassign</code> after enabling and consenting to its separate pilot and work read permission.</p>{% endif %}
+</div>
+{% endblock %}

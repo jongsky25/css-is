@@ -1,0 +1,35 @@
+{% extends "dash_layout.html" %}
+{% block title %}Prepare my supply draft — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>Prepare my supply draft</h1>
+<p><a href="/account/telegram">Telegram permissions</a> · <a href="/supplies/requests">My supply requests</a></p>
+<p>Start <code>/supply_draft</code> privately. Choose up to five active catalog items, enter quantities and review the exact private preview before confirming. Opening or preparing this form saves no draft. Submission and approval are separate.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if prepared %}<p role="status">{% if prepared.state == 'pending' %}Preview prepared. No supply draft exists yet. Send <code>/supplydraft_preview {{ prepared.operation_id }}</code> in the original private chat, then confirm the exact requester, items and quantities before expiry.{% else %}This operation has a recorded outcome. Send <code>/supplydraft_receipt {{ prepared.operation_id }}</code> privately. Recovery never creates another draft.{% endif %}</p>{% endif %}
+{% if origins %}
+<form method="get" action="{{ action_path }}">
+<input type="hidden" name="origin" value="{{ selected or origins[0] }}">
+<label for="catalog-query">Search active catalog</label>
+<input id="catalog-query" name="q" maxlength="80" value="{{ catalog_query }}" style="width:100%;box-sizing:border-box">
+<button type="submit">Search catalog</button>
+</form>
+<p>Search before filling the draft. Changing catalog pages clears unsaved entries. Each search page shows up to 25 results; selected items are retained after a form error. Catalog results show no stock balances.</p>
+{% if next_after %}<a href="{{ action_path }}?origin={{ selected or origins[0] }}&amp;q={{ catalog_query|urlencode }}&amp;after={{ next_after }}">Next catalog page</a>{% endif %}
+<form method="post" action="{{ action_path }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="draft-origin">Starting private conversation</label><select id="draft-origin" name="origin" required style="max-width:100%">{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
+<p><label for="draft-purpose">Purpose</label><input id="draft-purpose" name="purpose" maxlength="1000" value="{{ values.get('purpose','') }}" required style="width:100%;box-sizing:border-box"></p>
+<p><label for="draft-date">Date needed (optional)</label><input id="draft-date" name="date_needed" type="date" value="{{ values.get('date_needed','') }}"></p>
+{% for i in line_numbers %}
+<fieldset style="min-width:0;margin-bottom:1em"><legend>Line {{ i }}</legend>
+<label for="draft-item-{{ i }}">Item {{ i }}</label><select id="draft-item-{{ i }}" name="item_{{ i }}" style="width:100%;box-sizing:border-box"><option value="">No item selected</option>{% for item in catalog_items %}<option value="{{ item.id }}" {% if values.get('item_' ~ i,'')|string == item.id|string %}selected{% endif %}>{{ item.code }} · {{ item.description }} · {{ item.unit }}</option>{% endfor %}</select>
+<label for="draft-quantity-{{ i }}">Quantity {{ i }}</label><input id="draft-quantity-{{ i }}" name="quantity_{{ i }}" type="number" min="1" max="2147483647" value="{{ values.get('quantity_' ~ i,'') }}" style="max-width:100%">
+</fieldset>
+{% endfor %}
+<p>Leave both fields blank for unused lines. Repeated items are combined. Current native availability checks still apply; a draft does not hold stock. Changed catalog or requester details require a fresh preview. Preview expires after five minutes.</p>
+<button type="submit">Prepare exact private preview</button>
+</form>
+{% else %}<p>No current private request. Enable and consent to the separate supply-draft pilot and supplies read permission, then start <code>/supply_draft</code> in your linked private chat. Your account must be linked to current internal staff with an organizational unit.</p>{% endif %}
+</div>
+{% endblock %}

@@ -58,35 +58,47 @@ def history(conn, user, case_id, task_id, comment_id, before=None):
 
 def post(conn, user, case_id, body, task_id=None, parent_id=None, mentions=None):
     with transaction(conn):
-        user, _, _ = scope(conn, user, case_id, task_id)
-        work.writable(conn)
-        body = work._text(body, 'Message', 4000)
-        if parent_id is not None:
-            message(conn, case_id, task_id, parent_id)
-        import work_updates
-        mentioned = work_updates.validate_mentions(conn, case_id, mentions or [])
-        now = tz.now_iso()
-        cid = conn.execute('''INSERT INTO work_comment(case_id,task_id,parent_id,author_id,created_at)
-                              VALUES (?,?,?,?,?)''', (case_id, task_id, parent_id, user['id'], now)).lastrowid
-        conn.execute('INSERT INTO work_comment_revision VALUES (?,1,?,?)', (cid, body, now))
-        work_updates.record(conn, cid, 1, mentioned, new=True)
-        return cid
+        return post_in_transaction(conn,user,case_id,body,task_id,parent_id,mentions)
+
+
+def post_in_transaction(conn,user,case_id,body,task_id=None,parent_id=None,mentions=None):
+    if not conn.in_transaction:
+        raise RuntimeError('Discussion posting requires its caller transaction')
+    user, _, _ = scope(conn, user, case_id, task_id)
+    work.writable(conn)
+    body = work._text(body, 'Message', 4000)
+    if parent_id is not None:
+        message(conn, case_id, task_id, parent_id)
+    import work_updates
+    mentioned = work_updates.validate_mentions(conn, case_id, mentions or [])
+    now = tz.now_iso()
+    cid = conn.execute('''INSERT INTO work_comment(case_id,task_id,parent_id,author_id,created_at)
+                          VALUES (?,?,?,?,?)''', (case_id, task_id, parent_id, user['id'], now)).lastrowid
+    conn.execute('INSERT INTO work_comment_revision VALUES (?,1,?,?)', (cid, body, now))
+    work_updates.record(conn, cid, 1, mentioned, new=True)
+    return cid
 
 
 def edit(conn, user, case_id, task_id, comment_id, revision, body, mentions=None):
     with transaction(conn):
-        user, _, _ = scope(conn, user, case_id, task_id)
-        work.writable(conn)
-        current = message(conn, case_id, task_id, comment_id)
-        if current['author_id'] != user['id']:
-            raise permissions.Denied('Only the author can edit this message.')
-        if current['revision'] != revision:
-            raise docs.Conflict('This message was edited elsewhere. Review the latest text before saving again.')
-        body = work._text(body, 'Message', 4000)
-        import work_updates
-        old_mentions = [m['user_id'] for m in work_updates.mentions(conn, comment_id, revision)]
-        mentioned = work_updates.validate_mentions(conn, case_id, old_mentions if mentions is None else mentions)
-        if body != current['body'] or mentioned != old_mentions:
-            conn.execute('INSERT INTO work_comment_revision VALUES (?,?,?,?)',
-                         (comment_id, revision + 1, body, tz.now_iso()))
-            work_updates.record(conn, comment_id, revision + 1, mentioned)
+        return edit_in_transaction(conn,user,case_id,task_id,comment_id,revision,body,mentions)
+
+
+def edit_in_transaction(conn,user,case_id,task_id,comment_id,revision,body,mentions=None):
+    if not conn.in_transaction:
+        raise RuntimeError('Discussion editing requires its caller transaction')
+    user, _, _ = scope(conn, user, case_id, task_id)
+    work.writable(conn)
+    current = message(conn, case_id, task_id, comment_id)
+    if current['author_id'] != user['id']:
+        raise permissions.Denied('Only the author can edit this message.')
+    if current['revision'] != revision:
+        raise docs.Conflict('This message was edited elsewhere. Review the latest text before saving again.')
+    body = work._text(body, 'Message', 4000)
+    import work_updates
+    old_mentions = [m['user_id'] for m in work_updates.mentions(conn, comment_id, revision)]
+    mentioned = work_updates.validate_mentions(conn, case_id, old_mentions if mentions is None else mentions)
+    if body != current['body'] or mentioned != old_mentions:
+        conn.execute('INSERT INTO work_comment_revision VALUES (?,?,?,?)',
+                     (comment_id, revision + 1, body, tz.now_iso()))
+        work_updates.record(conn, comment_id, revision + 1, mentioned)

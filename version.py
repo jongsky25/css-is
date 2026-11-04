@@ -18,10 +18,58 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.62"
+APP_VERSION = "9.91"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.91",
+        "date": "November 3, 2026",
+        "summary": "Find office records and prepare work and supply requests through private Telegram previews.",
+        "changes": [
+            "Submit your own draft or returned supply request for approval after a separate exact private Telegram preview, preserving native numbering and approval rules.",
+            "Create your own supplies draft from a guided catalog form after an exact private Telegram preview and confirmation, leaving submission and approval separate.",
+            "Open an edit form for your own discussion message with source numbers and revision filled in, then enter replacement text and confirm an exact private preview.",
+            "Open a notice-prefilled acknowledgement form from your private update details, then review and confirm its exact revision before marking it read.",
+            "Open current discussion threads from your private updates and browse comments from followed discussions when you have separate reading permission.",
+            "Browse recent comments in a work or task discussion in private Telegram, then open threads, full messages and reply forms without changing read status.",
+            "Open a reply form from a discussion thread with the work, task and parent comment already filled in, then preview and confirm privately using your existing reply permission.",
+            "With separate consent, open a selected discussion comment and its replies in private Telegram, and read longer messages in current-revision parts without changing read status.",
+            "With separate consent, search current comments and replies in one work or task discussion and view short excerpts with source links in private Telegram.",
+            "List your followed work and task discussions in private Telegram, with coverage details and current source links, without changing preferences.",
+            "Follow or unfollow your work and task discussions through a private preview and confirmation, preserving existing notices and read status.",
+            "Mark one of your discussion updates read through a private preview and confirmation of its exact notice revision.",
+            "Find your unread discussion mentions, replies and followed updates in private Telegram, with current source links and no automatic read-state changes.",
+            "Select eligible colleagues to mention in work or task comments and replies, then review the message and recipients before confirming.",
+            "Edit your own work or task comment through a private Telegram preview and confirmation, preserving history and protecting newer changes.",
+            "Reply to an existing work or task comment through a private Telegram preview and confirmation, keeping replies in the correct discussion.",
+            "Post a work or task discussion comment through a private Telegram preview and confirmation, keeping progress and approvals unchanged.",
+            "Authorized work leads and concerned officers can add or remove task prerequisites through exact private Telegram previews and confirmation.",
+            "Record or clear a task blocker through private previews and confirmation, preserving native follow-up permissions, deadlines and dependencies.",
+            "Check task blocker flags, unfinished prerequisites and permitted follow-up responsibility in private Telegram without changing the work.",
+            "Find tasks you are allowed to review in private Telegram, with owner/deadline details and guidance for separate review confirmations.",
+            "Concerned officers can preview and confirm unfinished task cancellation in private Telegram, with completion and dependency effects shown.",
+            "Authorized officers and work leads can preview and confirm reopening a Done task for its existing owner in private Telegram.",
+            "Concerned officers can preview and confirm task reassignment in private Telegram, with the new owner returning to To do.",
+            "Concerned officers can preview and confirm an initial task assignment in private Telegram, preserving contributor access checks.",
+            "Authorized officers and work leads can preview and confirm task acceptance or return for changes in private Telegram.",
+            "Authorized officers and work leads can preview and confirm internal task deadline changes in private Telegram.",
+            "Propose a task through a guided private Telegram preview; officer assignment confirmation remains required.",
+            "Preview and confirm withdrawal or a date move for your own room request, with normal approval preserved.",
+            "With separate consent, preview and confirm rescheduling or cancellation of a plain meeting you created.",
+            "Search permitted tasks, work titles, document metadata and upcoming meetings together in private Telegram.",
+            "Request a daily private brief and save reminder preferences for later activation.",
+            "With your separate consent, Telegram can show your assigned tasks, deadlines and permitted work status.",
+            "Filter your tasks by deadline or review status and open the current records.",
+            "Separate consent and confirmation let you acknowledge a task or submit an output for review.",
+            "Find permitted document numbers, subjects and status with a separate document read permission.",
+            "Check your supply request approval and collection status with separate consent.",
+            "Separate read permissions show your travel filing, meal request and work-arrangement status.",
+            "Private meeting and room-request forms now return previews and confirmations through incoming Telegram replies.",
+            "Your private menu shows enabled, consented commands and helpful next steps.",
+            "A private summary combines overdue tasks, upcoming deadlines and work awaiting review."
+        ]
+    },
     {
         "version": "9.62",
         "date": "November 3, 2026",

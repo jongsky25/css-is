@@ -43,7 +43,10 @@ that Telegram executed the response.
 ## Remaining outgoing connection work
 
 Scheduled notifications, reminders, group membership checks, group commands and
-guided meeting/room actions still use the existing asynchronous outgoing path.
+group-origin meeting/room actions still use the existing asynchronous outgoing path.
+Draft 9.79 adds [private guided meeting/room webhook replies](TELEGRAM_PRIVATE_MEETING_WEBHOOK.md),
+including explicit preview retrieval, confirmation and recovery. This draft is
+not yet activated or verified live.
 This release does not establish that these work on the live host. An incoming
 webhook response cannot independently send a scheduled notification when there
 is no incoming update. Keep the full Telegram live pilot incomplete until those

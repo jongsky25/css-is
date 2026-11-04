@@ -1,5 +1,7 @@
 # Guided meeting with a room request (T3.4)
 
+Draft 9.79 adds a [private webhook guide/preview/confirmation/recovery flow](TELEGRAM_PRIVATE_MEETING_WEBHOOK.md). Direct/group worker behavior below remains available; deployment and live acceptance are separate.
+
 Implementation: [meeting adapter](../telegram_meetings.py),
 [room child coordinator](../telegram_meeting_rooms.py),
 [room adapter](../telegram_room_requests.py),

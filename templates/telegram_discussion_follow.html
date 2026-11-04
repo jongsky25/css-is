@@ -1,0 +1,25 @@
+{% extends "dash_layout.html" %}
+{% block title %}Follow a discussion — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>Follow or unfollow a discussion</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/work">Open source discussions</a></p>
+<p>Start <code>/discussion_follow</code> in your linked private chat. Choose the exact work and optional task, then review your own current follow and proposed change in Telegram before confirming.</p>
+<p>A work-wide follow covers work-level and all task discussions. A task-specific follow covers only that task. Unfollowing a task does not remove a work-wide follow; unfollowing work does not remove task-specific follows. Other accounts are never changed.</p>
+<p>Future native follower notices require current source access. Existing notices/read status, direct mentions/replies, task progress and approvals stay unchanged. This does not enable Telegram/email delivery or change existing delivery preferences.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if prepared %}<p role="status">{% if prepared.state == 'pending' %}Your preview is prepared. Following has not changed. Send <code>/discussionfollow_preview {{ prepared.operation_id }}</code> in the original private chat and confirm before expiry.{% else %}This operation has a recorded outcome. Send <code>/discussionfollow_receipt {{ prepared.operation_id }}</code> in the original private chat. Recovery never repeats the preference change.{% endif %}</p>{% endif %}
+{% if origins %}
+<form method="post" action="{{ action_path }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="follow-origin">Starting private conversation</label><br><select id="follow-origin" name="origin" required>{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
+<p><label for="follow-work">Work item number</label><br><input id="follow-work" name="case_id" type="number" min="1" value="{{ values.get('case_id','') }}" required></p>
+<p><label for="follow-task">Task number (optional)</label><br><input id="follow-task" name="task_id" type="number" min="1" value="{{ values.get('task_id','') }}"></p>
+<p>Leave Task number empty for a work-wide follow.</p>
+<p><label for="follow-choice">Change</label><br><select id="follow-choice" name="choice" required><option value="">Choose a change</option><option value="follow" {% if values.get('choice') == 'follow' %}selected{% endif %}>Follow</option><option value="unfollow" {% if values.get('choice') == 'unfollow' %}selected{% endif %}>Unfollow</option></select></p>
+<p>The exact preview expires after five minutes. Changed source, access or selected/work-wide following requires a fresh preview. Already matching preferences need no change.</p>
+<button type="submit">Prepare exact private preview</button>
+</form>
+{% else %}<p>No current private request. Start <code>/discussion_follow</code> after enabling and consenting to its separate pilot and work read permission.</p>{% endif %}
+</div>
+{% endblock %}
