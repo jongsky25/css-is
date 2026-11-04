@@ -75,6 +75,25 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 4, 2026 (Asia/Manila): reuse the existing bot.** Owner explicitly
+selected reuse; a new bot is no longer required. Follow the updated
+[reuse preflight](TELEGRAM_PILOT_OPERATOR.md#existing-bot-reuse--november-4-2026-asiamanila).
+Cloud readiness currently exposes only `HF_TOKEN`; expected bot @username and
+`OFFICE_TELEGRAM_PILOT_BOT_TOKEN` are missing. Requested only the username in chat
+and secure token configuration. No provider call, registration change, pilot
+upload or production change occurred. Password/participant setup and actual
+hosted acceptance remain pending. Earlier dedicated/new-bot requirements below
+are superseded by this owner decision.
+
+Fresh GitHub checks: review/local head `3d7321d5eee451b69012da63a61081bdb0c4b10e`
+matched; main remained `625c60f2fc91ddf98519a9084a5c4217fd1f2e56`.
+[CI 41663290885](https://github.com/jongsky25/css-is/actions/runs/41663290885)
+completed successfully: normal, shuffled, release metadata, dependency audit and
+Required checks all passed. [Avatar 41663294365](https://github.com/jongsky25/css-is/actions/runs/41663294365)
+completed successfully. These results certify that tooling commit, not the later
+documentation commit saving this decision; recheck the eventual published head.
+
+
 **Stage 2 authorized and prepared — November 3, 2026.** Owner instructed “do
 stage 2”, authorizing the saved isolated pilot scope. Production/stage 3 remains
 deferred. [Operator runbook](TELEGRAM_PILOT_OPERATOR.md) records exact credentials,

@@ -1,11 +1,33 @@
 # Isolated Telegram pilot — operator runbook
 
 Stage 2 authorized by the owner's **“do stage 2”** instruction on 2026-11-03.
-This authorizes the isolated protected target, dedicated test-bot setup, selected
+This authorizes the isolated protected target, owner-selected bot setup, selected
 private feature batches and real test replies described in the
 [pilot plan](TELEGRAM_STAGE2_PILOT_PLAN.md). It does not authorize production
 publication, bot replacement, activation, main merge or stage 3. No paid upgrade,
 public source publication, group/scheduled delivery or email is included.
+
+## Existing bot reuse — November 4, 2026 (Asia/Manila)
+
+The owner explicitly instructed **“reuse it. office connect”** after discussing
+Telegram's single-webhook constraint. Reuse the existing bot for this isolated
+pilot; creating a new bot is no longer a prerequisite. This supersedes earlier
+“dedicated/new bot only” wording in the plan and handoff. It does not authorize
+production application deployment, main merge or expanded participant access.
+
+The expected @username and token binding are still unavailable. Configure the
+existing token as cloud `OFFICE_TELEGRAM_PILOT_BOT_TOKEN`; do not paste it into
+chat or extract credentials from production. Use `getMe` and `getWebhookInfo`
+before mutation. Record the current registration and a viable restoration path
+privately before redirecting it to the verified pilot. Telegram cannot read back
+an existing webhook secret: an old URL alone does not establish rollback readiness.
+Check for an existing polling consumer and unexplained pending updates; do not
+run competing consumers, discard updates or process production messages as fixtures.
+If inspection reveals an unresolved interruption/restoration issue, report that
+concrete blocker. The reuse decision itself needs no repeated approval.
+
+All synthetic data, sender allowlist, selected-batch, explicit consent and receipt
+requirements remain. This session changed no bot registration or hosted app.
 
 ## Target and current boundary
 
@@ -27,10 +49,10 @@ occurred. Production and the shared companion preview remain untouched.
 | Name/location | Required value and purpose |
 | --- | --- |
 | Cloud `HF_TOKEN` | Existing configured identity; creation of this target succeeded. Prefer target-scoped rights. |
-| Cloud `OFFICE_TELEGRAM_PILOT_BOT_TOKEN` | Token for a newly created dedicated test bot, used for safe identity/registration checks and copied only to this pilot's `CSS_TELEGRAM_BOT_TOKEN` secret. Never use the production token. |
+| Cloud `OFFICE_TELEGRAM_PILOT_BOT_TOKEN` | Existing bot token selected by the owner for reuse; used for identity/registration checks and copied only to this pilot's `CSS_TELEGRAM_BOT_TOKEN` secret after the reuse preflight above. |
 | Pilot `OFFICE_TELEGRAM_PILOT_PASSWORDS` | JSON object with exactly `staff`, `officer`, `peer`, `admin`; four different passwords of 16–128 characters, kept in the owner's password manager. |
 | Pilot `OFFICE_TELEGRAM_PILOT_SENDERS` | JSON list of one or two explicitly nominated positive numeric Telegram user IDs. Owner and nominated peer only. No group/chat-topic IDs. |
-| Pilot `CSS_TELEGRAM_BOT_TOKEN` | Dedicated token, after the operator verifies bot identity and existing registration. |
+| Pilot `CSS_TELEGRAM_BOT_TOKEN` | Owner-selected existing token, after identity and reuse preflight. |
 | Pilot `CSS_TELEGRAM_WEBHOOK_SECRET` | New random 32–256 character URL-safe secret; already created. |
 | Pilot `CSS_SESSION_SECRET` | Independent random session secret of at least 32 characters; already created. |
 | Pilot variable `OFFICE_TELEGRAM_PILOT_BATCH` | `off` by default. Approved batch `A`, `B`, `C`, `D`, `E` or `F`; never a production switch. |
@@ -41,12 +63,12 @@ password values. Changing a batch/secret restarts the disposable app and resets
 records, links and sessions. Record the old results before doing so. Missing or
 invalid settings abort startup; there is no open first-admin registration mode.
 
-The dedicated bot must be identified by its expected @username and `getMe`, with
+The selected existing bot must be identified by its expected @username and `getMe`, with
 no token-bearing URLs or raw API errors in logs. Inspect `getWebhookInfo` first:
-stop if the bot is registered elsewhere, or has unexplained pending updates.
-Do not overwrite another workflow or drop pending updates to make setup pass.
+apply the reuse preflight above if registered elsewhere or pending updates exist.
+Do not drop pending updates to make setup pass.
 If the owner does not know their numeric ID, agree a one-time setup phrase and
-have them send it privately to the new bot before registration. A read-only
+have them send it privately to the selected bot before registration. A read-only
 `getUpdates` inspection can extract only the matching non-bot private sender ID,
 without logging bodies or identities; save that ID privately in the pilot secret.
 A second participant requires their own explicit nomination/setup; do not infer
@@ -138,14 +160,14 @@ existence, and do not inject faults into production.
 ## Provider registration and acceptance sequence
 
 After matching manifest, local/CI gates, secret presence, target visibility and
-bot identity, set test batch A and verify the new boot. Register only the dedicated
+bot identity, set test batch A and verify the new boot. Register only the owner-selected
 bot's callback with its current secret and `allowed_updates=["message"]`; do not
 use `drop_pending_updates`. Inspect registration again without publishing tokens.
 Wrong/missing-secret probes must fail and unlisted senders must produce no reply
 or business action. Registration/HTTP handoff does not prove receipt.
 
 Owner phone batch A: open the app, sign in as synthetic staff, send `/start` to
-the dedicated bot, select calendar read on `/account/telegram`, submit the actual
+the selected bot, select calendar read on `/account/telegram`, submit the actual
 received code, then `/status` and its exact `/confirm` in the same private chat.
 Do not issue another `/start` while confirmation is pending. Verify `/calendar`,
 `/menu`, `/status`, source navigation, denied work commands and explicit disconnect.

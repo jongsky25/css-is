@@ -1,5 +1,9 @@
 # Finish the current Telegram feature batch — three-stage handoff
 
+**November 4 owner update:** reuse the existing bot; a new bot is not required.
+The [operator reuse preflight](TELEGRAM_PILOT_OPERATOR.md#existing-bot-reuse--november-4-2026-asiamanila)
+supersedes earlier dedicated-bot requirements. Production release remains deferred.
+
 Updated November 3, 2026. Repository: `jongsky25/css-is`.
 Review branch: `feat/telegram-private-work-lookup`.
 Draft [PR #572](https://github.com/jongsky25/css-is/pull/572).

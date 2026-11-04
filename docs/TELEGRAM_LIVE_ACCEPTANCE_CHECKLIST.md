@@ -1,5 +1,9 @@
 # Pending private Telegram live-acceptance checklist
 
+**November 4 owner update:** reuse the existing bot; a new bot is not required.
+The [operator reuse preflight](TELEGRAM_PILOT_OPERATOR.md#existing-bot-reuse--november-4-2026-asiamanila)
+supersedes earlier dedicated-bot requirements. Production release remains deferred.
+
 This is a reviewable plan for later execution, not evidence of live acceptance.
 The owner authorized stage 2 on 2026-11-03: execute only the isolated test scope
 in the [operator runbook](TELEGRAM_PILOT_OPERATOR.md). Every case below remains

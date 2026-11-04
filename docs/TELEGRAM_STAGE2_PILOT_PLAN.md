@@ -1,5 +1,9 @@
 # Telegram stage-2 isolated pilot and acceptance plan
 
+**November 4 owner update:** reuse the existing bot; a new bot is not required.
+The [operator reuse preflight](TELEGRAM_PILOT_OPERATOR.md#existing-bot-reuse--november-4-2026-asiamanila)
+supersedes earlier dedicated-bot requirements. Production release remains deferred.
+
 Prepared 2026-11-03 for draft [PR #572](https://github.com/jongsky25/css-is/pull/572).
 Status: **stage 2 authorized and in progress** following the owner’s “do stage 2” instruction.
 The scoped isolated pilot is authorized; production/stage 3 remains deferred.
