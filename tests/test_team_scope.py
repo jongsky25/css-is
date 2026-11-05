@@ -362,3 +362,68 @@ def test_admin_filed_activity_reaches_the_section_managers_home(org):
         conn.execute("DELETE FROM event WHERE id=?", (ev["id"],))
         conn.execute("DELETE FROM form_instance WHERE id=?", (fid,))
         conn.commit()
+
+
+@pytest.mark.parametrize("actor", ["s1_chief", "s2_chief", "s1", "unlinked", "admin"])
+@pytest.mark.parametrize("action", ["add", "preset", "edit", "remove", "move"])
+def test_registration_question_actions_use_manage_page_team_authority(org, app_mod, actor, action):
+    """All question writes honor the same team authority as the manage page."""
+    from starlette.testclient import TestClient
+    from conftest import session_token
+    import auth
+    import reg_questions as rq
+
+    conn = org["conn"]
+    unit = conn.execute("SELECT id FROM org_unit WHERE path='TSCOPE/D1/S1'").fetchone()[0]
+    ev = st.create_event(conn, "TS question permissions", "2026-11-24",
+                         lead_org_id=unit, created_by="ts-adm@test.local")
+    if actor == "unlinked":
+        conn.execute("UPDATE admin_user SET role='section_manager' WHERE id=?", (org[actor],))
+        conn.commit()
+    question, error = rq.clean_question({"label": "First question", "kind": "text"})
+    assert error is None
+    first = st.add_event_question(conn, ev["id"], question)
+    question["label"] = "Second question"
+    second = st.add_event_question(conn, ev["id"], question)
+    before = st.list_event_questions(conn, ev["id"], include_archived=True)
+    base = f"/activities/{ev['event_token']}"
+    path, data = {
+        "add": ("/questions", {"label": "Added question", "kind": "text"}),
+        "preset": ("/questions/preset", {"preset": "food"}),
+        "edit": (f"/questions/{first}", {"label": "Edited question", "kind": "text"}),
+        "remove": (f"/questions/{first}/remove", {}),
+        "move": (f"/questions/{first}/move", {"direction": "down"}),
+    }[action]
+    allowed = actor in {"s1_chief", "admin"}
+    try:
+        with TestClient(app_mod.app) as client:
+            client.cookies.set(auth.COOKIE_NAME, session_token(_u(conn, org[actor])))
+            page = client.get(base + "/manage", follow_redirects=False)
+            assert page.status_code == (200 if allowed else 303)
+            response = client.post(base + path, data=data, follow_redirects=False)
+            assert response.status_code == 303
+            after = st.list_event_questions(conn, ev["id"], include_archived=True)
+            if not allowed:
+                assert response.headers["location"] == f"/e/{ev['event_token']}"
+                assert after == before
+                return
+            assert response.headers["location"] == base + "/manage?qok=1#questions"
+            if action == "add":
+                assert [q["label"] for q in after] == ["First question", "Second question", "Added question"]
+            elif action == "preset":
+                assert len(after) == len(before) + len(rq.preset_questions("food"))
+            elif action == "edit":
+                assert after[0]["label"] == "Edited question"
+            elif action == "remove":
+                assert [q["id"] for q in after] == [second]
+            else:
+                assert [q["id"] for q in after] == [second, first]
+            saved_page = client.get(response.headers["location"])
+            assert saved_page.status_code == 200
+            assert "Registration questions updated." in saved_page.text
+            if action == "add":
+                assert "Added question" in saved_page.text
+    finally:
+        conn.execute("DELETE FROM event_question WHERE event_id=?", (ev["id"],))
+        conn.execute("DELETE FROM event WHERE id=?", (ev["id"],))
+        conn.commit()

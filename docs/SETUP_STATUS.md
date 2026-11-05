@@ -75,6 +75,26 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 5, 2026: registration-question permission repair, candidate 9.94.**
+Branch: `fix/registration-question-team-permissions`. User requested the fix and
+merge when ready. All five registration-question writes now supply the database
+connection to the shared activity authority check, matching the Manage page's
+section/team access. This prevents authorized non-creator managers from being
+redirected to the participant page before saving. No schema change.
+
+Verification: 90 focused team-scope, registration-question and event-link tests
+passed with no skips. The new 25-case HTTP matrix first reproduced all five
+same-team-manager failures against unchanged handlers (20 other cases passed),
+then passed with the fix. It covers persistence/redirects, presets, edits,
+removal, ordering, admin access and rejection without mutation for another team,
+a same-team viewer and an unlinked manager. Release metadata, lock inputs,
+vendor integrity, evaluation contract, compilation and diff checks passed.
+Next: require complete normal/shuffled CI, dependency audit and current PR checks
+on the actual review head before merging. Merge is authorized and triggers the
+existing guarded production workflow, including fresh backup/version gates;
+no bypass or manual live-data edit is authorized by this repair.
+
+
 **November 4, 2026: learned-rule repairs implemented, candidate 9.93.**
 Branch: `feat/learned-rules-repair`. Restores the encoding tour, separates
 calendar-month answers from rolling 30-day answers, adds the six reviewed

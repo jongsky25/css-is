@@ -9996,7 +9996,7 @@ async def activity_question_add(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         if ev.get("event_kind") == "outside":
             return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
@@ -10023,7 +10023,7 @@ async def activity_question_preset(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         if ev.get("event_kind") == "outside":
             return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
@@ -10057,7 +10057,7 @@ async def activity_question_edit(request: Request, event_token: str, qid: int):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         if ev.get("event_kind") == "outside":
             return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
@@ -10088,7 +10088,7 @@ async def activity_question_remove(request: Request, event_token: str, qid: int)
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         if ev.get("event_kind") == "outside":
             return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
@@ -10113,7 +10113,7 @@ async def activity_question_move(request: Request, event_token: str, qid: int):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         if ev.get("event_kind") == "outside":
             return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
