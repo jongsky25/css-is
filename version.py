@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.95"
+APP_VERSION = "9.96"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.96",
+        "date": "November 5, 2026",
+        "summary": "A brighter Filipino Christmas for Office Connect.",
+        "changes": [
+            "Glowing capiz parols, cranberry ribbons and warm lights bring Christmas to the home page.",
+            "The festive artwork adapts to phones while keeping greetings and work cards easy to read.",
+            "Your saved greetings, companion choices and appearance preferences are preserved."
+        ]
+    },
     {
         "version": "9.95",
         "date": "November 5, 2026",

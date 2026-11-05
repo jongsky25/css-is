@@ -75,6 +75,25 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 5, 2026: Paskong Pinoy implemented, candidate 9.96.** User instructed
+execution of the recommended Christmas replacement. Branch `feat/paskong-pinoy-theme`
+contains original optimized capiz artwork, Christmas-only responsive styling,
+matching light strands and a green/gold companion setting. Nonblank saved greetings,
+existing companion controls and other seasons are preserved. No schema change.
+[Real application screenshots and handoff](design/christmas-replacement/IMPLEMENTATION.md).
+
+Verification: 40 focused appearance/browser/seasonal/companion tests passed without
+failures/skips; after the final artwork crop adjustment, all 3 affected browser
+layout/opt-out/companion tests passed again. Phone/desktop screenshots inspected.
+A mobile cascade defect discovered visually was fixed and covered by a stacking
+assertion. Eight new text/background contrast pairs exceed 4.5:1. Locked Python
+setup/doctor, metadata, JavaScript syntax, SVG and diff checks passed. Existing
+Starlette/httpx deprecation warning remains. Full normal/shuffled CI and dependency
+checks remain required; no production release or shared-preview publication occurred.
+Next: review the draft PR and real-page screenshots; verify current CI before any
+separately authorized release. The original concept study below is historical.
+
+
 **November 5, 2026: Christmas replacement mockups.** User requested stronger
 festive designs informed by external resources. Reviewed existing seasonal CSS,
 artwork and seasonal/companion desktop screenshots; consulted parol and Giant

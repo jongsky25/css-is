@@ -27,7 +27,7 @@ BANNER = "A little spooky. Still productive."
 
 
 BANNERS = {"default": "", "halloween": BANNER,
-           "christmas": "A season of gratitude. A little brighter together.",
+           "christmas": "Maligayang Pasko!",
            "newyear": "A brighter year, together."}
 
 

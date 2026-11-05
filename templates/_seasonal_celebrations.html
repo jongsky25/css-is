@@ -5,7 +5,7 @@
     <span class="celebration-kicker celebration-christmas">Paskong Office Connect</span>
     <span class="celebration-kicker celebration-newyear">New Year at Office Connect</span>
     <h2 data-celebration-message>{{ seasonal.banner if seasonal else '' }}</h2>
-    <p class="celebration-christmas">Small moments of kindness. A little light for everyone.</p>
+    <p class="celebration-christmas">A little brighter, together.</p>
     <p class="celebration-newyear">Here’s to the people who make good work possible.</p>
     {% if celebration_home %}
     <div class="celebration-newyear" data-newyear-clock data-target="{{ seasonal.newyear_target if seasonal else '' }}" data-server-time="{{ seasonal.server_time if seasonal else '' }}" data-year="{{ seasonal.target_year if seasonal else 2027 }}" data-preview="{{ '1' if seasonal and seasonal.preview else '0' }}">

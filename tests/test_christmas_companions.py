@@ -60,7 +60,7 @@ def test_named_companion_full_width_controls_and_scene(seasonal_browser, admin, 
                 assert stage.locator('.av-play-btn').is_enabled()
                 edit = stage.locator('.oc-pet-edit').bounding_box()
                 assert edit['y'] >= controls['y']+controls['height']
-                assert 'companion-courtyard.svg' in stage.evaluate('(el)=>getComputedStyle(el,"::before").backgroundImage')
+                assert 'pasko-lights.svg' in stage.evaluate('(el)=>getComputedStyle(el,"::before").backgroundImage')
                 assert 'christmas-parols.svg' not in stage.evaluate('(el)=>getComputedStyle(el).backgroundImage')
                 stage.locator('.av-sound-btn').click()
                 pw.expect(stage.locator('.av-volume')).to_be_visible()

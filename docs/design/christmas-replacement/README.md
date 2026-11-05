@@ -7,6 +7,8 @@ production theme change. Review branch: `design/christmas-replacement-mockups-20
 
 ![Three Christmas replacement directions](comparison-board.png)
 
+Implementation now exists on `feat/paskong-pinoy-theme`: [real screenshots and verification](IMPLEMENTATION.md). The original concept study below remains unchanged.
+
 ## Recommendation
 
 **01 — Paskong Pinoy** is the recommended direction: luminous capiz-inspired

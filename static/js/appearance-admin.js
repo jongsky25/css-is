@@ -41,7 +41,7 @@
   document.querySelectorAll('[name="theme"]').forEach(function(radio){
     radio.addEventListener('change',function(){radio.form.elements.artwork.checked=radio.value!=='default';
       var message=radio.form.elements.banner;
-      if(['','A little spooky. Still productive.','A season of gratitude. A little brighter together.','A brighter year, together.'].includes(message.value))message.value='';});
+      if(['','A little spooky. Still productive.','A season of gratitude. A little brighter together.','Maligayang Pasko!','A brighter year, together.'].includes(message.value))message.value='';});
   });
   editor.addEventListener('change',function(event){
     if(event.target.name==='expires')return;

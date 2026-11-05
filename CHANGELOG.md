@@ -1,3 +1,9 @@
+## 9.96 — November 5, 2026
+
+- Replace the Christmas home illustration with original capiz-parol artwork, cranberry ribbons and warm lighting.
+- Add an evergreen and ivory composition with responsive artwork, matching light strands and a coordinated companion setting.
+- Retain custom greetings, companion controls, artwork opt-out, high contrast, reduced motion and print behaviour.
+
 ## 9.95 — November 5, 2026
 
 - System health includes administrator-only timings for slow routes, session lookup, navigation and individual health checks.

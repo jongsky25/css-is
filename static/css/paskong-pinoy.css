@@ -1,0 +1,91 @@
+/* Paskong Pinoy: decorative artwork stays separate from live, editable copy.
+   Scoped to Christmas so other seasonal themes keep their own composition. */
+:root[data-season="christmas"] { --celebration-night:#063d2d; }
+:root[data-season="christmas"]:not([data-theme="dark"]):not([data-theme="contrast"]) {
+  --bg:#f9f4e9; --surface:#fffdf7; --surface-2:#f4ebdc;
+  --surface-3:#eae0ce; --ink:#173e30; --ink-soft:#385448;
+  --soft:#506457; --grey:#506457; --line:#d9ceba;
+  --line-strong:#9a8b70; --accent:#086044; --accent-ink:#064f38;
+  --accent-bg:#e5efe5; --on-accent:#fff;
+}
+:root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) .celebration-home {
+  grid-template-columns:1fr 1.15fr;
+  background:#063d2d;
+  border:1px solid #b89553;
+  border-bottom:3px solid #caa45b;
+  border-radius:20px;
+  min-height:340px;
+  box-shadow:0 12px 32px #173b291c;
+}
+:root[data-season="christmas"][data-season-artwork="1"] .celebration-home .celebration-copy {
+  padding:38px clamp(24px,4vw,60px);
+}
+:root[data-season="christmas"][data-season-artwork="1"] .celebration-home .celebration-ribbon {
+  /* Avoid repeating the greeting above the actual heading. */
+  display:none;
+}
+:root[data-season="christmas"][data-season-artwork="1"] .celebration-home .celebration-kicker {
+  color:#f2d291; font-size:.7rem; letter-spacing:.2em; line-height:1.6;
+}
+:root[data-season="christmas"][data-season-artwork="1"] .celebration-home h2 {
+  max-width:19ch; margin:18px 0; color:#fff1d3;
+  font:normal clamp(2rem,4.2vw,4.4rem)/1.08 Georgia,serif;
+  text-wrap:balance;
+}
+:root[data-season="christmas"][data-season-artwork="1"] .celebration-home p {
+  color:#f4e5c7; font:italic clamp(1rem,1.5vw,1.2rem)/1.5 Georgia,serif;
+}
+:root[data-season="christmas"][data-season-artwork="1"] .celebration-home .celebration-art {
+  min-height:340px;
+  background:url('/static/img/seasonal/pasko-capiz.webp') center top/cover no-repeat;
+  /* Blend the illustration edge into the copy's solid background. */
+  mask-image:linear-gradient(to right,transparent,#000 16%);
+  animation:none;
+}
+:root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) .topnav::after {
+  bottom:-18px; height:22px; z-index:-1;
+  background:#063d2d url('/static/img/seasonal/pasko-lights.svg') center top/360px 30px repeat-x;
+  border-bottom:1px solid #b89553;
+}
+:root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) body:has(.celebration-home) .oc-card {
+  border-top:1px solid var(--line);
+  box-shadow:0 4px 16px #54280e08;
+}
+:root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-hero .oc-pet-stage {
+  border-color:#b89553;
+  /* Same full-width stage and avatar controls, with a quieter Christmas setting. */
+  background:var(--surface);
+}
+:root[data-season="christmas"][data-season-artwork="1"] .oc-hero .oc-pet-stage::before {
+  background:url('/static/img/seasonal/pasko-lights.svg') center top/360px 30px repeat-x,
+    radial-gradient(ellipse at 50% 65%,#e6bc6360,transparent 50%),
+    linear-gradient(110deg,#063d2d,#1b5840 50%,#063d2d);
+  border-bottom:2px solid #b89553;
+}
+:root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) .celebration-footer {
+  margin-top:30px; padding:48px 24px 28px; border-bottom:0;
+  background:url('/static/img/seasonal/pasko-lights.svg') center top/360px 30px repeat-x;
+}
+@media(max-width:650px) {
+  :root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) .celebration-home {
+    grid-template-columns:1fr; min-height:0;
+  }
+  :root[data-season="christmas"][data-season-artwork="1"] .celebration-home .celebration-copy {
+    padding:26px 24px 8px; text-align:center;
+  }
+  :root[data-season="christmas"][data-season-artwork="1"] .celebration-home h2 {
+    font-size:2.25rem!important; margin:12px auto;
+  }
+  :root[data-season="christmas"][data-season-artwork="1"] .celebration-home .celebration-kicker:before { content:none; }
+  :root[data-season="christmas"][data-season-artwork="1"] .celebration-home .celebration-art {
+    min-height:0; height:190px; margin:0;
+    background-size:cover; background-position:center top;
+    mask-image:linear-gradient(to bottom,transparent,#000 16%);
+  }
+}
+@media(forced-colors:active) {
+  :root[data-season="christmas"] .celebration-art,
+  :root[data-season="christmas"] .topnav::after,
+  :root[data-season="christmas"] .oc-pet-stage::before,
+  :root[data-season="christmas"] .celebration-footer { display:none!important; }
+}
