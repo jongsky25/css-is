@@ -75,6 +75,17 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 5, 2026: System Health performance diagnostics prepared.**
+Owner requested the next diagnostic step after a 4.5-second reading and a later
+screenshot showing 1.6 seconds, no errors, 103 requests/five minutes and one active
+request. Candidate 9.95 on `feat/system-health-timings` adds admin-only slow-route
+and fixed-operation timing tables, bounded in-memory samples and safe framework
+route labels. See [measurement behavior and verification](SYSTEM_HEALTH_TIMINGS.md).
+Initial focused run: 98 passed; final shuffled run: 99 passed, no failures/skips.
+Synthetic slow-audit attribution works; production root cause remains unconfirmed.
+No production deployment/configuration/data changed. Next: finish exact-head CI
+and obtain explicit release authorization before collecting live measurements.
+
 **November 5, 2026: registration-question permission repair, candidate 9.94.**
 Branch: `fix/registration-question-team-permissions`. User requested the fix and
 merge when ready. All five registration-question writes now supply the database

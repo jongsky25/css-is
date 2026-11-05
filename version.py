@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.94"
+APP_VERSION = "9.95"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.95",
+        "date": "November 5, 2026",
+        "summary": "System health helps administrators identify slow requests.",
+        "changes": [
+            "Performance details show which routes and health checks take the most time.",
+            "The speed card describes server response times using the measured 95 percent threshold."
+        ]
+    },
     {
         "version": "9.94",
         "date": "November 5, 2026",

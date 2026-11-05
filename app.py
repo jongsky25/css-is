@@ -2256,7 +2256,8 @@ async def _auth_gate(request: Request, call_next):
                         return Response('Connection request is too large.', status_code=413)
                 request._body = bytes(payload)
         return await call_next(request)
-    request.state.user = await asyncio.to_thread(_user_from_request, request)
+    with mon.measure("auth_session"):
+        request.state.user = await asyncio.to_thread(_user_from_request, request)
     # Cookie-authenticated writes and public account operations share one
     # browser boundary. _is_public is deliberately NOT a CSRF exemption.
     if (request.method not in SAFE_METHODS
@@ -2280,40 +2281,41 @@ async def _auth_gate(request: Request, call_next):
     # whenever a session exists; anonymous attendees never see the button.
     if request.state.user:
         request.state.reads = RequestReads(request.state.user["id"])
-        conn = get_conn()
-        try:
-            request.state.spot_feedback_enabled = (
-                st.get_setting(conn, "spot_feedback_enabled", "1") != "0")
-            # Unread count for the "My feedback" bell (their own submissions only).
-            request.state.feedback_unread = st.count_unread_feedback(
-                conn, request.state.user["id"])
-            # Does this account approve for anyone? The wellness/AWA team pages
-            # gate on this at RUNTIME (a directory-rank lookup), not on a role
-            # capability, so NAV_GROUPS can't filter them with `cap` alone —
-            # see _cap_ok's "chief" branch. Resolved once here, on the connection
-            # already open, rather than per nav render.
-            request.state.is_chief = st.user_is_approving_chief(
-                conn, request.state.user)
-            # Nav bell: unread feedback + approvals waiting on this account as a
-            # chief + unseen decisions on its own wellness/AWA requests, all in
-            # one list so the bell can show more than "you have feedback news".
-            request.state.notifications = _notification_items(
-                conn, request.state.user, request.state.feedback_unread, reads=request.state.reads)
-            request.state.notif_count = sum(
-                n["count"] for n in request.state.notifications)
-            # How far this account may SEE (BUREAU_ACCESS_LEVELS). Read from the
-            # row, not from the session cookie that minted this user dict: a
-            # revoked grant has to take effect on the next request, not whenever
-            # the cookie happens to expire. Stashed on the user dict so _cap_ok
-            # stays pure and the nav needs no second runtime flag threaded
-            # through every caller.
-            request.state.user["bureau_access"] = st.bureau_access_of(
-                conn, request.state.user)
-            # Administrative Section members decide conference-room requests; the
-            # nav's "approver" cap reads this flag.
-            request.state.user["room_approver"] = request.state.reads.room_admin(conn, request.state.user)
-        finally:
-            conn.close()
+        with mon.measure("signed_in_context"):
+            conn = get_conn()
+            try:
+                request.state.spot_feedback_enabled = (
+                    st.get_setting(conn, "spot_feedback_enabled", "1") != "0")
+                # Unread count for the "My feedback" bell (their own submissions only).
+                request.state.feedback_unread = st.count_unread_feedback(
+                    conn, request.state.user["id"])
+                # Does this account approve for anyone? The wellness/AWA team pages
+                # gate on this at RUNTIME (a directory-rank lookup), not on a role
+                # capability, so NAV_GROUPS can't filter them with `cap` alone —
+                # see _cap_ok's "chief" branch. Resolved once here, on the connection
+                # already open, rather than per nav render.
+                request.state.is_chief = st.user_is_approving_chief(
+                    conn, request.state.user)
+                # Nav bell: unread feedback + approvals waiting on this account as a
+                # chief + unseen decisions on its own wellness/AWA requests, all in
+                # one list so the bell can show more than "you have feedback news".
+                request.state.notifications = _notification_items(
+                    conn, request.state.user, request.state.feedback_unread, reads=request.state.reads)
+                request.state.notif_count = sum(
+                    n["count"] for n in request.state.notifications)
+                # How far this account may SEE (BUREAU_ACCESS_LEVELS). Read from the
+                # row, not from the session cookie that minted this user dict: a
+                # revoked grant has to take effect on the next request, not whenever
+                # the cookie happens to expire. Stashed on the user dict so _cap_ok
+                # stays pure and the nav needs no second runtime flag threaded
+                # through every caller.
+                request.state.user["bureau_access"] = st.bureau_access_of(
+                    conn, request.state.user)
+                # Administrative Section members decide conference-room requests; the
+                # nav's "approver" cap reads this flag.
+                request.state.user["room_approver"] = request.state.reads.room_admin(conn, request.state.user)
+            finally:
+                conn.close()
     if _is_public(path):
         return await call_next(request)
     if not request.state.user:
@@ -2348,6 +2350,7 @@ async def _metrics_gate(request: Request, call_next):
         user = getattr(request.state, "user", None)
         mon.record(request.method, request.url.path, status, dur_ms,
                    ip=request.client.host if request.client else None,
+                   route_template=mon.route_template(request.scope),
                    user=('integration:' + request.state.integration['id']) if getattr(request.state,'integration',None) else user["username"] if user else None)
         if user and status >= 400 and status != 401 and not getattr(request.state,'integration',None):
             _record_http_error(request, user, status)
@@ -4044,7 +4047,7 @@ def _ops_plain(snap, chain_ok, bad_id, bkinfo, last_backup, persist=None, audit_
         {"tone": "neutral", "label": "How busy", "big": snap["rpm_1m"], "unit": "pages/min",
          "sub": f"{snap['total']} pages opened since the app started · running {snap['uptime_h']}"},
         {"tone": ("bad" if p95 > 1000 else "neutral"), "label": "Speed", "big": speed_word, "unit": "",
-         "sub": f"9 in 10 pages load {_fmt_load(p95)}"},
+         "sub": f"95% of server requests respond within {_fmt_load(p95)}"},
         {"tone": ("bad" if snap["err5_5m"] else "good"),
          "label": "Reliability", "big": ("No errors" if not snap["err5_5m"] else f"{snap['err_rate_5m']}% failed"), "unit": "",
          "sub": (f"Everything worked in the last 5 minutes ({snap['sample_5m']} actions)" if not snap["err5_5m"]
@@ -4104,19 +4107,19 @@ def ops(request: Request):
         import telegram_transport
         telegram_transport.probe_connection()
     mon.set_start_db_bytes(DB)
-    snap = mon.snapshot(DB)
-    conn = get_conn()
+    conn = mon.timed_call("ops_connection", get_conn)
     try:
-        bkinfo = bk.status(conn, DB)
-        audit_health = st.audit_health(conn)
+        bkinfo = mon.timed_call("ops_backups", bk.status, conn, DB)
+        audit_health = mon.timed_call("ops_audit", st.audit_health, conn)
         chain_ok, bad_id = audit_health["ok"], audit_health["bad_id"]
         last_backup = bkinfo["cfg"]["last_backup_status"]
-        inv = st.system_inventory(conn)
-        pulse = st.usage_pulse(conn)
+        inv = mon.timed_call("ops_inventory", st.system_inventory, conn)
+        pulse = mon.timed_call("ops_usage", st.usage_pulse, conn)
         import telegram_bot
-        telegram = telegram_bot.worker_status(conn)
+        telegram = mon.timed_call("ops_telegram", telegram_bot.worker_status, conn)
     finally:
         conn.close()
+    snap = mon.snapshot(DB)
     plain = _ops_plain(snap, chain_ok, bad_id, bkinfo, last_backup,
                        persist=_persist_health_view(), audit_history=audit_health)
     inventory = [
