@@ -79,6 +79,48 @@ def test_countdown_real_home_wrong_device_clock_and_live_form(seasonal_browser, 
         context.close()
 
 
+def test_pasko_art_delivery_custom_greeting_and_optouts(seasonal_browser, admin, viewer):
+    """Real assets decode; long saved copy stays separate from art and opt-outs work."""
+    from io import BytesIO
+    from PIL import Image
+
+    greeting = 'Maligayang Pasko sa lahat! Thank you for another year of caring for our community.'
+    assert submit(admin, 'publish', theme='christmas', outfit='christmas',
+                  banner=greeting, artwork_present='1', artwork='1', effects='1').status_code == 303
+    response = viewer.get('/static/img/seasonal/pasko-capiz.webp')
+    assert response.status_code == 200
+    assert len(response.content) < 350_000
+    with Image.open(BytesIO(response.content)) as image:
+        image.load()
+        assert image.width >= 1200
+    context, page = page_for(seasonal_browser, viewer)
+    context.add_init_script("localStorage.setItem('css_tour_optout','1')")
+    try:
+        for width in (320, 390, 768, 1440):
+            page.set_viewport_size({'width': width, 'height': 900})
+            page.goto('http://testserver/?view=me')
+            page.evaluate('document.documentElement.dataset.textscale="lg"')
+            pw.expect(page.locator('[data-celebration-message]')).to_have_text(greeting)
+            text = page.locator('.celebration-copy').bounding_box()
+            art = page.locator('.celebration-art').bounding_box()
+            assert text['x'] + text['width'] <= art['x'] + 1 or text['y'] + text['height'] <= art['y'] + 1
+            if width <= 650:
+                assert art['y'] >= text['y'] + text['height'] - 1
+                assert text['width'] >= width - 60
+            assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+        page.evaluate('document.documentElement.dataset.seasonArtwork="0"')
+        pw.expect(page.locator('.celebration-art')).to_be_hidden()
+        pw.expect(page.locator('[data-celebration-message]')).to_have_text(greeting)
+        assert page.locator('.topnav').evaluate('(el)=>getComputedStyle(el,"::after").content') == 'none'
+        page.evaluate('document.documentElement.dataset.seasonArtwork="1"')
+        page.emulate_media(forced_colors='active')
+        pw.expect(page.locator('.celebration-art')).to_be_hidden()
+        page.emulate_media(forced_colors='none', media='print')
+        pw.expect(page.locator('.celebration')).to_be_hidden()
+    finally:
+        context.close()
+
+
 def test_post_midnight_no_script_fallback_and_independent_artwork(seasonal_browser, admin, viewer, monkeypatch):
     original = rules.resolve
     monkeypatch.setattr(rules, 'resolve', lambda config, now=None: original(config, rules.newyear_target(2027) + 1))

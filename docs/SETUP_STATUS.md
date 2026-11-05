@@ -75,6 +75,40 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 5, 2026: Paskong Pinoy implemented, candidate 9.96.** User instructed
+execution of the recommended Christmas replacement. Branch `feat/paskong-pinoy-theme`
+contains original optimized capiz artwork, Christmas-only responsive styling,
+matching light strands and a green/gold companion setting. Nonblank saved greetings,
+existing companion controls and other seasons are preserved. No schema change.
+[Real application screenshots and handoff](design/christmas-replacement/IMPLEMENTATION.md).
+
+Verification: 40 focused appearance/browser/seasonal/companion tests passed without
+failures/skips; after the final artwork crop adjustment, all 3 affected browser
+layout/opt-out/companion tests passed again. Phone/desktop screenshots inspected.
+A mobile cascade defect discovered visually was fixed and covered by a stacking
+assertion. Eight new text/background contrast pairs exceed 4.5:1. Locked Python
+setup/doctor, metadata, JavaScript syntax, SVG and diff checks passed. Existing
+Starlette/httpx deprecation warning remains. Full normal/shuffled CI and dependency
+checks remain required; no production release or shared-preview publication occurred.
+Next: review the draft PR and real-page screenshots; verify current CI before any
+separately authorized release. The original concept study below is historical.
+
+
+**November 5, 2026: Christmas replacement mockups.** User requested stronger
+festive designs informed by external resources. Reviewed existing seasonal CSS,
+artwork and seasonal/companion desktop screenshots; consulted parol and Giant
+Lantern Festival references plus Balsam Hill decorating guidance. Created an
+original three-direction desktop/phone concept board and
+[design handoff](design/christmas-replacement/README.md) on
+`design/christmas-replacement-mockups-2026-11-05`, based on main `75a7eb4`.
+Recommended direction: Paskong Pinoy; alternatives: Christmas at Home and Festival
+of Lights. Board is AI-generated design exploration, not implemented UI or a
+responsive test result. Visually inspected the rendered board; local artifact/link
+and diff checks passed. No application code, release metadata, live appearance,
+shared preview or deployment changes. Next: user selects/refines the direction
+before application integration. Existing unrelated next actions remain below.
+
+
 **November 5, 2026: System Health performance diagnostics prepared.**
 Owner requested the next diagnostic step after a 4.5-second reading and a later
 screenshot showing 1.6 seconds, no errors, 103 requests/five minutes and one active
