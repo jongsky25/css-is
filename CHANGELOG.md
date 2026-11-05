@@ -1,3 +1,9 @@
+## 9.93 — November 4, 2026
+
+- Separate calendar-month answers from rolling 30-day statistics and conservatively upgrade untouched monthly FAQ seeds.
+- Restore encoding help with a Paper entry guide and add focused wellness, room, AWA and supplies phrases.
+- Reject vague, cross-scope and conflicting matcher results; preserve administrator edits, paused rules and later deletions during the one-time seed repair.
+
 ## 9.92 — November 4, 2026
 
 - Include all retained UX events in the selected date range, with a version filter and explicit observed coverage across dashboard, exports and AI analysis.

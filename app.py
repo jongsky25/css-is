@@ -1069,6 +1069,23 @@ AI_ANSWER_SLOTS = {
     },
 }
 
+# Calendar-month answers remain distinct from rolling 30-day summaries.
+for _metric, _label in (("responses", "Responses collected"),
+                        ("activities", "Activities that collected feedback"),
+                        ("people_rated", "People rated"),
+                        ("satisfaction", "Overall satisfaction")):
+    def _month_render(stats, metric=_metric, label=_label):
+        value = stats[metric]["month"]
+        if value is None:
+            return "There isn't enough data yet to show satisfaction for this calendar month."
+        suffix = "% (top-2-box)" if metric == "satisfaction" else ""
+        return f"{label}: {value}{suffix} this calendar month, through today."
+    AI_ANSWER_SLOTS[_metric + "_month"] = {
+        "label": _label + " — this calendar month",
+        "kw": _label.lower() + " this month current calendar month",
+        "calendar_month": True, "render": _month_render}
+
+
 # Calendar answers (office calendar H3). User-aware: rendered from the ASKER's own calendar by
 # calendar_answers (never from anything the model says), so they carry a `user_render` instead of `render`.
 AI_ANSWER_SLOTS.update(calendar_answers.SLOTS)
@@ -1082,6 +1099,8 @@ def _render_answer(slot, conn, user):
     the calendar ones."""
     if "user_render" in slot:
         return slot["user_render"](conn, user, _today_local())
+    if slot.get("calendar_month"):
+        return slot["render"](home_stats(conn, calendar_month=True))
     return slot["render"](home_stats(conn))
 
 
@@ -1448,6 +1467,33 @@ SEED_LEARNED_RULES = [
 ]
 
 
+# Preserve original seed signatures for a one-time, conservative upgrade.
+_MONTH_RULE_REPAIRS = []
+_REVIEWED_RULE_ADDITIONS = [
+    ("navigate", "wellness", "my wellness break", []),
+    ("navigate", "rooms", "reserve conference room", []),
+    ("navigate", "rooms", "book conference", []),
+    ("navigate", "work_arrangement", "blhsd awa", []),
+    ("navigate", "supplies", "request ballpen", []),
+    ("answer", "wellness_left", "how many wellness do i avail this week", []),
+]
+_revised_seeds = []
+for _kind, _target, _phrase, _alts in SEED_LEARNED_RULES:
+    if _target.endswith("_30d") and "month" in qa_rules.tokens(_phrase):
+        _month_target = _target[:-4] + "_month"
+        _month_alts = [q for q in _alts if "month" in qa_rules.tokens(q)]
+        _MONTH_RULE_REPAIRS.append((_phrase, _target,
+            " ".join([_phrase] + list(_alts)), _month_target,
+            " ".join([_phrase] + _month_alts)))
+        _revised_seeds.append((_kind, _month_target, _phrase, _month_alts))
+        for _alt in _alts:
+            if _alt not in _month_alts:
+                _REVIEWED_RULE_ADDITIONS.append((_kind, _target, _alt, []))
+    else:
+        _revised_seeds.append((_kind, _target, _phrase, _alts))
+SEED_LEARNED_RULES = _revised_seeds
+
+
 def _seed_learned_rules(conn):
     """Insert SEED_LEARNED_RULES on a fresh install only. Skipped once the table
     holds any rule, so an admin who deletes a seed (or has curated the set) never
@@ -1582,6 +1628,7 @@ def get_conn():
                 _seed_learned_rules(conn)    # FAQ rules for the AI search bar (fresh install only)
                 _seed_calendar_rules(conn)   # calendar FAQ rules, once, on any install
                 _seed_office_rules(conn)     # office FAQ rules (to-do, wellness, room, who is in), once
+                st.repair_learned_rules_20261104(conn, _MONTH_RULE_REPAIRS, _REVIEWED_RULE_ADDITIONS)
                 wabf.run_once(conn)          # ANNEX C Aug 16-31, 2026 — one-shot, marker-guarded
                 st.seed_wa_prepared_by_default(conn)  # ANNEX C "Prepared by" -> Alexander Medel, one-shot
                 _schema_ready_for.add(db_path)
@@ -5409,31 +5456,38 @@ def _home_period_since():
     }
 
 
-def home_stats(conn, *, fresh=False):
+def home_stats(conn, *, fresh=False, calendar_month=False):
     """Glanceable numbers for the home hub, computed for every time window so the
     stat cards can flip between them client-side. Memoised per atoms-key + day, so
     it recomputes when data changes or the calendar rolls, and is otherwise cached."""
     today_key = _today_local().isoformat()
 
     def _build():
-        since = _home_period_since()
+        since = ({"month": _today_local().replace(day=1).isoformat()}
+                 if calendar_month else _home_period_since())
+        through = (_today_local() + timedelta(days=1)).isoformat()
         responses, people_rated, satisfaction, activities = {}, {}, {}, {}
         for key, lo in since.items():
             where = "" if lo is None else " WHERE r.submitted_at >= ?"
             args = () if lo is None else (lo,)
+            date_filter = "" if lo is None else " AND r.submitted_at >= ?"
+            if calendar_month:
+                where += " AND r.submitted_at < ?"
+                date_filter += " AND r.submitted_at < ?"
+                args += (through,)
             responses[key] = conn.execute(
                 "SELECT COUNT(*) FROM response r" + where, args).fetchone()[0]
             people_rated[key] = conn.execute(
                 "SELECT COUNT(DISTINCT fi.rp_id) FROM response r "
                 "JOIN form_instance fi ON fi.id = r.form_instance_id "
                 "WHERE fi.rp_id IS NOT NULL AND COALESCE(fi.archived,0)=0"
-                + ("" if lo is None else " AND r.submitted_at >= ?"), args).fetchone()[0]
+                + date_filter, args).fetchone()[0]
             # activities that actually collected feedback = distinct Type-2 forms with responses
             activities[key] = conn.execute(
                 "SELECT COUNT(DISTINCT fi.id) FROM response r "
                 "JOIN form_instance fi ON fi.id = r.form_instance_id "
                 "WHERE fi.survey_type = 2 AND COALESCE(fi.archived,0)=0"
-                + ("" if lo is None else " AND r.submitted_at >= ?"), args).fetchone()[0]
+                + date_filter, args).fetchone()[0]
             # top-2-box positive, per each type's scale (ARTA 1-5, F2/F3 1-7)
             row = conn.execute(
                 "SELECT COUNT(*), "
@@ -5443,13 +5497,13 @@ def home_stats(conn, *, fresh=False):
                 "JOIN response r ON r.id = a.response_id "
                 "JOIN form_instance fi ON fi.id = r.form_instance_id "
                 "WHERE " + ai_facts.VALID_ANSWER
-                + ("" if lo is None else " AND r.submitted_at >= ?"), args).fetchone()
+                + date_filter, args).fetchone()
             n, pos = row[0], row[1]
             satisfaction[key] = round(pos * 100 / n) if n else None
         return {"responses": responses, "people_rated": people_rated,
                 "satisfaction": satisfaction, "activities": activities}
 
-    return _build() if fresh else view_memo("home_stats", (today_key,), _build)
+    return _build() if fresh else view_memo("home_stats", (today_key, calendar_month), _build)
 
 
 def _account_first_name(conn, user):

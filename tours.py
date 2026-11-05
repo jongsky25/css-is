@@ -24,6 +24,14 @@ from __future__ import annotations
 # existing landmark class so no template markup was needed. A step whose target
 # is absent (hidden by role, or no data yet) is skipped silently.
 TOURS = {
+    "encode": [
+        {"target": "[data-tour='encode-intro']", "title": "Enter paper responses",
+         "body": "Choose the survey form that matches the paper responses. Paper entry records submitted feedback; it does not create a new activity."},
+        {"target": "[data-tour='encode-walkin']", "title": "Walk-in service feedback",
+         "body": "Use the standing walk-in form for ARTA service feedback. Check that the paper uses this survey before entering it."},
+        {"target": "[data-tour='encode-search']", "title": "Find the right activity",
+         "body": "Search for the activity or resource person, check its date and form type, then choose Enter. Copy the paper answers carefully and save each response once."},
+    ],
     "home": [
         {"target": "[data-tour='search']",
          "title": "Find anything fast",

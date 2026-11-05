@@ -75,6 +75,37 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 4, 2026: learned-rule repairs implemented, candidate 9.93.**
+Branch: `feat/learned-rules-repair`. Restores the encoding tour, separates
+calendar-month answers from rolling 30-day answers, adds the six reviewed
+phrases, and prevents vague, conflicting or team-scoped fuzzy matches from
+selecting unrelated personal answers. Migration is transactional and one-time;
+only unchanged enabled system seeds are repaired. Edited/paused/manual rules
+and existing patterns remain authoritative and may need manual review.
+See [assessment](LEARNED_RULES_REVIEW_2026_11_04.md) for evidence and deferred work.
+
+Verification: 184 focused tests passed normally and in shuffled order (seed
+311); includes migration rollback/idempotency, month/year/leap boundaries,
+answer routing and encoding help. All 447 offline AI tests and the evaluation evidence gate passed on local
+implementation commit `b45baef`; normal/shuffled JUnit gates passed without
+failures or skips. The following commit changes only this status record.
+Metadata, contract, lock-input, vendor-integrity and diff checks passed. Full release CI remains required. Next: review the saved PR and
+its CI; no production deployment or live-rule mutation has been performed.
+Candidate-console recency/classification changes remain deferred.
+
+
+**November 4, 2026: learned rules assessed, read-only.**
+See [learned rules review](LEARNED_RULES_REVIEW_2026_11_04.md), saved on
+`docs/learned-rules-review-2026-11-04`. Live FAQ: 57 enabled seed rules,
+six lifetime hits, 27 retained-history candidates. Visible October 5–November 4
+routing sample: 14 successes, one rule-served. Priorities are unavailable
+encoding-help target, wellness navigation/balance ambiguity, calendar-month
+semantics, then a small tested phrase set. No live rule or setting was changed.
+The preceding UX implementation PR #581 merged as `d93eb737` after complete
+CI and avatar acceptance passed; deployment availability remains unverified
+in this assessment. Implementation of learned-rule changes remains a next task.
+
+
 **November 4, 2026: UX coverage and wellness filing implementation.**
 User authorized the proposed improvements. Candidate 9.92 on
 `feat/ux-coverage-wellness` includes complete retained-event date-range reads,

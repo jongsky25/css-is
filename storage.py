@@ -3922,6 +3922,41 @@ _LEARNED_RULE_COLS = ("SELECT id, pattern, keywords, sample_query, kind, target_
                       "created_at, updated_at FROM learned_rule")
 
 
+def repair_learned_rules_20261104(conn, month_repairs, additions):
+    """Upgrade untouched system seeds once, without resurrecting later deletions.
+
+    Existing patterns of any source win over additions. Edited, paused and
+    manually authored rules are deliberately preserved for administrator review.
+    """
+    marker = "learned_rules_review_20261104"
+    if get_setting(conn, marker, "") == "1":
+        return
+    with conn:
+        conn.execute("BEGIN IMMEDIATE")
+        if get_setting(conn, marker, "") == "1":
+            return
+        now = tz.now_iso()
+        for pattern, old_target, old_keywords, target, keywords in month_repairs:
+            conn.execute("""UPDATE learned_rule SET target_key=?, keywords=?, updated_at=?
+                WHERE pattern=? AND kind='answer' AND target_key=? AND keywords=?
+                AND source='seed' AND created_by='system' AND enabled=1
+                AND notes IS NULL AND (sample_query IS NULL OR sample_query=pattern)
+                AND updated_at=created_at
+                AND NOT EXISTS (SELECT 1 FROM learned_rule other
+                    WHERE other.pattern=? AND other.kind='answer' AND other.target_key=?)""",
+                (target, keywords, now, pattern, old_target, old_keywords, pattern, target))
+        for kind, target, pattern, alternatives in additions:
+            if conn.execute("SELECT 1 FROM learned_rule WHERE pattern=?", (pattern,)).fetchone():
+                continue
+            conn.execute("""INSERT INTO learned_rule
+                (pattern, keywords, sample_query, kind, target_key, enabled, source,
+                 hits, created_by, created_at, updated_at)
+                VALUES (?,?,?,?,?,1,'seed',0,'system',?,?)""",
+                (pattern, " ".join([pattern] + list(alternatives)), pattern, kind, target, now, now))
+        conn.execute("INSERT INTO app_setting(key,value) VALUES (?, '1') "
+                     "ON CONFLICT(key) DO UPDATE SET value='1'", (marker,))
+
+
 def _learned_rule_row(r):
     return {"id": r[0], "pattern": r[1], "keywords": r[2], "sample_query": r[3],
             "kind": r[4], "target_key": r[5], "enabled": bool(r[6]), "source": r[7],

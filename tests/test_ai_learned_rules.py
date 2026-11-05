@@ -220,12 +220,12 @@ def test_seed_rules_deflect_common_questions_without_the_model():
               "keywords": " ".join([canonical] + list(alts)), "enabled": True}
              for (kind, target_key, canonical, alts) in app_mod.SEED_LEARNED_RULES]
     cases = {
-        "how many responses this month": "responses_30d",
+        "how many responses this month": "responses_month",
         "how many responses this year": "responses_ytd",
         "how many responses in total": "responses_all",
         "what is our satisfaction this year": "satisfaction_ytd",
         "how are we doing": "satisfaction_30d",
-        "how many trainings this month": "activities_30d",
+        "how many trainings this month": "activities_month",
         "how many activities this year": "activities_ytd",
         "how many people were rated this year": "people_rated_ytd",
         "how many people were rated in total": "people_rated_all",
