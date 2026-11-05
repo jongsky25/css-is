@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.93"
+APP_VERSION = "9.94"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.94",
+        "date": "November 5, 2026",
+        "summary": "Section managers can update registration questions for their team's activities.",
+        "changes": [
+            "Adding a registration question now saves it and returns to the question list for activities managed by your section.",
+            "Presets, editing, removal and reordering also recognize your section's management access."
+        ]
+    },
     {
         "version": "9.93",
         "date": "November 4, 2026",

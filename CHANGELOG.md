@@ -1,3 +1,8 @@
+## 9.94 — November 5, 2026
+
+- Use the activity's team management permissions when adding registration questions, applying presets, editing, removing and reordering questions.
+- Keep authorized section managers on the question list after saving instead of redirecting them to the participant page.
+
 ## 9.93 — November 4, 2026
 
 - Separate calendar-month answers from rolling 30-day statistics and conservatively upgrade untouched monthly FAQ seeds.
