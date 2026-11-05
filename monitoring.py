@@ -22,6 +22,7 @@ import re
 import threading
 import time
 from collections import deque
+from contextlib import contextmanager
 
 WINDOW = 2000             # recent requests kept for percentiles/rates
 SLOW_MS = 1000.0          # a request slower than this is "slow" (saturation hint)
@@ -40,6 +41,79 @@ _STATE = {
     "start_db_bytes": None,
 }
 _log_writes = 0
+
+# Only fixed operation names and framework route templates enter these buffers.
+# No URLs, query strings, actors, exception messages or record IDs are retained.
+PHASES = {
+    "auth_session": "Session lookup",
+    "signed_in_context": "Signed-in navigation and permissions",
+    "ops_connection": "Health page: database connection",
+    "ops_backups": "Health page: backup listing",
+    "ops_audit": "Health page: audit verification",
+    "ops_inventory": "Health page: inventory counts",
+    "ops_usage": "Health page: usage counts",
+    "ops_telegram": "Health page: Telegram queue status",
+}
+_PHASE_RECENT = deque(maxlen=WINDOW)
+_ROUTE_RECENT = deque(maxlen=WINDOW)
+
+
+def route_template(scope):
+    """Use framework patterns only; never interpolate client path parameters."""
+    path = getattr(scope.get("route"), "path", None)
+    # The API is a mounted FastAPI application; its route patterns are relative.
+    if path and scope.get("root_path") == "/api/v1":
+        return "/api/v1" + path
+    return path
+
+
+@contextmanager
+def measure(phase):
+    """Time a fixed operation, including failures, without retaining its data."""
+    if phase not in PHASES:
+        raise ValueError("Unknown monitoring phase")
+    started = time.perf_counter()
+    failed = True
+    try:
+        yield
+        failed = False
+    finally:
+        elapsed = (time.perf_counter() - started) * 1000.0
+        with _LOCK:
+            _PHASE_RECENT.append((time.time(), phase, elapsed, failed))
+
+
+def timed_call(phase, fn, *args, **kwargs):
+    with measure(phase):
+        return fn(*args, **kwargs)
+
+
+def _diagnostics(routes, phases, now):
+    def stats(values):
+        ds = sorted(values)
+        return {"n": len(ds), "p50": round(_percentile(ds, .5)),
+                "p95": round(_percentile(ds, .95)), "max": round(max(ds)),
+                "slow": sum(d >= SLOW_MS for d in ds)}
+
+    grouped = {}
+    for ts, method, route, dur, status in routes:
+        if ts >= now - 300:
+            grouped.setdefault((method, route), []).append((dur, status))
+    rows = []
+    for (method, route), samples in grouped.items():
+        rows.append({"method": method, "path": route,
+                     "errs": sum(status >= 500 for _, status in samples),
+                     **stats([dur for dur, _ in samples])})
+    rows.sort(key=lambda r: (-r["slow"], -r["p95"], -r["n"], r["path"], r["method"]))
+    phase_rows = []
+    for key, label in PHASES.items():
+        samples = [(dur, failed) for ts, phase, dur, failed in phases
+                   if ts >= now - 300 and phase == key]
+        if samples:
+            phase_rows.append({"phase": key, "label": label,
+                               "failed": sum(failed for _, failed in samples),
+                               **stats([dur for dur, _ in samples])})
+    return {"routes": rows[:20], "phases": phase_rows}
 
 
 # ---------------------------------------------------------------------
@@ -87,11 +161,15 @@ def dec_inflight():
         _STATE["inflight"] = max(0, _STATE["inflight"] - 1)
 
 
-def record(method, path, status, dur_ms, *, ip=None, user=None, now=None):
+def record(method, path, status, dur_ms, *, ip=None, user=None, now=None, route_template=None):
     now = now or time.time()
     bucket = bucket_path(path)
     cls = _class(status)
     with _LOCK:
+        # route_template must come from the matched framework route, never path.
+        route = route_template or "(unmatched or denied before routing)"
+        method_label = method if method in {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"} else "OTHER"
+        _ROUTE_RECENT.append((now, method_label, route, dur_ms, status))
         _STATE["total"] += 1
         _STATE["status"][cls] = _STATE["status"].get(cls, 0) + 1
         if dur_ms >= SLOW_MS:
@@ -161,6 +239,8 @@ def snapshot(db_path="css_is.db", now=None):
         slow = _STATE["slow"]
         started = _STATE["started"]
         start_db = _STATE["start_db_bytes"]
+        diagnostic_routes = list(_ROUTE_RECENT)
+        phases = list(_PHASE_RECENT)
 
     def in_window(secs):
         return [r for r in recent if r[0] >= now - secs]
@@ -215,6 +295,7 @@ def snapshot(db_path="css_is.db", now=None):
         "db_growth_human": ("+" if growth >= 0 else "") + human_size(growth),
         "sample_5m": len(last5m),
         "routes": route_rows[:20],
+        "diagnostics": _diagnostics(diagnostic_routes, phases, now),
     }
 
 
@@ -272,6 +353,8 @@ def reset():
     """Test helper — clear all in-memory state."""
     global _log_writes
     with _LOCK:
+        _PHASE_RECENT.clear()
+        _ROUTE_RECENT.clear()
         _STATE.update({"started": time.time(), "total": 0, "inflight": 0,
                        "max_inflight": 0, "status": {"2xx": 0, "3xx": 0, "4xx": 0, "5xx": 0},
                        "slow": 0, "recent": deque(maxlen=WINDOW), "start_db_bytes": None})

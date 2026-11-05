@@ -56,6 +56,92 @@ def test_health_payload(tmp_path):
     assert bad["status"] == "degraded" and bad["db"] == "error"
 
 
+def test_diagnostics_rank_slow_routes_and_expire_samples(tmp_path):
+    mon.reset()
+    now = time.time()
+    for _ in range(30):
+        mon.record("GET", "/frequent", 200, 10, now=now, route_template="/frequent")
+    mon.record("POST", "/record/123", 500, 4500, now=now, route_template="/record/{id}")
+    mon.record("GET", "/old", 200, 9000, now=now - 301, route_template="/old")
+    mon.record("GET", "/private/secret-token", 403, 20, now=now)
+    rows = mon.snapshot(str(tmp_path / "none.db"), now=now)["diagnostics"]["routes"]
+    assert rows[0] == {"method": "POST", "path": "/record/{id}", "n": 1,
+                       "slow": 1, "p50": 4500, "p95": 4500, "max": 4500, "errs": 1}
+    assert "secret-token" not in str(rows) and "/old" not in str(rows)
+    assert "unmatched or denied" in str(rows)
+
+
+def test_metric_route_templates_do_not_interpolate_scope_paths():
+    from types import SimpleNamespace
+    scope = {"route": SimpleNamespace(path="/documents/{id}"),
+             "root_path": "/api/v1", "path": "/api/v1/documents/private-id"}
+    assert mon.route_template(scope) == "/api/v1/documents/{id}"
+    assert mon.route_template({"path": "/private-token"}) is None
+
+
+def test_operation_timing_includes_failure_and_is_bounded(monkeypatch, tmp_path):
+    mon.reset()
+    ticks = iter([10, 12])
+    monkeypatch.setattr(mon.time, "perf_counter", lambda: next(ticks))
+    with pytest.raises(RuntimeError):
+        with mon.measure("ops_audit"):
+            raise RuntimeError("private error text")
+    now = time.time()
+    snap = mon.snapshot(str(tmp_path / "none.db"), now=now)["diagnostics"]
+    assert snap["phases"][0]["p95"] == 2000
+    assert snap["phases"][0]["failed"] == 1
+    assert "private error" not in str(snap)
+    assert not mon.snapshot(str(tmp_path / "none.db"), now=now + 301)["diagnostics"]["phases"]
+    with pytest.raises(ValueError):
+        with mon.measure("private label"):
+            pass
+    ticks = iter(range(2 * (mon.WINDOW + 1)))
+    for _ in range(mon.WINDOW + 1):
+        with mon.measure("ops_usage"):
+            pass
+        mon.record("GET", "/health", 200, 1, route_template="/health")
+    assert len(mon._PHASE_RECENT) == len(mon._ROUTE_RECENT) == mon.WINDOW
+    mon.reset()
+    assert not mon.snapshot(str(tmp_path / "none.db"))["diagnostics"]["phases"]
+
+
+def _performance_data(body):
+    import json
+    import re
+    return json.loads(re.search(r'id="performance-data">(.*?)</script>', body, re.S)[1])
+
+
+def test_admin_diagnostics_attribute_slow_audit_without_leaking_ids(admin, app_mod, monkeypatch):
+    mon.reset()
+    original = st.audit_health
+    original_clock = mon.time.perf_counter
+    offset = [0]
+    monkeypatch.setattr(mon.time, "perf_counter", lambda: original_clock() + offset[0])
+
+    def delayed_audit(conn):
+        result = original(conn)
+        offset[0] += 1.6  # deterministic simulated work, no actual sleep
+        return result
+
+    monkeypatch.setattr(st, "audit_health", delayed_audit)
+    admin.get("/photo/424242?private=must-not-appear")
+    first = admin.get("/ops")
+    assert first.status_code == 200
+    data = _performance_data(first.text)
+    phases = {r["phase"]: r for r in data["phases"]}
+    assert phases["ops_audit"]["p95"] >= 1600
+    assert phases["ops_backups"]["n"] == 1
+    assert phases["signed_in_context"]["n"] >= 1
+    assert phases["auth_session"]["n"] >= 1
+    assert phases["ops_connection"]["n"] == 1
+    assert "/photo/{rp_id}" in str(data)
+    assert "424242" not in str(data) and "must-not-appear" not in str(data)
+    second = _performance_data(admin.get("/ops").text)
+    ops = next(r for r in second["routes"] if r["path"] == "/ops")
+    assert ops["max"] >= 1600
+    assert ops["n"] == 1  # current refresh is still in progress
+
+
 # ---- routes --------------------------------------------------------------
 
 def test_health_is_public(client):
@@ -63,6 +149,7 @@ def test_health_is_public(client):
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "ok" and "uptime_s" in body
+    assert "diagnostics" not in body
 
 
 def test_ops_admin_only(app_mod, viewer, admin):

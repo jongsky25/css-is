@@ -131,6 +131,46 @@
   </div>
 </div>
 
+<details class="panel" id="performance-diagnostics">
+  <summary>Performance details</summary>
+  <p class="note">Last five minutes, limited to the most recent 2,000 requests and
+    2,000 operation samples since restart. Server timings exclude browser rendering
+    and network transfer. Small samples may reflect a single slow request.</p>
+  <script type="application/json" id="performance-data">{{ snap.diagnostics|tojson }}</script>
+  <h2>Slow requests by route</h2>
+  <p class="note">Ranked by requests taking at least one second, then p95.
+    Routes use placeholders instead of record IDs. Requests rejected before routing
+    share one label. The current refresh appears after it finishes.</p>
+  <div style="overflow-x:auto" role="region" aria-label="Request timing table" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Route</th><th scope="col">Requests</th><th scope="col">Slow</th><th scope="col">p50 (ms)</th><th scope="col">p95 (ms)</th><th scope="col">Max (ms)</th><th scope="col">Server errors</th></tr></thead>
+      <tbody>
+      {% for r in snap.diagnostics.routes %}
+        <tr><th scope="row">{{ r.method }} {{ r.path }}</th><td>{{ r.n }}</td><td>{{ r.slow }}</td><td>{{ r.p50 }}</td><td>{{ r.p95 }}</td><td>{{ r.max }}</td><td>{{ r.errs }}</td></tr>
+      {% else %}
+        <tr><td colspan="7">No completed requests measured in this window.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <h2>Time spent inside requests</h2>
+  <p class="note">Session lookup and signed-in navigation cover ordinary browser requests.
+    Health-page operations include this refresh. Operation samples cover different
+    requests and can overlap, so their percentiles should not be added together.</p>
+  <div style="overflow-x:auto" role="region" aria-label="Operation timing table" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Operation</th><th scope="col">Samples</th><th scope="col">p50 (ms)</th><th scope="col">p95 (ms)</th><th scope="col">Max (ms)</th><th scope="col">Failures</th></tr></thead>
+      <tbody>
+      {% for r in snap.diagnostics.phases %}
+        <tr><th scope="row">{{ r.label }}</th><td>{{ r.n }}</td><td>{{ r.p50 }}</td><td>{{ r.p95 }}</td><td>{{ r.max }}</td><td>{{ r.failed }}</td></tr>
+      {% else %}
+        <tr><td colspan="6">No operations measured in this window.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</details>
+
 <div class="panel">
   <h2>What's in the system <span class="note" style="color:var(--soft); font-weight:400; font-size:.82rem;">· totals to date</span></h2>
   <div class="signals">

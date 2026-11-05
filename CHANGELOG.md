@@ -1,3 +1,8 @@
+## 9.95 — November 5, 2026
+
+- System health includes administrator-only timings for slow routes, session lookup, navigation and individual health checks.
+- The speed card accurately describes its 95th-percentile server response measurement.
+
 ## 9.94 — November 5, 2026
 
 - Use the activity's team management permissions when adding registration questions, applying presets, editing, removing and reordering questions.
