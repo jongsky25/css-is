@@ -3590,3 +3590,21 @@ steps and rollback/completion criteria. No new feature or hosted action performe
 At application head `1f25bbd`, avatar acceptance 41634542442 passed; CI 41634542460
 metadata/dependency passed while normal/shuffled suites were still running. This
 documentation push creates a new head: inspect its fresh checks, not old evidence.
+
+
+### Christmas companion room — November 5, 2026
+
+PR #586 merged as 7859b31 (9.96). The next requested enhancement is saved on
+`feat/christmas-companion-nook`, candidate 9.97. The approved fuller room now
+surrounds the live companion with garlands, bows, gifts, stockings, capiz windows
+and a rug; it complements the existing parol header. Two responsive decorative
+WebP backgrounds total 485,828 bytes. Sound/edit hooks and artwork preferences
+are retained. No live appearance or production data was touched.
+
+[Implementation and real browser screenshots](design/christmas-nook/README.md).
+Forty focused appearance/seasonal/companion tests passed, followed by four passing
+companion checks after final positioning and forced-colour spacing changes.
+No skips; existing Starlette/httpx deprecation warning only. Release metadata
+(9.97) and whitespace checks passed. Normal/shuffled full CI and dependency audit
+remain pending after push. Next: review the draft PR and current-head CI before
+any separately authorized release. No deployment was requested for this branch.

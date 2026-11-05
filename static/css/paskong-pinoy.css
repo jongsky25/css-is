@@ -53,14 +53,56 @@
 }
 :root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-hero .oc-pet-stage {
   border-color:#b89553;
-  /* Same full-width stage and avatar controls, with a quieter Christmas setting. */
+  /* Keep the live companion and its controls within the full-width festive room. */
   background:var(--surface);
 }
+/* The scene is decorative; existing live avatar and audio hooks stay intact.
+   Container units keep the rug, avatar and control boundary aligned at every width. */
+:root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-hero .oc-pet-stage {
+  container-type:inline-size;
+  --nook-height:33.333cqw;
+  --nook-avatar:clamp(150px,15cqw,200px);
+  padding:0 12px 12px;
+}
 :root[data-season="christmas"][data-season-artwork="1"] .oc-hero .oc-pet-stage::before {
-  background:url('/static/img/seasonal/pasko-lights.svg') center top/360px 30px repeat-x,
-    radial-gradient(ellipse at 50% 65%,#e6bc6360,transparent 50%),
-    linear-gradient(110deg,#063d2d,#1b5840 50%,#063d2d);
-  border-bottom:2px solid #b89553;
+  height:var(--nook-height);
+  background:#304329 url('/static/img/seasonal/christmas-nook-wide.webp') center/100% auto no-repeat;
+  border-bottom:1px solid #b89553;
+}
+:root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-hero .oc-pet-stage .oc-pet {
+  width:min(100%,360px);
+  padding-top:calc(var(--nook-height) - var(--nook-avatar) * 1.16 - 28px);
+}
+:root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-pet-stage .av-play-btn {
+  width:var(--nook-avatar);
+}
+:root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-pet-stage .av-play-btn>.av-tiltstage {
+  width:var(--nook-avatar)!important;
+  height:calc(var(--nook-avatar) * 1.16)!important;
+}
+:root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-pet-stage .av-sound-controls {
+  margin-top:28px; min-height:48px; gap:8px; padding:6px 4px 0;
+}
+:root[data-season="christmas"][data-season-artwork="1"] .oc-pet-stage .av-audio-credits {
+  display:inline-flex; align-items:center; min-height:44px;
+}
+:root[data-season="christmas"][data-season-artwork="1"] .oc-pet-stage .oc-pet-edit {
+  margin-top:2px;
+}
+@media(max-width:1024px) {
+  :root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-pet-stage .av-play-btn>.av-tiltstage {
+    position:relative; top:20px;
+  }
+}
+@media(max-width:699px) {
+  :root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-hero .oc-pet-stage {
+    --nook-height:clamp(240px,66.667cqw,420px);
+    --nook-avatar:150px;
+  }
+  :root[data-season="christmas"][data-season-artwork="1"] .oc-hero .oc-pet-stage::before {
+    background-image:url('/static/img/seasonal/christmas-nook.webp');
+    background-size:cover; background-position:center bottom;
+  }
 }
 :root[data-season="christmas"][data-season-artwork="1"]:not([data-theme="contrast"]) .celebration-footer {
   margin-top:30px; padding:48px 24px 28px; border-bottom:0;
@@ -84,6 +126,9 @@
   }
 }
 @media(forced-colors:active) {
+  :root[data-season="christmas"][data-season-artwork="1"] .oc-hero .oc-pet-stage .oc-pet { padding-top:24px; }
+  :root[data-season="christmas"][data-season-artwork="1"] .oc-pet-stage .av-play-btn>.av-tiltstage { top:0; }
+
   :root[data-season="christmas"] .celebration-art,
   :root[data-season="christmas"] .topnav::after,
   :root[data-season="christmas"] .oc-pet-stage::before,
