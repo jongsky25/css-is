@@ -75,6 +75,18 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 5, 2026: System Health slowness investigated, read-only.**
+See [diagnosis and evidence](SYSTEM_SLOWNESS_DIAGNOSIS_2026_11_05.md), on
+`docs/system-slowness-diagnosis-2026-11-05`. Production hosting reports RUNNING,
+version 9.94/source `bc8612d`; public app/database health is ok. The Slow label
+means five-minute server p95 above one second, not CPU/memory saturation.
+Operations backup enumeration/full audit hashing and synchronous shared auth DB
+reads are candidates, not measured causes. Bounded runtime logs show no sampled
+5xx or exact error patterns but expose no request timings. Admin `/ops` requires
+an unavailable browser session; requested the four live card readings. Next:
+obtain contemporaneous authenticated route timings and isolate those costs.
+No application/production configuration or data changed; no release authorized.
+
 **November 4, 2026: learned-rule repairs implemented, candidate 9.93.**
 Branch: `feat/learned-rules-repair`. Restores the encoding tour, separates
 calendar-month answers from rolling 30-day answers, adds the six reviewed
