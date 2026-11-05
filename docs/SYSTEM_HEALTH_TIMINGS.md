@@ -71,3 +71,45 @@ largest slow-route/operation values. Refresh once to include the preceding healt
 request. Compare backup/audit costs against ordinary routes and shared auth costs
 before choosing an optimization. The synthetic delay validates attribution, not
 a live root cause. Existing full CI and backup/version gates remain required.
+
+## Production release verified — November 5, 2026
+
+The owner explicitly authorized deployment after reviewing the effects.
+[PR #585](https://github.com/jongsky25/css-is/pull/585) passed complete normal and
+shuffled CI, dependency/metadata/aggregate gates and avatar acceptance on
+`c043489de7c59396862967d2b676f67fb2ee95ff`, then merged as
+`75a7eb494528156f4c73228937738238884151ed` at 16:49 Asia/Manila. Main's tree matches
+the reviewed tree. No unresolved review threads or required approvals blocked
+the merge; strict required-check rules were inspected again immediately before it.
+
+[Production workflow 41997410104](https://github.com/jongsky25/css-is/actions/runs/41997410104)
+completed successfully at 17:41 Asia/Manila. Its exact-main full normal/shuffled
+suites, dependency audit, metadata and required aggregate checks all passed.
+Deployment logs confirm a newly secured/integrity-verified backup, code-only
+upload, no backup bypass, and the expected live login version. The workflow's
+three authenticated Operations observations succeeded afterward. The initial
+automatic-merge request was unsupported by repository configuration; the agent
+waited and merged normally only after every PR gate passed, without changing
+repository rules.
+
+Fresh independent checks at approximately 17:42 Asia/Manila established:
+
+- Hosting stage RUNNING on CPU Basic; Space commit
+  `db0ddd2be363a26891a4ac9faab014b507990917`.
+- Hosted build version 9.95, source
+  `75a7eb494528156f4c73228937738238884151ed`, deployed at 17:39:25 application time.
+- Hosted app.py, monitoring.py and templates/ops.html match reviewed files.
+- Public `/health` HTTP 200, app/database ok; one probe took 361 ms including
+  network/proxy overhead. `/login` showed 9.95; anonymous `/ops` required login.
+- The configured writable `/data` bucket mount and persistence variable were
+  verified before deployment. No storage-topology change was performed.
+
+The new production process had only ten completed requests at the health probe;
+that is not a representative performance sample. No live authenticated timing
+table was retrieved in this workspace. Use the admin Performance details panel
+after ordinary traffic to establish the actual bottleneck. A successful release
+does not establish a performance improvement or verified recovery objectives.
+
+This post-release documentation is saved on `docs/9-95-release-verification`;
+it does not trigger another production release. Raw logs, backups and credentials
+are excluded from the record. Documentation whitespace and new link checks pass.

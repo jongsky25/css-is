@@ -75,6 +75,23 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 5, 2026, 17:42 Asia/Manila: System Health timings deployed, 9.95.**
+Owner explicitly approved production deployment. [PR #585](https://github.com/jongsky25/css-is/pull/585)
+merged as `75a7eb494528156f4c73228937738238884151ed` after complete normal/shuffled,
+dependency, metadata, aggregate and avatar checks passed on review head `c043489`.
+Production [run 41997410104](https://github.com/jongsky25/css-is/actions/runs/41997410104)
+passed its own exact-main normal/shuffled/dependency/metadata gates, secured a
+fresh verified backup without bypass, uploaded code only and verified live 9.95.
+Three authenticated Operations observations also succeeded. Fresh hosting/source
+checks confirm RUNNING, Space commit `db0ddd2be363a26891a4ac9faab014b507990917`,
+build source `75a7eb4`, and matching app.py/monitoring.py/ops template. Public
+health is HTTP 200, app/database ok; anonymous Operations still requires login.
+See [measurement and release record](SYSTEM_HEALTH_TIMINGS.md). Next: after normal
+traffic, inspect System Health → Performance details, refresh once to include the
+previous health request, and identify the dominant route/operation cost. Live
+root cause remains unconfirmed; no optimization or hardware change is claimed.
+This post-release record is saved separately on `docs/9-95-release-verification`.
+
 **November 5, 2026: System Health performance diagnostics prepared.**
 Owner requested the next diagnostic step after a 4.5-second reading and a later
 screenshot showing 1.6 seconds, no errors, 103 requests/five minutes and one active
