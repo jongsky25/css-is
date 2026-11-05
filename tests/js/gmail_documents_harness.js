@@ -1,9 +1,11 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const props={GMAIL_DOCUMENTS_PREVIEW_ENABLED:'true',GMAIL_DOCUMENTS_MAILBOX:'office@example.test',
  GMAIL_DOCUMENTS_LABEL:'CSS-Documents',GMAIL_DOCUMENTS_START_AT:'2026-10-17T00:00:00+08:00'};
+let now=Date.parse('2026-11-05T15:59:00Z');
+class Clock extends Date {constructor(...args){super(...(args.length?args:[now]));}static now(){return now;}}
 let mailbox='office@example.test', labels=[{id:'Label_1',name:'CSS-Documents',type:'user'}], messages={}, page={}, calls=[];
 const fail=()=>{throw Error('Unexpected write or download');};
-const ctx={console:{log:fail},Date,JSON,Math,Number,String,Array,Set,Error,
+const ctx={console:{log:fail},Date:Clock,JSON,Math,Number,String,Array,Set,Error,
  PropertiesService:{getScriptProperties:()=>({getProperty:k=>props[k],setProperty:fail})},
  DriveApp:new Proxy({},{get:()=>fail}),UrlFetchApp:{fetch:fail},MailApp:{sendEmail:fail},
  Gmail:{Users:{getProfile:()=>({emailAddress:mailbox}),Labels:{list:()=>({labels}),create:fail},
@@ -12,7 +14,7 @@ const ctx={console:{log:fail},Date,JSON,Math,Number,String,Array,Set,Error,
 vm.createContext(ctx);vm.runInContext(fs.readFileSync('apps_script/gmail_documents.gs','utf8'),ctx);
 const run=(token)=>JSON.parse(JSON.stringify(ctx.previewGmailDocumentsPage(token)));
 function attachment(name='memo.pdf',mime='application/pdf',id='attachment1',size=1024,headers=[]){return {filename:name,mimeType:mime,body:{attachmentId:id,size},headers};}
-function message(parts=[attachment()],extra={}) {return {internalDate:String(Date.parse(props.GMAIL_DOCUMENTS_START_AT)),labelIds:['Label_1','INBOX'],
+function message(parts=[attachment()],extra={}) {return {internalDate:String(Date.parse('2026-11-05T00:00:00+08:00')),labelIds:['Label_1','INBOX'],
  payload:{mimeType:'multipart/mixed',headers:[{name:'Subject',value:'Memo'},{name:'From',value:'Sender <sender@example.test>'}],
  parts:[{mimeType:'text/plain',body:{data:'PRIVATE_BODY_SENTINEL',size:10}},...parts]},...extra};}
 function set(items){messages=items;page={messages:Object.keys(items).map(id=>({id}))};calls=[];}
@@ -23,13 +25,13 @@ check('nested attachment and metadata only',()=>{
  const r=run();assert.equal(r.candidates.length,1);assert.equal(r.candidates[0].attachments.length,1);
  assert.equal(r.candidates[0].excluded_attachments[0].reason,'inline_attachment');assert(r.candidates[0].ready_for_import);
  assert(!JSON.stringify(r).includes('PRIVATE_BODY_SENTINEL'));
- assert.deepEqual(calls[0].labelIds,['Label_1']);assert.equal(calls[0].maxResults,25);
- assert(calls[0].q.includes('after:'+(Date.parse(props.GMAIL_DOCUMENTS_START_AT)/1000-1)));
+ assert.equal(calls[0].labelIds,undefined);assert.equal(calls[0].maxResults,25);
+ assert(calls[0].q.includes('after:'+(Date.parse('2026-11-05T00:00:00+08:00')/1000-1)));
 });
-check('message-level label, date and folder checks',()=>{
- set({a:message([], {internalDate:String(Date.parse(props.GMAIL_DOCUMENTS_START_AT)-1)}),b:message(undefined,{labelIds:['Label_1','SENT']}),
+check('unlabelled mail accepted; exact date and folder checks',()=>{
+ set({a:message([], {internalDate:String(Date.parse('2026-11-05T00:00:00+08:00')-1)}),b:message(undefined,{labelIds:['Label_1','SENT']}),
  c:message(undefined,{labelIds:['INBOX']}),d:message(undefined,{labelIds:['Label_1','DRAFT']})});
- const r=run();assert.equal(r.candidates.length,0);assert.equal(r.excluded.length,4);
+ const r=run();assert.equal(r.candidates.length,1);assert.equal(r.candidates[0].message_id,'c');assert.equal(r.excluded.length,3);
 });
 check('unsupported, oversized, inline CID and missing attachment IDs',()=>{
  set({abc:message([attachment('zip.zip','application/zip'),attachment('large.pdf','application/pdf','large',20*1024*1024+1),
@@ -55,7 +57,7 @@ check('provider error isolated without leaking provider text',()=>{
 check('disabled by default and mailbox identity required',()=>{
  delete props.GMAIL_DOCUMENTS_PREVIEW_ENABLED;assert.throws(run,/disabled/);props.GMAIL_DOCUMENTS_PREVIEW_ENABLED='true';
  mailbox='wrong@example.test';assert.throws(run,/mailbox_mismatch/);mailbox='office@example.test';
- labels=[];assert.throws(run,/label_missing/);labels=[{id:'Label_1',name:'CSS-Documents',type:'user'}];
+ labels=[];delete props.GMAIL_DOCUMENTS_LABEL;run();
 });
 check('explicit valid start date and page size required',()=>{
  for(const value of ['', '2026-02-30T00:00:00Z','2026-10-17','invalid']){props.GMAIL_DOCUMENTS_START_AT=value;assert.throws(run,/start/);}
@@ -71,5 +73,16 @@ check('body-only messages are candidates without logging their contents',()=>{
  set({abc:message([])});const r=run();assert.equal(r.candidates.length,1);
  assert(r.candidates[0].body_only);assert(r.candidates[0].ready_for_import);
  assert(!JSON.stringify(r).includes('PRIVATE_BODY_SENTINEL'));
+});
+check('Manila midnight advances window and old mail is never backfilled',()=>{
+ set({today:message(),tomorrow:message(undefined,{internalDate:String(Date.parse('2026-11-06T00:00:00+08:00'))})});
+ assert.equal(run().candidates[0].message_id,'today');assert.equal(run().candidates.length,1);
+ now=Date.parse('2026-11-05T16:00:00Z');
+ const r=run();assert.equal(r.candidates.length,1);assert.equal(r.candidates[0].message_id,'tomorrow');
+ assert.equal(r.start_at,'2026-11-05T16:00:00.000Z');assert.equal(r.timezone,'Asia/Manila');
+ assert(calls.at(-1).q.includes('before:'+Date.parse('2026-11-06T16:00:00Z')/1000));
+ props.GMAIL_DOCUMENTS_START_AT='2026-11-06T02:00:00+08:00';
+ set({before:message(undefined,{internalDate:String(Date.parse('2026-11-06T01:59:59+08:00'))})});
+ assert.equal(run().candidates.length,0);
 });
 console.log(checks+' Gmail discovery contracts passed');

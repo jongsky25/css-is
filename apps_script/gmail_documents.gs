@@ -13,16 +13,27 @@ function gdiConfig_() {
   const props = PropertiesService.getScriptProperties();
   if (props.getProperty('GMAIL_DOCUMENTS_PREVIEW_ENABLED') !== 'true') throw new Error('gmail_preview_disabled');
   const mailbox = String(props.getProperty('GMAIL_DOCUMENTS_MAILBOX') || '').trim().toLowerCase();
-  const label = String(props.getProperty('GMAIL_DOCUMENTS_LABEL') || '').trim();
   const start = String(props.getProperty('GMAIL_DOCUMENTS_START_AT') || '');
   // A deliberate instant prevents an implicit historical mailbox backfill.
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mailbox) || !label || label.length > 225 || /[\r\n]/.test(label)) throw new Error('gmail_preview_config');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mailbox)) throw new Error('gmail_preview_config');
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})$/.test(start) || !Number.isFinite(Date.parse(start))) throw new Error('gmail_preview_start');
   const calendar = new Date(start.slice(0,10) + 'T00:00:00Z');
   if (calendar.toISOString().slice(0,10) !== start.slice(0,10)) throw new Error('gmail_preview_start');
   const pageSize = props.getProperty('GMAIL_DOCUMENTS_PAGE_SIZE') || '25';
   if (!/^\d+$/.test(pageSize) || Number(pageSize)<1 || Number(pageSize)>100) throw new Error('gmail_preview_page_size');
-  return {mailbox:mailbox,label:label,startMs:Date.parse(start),pageSize:Number(pageSize)};
+  const window=gdiDayWindow_(Date.parse(start));
+  return {mailbox:mailbox,startMs:window.startMs,endMs:window.endMs,configuredStartMs:Date.parse(start),pageSize:Number(pageSize)};
+}
+
+// Philippine civil day, independent of the Apps Script project's timezone.
+function gdiDayWindow_(configuredStartMs) {
+  const offset=8*60*60*1000, day=24*60*60*1000;
+  const midnight=Math.floor((Date.now()+offset)/day)*day-offset;
+  return {startMs:Math.max(configuredStartMs,midnight),endMs:midnight+day};
+}
+function gdiReceivedEligible_(config, received) {
+  const window=gdiDayWindow_(config.configuredStartMs === undefined ? config.startMs : config.configuredStartMs);
+  return Number.isFinite(received) && received>=window.startMs && received<window.endMs;
 }
 
 function gdiHeader_(part, name) {
@@ -66,14 +77,12 @@ function gdiDiscoverPage_(config, pageToken) {
   if (pageToken !== undefined && (typeof pageToken!=='string' || pageToken.length>2048)) throw new Error('gmail_preview_page_token');
   const profile = Gmail.Users.getProfile('me');
   if (String(profile.emailAddress || '').toLowerCase()!==config.mailbox) throw new Error('gmail_preview_mailbox_mismatch');
-  const labels = Gmail.Users.Labels.list('me').labels || [];
-  const label = labels.find(function(item) {return item.name===config.label && item.type==='user';});
-  if (!label) throw new Error('gmail_preview_label_missing');
-  const options = {labelIds:[label.id],q:'after:'+String(Math.floor(config.startMs/1000)-1)+' -in:spam -in:trash -in:sent -in:drafts',
+  const window=gdiDayWindow_(config.configuredStartMs === undefined ? config.startMs : config.configuredStartMs);
+  const options = {q:'after:'+String(Math.floor(window.startMs/1000)-1)+' before:'+String(Math.ceil(window.endMs/1000))+' -in:spam -in:trash -in:sent -in:drafts',
     includeSpamTrash:false,maxResults:config.pageSize};
   if (pageToken) options.pageToken=pageToken;
   const page = Gmail.Users.Messages.list('me',options);
-  const result = {mode:'preview',mailbox:config.mailbox,label:config.label,start_at:new Date(config.startMs).toISOString(),
+  const result = {mode:'preview',mailbox:config.mailbox,start_at:new Date(window.startMs).toISOString(),end_at:new Date(window.endMs).toISOString(),timezone:'Asia/Manila',
     candidates:[],excluded:[],errors:[],next_page_token:page.nextPageToken || null};
   const seen = new Set();
   (page.messages || []).slice(0,config.pageSize).forEach(function(ref) {
@@ -86,9 +95,8 @@ function gdiDiscoverPage_(config, pageToken) {
       const labels = message.labelIds || [];
       const received = Number(message.internalDate);
       let reason = '';
-      if (!labels.includes(label.id)) reason='label_changed';
-      else if (['SPAM','TRASH','SENT','DRAFT'].some(function(id) {return labels.includes(id);})) reason='excluded_folder';
-      else if (!Number.isFinite(received) || received<=0 || received<config.startMs) reason='before_start_or_invalid_date';
+      if (['SPAM','TRASH','SENT','DRAFT'].some(function(id) {return labels.includes(id);})) reason='excluded_folder';
+      else if (!gdiReceivedEligible_(config,received)) reason='outside_current_day_or_start';
       if (reason) {result.excluded.push({message_id:ref.id,reason:reason}); return;}
       const attachments = gdiAttachments_(message.payload);
       const subject = gdiHeader_(message.payload || {},'subject');

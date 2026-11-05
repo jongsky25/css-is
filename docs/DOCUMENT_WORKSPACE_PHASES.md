@@ -86,7 +86,7 @@ Apps Script projects are updated separately from the GitHub application deployme
    and Drive API v3. These editor/time-trigger importer functions need no web-app
    redeployment. Run `gmailDocumentsStatus` while paused to inspect its status.
 5. Set `GMAIL_DOCUMENTS_FOLDER_ID` to the SAME To Review folder. Keep the mailbox,
-   label, deliberate start instant, signed intake endpoint and dedicated secret
+   same-day selection, deliberate initial start instant, signed intake endpoint and dedicated secret
    configured as described in `GMAIL_DOCUMENT_INTAKE.md`. Update existing projects
    in place; a new project would lose the receipt index. Confirm actual folder sharing
    and privacy for receipts, especially when several staff upload to the inbox.
@@ -99,7 +99,7 @@ Apps Script projects are updated separately from the GitHub application deployme
    for normal operation. Pausing Drive keeps emails queued and never restores direct
    registration. Installations that have never enabled it retain the older Gmail
    registration behavior. Enable Gmail only after the updated app is configured.
-8. Keep the existing five-minute Gmail trigger and label/date selection. Each invocation
+8. Keep the existing five-minute Gmail trigger and current Manila-day selection. Each invocation
    attempts at most five messages. A `queued` receipt acknowledges handoff to app review,
    not completed registration or staff action. The app tracks subsequent status.
 

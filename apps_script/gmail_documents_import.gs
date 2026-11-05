@@ -77,6 +77,7 @@ function gdiReceipt_(config,candidate) {
 }
 function gdiUpload_(config, saved, attachment) {
   const receipt=saved.value;
+  if(!gdiReceivedEligible_(config,Date.parse(receipt.candidate.received_at)))throw new Error('gmail_outside_current_day');
   let file=receipt.files.find(function(item) {return item.attachment_id===attachment.attachment_id;});
   if (!file) {
     file={attachment_id:attachment.attachment_id,id:gdiNewId_(),uploaded:false};
@@ -167,6 +168,7 @@ function gdiImportOne_(config,candidate) {
   if (receipt.state==='queued') return 'already_queued';
   if (receipt.state==='registered') return 'already_registered';
   const pinned=receipt.candidate;
+  if(!gdiReceivedEligible_(config,Date.parse(pinned.received_at)))throw new Error('gmail_outside_current_day');
   if (!receipt.payload) {
     const attachments=pinned.attachments.map(function(item) {return gdiUpload_(config,saved,item);});
     receipt.payload={mailbox:receipt.mailbox,message_id:receipt.message_id,subject:pinned.subject,
@@ -174,6 +176,7 @@ function gdiImportOne_(config,candidate) {
     if(!attachments.length)receipt.payload.body_text=gdiBodyText_(receipt.message_id);
     gdiSaveReceipt_(saved.id,receipt); // pin exact request before HTTP
   }
+  if(!gdiReceivedEligible_(config,Date.parse(pinned.received_at)))throw new Error('gmail_outside_current_day');
   const result=gdiSubmit_(config,receipt.payload);
   receipt.document_id=result.document_id || null;
   receipt.intake_id=result.intake_id || null;
@@ -195,7 +198,7 @@ function importGmailDocuments() {
     gdiHealth_({state:'running',last_run_at:new Date().toISOString()});
     const config=gdiImportConfig_();
     const recovery=gdiPendingPage_(config);
-    const scanKey='GDI_SCAN_'+gdiHash_(JSON.stringify([config.binding,config.label,config.startMs,config.pageSize]));
+    const scanKey='GDI_SCAN_'+gdiHash_(JSON.stringify([config.binding,config.startMs,config.endMs,config.pageSize]));
     const token=props.getProperty(scanKey) || undefined;
     let page,discoveryFailed=false;
     try {page=gdiDiscoverPage_(config,token);}
@@ -210,6 +213,7 @@ function importGmailDocuments() {
       errors:recovery.result.errors.concat(page.errors)};
     const seen=new Set();let attempts=0,recoveryComplete=true;
     function process(candidate) {
+      if(!gdiReceivedEligible_(config,Date.parse(candidate.received_at))){report.excluded++;return true;}
       if(seen.has(candidate.message_id))return true;
       if(Date.now()-started>240000 || attempts>=5){report.state='partial';return false;}
       seen.add(candidate.message_id);

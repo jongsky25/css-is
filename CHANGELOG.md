@@ -1,3 +1,9 @@
+## 9.94 — November 5, 2026
+
+- Update the companion GovMail scripts to pull only the current Asia/Manila day without labels, retaining the configured initial start instant as a lower bound.
+- Exclude older saved retries and recheck eligibility before attachment processing and submission; preserve existing files, receipts and queue entries.
+- Activation requires replacing the three scripts in the existing mail Apps Script project; the application deployment does not update that project.
+
 ## 9.93 — November 4, 2026
 
 - Separate calendar-month answers from rolling 30-day statistics and conservatively upgrade untouched monthly FAQ seeds.
