@@ -1,3 +1,8 @@
+## 9.97 — November 5, 2026
+
+- Give companions a festive room with garlands, warm lamps, gifts and a woven rug.
+- Adapt the scene to phones and wider screens while keeping sound controls below the artwork.
+
 ## 9.96 — November 5, 2026
 
 - Replace the Christmas home illustration with original capiz-parol artwork, cranberry ribbons and warm lighting.

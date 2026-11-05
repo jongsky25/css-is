@@ -57,10 +57,14 @@ def test_named_companion_full_width_controls_and_scene(seasonal_browser, admin, 
                 controls = stage.locator('.av-sound-controls').bounding_box()
                 assert abs((art['x']+art['width']/2)-(box['x']+box['width']/2)) < 2
                 assert controls['y'] >= art['y']+art['height']
+                scene_height = stage.evaluate('(el)=>parseFloat(getComputedStyle(el,"::before").height)')
+                assert controls['y'] >= box['y'] + scene_height - 1
+                assert art['y'] >= box['y']
+                assert art['y'] + art['height'] <= box['y'] + scene_height
                 assert stage.locator('.av-play-btn').is_enabled()
                 edit = stage.locator('.oc-pet-edit').bounding_box()
                 assert edit['y'] >= controls['y']+controls['height']
-                assert 'pasko-lights.svg' in stage.evaluate('(el)=>getComputedStyle(el,"::before").backgroundImage')
+                assert ('christmas-nook.webp' if width < 700 else 'christmas-nook-wide.webp') in stage.evaluate('(el)=>getComputedStyle(el,"::before").backgroundImage')
                 assert 'christmas-parols.svg' not in stage.evaluate('(el)=>getComputedStyle(el).backgroundImage')
                 stage.locator('.av-sound-btn').click()
                 pw.expect(stage.locator('.av-volume')).to_be_visible()
@@ -70,12 +74,8 @@ def test_named_companion_full_width_controls_and_scene(seasonal_browser, admin, 
                 stage.locator('.av-sound-btn').click()
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
                 if width in (390, 768, 1440):
-                    page.screenshot(path=str(tmp_path/f'courtyard-{mode}-{width}.png'),full_page=True)
-                    stage.screenshot(path=str(tmp_path/f'panel-{mode}-{width}.png'))
-            if width in (390, 768, 1440):
-                for alternative in ('sala','veranda'):
-                    page.add_style_tag(content=f'.oc-pet-stage::before{{background-image:url("/static/img/seasonal/companion-{alternative}.svg")!important}}')
-                    page.screenshot(path=str(tmp_path/f'{alternative}-{width}.png'),full_page=True)
+                    page.screenshot(path=str(tmp_path/f'nook-{mode}-{width}.png'),full_page=True)
+                    stage.screenshot(path=str(tmp_path/f'panel-{mode}-{width}.png'), style='.topnav{visibility:hidden}')
         page.goto('http://testserver/?view=me')
         page.evaluate('document.documentElement.dataset.theme="contrast"')
         assert page.locator('.oc-pet-stage').evaluate('(el)=>getComputedStyle(el,"::before").display') == 'none'
