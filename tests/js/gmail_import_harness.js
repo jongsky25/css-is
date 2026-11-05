@@ -59,7 +59,14 @@ const context={Date:Clock,JSON,Math,Number,String,Array,Set,Error,console:{log:(
   return {getResponseCode:()=>replyCode,getContentText:()=>JSON.stringify(queueReply ? {intake_id:456,state:'queued',duplicate:requests.length>1} : {document_id:123,duplicate:requests.length>1})};
  }}
 };
-vm.createContext(context);vm.runInContext(fs.readFileSync('apps_script/gmail_documents_import.gs','utf8'),context);
+const configDouble=context.gdiConfig_,discoveryDouble=context.gdiDiscoverPage_;
+vm.createContext(context);
+vm.runInContext(fs.readFileSync('apps_script/gmail_documents.gs','utf8'),context);
+const eligibility=context.gdiReceivedEligible_;
+context.gdiConfig_=configDouble;context.gdiDiscoverPage_=discoveryDouble;
+// Existing recovery contracts use a fixed historical fixture, independently of date selection.
+context.gdiReceivedEligible_=()=>true;
+vm.runInContext(fs.readFileSync('apps_script/gmail_documents_import.gs','utf8'),context);
 vm.runInContext(fs.readFileSync('apps_script/gmail_documents_ops.gs','utf8'),context);
 const run=()=>{if(runCount++)offset+=3600000;return JSON.parse(JSON.stringify(context.importGmailDocuments()));};
 function retry(){props.GMAIL_DOCUMENTS_OPERATOR_REASON='Issue resolved';props.GMAIL_DOCUMENTS_RETRY_RECEIPT_ID=Object.entries(props).find(([k,v])=>k.startsWith('GDI_RECEIPT_'))[1];context.retryGmailDocument();}
@@ -294,6 +301,27 @@ check('Unicode body authentication retry preserves the exact payload',()=>{
  assert.equal(JSON.parse(requests[0].payload).body_text,body);
  retry();replyCode=201;assert.equal(run().already_queued,1);
  assert.equal(requests[0].payload,requests[1].payload);assert.equal(attachmentCount(),0);
+});
+check('daily policy excludes old discovery and saved retries without side effects',()=>{
+ failPost=true;run(); // Save a pending historical receipt using the recovery fixture.
+ const beforeDownloads=downloads,beforeRequests=requests.length,beforeFiles=files.size;
+ context.gdiReceivedEligible_=eligibility;
+ try {
+   const r=run();assert.equal(r.registered,0);assert.equal(r.already_registered,0);
+   assert.equal(downloads,beforeDownloads);assert.equal(requests.length,beforeRequests);assert.equal(files.size,beforeFiles);
+   assert.throws(()=>context.gdiAttempt_(context.gdiImportConfig_(),candidate),/outside_current_day/);
+ } finally {context.gdiReceivedEligible_=()=>true;}
+});
+check('current-day import works but its pending request expires at Manila midnight',()=>{
+ context.gdiReceivedEligible_=eligibility;
+ scanPage.candidates=[{...candidate,received_at:new Date(clockEpoch).toISOString()}];failPost=true;
+ try {
+   assert.equal(run().errors[0].reason,'import_incomplete');assert.equal(requests.length,1);
+   const day=86400000,zone=28800000;
+   offset=(Math.floor((clockEpoch+zone)/day)+1)*day-zone-clockEpoch;
+   const r=run();assert.equal(r.registered,0);assert.equal(r.already_registered,0);
+   assert.equal(requests.length,1);assert.equal(downloads,2);assert.equal(attachmentCount(),2);
+ } finally {context.gdiReceivedEligible_=()=>true;}
 });
 if(process.argv.includes('--envelope')){
  reset();run();console.log(JSON.stringify({body:requests[0].payload,headers:requests[0].headers}));

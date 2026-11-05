@@ -1,3 +1,36 @@
+# Current rule: same-day GovMail intake (November 5, 2026)
+
+The current three companion scripts no longer require or inspect a Gmail user
+label. Every run selects received emails from the current **Asia/Manila** civil
+day, excluding spam, trash, sent mail and drafts. Read/unread status is irrelevant.
+The configured initial start instant remains a lower bound. On November 6 the
+window moves to November 6; it never catches up on November 5 or earlier mail.
+This intentionally means mail missed before midnight will not be imported later.
+Body-only support and existing attachment validation remain in effect.
+
+Saved pending receipts from an earlier day are excluded from automatic recovery.
+An operator retry cannot bypass the date guard. Receipts, uploaded files and
+existing queue entries remain intact; an uncertain prior submission is not undone.
+A request already in flight at midnight may finish afterwards.
+
+To activate in the existing office mail Apps Script project:
+
+1. Pause the importer and replace **all three** files together:
+   `gmail_documents.gs`, `gmail_documents_import.gs`, `gmail_documents_ops.gs`.
+2. Set `GMAIL_DOCUMENTS_START_AT` to `2026-11-05T00:00:00+08:00` for the agreed
+   November 5 start. Keep mailbox, destination, endpoint, secrets and receipt
+   indexes. `GMAIL_DOCUMENTS_LABEL` can be removed or left unused.
+3. Run `previewGmailDocuments` and confirm the reported start/end window and
+   `Asia/Manila` timezone. Resume and run `importGmailDocuments`, checking the
+   queue and execution report. Keep the five-minute trigger.
+
+Updating the GitHub application does not install Apps Script changes. No relay
+web-app redeployment is required. The live project update, properties and trigger
+have not been verified by this repository change.
+
+The historical label-based rollout below is retained for reference; the current
+selection and recovery rule above supersedes its label and backfill instructions.
+
 > For the unified review queue, My Drive/Shared Drive support, body-only email,
 > and the current rollout, see [Document workspace setup](DOCUMENT_WORKSPACE_PHASES.md).
 > The sections below describe the earlier incremental implementation. Enabling the

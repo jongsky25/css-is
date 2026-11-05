@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.93"
+APP_VERSION = "9.94"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.94",
+        "date": "November 5, 2026",
+        "summary": "Prepare GovMail intake for today's emails without labels.",
+        "changes": [
+            "After updating the mail importer, it pulls only emails received today in Philippine time without requiring a Gmail label.",
+            "Older mail is excluded from discovery and retries; existing review entries remain available."
+        ],
+    },
     {
         "version": "9.93",
         "date": "November 4, 2026",

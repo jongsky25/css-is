@@ -75,6 +75,19 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 5, 2026: same-day GovMail request.** Review branch
+`fix/govmail-same-day`, candidate 9.94, removes label gating and restricts new
+imports and saved recovery to the current Asia/Manila day. Initial rollout start
+is November 5 midnight +08:00; no earlier-day catch-up. Existing queue entries,
+receipt indexes and files are preserved. See [activation instructions](GMAIL_DOCUMENT_INTAKE.md).
+Local Node contracts pass: 12 discovery and 39 importer contracts, using synthetic
+services. Release metadata and diff checks pass. Python endpoint/signature tests
+and full release suites were not run locally; CI remains required. Live Apps
+Script has not been updated. Next: review CI and install all three companion
+scripts in the existing mail project, configure the start instant and verify a
+manual run before relying on its trigger. No production app merge/deploy authorized.
+
+
 **November 4, 2026: learned-rule repairs implemented, candidate 9.93.**
 Branch: `feat/learned-rules-repair`. Restores the encoding tour, separates
 calendar-month answers from rolling 30-day answers, adds the six reviewed
