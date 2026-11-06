@@ -75,6 +75,18 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Queue update — November 6, 2026, 21:17 UTC.** #591's deployment retry
+42268096935 completed successfully: all verification, deploy and diagnostics jobs
+passed. No timeout or release guard was relaxed. #592 at `bcfaab4` passed all five
+CI checks in 42268117855; review threads were resolved and the main ruleset was
+confirmed active, strict and without bypass actors. #592 merged as `9e4cfbc` and
+its guarded deployment is pending. #593 was retargeted to main and its branch
+update requested; inspect fresh checks on the resulting head and wait for #592
+deployment success before merging. #594 remains queued last. The task remains
+enabled. Clean review-branch work was preserved; this is a handoff-only edit.
+Drive relay activation remains manual and unclaimed.
+
+
 **Queue update — November 6, 2026, 19:36 UTC.** #591's guarded deployment
 42268096935 did not deploy: normal test job 128065195613 exceeded its 75-minute
 limit (GitHub check annotation), so Required checks failed and deploy/diagnostics
