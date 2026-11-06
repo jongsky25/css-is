@@ -77,6 +77,10 @@ access remains necessary in a fresh chat.
 
 **November 6, 2026: next OCR increment, candidate 9.99.**
 The owner requested merging #588 when ready and proceeding to the next increment.
+Draft [PR #589](https://github.com/jongsky25/css-is/pull/589) contains the next increment.
+An hourly conditional task is enabled to finish #588 after all gates pass, verify
+its deployment, retarget #589 to main, and stop after completion or a user-only
+blocker. It must not merge #589 without further release authorization.
 Branch `feat/document-request-details`, based on #588 head `aadf608`, prepares
 literal deliverable, named recipient, explicit deadline and submission instruction
 suggestions. Each suggested detail shows source evidence. Relative/ambiguous dates
