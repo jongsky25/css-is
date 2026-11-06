@@ -75,6 +75,17 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Queue update — November 6, 2026, 17:15 UTC.** #590 deployed successfully:
+guarded workflow 42249433586 at `39f62c0` passed all verification, deploy and
+post-deploy diagnostic jobs. #591 is next, head `e7c5c58`: metadata, dependency
+audit and shuffled suite passed, but its normal suite in 42249455058 is still
+running and Required checks has not completed. Do not merge until both pass.
+No unresolved review threads; main ruleset remains active with no bypasses.
+#592–#594 remain queued behind #591 and each successful predecessor deployment.
+The review branch was clean and matched remote before this handoff-only edit.
+Keep the task enabled. Drive relay activation remains manual, not completed.
+
+
 **Queue update — November 6, 2026, 16:07 UTC.** #589's guarded production
 workflow 42237842415 completed successfully, including deployment and diagnostics.
 #590 passed all five checks at `7b9fbc7` (CI 42237860045), with no unresolved
