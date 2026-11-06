@@ -8,4 +8,3 @@
 <p>Primary focus: {{ focus_areas.get(uv.get('focus_primary'), 'Unclassified — needs review') }}{% if uv.get('focus_secondary') %} · Secondary: {{ focus_areas.get(uv.get('focus_secondary')) }}{% endif %}</p>
 {% if uv.get('focus_evidence') %}<blockquote>{{ uv.focus_evidence }}</blockquote>{% endif %}
 </section>{% endif %}
-
