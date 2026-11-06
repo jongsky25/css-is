@@ -195,3 +195,59 @@ def save(conn, doc_id, user, fields, timestamp):
 def read(conn, doc_id):
     row = conn.execute('SELECT values_json FROM document_understanding WHERE document_id=?', (doc_id,)).fetchone()
     return json.loads(row[0]) if row else {}
+
+
+def can_edit(conn, user, doc):
+    import documents_permissions as permissions
+    return (doc['direction']=='IN' and not doc['canonical_id'] and not doc['archived_at']
+            and doc['status'] not in ('closed','cancelled','released','awaiting_acknowledgment','in_review','approved','signed','ready_to_release')
+            and permissions.can_work(conn,user,doc))
+
+
+def history(conn, doc_id, before=0):
+    """Internal reader: callers must check current document visibility first."""
+    from documents_storage import rows
+    items=rows(conn,'''SELECT revision,values_json,actor_id,created_at,reason
+        FROM document_understanding_revision WHERE document_id=? AND (?=0 OR revision<?)
+        ORDER BY revision DESC LIMIT 11''',(doc_id,before,before))
+    more=len(items)>10
+    items=items[:10]
+    for item in items: item['values']=json.loads(item.pop('values_json'))
+    if not items and not before:
+        original=conn.execute('SELECT values_json,actor_id,created_at FROM document_understanding WHERE document_id=?',(doc_id,)).fetchone()
+        if original:
+            items=[{'revision':1,'values':json.loads(original[0]),'actor_id':original[1],
+                    'created_at':original[2],'reason':'Original intake review'}]
+    return items, more
+
+
+def revise(conn, user, doc_id, revision, fields):
+    """Replace the reviewed snapshot, preserving prior versions atomically."""
+    import documents as docs
+    import tzutil as tz
+    from documents_storage import transaction
+    with transaction(conn):
+        user,doc=docs.check(conn,user,doc_id,revision)
+        docs.require(can_edit(conn,user,doc), 'Only authorized staff can review requests on an active incoming document outside approval or release.')
+        if fields.get('review_confirmed')!='yes':
+            raise ValueError('Confirm that you checked the revised requests and focus areas against the source.')
+        reason=docs.reason(fields.get('reason'))
+        values=clean(fields,require_confirmation=True)
+        if not values['needs_status']:
+            raise ValueError('Choose a request status, including unclear if the source still needs review.')
+        original=conn.execute('SELECT values_json,actor_id,created_at FROM document_understanding WHERE document_id=?',(doc_id,)).fetchone()
+        latest=conn.execute('SELECT MAX(revision) FROM document_understanding_revision WHERE document_id=?',(doc_id,)).fetchone()[0] or 0
+        if not latest and original:
+            conn.execute('INSERT INTO document_understanding_revision VALUES (?,?,?,?,?,?)',
+                         (doc_id,1,original[0],original[1],original[2],'Original intake review'))
+            latest=1
+        timestamp=tz.now_iso()
+        payload=json.dumps(values)
+        conn.execute('INSERT INTO document_understanding_revision VALUES (?,?,?,?,?,?)',
+                     (doc_id,latest+1,payload,user['id'],timestamp,reason))
+        conn.execute('''INSERT INTO document_understanding(document_id,values_json,actor_id,created_at)
+            VALUES (?,?,?,?) ON CONFLICT(document_id) DO UPDATE SET
+            values_json=excluded.values_json,actor_id=excluded.actor_id,created_at=excluded.created_at''',
+                     (doc_id,payload,user['id'],timestamp))
+        return docs.finish(conn,user,doc,'understanding_review',
+                           {'review_revision':latest+1,'reason':reason}, {'reconcile':1})

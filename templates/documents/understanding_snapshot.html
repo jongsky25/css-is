@@ -1,0 +1,10 @@
+{% if understanding_values %}{% set uv=understanding_values %}
+<section class="doc-card"><h3>What is needed?</h3><p>Reviewed sender requests. These are separate from internal instructions and assignments.</p>
+<p>Status: {{ (uv.get('needs_status') or 'Not yet reviewed')|replace('_',' ') }}</p>
+{% for i in range(5) %}{% set prefix='need_' ~ i ~ '_' %}{% if uv.get(prefix ~ 'action') %}
+<h4>Request {{ i+1 }}: {{ uv.get(prefix ~ 'action') }}</h4><dl>
+{% for key,label in [('kind','Interpretation'),('output','Expected output'),('recipient','Requested from'),('deadline','Deadline'),('submission','Where / how to submit'),('evidence','Supporting passage'),('page','Source location')] %}<dt>{{ label }}</dt><dd>{{ uv.get(prefix ~ key) or 'Not captured' }}</dd>{% endfor %}</dl>
+{% endif %}{% endfor %}
+<p>Primary focus: {{ focus_areas.get(uv.get('focus_primary'), 'Unclassified — needs review') }}{% if uv.get('focus_secondary') %} · Secondary: {{ focus_areas.get(uv.get('focus_secondary')) }}{% endif %}</p>
+{% if uv.get('focus_evidence') %}<blockquote>{{ uv.focus_evidence }}</blockquote>{% endif %}
+</section>{% endif %}

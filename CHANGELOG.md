@@ -1,3 +1,9 @@
+## 10.00 — November 6, 2026
+
+- Correct saved requests and focus areas on active incoming documents with individual confirmation.
+- Keep the original intake and each later review with its reviewer, time and reason.
+- Prevent older forms from overwriting newer reviews and flag changed interpretations for reconciliation.
+
 ## 9.99 — November 6, 2026
 
 - Suggest deliverables, named recipients, explicit deadlines and submission instructions from each request passage.

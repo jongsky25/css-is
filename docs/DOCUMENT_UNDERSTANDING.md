@@ -1,4 +1,4 @@
-# Incoming document understanding — candidate 9.99
+# Incoming document understanding — candidate 10.00
 
 The registration form and Drive intake review now capture up to five requests,
 with requested action, expected output, recipient named in the source, request
@@ -63,9 +63,8 @@ An additive, idempotent `document_understanding` table records bounded reviewed
 fields, reviewer ID and creation time in the same registration transaction.
 Failed confirmation or validation rolls back the document, number and review.
 Registration receipts retain existing retry semantics. Saved understanding appears
-on the permitted document detail page. It is an intake snapshot; post-registration
-editing, search filters, task conversion and automatic section routing are outside
-these first increments.
+on the permitted document detail page. Authorized staff can revise it through the review page described below. Search
+filters, task conversion and automatic section routing remain outside these increments.
 
 Unlike earlier intake metadata-only suggestions, this feature deliberately retains
 bounded supporting passages in intake suggestion JSON and the reviewed snapshot.
@@ -110,3 +109,41 @@ from a “to” destination or inferred organizational responsibility. Pronoun-o
 outputs remain blank. Long passages are bounded and warn that additional details
 may be outside the reading. Adjacent sentences, unmarked imperatives, complex
 coordination and abbreviated months remain manual-review cases.
+
+## Saved-review corrections and history (10.00)
+
+The incoming document detail page links to **Review requests and focus areas /
+history**. Staff with the existing document work permission can correct saved
+requests or add the first review to older records. They must confirm populated
+requests and focus areas, choose the request status, enter a reason/source checked,
+and confirm the overall review. The form starts with confirmations unchecked.
+Editing any field clears the overall confirmation; editing a request or focus
+field clears its own confirmation too. Manual entry works without JavaScript.
+
+The additive `document_understanding_revision` table preserves each reviewed
+snapshot, reviewer ID, timestamp and reason. Existing intake snapshots are copied
+into revision 1 on the first correction, preserving their original author and
+time; no bulk rewrite of old documents occurs. Older records without a snapshot
+start at revision 1 with their first review. The latest snapshot remains in
+`document_understanding` for the existing detail view. History shows at most ten
+reviews per page with an older-reviews link, and inherits current document access.
+
+The save and history append run inside the document transaction. A stale document
+revision cannot overwrite a newer review. Invalid confirmation, invalid data or
+audit failure rolls back the entire change. Validation errors preserve submitted
+entries; stale forms retain their old revision and offer a link to compare the
+latest review in a new tab. No silent overwrite or automatic retry occurs.
+
+Saving increments the document revision, records the review revision and reason
+in its existing audit/event stream, flags reconciliation and uses the existing
+change-notification/linked-work invalidation path. It does not create assignments,
+replace Director instructions, set the document-wide deadline, change routing or
+call external services. Reviewers can explicitly clear a mistaken interpretation
+by selecting “unclear” with a reason; the original remains in history.
+
+Editing is blocked for outgoing, merged, archived, closed/cancelled, approval and
+released documents, and while the module is disabled. Existing visibility rules
+still apply, including restricted-record and linked-work access. A viewer without
+work permission can inspect permitted history but cannot edit it. The history and
+editor responses are no-store; content is escaped and bounded by the existing
+field limits. Review snapshots and reasons inherit database/backup retention.

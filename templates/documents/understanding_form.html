@@ -1,7 +1,7 @@
 <section class="doc-card" id="document-understanding" data-ux-ignore data-telemetry-ignore>
 <h3>What is needed?</h3>
 <p>Capture the sender’s requests separately from internal routing instructions. Review every relevant page. Empty fields mean not captured; they do not mean no action is needed.</p>
-<p id="understanding-warning" role="status">Enter requests manually or read the document for suggestions. Suggestions do not assign work.</p>
+<p id="understanding-warning" role="status">{% if understanding_review_mode|default(false) %}Check the saved entries against the original source. Confirm each populated request and focus area before saving.{% else %}Enter requests manually or read the document for suggestions. Suggestions do not assign work.{% endif %}</p>
 <label>Request status<select name="needs_status">{% for key,label in [('', 'Not yet reviewed'),('requests','Requests identified'),('information_only','For information only'),('unclear','Unclear — needs review')] %}<option value="{{ key }}" {% if values.get('needs_status','')==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
 <label><input type="checkbox" name="needs_status_confirmed" value="yes" {% if values.get('needs_status_confirmed')=='yes' %}checked{% endif %}> I checked any “for information only” conclusion against the source.</label>
 <div id="understanding-suggestions"></div>

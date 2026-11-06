@@ -75,12 +75,41 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 6, 2026: saved request-review corrections, candidate 10.00.**
+Branch `feat/document-understanding-review`, based on #589 head `6f44ff9`, adds
+post-registration correction of requests and focus areas for authorized staff on
+active incoming records. An additive history table preserves original intake and
+subsequent snapshots with reviewer, time and reason; edits require individual and
+overall confirmation. Saves use document revision checks, audit and reconciliation,
+without changing assignments, internal instructions or document-wide deadlines.
+History inherits current document access and is paginated. See
+[behavior and constraints](DOCUMENT_UNDERSTANDING.md).
+
+The owner explicitly queued #589 to merge when ready, after #588. The existing
+hourly conditional task now handles both in order, requiring successful current
+checks and deployment between releases. Both PRs' metadata and dependency audits
+pass; full test orders are still running at this handoff. GitHub auto-merge is
+disabled, so the task performs a normal checked merge. This new 10.00 increment
+remains a separate draft and is not authorized for production merge. Retarget it
+to main after #589 merges. Drive relay activation remains a manual Apps Script
+editor step; no activation or deployment is claimed here.
+
+Verification: 194 focused review/history/parser/intake/registration/lifecycle/route
+and browser tests passed without failures/skips. Phone-width correction and history
+were visually inspected. Final focused reruns passed all 5 route/browser tests and all 26 review/history
+tests, including review-page wording and the ready-to-release state guard. Metadata, lock-input, evaluation-contract,
+JavaScript syntax and diff checks passed. Existing Starlette/httpx deprecation
+warning remains. Initial browser harness failures were corrected to follow the
+real POST redirect inside TestClient rather than escaping the isolated fake host;
+no application redirect bypass was introduced. Full CI remains required.
+
+
 **November 6, 2026: next OCR increment, candidate 9.99.**
 The owner requested merging #588 when ready and proceeding to the next increment.
 Draft [PR #589](https://github.com/jongsky25/css-is/pull/589) contains the next increment.
 An hourly conditional task is enabled to finish #588 after all gates pass, verify
 its deployment, retarget #589 to main, and stop after completion or a user-only
-blocker. It must not merge #589 without further release authorization.
+blocker. The subsequent owner instruction authorizes #589 after #588 and all gates.
 Branch `feat/document-request-details`, based on #588 head `aadf608`, prepares
 literal deliverable, named recipient, explicit deadline and submission instruction
 suggestions. Each suggested detail shows source evidence. Relative/ambiguous dates
@@ -99,8 +128,8 @@ syntax and diff checks passed. Full CI is required on the final review head.
 Release status: #588 remains open pending both full test orders; its repaired
 built-image dependency audit and metadata gates pass. GitHub auto-merge is disabled
 for this repository. User authorization permits #588 to merge once all gates pass;
-it does not authorize bypassing checks. The next increment is a separate draft
-for review, not an additional production merge. The Drive relay update remains
+it does not authorize bypassing checks. The subsequent owner instruction also
+authorizes #589 after #588; candidate 10.00 remains a separate draft. The Drive relay update remains
 necessary and no connected Apps Script deployment capability is available.
 
 
