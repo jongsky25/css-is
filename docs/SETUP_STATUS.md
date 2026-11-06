@@ -75,6 +75,17 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Queue update — November 6, 2026, 22:19 UTC.** #592 deployed successfully:
+workflow 42295411492 passed all verification, deploy and diagnostic jobs at
+`9e4cfbc`. #593 head `cc6427c` remains unmerged: metadata, audit and shuffled
+suite passed, while normal tests in 42295427614 are still running and the final
+gate has not completed. No unresolved review threads; main ruleset remains active
+without bypass actors. Merge only after full success, then retarget/reconcile
+#594 and require its fresh checks plus #593 deployment success. Keep the task
+enabled through #594; no later increment authorized. Clean review work preserved.
+Drive relay activation remains manual and unclaimed.
+
+
 **Queue update — November 6, 2026, 21:17 UTC.** #591's deployment retry
 42268096935 completed successfully: all verification, deploy and diagnostics jobs
 passed. No timeout or release guard was relaxed. #592 at `bcfaab4` passed all five
