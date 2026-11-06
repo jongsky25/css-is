@@ -75,6 +75,31 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 6, 2026: abbreviated request deadlines, candidate 10.04.**
+Branch `feat/document-request-abbreviated-dates` is stacked on #593 (`1b3f8e4`).
+The common parser now recognizes complete English abbreviated-month deadlines,
+including dotted and wrapped dates, without splitting their request at the month
+period. Source evidence preserves its original spelling and punctuation. Parsing
+uses an explicit English month map, validates the calendar, requires four-digit
+years and keeps event/ambiguous/relative/conflicting dates out of deadline fields.
+No schema, dependency, relay API or saved-review rewrite.
+
+The owner's “do the same for next” authorizes this release after #593, superseding
+the previous limit at 10.03. Extend the existing checked queue through the ready
+10.04 PR only. Require fresh full normal/shuffled CI, metadata and audit on each
+main-reconciled head, and successful guarded predecessor deployment. Never bypass
+backup/version gates. #588 is deployed; #589 deployment 42237842415 remains in
+progress and #590's fresh checks remain pending at this handoff. No later increment
+is authorized. Drive analysis still needs the manual Docs/travel relay activation.
+
+Initial parser regression: 119 tests passed. Expanded reader/intake/browser/release
+regression passed 237 tests without failures or skips after correcting a test
+import to the actual local-reader summarizer. Release metadata and whitespace checks passed. Full CI remains required;
+no shared preview or production release of this increment. Next: publish ready PR,
+record its number in the merge task, and advance only after all required gates.
+
+### Earlier handoff (authorization superseded above)
+
 **November 6, 2026: request follow-up overview, candidate 10.03.**
 Ready [PR #593](https://github.com/jongsky25/css-is/pull/593), implementation
 `aeda449` on `feat/document-request-overview`, is stacked on #592 (`a935b31`). Incoming

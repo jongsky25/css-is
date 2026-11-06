@@ -30,20 +30,46 @@ FIELDS = tuple(f'need_{i}_{key}' for i in range(MAX_REQUESTS) for key in LIMITS)
 REQUEST = re.compile(r'\b(?:please|kindly)\s+(?:(?:\w+)\s+){0,3}?(submit|provide|review|approve|nominate|attend|send|prepare|complete|accomplish|designate|confirm|furnish)\b|\b(?:requested|required)\s+to\s+(submit|provide|review|approve|nominate|attend|send|prepare|complete|accomplish|designate|confirm|furnish)\b', re.I)
 
 
-_MONTH = r'(?:January|February|March|April|May|June|July|August|September|October|November|December)'
+_MONTH = r'(?:January|February|March|April|May|June|July|August|September|October|November|December|(?:Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sept?|Oct|Nov|Dec)\.?)'
+_MONTH_NUMBER = {name: number for number, names in enumerate((
+    ('january','jan'), ('february','feb'), ('march','mar'), ('april','apr'), ('may',),
+    ('june','jun'), ('july','jul'), ('august','aug'), ('september','sep','sept'),
+    ('october','oct'), ('november','nov'), ('december','dec')), 1) for name in names}
 _DATE = rf'(?:\d{{4}}-\d{{2}}-\d{{2}}|{_MONTH}\s+\d{{1,2}},?\s+\d{{4}}|\d{{1,2}}\s+{_MONTH}\s+\d{{4}})'
 _DUE = re.compile(r'\b(?:on or before|not later than|no later than|by)\s+|\bdeadline\s*:\s*', re.I)
 _DATE_AT_START = re.compile(rf'({_DATE})(?![\w/-])', re.I)
 
 
 def _explicit_date(value):
-    from datetime import datetime
-    for pattern in ('%Y-%m-%d', '%B %d, %Y', '%B %d %Y', '%d %B %Y'):
+    # Parse English month names deterministically, independent of process locale.
+    if re.fullmatch(r'\d{4}-\d{2}-\d{2}',value):
         try:
-            return datetime.strptime(value, pattern).date().isoformat()
+            return date.fromisoformat(value).isoformat()
         except ValueError:
-            pass
-    return ''
+            return ''
+    parts=value.replace(',','').replace('.','').casefold().split()
+    if len(parts)!=3:
+        return ''
+    month,day,year=(parts[1],parts[0],parts[2]) if parts[0].isdigit() else parts
+    try:
+        return date(int(year),_MONTH_NUMBER[month],int(day)).isoformat()
+    except (KeyError,ValueError):
+        return ''
+
+
+def _sentences(text):
+    # Retain the original characters: evidence must remain a source quotation.
+    # Protect abbreviation periods only within a complete recognized date.
+    protected=set()
+    for match in re.finditer(r'\b'+_DATE+r'(?![\w/-])',text,re.I):
+        protected.update(match.start()+i+1 for i,char in enumerate(match[0]) if char=='.')
+    start=0
+    for boundary in re.finditer(r'(?<=[.!?])\s+|\n\s*\n',text):
+        if boundary.start() in protected and not re.search(r'\n\s*\n',boundary[0]):
+            continue
+        yield text[start:boundary.start()]
+        start=boundary.end()
+    yield text[start:]
 
 
 def request_details(passage, match):
@@ -98,7 +124,7 @@ def suggest(pages, numbers=None):
     info = False
     for number, text in zip(numbers or range(1, len(pages)+1), pages):
         # Joining wrapped lines retains requests split by OCR, with bounded windows.
-        sentences = re.split(r'(?<=[.!?])\s+|\n\s*\n', text[:100000])
+        sentences = list(_sentences(text[:100000]))
         for sentence in sentences:
             sentence = ' '.join(sentence.split())
             matches = list(REQUEST.finditer(sentence))
