@@ -75,6 +75,20 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Queue update — November 6, 2026, 19:36 UTC.** #591's guarded deployment
+42268096935 did not deploy: normal test job 128065195613 exceeded its 75-minute
+limit (GitHub check annotation), so Required checks failed and deploy/diagnostics
+were skipped. Shuffled tests, metadata and dependency audit passed. A targeted
+rerun of the cancelled normal job was accepted; retain the existing timeout and
+all verification/backup/version gates. Inspect the new attempt and downstream
+gate/deploy outcomes; if it times out again, investigate before further retries.
+#592 at `bcfaab4` passed every CI check in 42268117855 but remains unmerged until
+#591 deployment succeeds. #593–#594 remain queued. Task stays enabled: this is a
+routine retry, not a user-only blocker. No code or dirty-tree edits were made;
+this handoff is saved on the clean latest review branch. Drive relay activation
+remains manual and unclaimed.
+
+
 **Queue update — November 6, 2026, 18:09 UTC.** #591 passed all five required
 checks at `e7c5c58` (CI 42249455058); its normal suite and final gate completed.
 With #590 deployed, no unresolved threads and the active strict/no-bypass main
