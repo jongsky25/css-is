@@ -75,6 +75,18 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Queue update — November 6, 2026, 16:07 UTC.** #589's guarded production
+workflow 42237842415 completed successfully, including deployment and diagnostics.
+#590 passed all five checks at `7b9fbc7` (CI 42237860045), with no unresolved
+review threads. Main ruleset remains active, strict and without bypass actors.
+#590 merged as `39f62c0`; its production deployment remains pending. #591 was
+retargeted to main and its branch update requested; require fresh checks on the
+resulting head and successful #590 deployment before merging. #592–#594 remain
+queued in order. Latest branch was clean and its work preserved; this handoff
+updates only the review branch. The task remains enabled through #594. Drive
+relay activation remains manual and is not claimed.
+
+
 **November 6, 2026: abbreviated request deadlines, candidate 10.04.**
 Ready [PR #594](https://github.com/jongsky25/css-is/pull/594), implementation
 `dc87848` on `feat/document-request-abbreviated-dates`, is stacked on #593 (`1b3f8e4`).
