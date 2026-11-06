@@ -30,6 +30,69 @@ FIELDS = tuple(f'need_{i}_{key}' for i in range(MAX_REQUESTS) for key in LIMITS)
 REQUEST = re.compile(r'\b(?:please|kindly)\s+(?:(?:\w+)\s+){0,3}?(submit|provide|review|approve|nominate|attend|send|prepare|complete|accomplish|designate|confirm|furnish)\b|\b(?:requested|required)\s+to\s+(submit|provide|review|approve|nominate|attend|send|prepare|complete|accomplish|designate|confirm|furnish)\b', re.I)
 
 
+_MONTH = r'(?:January|February|March|April|May|June|July|August|September|October|November|December)'
+_DATE = rf'(?:\d{{4}}-\d{{2}}-\d{{2}}|{_MONTH}\s+\d{{1,2}},?\s+\d{{4}}|\d{{1,2}}\s+{_MONTH}\s+\d{{4}})'
+_DUE = re.compile(r'\b(?:on or before|not later than|no later than|by)\s+|\bdeadline\s*:\s*', re.I)
+_DATE_AT_START = re.compile(rf'({_DATE})(?![\w/-])', re.I)
+
+
+def _explicit_date(value):
+    from datetime import datetime
+    for pattern in ('%Y-%m-%d', '%B %d, %Y', '%B %d %Y', '%d %B %Y'):
+        try:
+            return datetime.strptime(value, pattern).date().isoformat()
+        except ValueError:
+            pass
+    return ''
+
+
+def request_details(passage, match):
+    """Only extract details inside this request's own bounded passage."""
+    result = {'output': '', 'recipient': '', 'deadline': '', 'submission': '',
+              'detail_evidence': {}, 'warnings': []}
+    def keep(key, value, evidence=None):
+        value = value.strip(' ,;:.')
+        if value and len(value) <= LIMITS[key]:
+            result[key] = value
+            result['detail_evidence'][key] = evidence or value
+    verb = next(group for group in match.groups() if group).casefold()
+    if verb in ('submit', 'provide', 'send', 'prepare', 'complete', 'accomplish', 'furnish'):
+        remainder = passage[match.end():].strip()
+        output = re.split(r'\s+(?:on or before|not later than|no later than|by|via|through|to|using)\b|[.;]', remainder, maxsplit=1, flags=re.I)[0]
+        if output.casefold().strip(' .') not in ('', 'it', 'this', 'that', 'them', 'these', 'those'):
+            keep('output', output)
+    # Only an explicitly named subject immediately before "are/is requested".
+    prefix = passage[:match.start()]
+    addressed = re.fullmatch(r'([A-Za-z][A-Za-z0-9 ,/&()’-]{1,150}?)\s+(?:are|is)\s+', prefix)
+    if addressed and addressed[1].casefold() not in ('you', 'we', 'they', 'it'):
+        keep('recipient', addressed[1])
+    deadlines, uncertain = [], False
+    for marker in _DUE.finditer(passage):
+        tail = passage[marker.end():]
+        found = _DATE_AT_START.match(tail)
+        if not found:
+            # "by email" identifies a channel, not an unclear due date.
+            if not re.match(r'(?:email|e-mail|post|courier|hand)\b',tail,re.I): uncertain = True
+            continue
+        value = _explicit_date(found[1])
+        if not value or re.match(r'\s*,?\s*(?:or|and|/|–|-)\s*\S', tail[found.end():], re.I):
+            uncertain = True
+        else:
+            deadlines.append((value, passage[marker.start():marker.end()+found.end()]))
+    if len({value for value,_ in deadlines}) == 1 and not uncertain:
+        keep('deadline', deadlines[0][0], deadlines[0][1])
+    elif deadlines or uncertain or re.search(r'\bwithin\s+\d+\s+(?:working\s+|calendar\s+)?days?\b',passage,re.I):
+        result['warnings'].append('Deadline unclear or conflicting; enter it only after checking the source. Relative dates are not calculated.')
+    channel = re.search(r'\b(?:via|through|using|by email(?: at)?|by e-mail(?: at)?)\s+(.+)',passage,re.I)
+    if channel:
+        instruction = re.split(r'\s+(?:on or before|not later than|no later than|by)\s+(?=\d|'+_MONTH+r'\b)|;|\.(?:\s|$)',channel[0],maxsplit=1,flags=re.I)[0]
+        keep('submission', instruction)
+    else:
+        destination = re.search(r'\bto\s+([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|https://[^\s<>]+)',passage,re.I)
+        if destination: keep('submission', destination[0])
+    return result
+
+
 def suggest(pages, numbers=None):
     requests, focus, seen = [], [], set()
     info = False
@@ -38,15 +101,25 @@ def suggest(pages, numbers=None):
         sentences = re.split(r'(?<=[.!?])\s+|\n\s*\n', text[:100000])
         for sentence in sentences:
             sentence = ' '.join(sentence.split())
-            match = REQUEST.search(sentence)
-            if match and not re.search(r'\b(?:not|never)\b', match[0], re.I) and not re.search(r'\b(?:not|never|no longer)\s*$', sentence[max(0,match.start()-20):match.start()], re.I):
-                passage = sentence[max(0, match.start()-100):match.start()+600]
+            matches = list(REQUEST.finditer(sentence))
+            for index, match in enumerate(matches):
+                if re.search(r'\b(?:not|never)\b', match[0], re.I) or re.search(r'\b(?:not|never|no longer)\s*$', sentence[max(0,match.start()-20):match.start()], re.I):
+                    continue
+                end = matches[index+1].start() if index+1 < len(matches) else len(sentence)
+                start = max(0, match.start()-100) if index == 0 else match.start()
+                passage = sentence[start:min(end,match.start()+600)].strip()
                 key = passage.casefold()
                 if key not in seen:
                     seen.add(key)
-                    requests.append({'action': sentence[match.start():match.start()+600],
-                                     'kind': 'explicit', 'evidence': passage, 'page': str(number),
-                                     'output': '', 'recipient': '', 'deadline': '', 'submission': ''})
+                    local_match = REQUEST.search(passage)
+                    details = request_details(passage, local_match)
+                    if start > 0:
+                        details['recipient'] = ''
+                        details['detail_evidence'].pop('recipient', None)
+                    if end > match.start()+600:
+                        details['warnings'].append('Request passage truncated; review the full source for remaining details.')
+                    requests.append({'action': sentence[match.start():min(end,match.start()+600)].strip(),
+                                     'kind': 'explicit', 'evidence': passage, 'page': str(number), **details})
             if re.search(r'\bfor (?:your )?information only\b', sentence, re.I):
                 info = True
         for key, terms in TERMS.items():

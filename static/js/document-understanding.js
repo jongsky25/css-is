@@ -35,7 +35,18 @@
         button.disabled = true; button.textContent = 'Added — check and confirm below';
         field(`need_${index}_action`).focus();
       });
-      card.append(quote, button); target.append(card);
+      card.append(quote);
+      const labels = {output:'Expected output',recipient:'Requested from',deadline:'Deadline',submission:'Submission'};
+      for (const [key, label] of Object.entries(labels)) {
+        if (!request[key]) continue;
+        const detail = document.createElement('p');
+        detail.textContent = `${label}: ${request[key]} · Evidence: ${request.detail_evidence?.[key] || request.evidence}`;
+        card.append(detail);
+      }
+      for (const warning of request.warnings || []) {
+        const note = document.createElement('p'); note.textContent = warning; card.append(note);
+      }
+      card.append(button); target.append(card);
     }
     for (const focus of data?.focus || []) {
       const card = document.createElement('p');

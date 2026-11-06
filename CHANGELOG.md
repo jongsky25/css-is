@@ -1,3 +1,9 @@
+## 9.99 — November 6, 2026
+
+- Suggest deliverables, named recipients, explicit deadlines and submission instructions from each request passage.
+- Show evidence for suggested details and leave ambiguous, conflicting or relative dates for review.
+- Keep multiple requests in one sentence separate so their deadlines are not mixed.
+
 ## 9.98 — November 6, 2026
 
 - Capture and individually confirm incoming requests, deliverables, deadlines and supporting passages.

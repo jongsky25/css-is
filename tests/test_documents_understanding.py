@@ -113,3 +113,87 @@ def test_legacy_relay_is_explicitly_unavailable_not_information_only():
 def test_focus_evidence_contains_match_in_long_paragraph():
     data=understanding.suggest(['Background '*100 + 'health financing consultation.'])
     assert 'health financing' in data['focus'][0]['evidence']
+
+
+def first_request(source):
+    return understanding.suggest([source])['requests'][0]
+
+
+def test_structured_details_are_literal_and_deadline_is_explicit():
+    source='Regional offices are requested to submit the comments matrix via email to reports@example.test by 20 November 2026.'
+    request=first_request(source)
+    assert request['output']=='the comments matrix'
+    assert request['recipient']=='Regional offices'
+    assert request['deadline']=='2026-11-20'
+    assert request['submission']=='via email to reports@example.test'
+    assert all(evidence in request['evidence'] for evidence in request['detail_evidence'].values())
+
+
+@pytest.mark.parametrize('phrase,expected', [
+    ('by 2026-11-20','2026-11-20'), ('on or before November 20, 2026','2026-11-20'),
+    ('not later than 20 November 2026','2026-11-20'), ('no later than November 20 2026','2026-11-20'),
+    ('by 11/12/2026',''), ('by Friday',''), ('within 5 working days',''),
+    ('by 31 February 2026',''), ('by November 20',''), ('by 2026-11-20 or 2026-11-25',''), ('by November 20, 2026, or November 25, 2026',''),
+    ('by 2026-11-20; deadline: 2026-11-25',''), ('by 2026-11-20–2026-11-25',''),
+    ('by 2026-11-20 (deadline: 2026-11-20)','2026-11-20')])
+def test_request_deadlines_reject_ambiguity_and_do_not_compute_relative_dates(phrase,expected):
+    request=first_request('Please submit the report '+phrase+'.')
+    assert request['deadline']==expected
+    if not expected: assert request['warnings']
+
+
+def test_deadline_does_not_come_from_document_or_event_dates():
+    request=first_request('Date: 2026-11-01\n\nPlease attend the consultation on 20 November 2026.')
+    assert request['deadline']=='' and request['output']==''
+
+
+def test_same_sentence_requests_keep_their_own_deadlines_and_outputs():
+    requests=understanding.suggest(['Please submit the report by 2026-11-20 and kindly provide the nomination by 2026-11-25.'])['requests']
+    assert len(requests)==2
+    assert [(item['output'],item['deadline']) for item in requests]==[('the report','2026-11-20'),('the nomination','2026-11-25')]
+
+
+@pytest.mark.parametrize('source,recipient', [
+    ('You are requested to submit a report.',''),
+    ('Please provide a report to the Director.',''),
+    ('The Regional Director is requested to submit a report.','The Regional Director'),
+    ('All regional offices are required to submit a report.','All regional offices')])
+def test_recipient_is_only_explicit_request_subject(source,recipient):
+    assert first_request(source)['recipient']==recipient
+
+
+@pytest.mark.parametrize('phrase,expected', [
+    ('via the online portal','via the online portal'),
+    ('through the records office','through the records office'),
+    ('using the attached template','using the attached template'),
+    ('by email at reports@example.test','by email at reports@example.test'),
+    ('to reports@example.test','to reports@example.test'),
+    ('to https://example.test/submit','to https://example.test/submit')])
+def test_submission_details_keep_literal_destination(phrase,expected):
+    request=first_request('Please submit the report '+phrase+' by 20 November 2026.')
+    assert request['submission']==expected and request['deadline']=='2026-11-20'
+
+
+def test_pronoun_deliverable_is_not_invented():
+    assert first_request('Please submit it by 20 November 2026.')['output']==''
+
+
+def test_long_request_warns_about_missing_tail_instead_of_inventing_deadline():
+    request=first_request('Please submit '+('a very long description '*40)+' by 20 November 2026.')
+    assert not request['deadline'] and any('truncated' in warning for warning in request['warnings'])
+
+
+def test_unrelated_deadline_on_another_page_is_not_assigned_to_request():
+    result=reader.summarize({'pages':[
+        {'page':2,'text':'Please submit the report.','ocr':False},
+        {'page':8,'text':'Deadline: 2026-11-25','ocr':False}]})
+    request=result['understanding']['requests'][0]
+    assert request['page']=='2' and request['deadline']==''
+
+
+def test_drive_extraction_and_local_pdf_use_same_details():
+    source='Please submit the report using the attached template by 2026-11-20.'
+    remote=operations.sanitize_extraction({'suggestions':{},'understanding_text':source})['understanding']['requests'][0]
+    local=first_request(source)
+    assert all(remote[key]==local[key] for key in ('output','deadline','submission','detail_evidence'))
+    assert remote['page']=='Source (page unavailable)'
