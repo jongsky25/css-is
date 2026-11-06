@@ -1,3 +1,9 @@
+## 10.03 — November 6, 2026
+
+- Show saved requests, review needs, missing details and focus-area gaps on incoming document pages.
+- Display accessible contribution status and source-change warnings with links to the existing comparison.
+- Keep cleared requests discoverable for authorized work readers without exposing work to other document readers.
+
 ## 10.02 — November 6, 2026
 
 - Compare changed request details and focus areas with the source preserved when work was proposed.

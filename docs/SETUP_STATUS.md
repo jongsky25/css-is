@@ -75,6 +75,35 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 6, 2026: request follow-up overview, candidate 10.03.**
+Ready [PR #593](https://github.com/jongsky25/css-is/pull/593), implementation
+`aeda449` on `feat/document-request-overview`, is stacked on #592 (`a935b31`). Incoming
+detail/review pages now summarize saved requests, review needs, missing source
+details, primary focus and accessible contribution status. Source-change warnings
+link to comparisons, including receipts whose requests were cleared. Document
+readers without work access see neither its status nor cleared receipts. Counts
+are explicitly limited to visible work; missing source fields are not requirements
+or claims that the document lacks them. No schema, dependency or relay change.
+
+The owner said “do the same for the next,” authorizing this increment for the
+checked merge queue after #592. This supersedes the earlier limit at 10.02.
+Sequence remains #588 → #589 → #590 → #591 → #592 → the ready 10.03 PR.
+Require fresh full CI on reconciled main-based heads and successful predecessor
+deployments. #588 deployed; #589 deployment 42237842415 remains in progress;
+#590's fresh checks are pending. No increment beyond 10.03 is authorized.
+
+41 overview/proposal/comparison/review-route/document-route checks passed without
+failures or skips, including a 390×844 no-script browser flow from document
+overview to the proposal form. Tests cover gaps, cleared requests, restricted work
+visibility, unclear interpretations and disabled modules. Release metadata and
+whitespace checks passed. Another 30 review-browser and release checks passed without failures/skips;
+full CI remains required. No shared preview or production release of 10.03 yet.
+Drive analysis still requires the existing manual Docs/travel relay activation.
+The existing merge task now includes #593 after #592. Next: inspect fresh full
+CI and advance releases only after all gates pass.
+
+### Earlier handoff (authorization superseded above)
+
 **November 6, 2026: request/source comparison, candidate 10.02.**
 Ready [PR #592](https://github.com/jongsky25/css-is/pull/592), implementation
 `5fc20e7` on `feat/document-request-comparison`, is stacked on #591 (`be5ae4b`). It adds
