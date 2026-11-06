@@ -75,6 +75,18 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Queue update — November 6, 2026, 23:08 UTC.** #593 passed all five checks
+at `cc6427c` (CI 42295427614), including both full test orders and Required checks.
+With #592 deployed, no unresolved threads and active strict/no-bypass main rules
+verified, #593 merged as `9ee4790`. Its guarded deployment is pending. #594, the
+last authorized increment, was retargeted to main and updated from its predecessor.
+The clean local branch was fast-forwarded to that remote update before this
+handoff-only edit. Require fresh full CI on the final resulting #594 head and
+successful #593 deployment before its checked merge. Verify #594 deployment before
+disabling the task. No later increment is authorized. Drive relay activation
+remains manual and unclaimed.
+
+
 **Queue update — November 6, 2026, 22:19 UTC.** #592 deployed successfully:
 workflow 42295411492 passed all verification, deploy and diagnostic jobs at
 `9e4cfbc`. #593 head `cc6427c` remains unmerged: metadata, audit and shuffled
