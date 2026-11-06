@@ -28,7 +28,8 @@ CHANGELOG = [
         "summary": "Capture what incoming correspondence needs.",
         "changes": [
             "Review requests, expected outputs, deadlines and source evidence during document intake.",
-            "Confirm suggested focus areas and keep the sender’s requests separate from internal assignments."
+            "Confirm suggested focus areas and keep the sender’s requests separate from internal assignments.",
+            "Update an authentication dependency to its patched release."
         ]
     },
     {

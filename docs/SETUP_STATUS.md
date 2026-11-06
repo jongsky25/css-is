@@ -94,7 +94,10 @@ contract, JavaScript syntax and diff checks passed. Existing Starlette/httpx
 deprecation warning remains. Full normal/shuffled CI and dependency audit are still
 required. No production application, relay or preview deployment performed.
 
-Next: review the draft PR and CI. A separately authorized release must include a
+User authorized merging PR #588 when ready on November 6. Its initial dependency
+audit found CVE-2026-49272 in OAuthLib 4.0.0; the branch pins fixed 4.0.1 and
+regenerates runtime/test locks without unrelated upgrades. Recheck complete CI
+on the repaired head before merging. The authorized release must include a
 new version of the existing Docs/travel relay for Drive request analysis. Older
 relays retain manual entry with an explicit unavailable notice. Local PDF analysis
 works without that relay update. This first release uses conservative English

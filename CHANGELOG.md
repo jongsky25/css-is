@@ -3,6 +3,7 @@
 - Capture and individually confirm incoming requests, deliverables, deadlines and supporting passages.
 - Review suggested focus areas and retain confirmed details with the registered document.
 - Keep uncertain readings visible and require renewed review after source changes.
+- Update an authentication dependency to its patched release.
 
 ## 9.97 — November 5, 2026
 
