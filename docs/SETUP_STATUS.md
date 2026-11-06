@@ -77,7 +77,8 @@ access remains necessary in a fresh chat.
 
 
 **November 6, 2026: proposed work from reviewed requests, candidate 10.01.**
-Branch `feat/document-request-work`, stacked on #590 (`ca11672`), adds explicit
+Draft [PR #591](https://github.com/jongsky25/css-is/pull/591), implementation
+`85a2dfd` on `feat/document-request-work`, stacked on #590 (`ca11672`), adds explicit
 conversion of one confirmed request into a shared work item and an unassigned
 proposed contribution. It retains the source/focus snapshot, requires output/unit/
 target review, observes Director routing and official deadlines, and preserves
