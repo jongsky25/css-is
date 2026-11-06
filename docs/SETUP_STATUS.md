@@ -75,6 +75,17 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Queue update — November 6, 2026, 14:52 UTC.** #588's guarded production
+workflow 42223684442 completed successfully, including deployment and diagnostics.
+#589 passed all current-head checks at `af7abd7` with no unresolved review threads
+and merged as `26d14ab`. Its guarded deployment must succeed before #590 merges.
+#590 was retargeted to main and its branch update requested; require fresh checks
+on the resulting head. #591 remains draft and unapproved for production merge;
+its `3707bdf` CI passed, but this handoff commit requires fresh exact-head checks.
+Retarget/reconcile #591 only after #590 merges. The hourly queue remains enabled.
+Drive relay activation is still a manual step; no Apps Script activation claimed.
+
+
 
 **November 6, 2026: proposed work from reviewed requests, candidate 10.01.**
 Draft [PR #591](https://github.com/jongsky25/css-is/pull/591), implementation
