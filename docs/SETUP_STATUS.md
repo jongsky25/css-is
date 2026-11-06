@@ -75,6 +75,34 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 6, 2026: incoming document understanding implemented, candidate 9.98.**
+Branch `feat/document-understanding`, based on main `63f8c4e`. User authorized the
+recommended first release. Local PDF and Drive intake now support five individually
+confirmed sender requests, reviewed deliverables/deadlines/submission details,
+source evidence and primary/secondary controlled focus tags. A new additive table
+stores the reviewed intake snapshot atomically with registration. No assignment or
+routing change is created by this feature. See
+[behavior, activation and limits](DOCUMENT_UNDERSTANDING.md).
+
+Verification: 202 focused reader/OCR/intake/registration/route/relay/browser/lifecycle
+and workspace tests passed without failures/skips. Subsequent extractor safeguards
+passed all 22 understanding tests; all 7 registration browser tests passed again
+after the final wording adjustment.
+Phone-width screenshot inspected; literal hostile text stays text. Locked setup,
+doctor, version 9.98 metadata, dependency-lock inputs, vendored integrity, evaluation
+contract, JavaScript syntax and diff checks passed. Existing Starlette/httpx
+deprecation warning remains. Full normal/shuffled CI and dependency audit are still
+required. No production application, relay or preview deployment performed.
+
+Next: review the draft PR and CI. A separately authorized release must include a
+new version of the existing Docs/travel relay for Drive request analysis. Older
+relays retain manual entry with an explicit unavailable notice. Local PDF analysis
+works without that relay update. This first release uses conservative English
+phrase rules; structured output/deadline details are reviewer-entered, focus
+vocabulary is code-maintained, and real office scan accuracy needs acceptance
+sampling. Saved snapshots have no post-registration editing in this release.
+
+
 **November 5, 2026: Paskong Pinoy implemented, candidate 9.96.** User instructed
 execution of the recommended Christmas replacement. Branch `feat/paskong-pinoy-theme`
 contains original optimized capiz artwork, Christmas-only responsive styling,

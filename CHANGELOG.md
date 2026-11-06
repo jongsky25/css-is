@@ -1,3 +1,9 @@
+## 9.98 — November 6, 2026
+
+- Capture and individually confirm incoming requests, deliverables, deadlines and supporting passages.
+- Review suggested focus areas and retain confirmed details with the registered document.
+- Keep uncertain readings visible and require renewed review after source changes.
+
 ## 9.97 — November 5, 2026
 
 - Give companions a festive room with garlands, warm lamps, gifts and a woven rug.

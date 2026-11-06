@@ -1,4 +1,5 @@
 """Focused intake screens, authenticated with the existing Documents session."""
+import documents_understanding as understanding
 import asyncio
 import json
 from fastapi import APIRouter, Request
@@ -20,7 +21,7 @@ def make_router(templates,get_conn):
     def context(request,conn,**values):
         user=p.actor(conn,request.state.user)
         return {'nav_active':'documents','enabled':d.enabled(conn),'csrf':csrf(request),'error':'',
-                'submitted':{},'intake_access':intake.can_review(conn,user),'is_director':p.director(conn,user),
+                'focus_areas':understanding.FOCUS_AREAS,'submitted':{},'intake_access':intake.can_review(conn,user),'is_director':p.director(conn,user),
                 'workflow_admin':p.has_role(conn,user,'workflow_admin'),'archive_admin':p.has_role(conn,user,'workflow_admin'),**values}
 
     def render(request,conn,template_name,status=200,**values):

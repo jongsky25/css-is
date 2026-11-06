@@ -1,4 +1,5 @@
 """Unnumbered Drive intake and retry-safe filing. No binary files are stored."""
+import documents_understanding as understanding
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import json
@@ -17,7 +18,8 @@ from documents_storage import rows, transaction, event
 import storage as st
 import tzutil as tz
 
-FIELDS = ('direction','subject','type','sender','document_date','received_at','references','due_date','priority')
+BASE_FIELDS = ('direction','subject','type','sender','document_date','received_at','references','due_date','priority')
+FIELDS = BASE_FIELDS + understanding.FIELDS
 OCR_MIMES = {'application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'text/plain'}
 MIMES = OCR_MIMES | {'application/msword','application/vnd.ms-excel','application/vnd.ms-powerpoint',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -221,6 +223,10 @@ def discover(conn, config, result, *, owner=None):
                     conn.execute('''UPDATE document_intake SET current_name=?,mime_type=?,fingerprint=?,content_key=?,
                         suggestions_json='{}',suggestion_key=NULL,revision=revision+1,updated_at=?,
                         state=?,error=? WHERE id=?''',(name,mime,fp,key,now,'attention',error or 'The source scan changed. Recheck saved details against the new file.',old[0]))
+                    draft_row=conn.execute('SELECT draft_json FROM document_intake WHERE id=?',(old[0],)).fetchone()
+                    draft=json.loads(draft_row[0] or '{}')
+                    for field in understanding.FIELDS: draft.pop(field,None)
+                    conn.execute('UPDATE document_intake SET draft_json=? WHERE id=?',(json.dumps(draft),old[0]))
                     event(conn,None,actor,'intake_source_changed',{'intake_id':old[0],'file_id':fid})
                 else:
                     conn.execute('UPDATE document_intake SET current_name=?,fingerprint=? WHERE id=?',(name,fp,old[0]))
@@ -229,6 +235,11 @@ def discover(conn, config, result, *, owner=None):
                 note='Attachment details loaded. Check all attachments before registering.' if old[3]=='pending' else 'An email attachment changed. Recheck all attachments before registering.'
                 conn.execute('''UPDATE document_intake SET revision=revision+1,error=?
                     WHERE email_primary=1 AND id<>? AND email_id=(SELECT email_id FROM document_intake WHERE id=?)''',(note,old[0],old[0]))
+                for parent in rows(conn,'SELECT id,draft_json FROM document_intake WHERE email_primary=1 AND id<>? AND email_id=(SELECT email_id FROM document_intake WHERE id=?)',(old[0],old[0])):
+                    draft=json.loads(parent['draft_json'] or '{}')
+                    for field in understanding.FIELDS:
+                        if field.endswith('_confirmed'): draft[field]=''
+                    conn.execute('UPDATE document_intake SET draft_json=? WHERE id=?',(json.dumps(draft),parent['id']))
         cursor=str(result.get('next_cursor') or '')
         if len(cursor)>4096: raise ValueError('Invalid Drive continuation token.')
         _setting(conn,'cursor',cursor)
@@ -277,9 +288,10 @@ def requeue(conn,user,item_id,revision):
 
 
 def clean_fields(fields):
-    clean={key:str(fields.get(key,'')).strip() for key in FIELDS}
+    clean={key:str(fields.get(key,'')).strip() for key in BASE_FIELDS}
     if any(len(v)>4000 for v in clean.values()):
         raise ValueError('A review field is too long.')
+    clean.update(understanding.clean(fields))
     clean['direction']=direction_from_sender(clean['sender']) or clean['direction']
     return clean
 
@@ -315,7 +327,7 @@ def extract(conn,user,item_id,revision,adapter=None,force=False):
     adapter=adapter or ops.get_adapter()
     config=_active(conn)
     result=adapter.call('extract',{'file_id':item['file_id'],'fingerprint':item['fingerprint'],
-                                  'intake':True,'inbox':config['inbox'],'content_key':item['content_key'],
+                                  'intake':True,'understanding':True,'inbox':config['inbox'],'content_key':item['content_key'],
                                   'actor_id':user['id']},str(uuid.uuid4()))
     if result.get('state')!='confirmed': raise ValueError('OCR was not confirmed. Enter details manually or retry.')
     if result.get('file_id') is None or result.get('content_key') is None or not result.get('fingerprint'):
@@ -323,14 +335,19 @@ def extract(conn,user,item_id,revision,adapter=None,force=False):
     if result['file_id']!=item['file_id'] or result['content_key']!=item['content_key']:
         raise d.Conflict('The OCR source does not match this intake file. Refresh Drive and review its contents again.')
     sanitized=ops.sanitize_extraction(result)
-    # Persist suggestions only: no full text, excerpts, or binary copies.
-    cached={'suggestions':sanitized['suggestions'],'warnings':sanitized['warnings']}
+    # Persist bounded suggestions and their evidence only; never full extracted text or binary copies.
+    cached={'suggestions':sanitized['suggestions'],'warnings':sanitized['warnings'],
+            'understanding':sanitized['understanding']}
     with transaction(conn):
         user,current=_editable(conn,user,item_id,revision)
         if _active(conn)['inbox']!=config['inbox']: raise d.Conflict('The intake folder changed during reading. Reload this review.')
         if current['content_key']!=item['content_key']: raise d.Conflict('The scan changed during reading.')
         conn.execute('''UPDATE document_intake SET suggestions_json=?,suggestion_key=?,fingerprint=?,revision=revision+1
                         WHERE id=?''',(json.dumps(cached),item['content_key'],str(result['fingerprint'])[:500],item_id))
+        draft=current['draft']
+        for field in understanding.FIELDS:
+            if field.endswith('_confirmed'): draft[field]=''
+        conn.execute('UPDATE document_intake SET draft_json=? WHERE id=?',(json.dumps(draft),item_id))
         event(conn,None,user,'intake_read',{'intake_id':item_id})
     return get(conn,user,item_id)
 

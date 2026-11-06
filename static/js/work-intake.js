@@ -96,6 +96,7 @@
   const showResult = result => {
     if (!result || !result.suggestions || typeof result.suggestions !== 'object' || !Array.isArray(result.text_preview)) throw new Error('Incomplete reading result. Retry.');
     clearSuggestions();
+    form.dispatchEvent(new CustomEvent('document-understanding-result', {detail: result.understanding}));
     document.getElementById('intake-details').hidden = false;
     invalidateApproval();
       const notesTitle = document.createElement('summary'); notesTitle.textContent = 'Reading notes and extracted text'; suggestions.append(notesTitle);

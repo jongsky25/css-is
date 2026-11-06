@@ -3,6 +3,7 @@
 <h2>{{ doc.number }} · {{ doc.subject }}</h2>
 {% include 'documents/next_step.html' %}
 {% include 'documents/workspace.html' %}
+{% include 'documents/understanding_detail.html' %}
 {% if enabled and can_work and doc.direction=='OUT' and doc.status not in ['closed','cancelled','released','awaiting_acknowledgment'] and not doc.archived_at %}
 <details class="doc-card"><summary>Start from a memorandum template</summary>
 <p>Download an editable Word draft, review it in your office format, then attach its final Drive copy to this record. Downloading does not approve, sign or send it.</p>

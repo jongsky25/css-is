@@ -142,3 +142,45 @@ def test_changed_successful_submission_does_not_claim_the_edits_were_saved(regis
     assert page.locator('#registration-result').is_visible()
     assert conn.execute('SELECT subject FROM document').fetchone()[0] == 'Previously saved subject'
     assert conn.execute('SELECT COUNT(*) FROM document').fetchone()[0] == 1
+
+
+def test_understanding_review_confirmation_persistence_and_safe_text(registration_page):
+    import documents_understanding
+    page, state, conn = registration_page
+    page.set_viewport_size({'width':390,'height':844})
+    result = documents_understanding.suggest(['Please submit comments on health financing.'])
+    result['requests'][0]['evidence'] += ' <img src=x onerror=alert(1)>'
+    page.evaluate("data => document.getElementById('intake-form').dispatchEvent(new CustomEvent('document-understanding-result', {detail:data}))", result)
+    page.get_by_role('button',name='Use this request for review',exact=True).click()
+    assert page.locator('[name=need_0_action]').input_value().startswith('Please submit')
+    assert not page.locator('[name=need_0_confirmed]').is_checked()
+    assert page.locator('#understanding-suggestions img').count()==0
+    page.get_by_role('button',name='Use focus area for review',exact=True).click()
+    page.locator('[name=need_0_output]').fill('Consolidated comments matrix')
+    page.locator('[name=need_0_confirmed]').check()
+    page.locator('[name=focus_confirmed]').check()
+    page.locator('[name=need_0_output]').fill('Final comments matrix')
+    assert not page.locator('[name=need_0_confirmed]').is_checked()
+    page.locator('[name=need_0_confirmed]').check()
+    page.locator('#intake-approve').click()
+    page.locator('[name=confirmed]').check()
+    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+    page.locator('#document-understanding').screenshot(path='/tmp/document-understanding-phone.png')
+    submit(page)
+    page.wait_for_url(re.compile(r'/documents/\d+$'))
+    assert page.get_by_text('Final comments matrix',exact=True).is_visible()
+    doc_id=conn.execute('SELECT id FROM document').fetchone()[0]
+    saved=documents_understanding.read(conn,doc_id)
+    assert saved['focus_primary']=='financing' and saved['need_0_confirmed']=='yes'
+    assert conn.execute('SELECT COUNT(*) FROM document_assignment').fetchone()[0]==0
+
+
+def test_understanding_source_change_preserves_corrections_but_requires_review(registration_page):
+    page, _, _ = registration_page
+    page.locator('[data-request="0"] summary').click()
+    page.locator('[name=need_0_action]').fill('Manually corrected request')
+    page.locator('[name=need_0_confirmed]').check()
+    page.locator('#intake-source').fill('https://example.invalid/changed.pdf')
+    assert page.locator('[name=need_0_action]').input_value()=='Manually corrected request'
+    assert not page.locator('[name=need_0_confirmed]').is_checked()
+    assert 'Source cleared or changed' in page.locator('#understanding-warning').inner_text()
