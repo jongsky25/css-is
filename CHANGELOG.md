@@ -1,3 +1,9 @@
+## 10.01 — November 6, 2026
+
+- Turn a confirmed incoming request into a shared work item and an unassigned proposed contribution.
+- Preserve the reviewed source and focus area, prevent duplicate proposals, and flag later source changes.
+- Review the expected output, unit and target date before creating work; existing routing and officer confirmation still apply.
+
 ## 10.00 — November 6, 2026
 
 - Correct saved requests and focus areas on active incoming documents with individual confirmation.

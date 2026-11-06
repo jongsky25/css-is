@@ -147,3 +147,36 @@ still apply, including restricted-record and linked-work access. A viewer withou
 work permission can inspect permitted history but cannot edit it. The history and
 editor responses are no-store; content is escaped and bounded by the existing
 field limits. Review snapshots and reasons inherit database/backup retention.
+
+
+## Proposed work from a reviewed request (10.01)
+
+Open **Review requests and focus areas / history**, then the saved request's
+work link. Save corrections first. Confirmed explicit, inferred or manually
+entered requests with status Requests can produce one shared work item and one
+unassigned contribution in Proposed status. Unclear interpretations must be
+resolved first. Review the title (250 characters), required expected output,
+concerned unit and optional target date, then explicitly confirm creation.
+The source's named recipient is never mapped automatically to a staff account.
+The concerned officer still confirms responsibility through the existing workflow.
+
+Creation requires enabled Documents and Shared work, current document visibility,
+document work permission, and an active incoming record outside approval/release.
+Director routing must be issued before shared work starts. Existing official
+deadline constraints apply to the proposed contribution; the document's deadline,
+instructions and assignments are unchanged. A missing output must be supplied.
+
+An additive `document_request_work` table preserves the selected request and focus
+snapshot, creator/time, case/task links and hashes. Creation, source link, audit and
+receipt are atomic. Document revision and source hashes reject stale forms. The
+unique document/request-position key prevents retries from creating duplicates;
+a matching retry returns the existing receipt after current access checks. A
+changed payload must be reconciled in the existing work. Later source corrections
+show a warning on the receipt and never overwrite work. Request positions remain
+reserved even if the source is cleared or replaced or work is cancelled. This
+increment does not append to existing cases or propose staff owners automatically.
+
+Receipt access requires both current document and linked work access; history
+snapshots do not introduce additional readership. The receipt retains the original
+source, not the complete OCR text. Drive analysis still requires manual activation
+of the existing Docs/travel relay update; this increment adds no relay changes.

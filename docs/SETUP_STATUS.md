@@ -75,6 +75,42 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+
+**November 6, 2026: proposed work from reviewed requests, candidate 10.01.**
+Branch `feat/document-request-work`, stacked on #590 (`ca11672`), adds explicit
+conversion of one confirmed request into a shared work item and an unassigned
+proposed contribution. It retains the source/focus snapshot, requires output/unit/
+target review, observes Director routing and official deadlines, and preserves
+normal officer confirmation. Atomic creation, current permissions, stale-source
+checks and a unique request-position receipt prevent duplicate or partial work.
+Changed source is flagged on the receipt and work contribution; no silent updates.
+See [behavior and constraints](DOCUMENT_UNDERSTANDING.md).
+
+The owner authorized #590 after #589. The existing hourly conditional merge task
+now handles #588 → #589 → #590 with fresh full checks and successful deployment
+between releases; it leaves this fourth increment draft. #588 passed all five CI
+checks at `aadf608` and merged as `c1573bb` on November 6. Its guarded deployment
+[42223684442](https://github.com/jongsky25/css-is/actions/runs/42223684442) is still
+running verification, not yet deployed. Main ruleset 26274179 was rechecked active
+with Required checks, strict update policy, resolved threads and no bypasses.
+#589 was retargeted to main and updated to `af7abd7`; fresh CI
+[42224013371](https://github.com/jongsky25/css-is/actions/runs/42224013371) is running.
+#590 is ready and queued after #589, not merged. Do not treat the old #589 checks
+as acceptance for its updated branch. Preserve/reconcile this draft after #590
+merges; no fourth production merge is authorized. The relay still requires manual
+activation in the existing Docs/travel Apps Script deployment.
+
+Final targeted validation: 19 tests passed, including real session/CSRF routes,
+a 390×844 no-script browser submission, concurrent duplicate retry, access loss,
+invalid fields, source changes and audit rollback. The broader request/review/
+work/document-route/release regression run passed 300 tests with no failures or
+skips. Existing Starlette/httpx deprecation warning only. The final 19 targeted
+tests include later concurrency/access and work-source-link coverage. Release
+metadata (10.01), compilation and whitespace checks passed. No shared
+preview or production deployment of this draft. Next: inspect the draft PR’s exact-head full CI before a later release.
+
+### Previous increment handoff
+
 **November 6, 2026: saved request-review corrections, candidate 10.00.**
 Branch `feat/document-understanding-review`, based on #589 head `6f44ff9`, adds
 post-registration correction of requests and focus areas for authorized staff on

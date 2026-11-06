@@ -1,0 +1,29 @@
+{% extends 'documents/base.html' %}
+{% block documents_content %}
+<p><a href="/documents/{{ doc.id }}/understanding">← {{ doc.number }} · Requests and focus areas</a></p>
+<h2>Work from request {{ index+1 }}</h2>
+{% if error %}<p role="alert">{{ error }}</p><p><a href="/documents/{{ doc.id }}/requests/{{ index }}/work">Reload the saved request and proposal</a></p>{% endif %}
+{% if saved %}
+<p role="status">Work was proposed on {{ saved.created_at }} by {{ names.get(saved.actor_id,'Former staff member') }}.</p>
+<p><a href="/work/{{ saved.case_id }}#task-{{ saved.task_id }}">Open the work item and contribution</a></p>
+{% if saved.changed %}<p role="alert">The saved request or focus area has changed since this proposal. Reconcile the existing work explicitly; its details have not been overwritten. This request position cannot create a second work item.</p>{% endif %}
+<h3>Source preserved when work was proposed</h3>
+{% with understanding_values=saved['values'] %}{% include 'documents/understanding_snapshot.html' %}{% endwith %}
+{% else %}
+<h3>Saved source</h3>
+{% with understanding_values=snapshot %}{% include 'documents/understanding_snapshot.html' %}{% endwith %}
+{% if editable %}
+<p>Review the title, expected output, unit and target date. The title is limited to 250 characters. This creates a shared work item and an unassigned proposed contribution. The concerned officer confirms responsibility. The sender’s named recipient is source context, not a staff assignment.</p>
+<form method="post" data-ux-ignore data-telemetry-ignore>
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ values.revision }}"><input type="hidden" name="source_hash" value="{{ values.source_hash }}">
+<label>Work title<input name="title" maxlength="250" required value="{{ values.title }}"></label>
+<label>Expected output<textarea name="expected_output" maxlength="4000" required>{{ values.expected_output }}</textarea></label>
+<label>Concerned unit<select name="unit_id" required><option value="">Choose a unit</option>{% for unit in units %}<option value="{{ unit.id }}" {% if values.unit_id|string==unit.id|string %}selected{% endif %}>{{ unit.name }}</option>{% endfor %}</select></label>
+<label>Proposed target date<input name="due_date" type="date" value="{{ values.due_date }}"></label>
+<p>The document-wide deadline and Director’s instructions stay in the document. A contribution target cannot follow its official deadline.</p>
+<label><input type="checkbox" name="confirmed" value="yes" required> I checked the source and want to propose this work.</label>
+<button type="submit">Create proposed work</button>
+</form>
+{% else %}<p>Proposing work requires enabled Documents and Shared work modules and permission to work on an active incoming document.</p>{% endif %}
+{% endif %}
+{% endblock %}

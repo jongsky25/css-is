@@ -14,6 +14,10 @@
 <button type="submit">Save reviewed requests</button>
 </form>
 {% else %}<p>This review is read-only. Editing requires document work permission and an active incoming record outside approval or release.</p>{% endif %}
+{% if work_enabled %}<section><h3>Propose work from a saved request</h3>
+<p>Save any corrections first. Each request can create one shared work item with a proposed contribution. Officer confirmation is still required.</p>
+{% for i in range(5) %}{% if saved_requests.get('need_' ~ i ~ '_action') %}<p><a href="/documents/{{ doc.id }}/requests/{{ i }}/work">Request {{ i+1 }}: {{ saved_requests.get('need_' ~ i ~ '_action') }}</a></p>{% endif %}{% endfor %}
+</section>{% endif %}
 <section id="understanding-history"><h3>Review history</h3>
 {% for entry in review_history %}
 <details class="doc-card" {% if loop.first %}open{% endif %}><summary>Review {{ entry.revision }} · {{ entry.created_at }} · {{ names.get(entry.actor_id,'Former staff member') }}</summary>
