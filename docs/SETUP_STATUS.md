@@ -76,7 +76,8 @@ access remains necessary in a fresh chat.
 ## Next action
 
 **November 6, 2026: abbreviated request deadlines, candidate 10.04.**
-Branch `feat/document-request-abbreviated-dates` is stacked on #593 (`1b3f8e4`).
+Ready [PR #594](https://github.com/jongsky25/css-is/pull/594), implementation
+`dc87848` on `feat/document-request-abbreviated-dates`, is stacked on #593 (`1b3f8e4`).
 The common parser now recognizes complete English abbreviated-month deadlines,
 including dotted and wrapped dates, without splitting their request at the month
 period. Source evidence preserves its original spelling and punctuation. Parsing
@@ -95,8 +96,8 @@ is authorized. Drive analysis still needs the manual Docs/travel relay activatio
 Initial parser regression: 119 tests passed. Expanded reader/intake/browser/release
 regression passed 237 tests without failures or skips after correcting a test
 import to the actual local-reader summarizer. Release metadata and whitespace checks passed. Full CI remains required;
-no shared preview or production release of this increment. Next: publish ready PR,
-record its number in the merge task, and advance only after all required gates.
+no shared preview or production release of this increment. The existing task now
+queues #594 after #593. Next: inspect fresh full CI and advance only after all gates.
 
 ### Earlier handoff (authorization superseded above)
 
