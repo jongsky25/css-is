@@ -76,7 +76,8 @@ access remains necessary in a fresh chat.
 ## Next action
 
 **November 6, 2026: request follow-up overview, candidate 10.03.**
-Branch `feat/document-request-overview` is stacked on #592 (`a935b31`). Incoming
+Ready [PR #593](https://github.com/jongsky25/css-is/pull/593), implementation
+`aeda449` on `feat/document-request-overview`, is stacked on #592 (`a935b31`). Incoming
 detail/review pages now summarize saved requests, review needs, missing source
 details, primary focus and accessible contribution status. Source-change warnings
 link to comparisons, including receipts whose requests were cleared. Document
@@ -98,8 +99,8 @@ visibility, unclear interpretations and disabled modules. Release metadata and
 whitespace checks passed. Another 30 review-browser and release checks passed without failures/skips;
 full CI remains required. No shared preview or production release of 10.03 yet.
 Drive analysis still requires the existing manual Docs/travel relay activation.
-Next: publish the ready 10.03 PR, add its number to the existing merge task, and
-advance releases only after all gates pass.
+The existing merge task now includes #593 after #592. Next: inspect fresh full
+CI and advance releases only after all gates pass.
 
 ### Earlier handoff (authorization superseded above)
 
