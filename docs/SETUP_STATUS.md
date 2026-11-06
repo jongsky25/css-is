@@ -75,6 +75,17 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Queue update — November 6, 2026, 18:09 UTC.** #591 passed all five required
+checks at `e7c5c58` (CI 42249455058); its normal suite and final gate completed.
+With #590 deployed, no unresolved threads and the active strict/no-bypass main
+ruleset verified, #591 merged as `e8714ec`. Its guarded deployment is pending.
+#592 was retargeted to main and its branch update requested. Require fresh checks
+on its resulting head plus successful #591 deployment before merging. #593 and
+#594 remain queued in order; no further feature work authorized. The task remains
+enabled. The clean review branch matched remote before this handoff-only edit.
+Drive relay activation remains manual and unclaimed.
+
+
 **Queue update — November 6, 2026, 17:15 UTC.** #590 deployed successfully:
 guarded workflow 42249433586 at `39f62c0` passed all verification, deploy and
 post-deploy diagnostic jobs. #591 is next, head `e7c5c58`: metadata, dependency
