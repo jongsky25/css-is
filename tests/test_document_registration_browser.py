@@ -184,3 +184,27 @@ def test_understanding_source_change_preserves_corrections_but_requires_review(r
     assert page.locator('[name=need_0_action]').input_value()=='Manually corrected request'
     assert not page.locator('[name=need_0_confirmed]').is_checked()
     assert 'Source cleared or changed' in page.locator('#understanding-warning').inner_text()
+
+
+def test_structured_request_suggestion_reviews_and_saves_deadline(registration_page):
+    import documents_understanding
+    page, _, conn=registration_page
+    data=documents_understanding.suggest(['Regional offices are requested to submit the comments matrix via email to reports@example.test by 20 November 2026.'])
+    page.evaluate("data => document.getElementById('intake-form').dispatchEvent(new CustomEvent('document-understanding-result', {detail:data}))",data)
+    assert 'Deadline: 2026-11-20' in page.locator('#understanding-suggestions').inner_text()
+    assert 'Evidence: by 20 November 2026' in page.locator('#understanding-suggestions').inner_text()
+    page.get_by_role('button',name='Use this request for review',exact=True).click()
+    assert page.locator('[name=need_0_output]').input_value()=='the comments matrix'
+    assert page.locator('[name=need_0_recipient]').input_value()=='Regional offices'
+    assert page.locator('[name=need_0_deadline]').input_value()=='2026-11-20'
+    assert not page.locator('[name=need_0_confirmed]').is_checked()
+    page.locator('[name=need_0_confirmed]').check()
+    page.locator('#intake-approve').click()
+    page.locator('[name=confirmed]').check()
+    submit(page)
+    page.wait_for_url(re.compile(r'/documents/\d+$'))
+    doc_id=conn.execute('SELECT id FROM document').fetchone()[0]
+    saved=documents_understanding.read(conn,doc_id)
+    assert saved['need_0_deadline']=='2026-11-20'
+    assert saved['need_0_submission']=='via email to reports@example.test'
+    assert conn.execute('SELECT due_date FROM document').fetchone()[0] is None

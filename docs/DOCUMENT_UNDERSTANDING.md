@@ -1,4 +1,4 @@
-# Incoming document understanding — candidate 9.98
+# Incoming document understanding — candidate 9.99
 
 The registration form and Drive intake review now capture up to five requests,
 with requested action, expected output, recipient named in the source, request
@@ -14,9 +14,10 @@ Local PDF/native-text and selected-page OCR results include conservative English
 phrase matches such as “please submit” or “requested to provide.” Each request
 suggestion includes its source passage and page. The reviewer explicitly adds a
 suggestion into an empty request slot, edits its details, and confirms it. The
-initial extractor suggests the request passage, not individual deliverables,
-recipients, deadlines or submission channels; those fields are entered by the
-reviewer. Ambiguous, indirect, multilingual and handwritten requests can be
+extractor suggests literal deliverables following submission/preparation verbs,
+named subjects immediately before “are/is requested,” explicit deadline dates
+and submission channels within the same request passage. Every detail carries
+its own source evidence; the reviewer checks and corrects the suggested details. Ambiguous, indirect, multilingual and handwritten requests can be
 missed. No language model or new vendor is involved.
 
 Focus suggestions use a controlled starter vocabulary in
@@ -64,7 +65,7 @@ Failed confirmation or validation rolls back the document, number and review.
 Registration receipts retain existing retry semantics. Saved understanding appears
 on the permitted document detail page. It is an intake snapshot; post-registration
 editing, search filters, task conversion and automatic section routing are outside
-this first release.
+these first increments.
 
 Unlike earlier intake metadata-only suggestions, this feature deliberately retains
 bounded supporting passages in intake suggestion JSON and the reviewed snapshot.
@@ -86,3 +87,26 @@ The full normal/shuffled suite and dependency audit remain required in CI before
 any production release. Real office scans and physical iPhone validation remain
 additional acceptance work; synthetic passing checks do not establish live OCR
 accuracy.
+
+## Request-detail extraction (9.99)
+
+The parser uses the existing transient text and requires no additional relay API,
+model or dependency. The 9.98 relay update is still necessary for Drive text.
+Local PDF and Drive suggestions use the same parser. Review cards show each
+suggested detail with its evidence before the user adds it to an empty request
+slot. Adding a suggestion never confirms it or overwrites existing entries.
+
+Deadline recognition requires an explicit marker such as “by,” “on or before,”
+“not later than” or “deadline:”, followed by a complete ISO date or full English
+month/day/year date. Event dates introduced only by “on” are not deadlines.
+Ambiguous numeric dates, missing years, relative dates, invalid calendar dates,
+competing alternatives and conflicting explicit deadlines stay blank with a
+warning. Identical repeated dates are accepted. Deadlines are not resolved from
+the receipt date or copied across neighboring requests.
+
+Multiple explicit requests within a sentence are split at their request phrases.
+Named recipients are extracted only when their subject is wholly present, never
+from a “to” destination or inferred organizational responsibility. Pronoun-only
+outputs remain blank. Long passages are bounded and warn that additional details
+may be outside the reading. Adjacent sentences, unmarked imperatives, complex
+coordination and abbreviated months remain manual-review cases.

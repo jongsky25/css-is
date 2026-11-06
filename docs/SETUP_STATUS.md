@@ -75,6 +75,31 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 6, 2026: next OCR increment, candidate 9.99.**
+The owner requested merging #588 when ready and proceeding to the next increment.
+Branch `feat/document-request-details`, based on #588 head `aadf608`, prepares
+literal deliverable, named recipient, explicit deadline and submission instruction
+suggestions. Each suggested detail shows source evidence. Relative/ambiguous dates
+stay blank; neighboring explicit requests retain separate details. No new schema,
+dependency, assignment or external provider is introduced in this increment.
+See [extraction boundaries](DOCUMENT_UNDERSTANDING.md).
+
+Verification: 167 focused parser/reader/OCR/intake/registration/route/browser tests
+passed. After the final date-alternative safeguard, all 53 understanding tests
+passed. Browser coverage includes review-before-confirmation, stored structured
+details and no accidental promotion of a request deadline to the document-wide
+deadline. A focus-suggestion rendering regression caught during browser testing
+was corrected before the successful 167-test run. Version 9.99 metadata, JS
+syntax and diff checks passed. Full CI is required on the final review head.
+
+Release status: #588 remains open pending both full test orders; its repaired
+built-image dependency audit and metadata gates pass. GitHub auto-merge is disabled
+for this repository. User authorization permits #588 to merge once all gates pass;
+it does not authorize bypassing checks. The next increment is a separate draft
+for review, not an additional production merge. The Drive relay update remains
+necessary and no connected Apps Script deployment capability is available.
+
+
 **November 6, 2026: incoming document understanding implemented, candidate 9.98.**
 Branch `feat/document-understanding`, based on main `63f8c4e`. User authorized the
 recommended first release. Local PDF and Drive intake now support five individually
