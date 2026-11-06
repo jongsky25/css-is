@@ -8,6 +8,10 @@
   function resetConfirmations() {
     panel.querySelectorAll('input[type=checkbox]').forEach(input => { input.checked = false; });
   }
+  form.addEventListener('input', event => {
+    const confirmation = field('review_confirmed');
+    if (confirmation && event.target !== confirmation) confirmation.checked = false;
+  });
   panel.addEventListener('input', event => {
     const name = event.target.name || '';
     if (event.target.type === 'checkbox') return;

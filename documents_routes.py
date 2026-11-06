@@ -473,6 +473,64 @@ def make_router(templates,get_conn):
         finally:
             conn.close()
 
+    def understanding_page(request, conn, doc_id, data=None, error='', status=200):
+        user=p.actor(conn,request.state.user)
+        doc=d.get(conn,user,doc_id)
+        cursor=request.query_params.get('before','0')
+        if not cursor.isascii() or not cursor.isdigit() or len(cursor)>10:
+            raise ValueError('Invalid review history cursor.')
+        before=int(cursor)
+        if before > 2147483647: raise ValueError('Invalid review history cursor.')
+        entries,more=understanding.history(conn,doc_id,before)
+        values={key:value for key,value in (data if data is not None else understanding.read(conn,doc_id)).items()
+                if key in understanding.FIELDS}
+        if data is None:
+            for key in values:
+                if key.endswith('_confirmed'): values[key]=''
+        response=templates.TemplateResponse(request,'documents/understanding_review.html',context(request,conn,
+            doc=doc,values=values,error=error,understanding_review_mode=True,form_revision=data.get('revision',doc['revision']) if data is not None else doc['revision'],
+            review_reason=data.get('reason','') if data is not None else '',
+            editable=d.enabled(conn) and understanding.can_edit(conn,user,doc),
+            review_history=entries,history_more=more),status_code=status)
+        response.headers.update({'Cache-Control':'no-store','Pragma':'no-cache'})
+        return response
+
+    @router.get('/documents/{doc_id}/understanding',response_class=HTMLResponse)
+    def understanding_review(request:Request,doc_id:int):
+        conn=get_conn()
+        try:
+            return understanding_page(request,conn,doc_id)
+        except p.Denied:
+            return HTMLResponse('Document not found.',status_code=404,headers={'Cache-Control':'no-store'})
+        except ValueError as exc:
+            return HTMLResponse(str(exc),status_code=400,headers={'Cache-Control':'no-store'})
+        finally: conn.close()
+
+    @router.post('/documents/{doc_id}/understanding',response_class=HTMLResponse)
+    async def understanding_save(request:Request,doc_id:int):
+        try:
+            data=await posted(request)
+        except (p.Denied,ValueError) as exc:
+            return HTMLResponse(str(exc),status_code=403 if isinstance(exc,p.Denied) else 400,headers={'Cache-Control':'no-store'})
+        return await asyncio.to_thread(understanding_submit,request,doc_id,data)
+
+    def understanding_submit(request,doc_id,data):
+        conn=get_conn()
+        try:
+            revision=data.get('revision',0)
+            if not isinstance(revision,(int,str)) or isinstance(revision,bool):
+                raise ValueError('Invalid document revision. Reload the review.')
+            understanding.revise(conn,request.state.user,doc_id,int(revision),data)
+            return RedirectResponse(f'/documents/{doc_id}/understanding?saved=1',status_code=303,headers={'Cache-Control':'no-store'})
+        except p.Denied:
+            return HTMLResponse('This document review is unavailable to this account or document state.',status_code=403,headers={'Cache-Control':'no-store'})
+        except ValueError as exc:
+            try:
+                return understanding_page(request,conn,doc_id,data,str(exc),409 if isinstance(exc,d.Conflict) else 400)
+            except p.Denied:
+                return HTMLResponse('Document not found.',status_code=404,headers={'Cache-Control':'no-store'})
+        finally: conn.close()
+
     @router.get('/documents/{doc_id}',response_class=HTMLResponse)
     def detail(request:Request,doc_id:int):
         conn=get_conn()

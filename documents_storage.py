@@ -45,6 +45,11 @@ def install(conn):
     CREATE TABLE IF NOT EXISTS document_understanding (
       document_id INTEGER PRIMARY KEY REFERENCES document(id), values_json TEXT NOT NULL,
       actor_id INTEGER NOT NULL REFERENCES admin_user(id), created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS document_understanding_revision (
+      document_id INTEGER NOT NULL REFERENCES document(id), revision INTEGER NOT NULL,
+      values_json TEXT NOT NULL, actor_id INTEGER NOT NULL REFERENCES admin_user(id),
+      created_at TEXT NOT NULL, reason TEXT NOT NULL,
+      PRIMARY KEY(document_id,revision));
     CREATE TABLE IF NOT EXISTS document_registration (
       actor_id INTEGER NOT NULL REFERENCES admin_user(id), submission_id TEXT NOT NULL,
       payload_hash TEXT NOT NULL, document_id INTEGER NOT NULL REFERENCES document(id),
