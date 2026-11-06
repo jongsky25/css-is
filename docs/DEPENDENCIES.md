@@ -188,3 +188,13 @@ FullCalendar **6.1.22 Standard**, the **6.1.22 Luxon3 adapter**, and **Luxon 3.7
 `fullcalendar-with-timezone.js` is exactly the three unmodified upstream runtime files joined with newlines. The vendor gate verifies the full file set, complete bundled-package provenance and the exact concatenation, then audits all ten pinned package versions through npm. CI retains the FullCalendar manifest and its separate advisory receipt. The initial audit found no reported advisories.
 
 Both v6.1.22 and v7.1.3 were released October 16, 2026. The maintained v6 line passed the browser/timezone prototype; v7's time-grid header rendering was unsuitable in the tested standalone setup. See [the pilot guide](CALENDAR_SCHEDULE.md) for behavior, limits and verification.
+
+### OAuthLib release-gate repair (9.98)
+
+The November 6, 2026 PR audit reported CVE-2026-49272 /
+GHSA-3jp2-3mrg-2vxc in OAuthLib 4.0.0, pulled through requests-oauthlib/Apprise.
+Pin OAuthLib 4.0.1, the advisory's fixed version, and regenerate runtime/test
+locks using uv 0.13.4 without upgrading unrelated packages. No advisory exclusion
+is added. Tooling/deployment locks are unchanged. The device-code token endpoint
+is not an Office Connect feature, but the dependency must still pass the complete
+audit gate.

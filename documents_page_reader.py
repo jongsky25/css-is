@@ -46,6 +46,8 @@ def summarize(payload):
             raise ValueError('Invalid subject reading.')
         subjects[i] = cleaned
     result = documents_reader.suggest([item['text'] for item in pages], subjects)
+    import documents_understanding
+    result['understanding'] = documents_understanding.suggest([item['text'] for item in pages], [item['page'] for item in pages])
     for reading in result.get('field_readings', {}).get('subject', []):
         reading['page'] = pages[reading['page'] - 1]['page']
     for evidence in result['evidence'].values():

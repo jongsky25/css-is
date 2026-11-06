@@ -27,6 +27,10 @@ const req=fields=>({action:'document_extract',actor_id:7,operation_id:'00000000-
 const run=r=>ctx.documentOperation_(r,['extract']);
 let r=run(req());assert.equal(r.state,'confirmed');assert.equal(r.suggestions.subject,'Extracted request');assert.equal(r.content_key,checksum());
 assert.equal(r.fingerprint,'drive-v3:scan_file_12345:1');
+assert.equal(r.understanding_text,undefined);
+const understood=run(req({understanding:true}));
+assert.equal(understood.understanding_text,'Subject: Extracted request\nFrom: Regional Office');
+assert.equal(understood.content_key,checksum());
 mode='metadata_on_read';r=run(req());assert.equal(r.state,'confirmed');assert.equal(r.fingerprint,'drive-v3:scan_file_12345:2');
 mode='metadata_during_ocr';r=run(req());assert.equal(r.state,'confirmed');assert.equal(r.fingerprint,'drive-v3:scan_file_12345:3');mode='';
 let call=req();text='Replacement before reading';assert.equal(run(call).error,'version_changed');

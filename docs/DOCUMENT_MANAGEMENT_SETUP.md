@@ -417,3 +417,9 @@ Page-image responses carry transient `subject_reading` metadata: status, method,
 No original PDF, crop or OCR text is persisted by these readers. Original request byte/pixel bounds and the OCR lock remain enforced. Page requests allow 45 seconds in the browser for the existing page OCR, routing-table pass and the new bounded subject pass. NumPy is now an explicit dependency and `documents_dtrak.py` is in the deployment manifest.
 
 Validation includes synthetic scaled/skewed routing slips; the provided PDF at three rendering scales, compressed JPEGs, added margins and small rotations; and full Chromium and WebKit browser tests with actual PDF.js rendering, Tesseract, visible dates, subject-crop evidence, approval invalidation and retained manual edits. Physical iPhone validation remains outstanding.
+
+## Request and focus-area review (candidate 9.98)
+
+See [Document understanding](DOCUMENT_UNDERSTANDING.md) for request capture,
+individual confirmation, topic suggestions, bounded evidence retention, and the
+required Drive relay update. Full extracted text remains transient.

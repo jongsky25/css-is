@@ -30,6 +30,7 @@ import documents_dashboard as dashboard
 import dashboard_pdf
 import work
 import work_intake
+import documents_understanding as understanding
 import work_readiness
 import work_review
 from documents_storage import rows
@@ -49,7 +50,7 @@ def make_router(templates,get_conn):
         person_filter=' WHERE u.id IN (SELECT value FROM json_each(?))' if compact else ''
         person_params=(json.dumps(page_ids),) if compact else ()
         return {'nav_active':'documents','enabled':d.enabled(conn),'csrf':csrf(request),'error':'',
-                'submitted':{},'intake_access':p.has_role(conn,user,'records'),'is_director':p.director(conn,user),'workflow_admin':p.has_role(conn,user,'workflow_admin'),
+                'focus_areas':understanding.FOCUS_AREAS,'submitted':{},'intake_access':p.has_role(conn,user,'records'),'is_director':p.director(conn,user),'workflow_admin':p.has_role(conn,user,'workflow_admin'),
                 'archive_admin':bool(conn.execute("SELECT 1 FROM document_role_grant WHERE user_id=? AND role='workflow_admin' AND revoked_at IS NULL",(user['id'],)).fetchone()),
                 'people':[] if compact else rows(conn,"SELECT u.id,u.username,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id WHERE u.active=1 ORDER BY name"),
                 'names':{r['id']:r['name'] for r in rows(conn,"SELECT u.id,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id"+person_filter,person_params)},
@@ -110,7 +111,7 @@ def make_router(templates,get_conn):
         values={'doc':doc,**details,'policy':policy,'duplicates':d.duplicate_candidates(conn,user,doc_id),
                 'file_indexes':{row['version_id']:row for row in rows(conn,
                     'SELECT version_id,indexed_at,chars FROM document_file_index WHERE document_id=?',(doc_id,))},
-                'email_bodies':rows(conn,"SELECT body_text FROM document_intake_email WHERE document_id=? AND body_text<>''",(doc_id,)),
+                'understanding_values':understanding.read(conn,doc_id),'email_bodies':rows(conn,"SELECT body_text FROM document_intake_email WHERE document_id=? AND body_text<>''",(doc_id,)),
                 'filing_rows':rows(conn,"SELECT id,original_name,filing_state,filing_attempts,filing_next_at,filing_last_at,filing_blocked,error FROM document_intake WHERE document_id=? AND filing_state<>'none'",(doc_id,)),
                 'instruction_recipients':rows(conn,'SELECT r.directive_id,r.user_id FROM document_instruction_recipient r JOIN document_directive d ON d.id=r.directive_id WHERE d.document_id=?',(doc_id,)),
                 'unread_instructions':{r['id'] for r in rows(conn,'''SELECT x.id FROM document_directive x

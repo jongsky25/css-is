@@ -352,7 +352,14 @@ def sanitize_extraction(result):
     allowed={'subject','sender','references','type','document_date','due_date','keywords'}
     if not isinstance(fields,dict):
         raise ValueError('Extraction returned invalid suggestions.')
-    return {'suggestions':{k:str(v)[:1000] for k,v in fields.items() if k in allowed},
+    import documents_understanding
+    text=result.get('understanding_text','')
+    if not isinstance(text,str) or len(text)>100000:
+        raise ValueError('Invalid document understanding text.')
+    understanding=documents_understanding.suggest([text], ['Source (page unavailable)'])
+    if not text:
+        understanding['warning']='Request analysis unavailable from this relay. Enter requests manually or update the Docs relay and read again.'
+    return {'understanding':understanding,'suggestions':{k:str(v)[:1000] for k,v in fields.items() if k in allowed},
             'excerpts':[str(v)[:1000] for v in result.get('excerpts',[])[:10]],
             'warnings':[str(v)[:500] for v in result.get('warnings',[])[:10]],
             'notice':'Untrusted suggestions only. Check the source and confirm each value before applying.'}

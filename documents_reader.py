@@ -282,7 +282,8 @@ def suggest(pages, subject_readings=None):
             warnings.append('Multiple values found for ' + key.replace('_', ' ') + '; enter it manually.')
     if not suggestions:
         warnings.append('No clearly labelled fields were found. Enter the details manually.')
-    return {'suggestions': suggestions, 'evidence': evidence, 'warnings': warnings, 'conflicts': conflicts,
+    import documents_understanding
+    return {'understanding': documents_understanding.suggest(pages), 'suggestions': suggestions, 'evidence': evidence, 'warnings': warnings, 'conflicts': conflicts,
             'field_readings': {'subject': [dict(reading, page=index+1) for index, reading in sorted(subject_readings.items())]},
             'notice': 'Suggested values are unverified. Check each value against the PDF before registration.'}
 

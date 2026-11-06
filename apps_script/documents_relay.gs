@@ -134,7 +134,8 @@ function dmExtract_(req) {
     if (req.return_text===true) return {ok:true,operation_id:req.operation_id,state:'confirmed',
       file_id:current.id,fingerprint:dmFingerprint_(current),mime:current.mimeType,text:text};
     return Object.assign({ok:true, operation_id:req.operation_id, state:'confirmed'}, dmSuggest_(text),
-      intake ? {file_id:current.id,content_key:current.md5Checksum,fingerprint:dmFingerprint_(current)} : {});
+      intake ? {file_id:current.id,content_key:current.md5Checksum,fingerprint:dmFingerprint_(current)} : {},
+      intake && req.understanding===true ? {understanding_text:text} : {});
   } finally {
     // Failure to remove temporary content fails the operation visibly; do not
     // silently report successful transient processing if cleanup failed.

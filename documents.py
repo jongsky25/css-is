@@ -301,6 +301,8 @@ def register_in_transaction(conn, user, fields, now=None, suppress_assignments=F
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
         (number,direction,subject,typ,sender,issued,received,user['id'],unit,lead,'registered' if direction=='IN' else 'draft',
          'urgent' if fields.get('priority')=='urgent' else 'normal',due,due,source,json.dumps(policy),json.dumps(evaluation),timestamp,timestamp)).lastrowid
+    import documents_understanding
+    documents_understanding.save(conn, doc_id, user, fields, timestamp)
     doc = raw(conn,doc_id)
     for ref in str(fields.get('references','')).splitlines():
         if ref.strip():

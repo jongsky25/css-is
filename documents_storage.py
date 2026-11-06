@@ -42,6 +42,9 @@ def install(conn):
       revision INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
       archived_at TEXT, archived_by INTEGER REFERENCES admin_user(id));
     CREATE INDEX IF NOT EXISTS document_due ON document(status,due_date);
+    CREATE TABLE IF NOT EXISTS document_understanding (
+      document_id INTEGER PRIMARY KEY REFERENCES document(id), values_json TEXT NOT NULL,
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS document_registration (
       actor_id INTEGER NOT NULL REFERENCES admin_user(id), submission_id TEXT NOT NULL,
       payload_hash TEXT NOT NULL, document_id INTEGER NOT NULL REFERENCES document(id),
