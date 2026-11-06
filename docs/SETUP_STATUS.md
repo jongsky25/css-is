@@ -76,7 +76,8 @@ access remains necessary in a fresh chat.
 ## Next action
 
 **November 6, 2026: request/source comparison, candidate 10.02.**
-Branch `feat/document-request-comparison` is stacked on #591 (`be5ae4b`). It adds
+Ready [PR #592](https://github.com/jongsky25/css-is/pull/592), implementation
+`5fc20e7` on `feat/document-request-comparison`, is stacked on #591 (`be5ae4b`). It adds
 read-only comparison of the preserved source, latest saved request/focus fields,
 and current contribution details. Changed fields are expanded, unchanged fields
 remain available, cleared requests are explicit, and source/work differences are
@@ -100,7 +101,7 @@ read. An initial missing fixture import was corrected before the passing run.
 Release metadata and whitespace checks passed. Existing Starlette/httpx warning
 only. Full CI remains required; no preview or production release of 10.02 yet.
 Drive analysis still requires manual activation of the existing Docs/travel relay.
-Next: publish ready comparison PR, then let the checked merge queue advance in
+Next: inspect #592’s fresh full CI and let the checked merge queue advance in
 order. Do not claim deployment or relay activation from branch/test success.
 
 ### Earlier handoff (authorization superseded above)
