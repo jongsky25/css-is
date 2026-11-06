@@ -127,3 +127,51 @@ def comparison(conn, user, doc_id, index):
             'removed':not current.get(prefix+'action'), 'task':task,
             'task_status':work_tasks.LABELS.get(task['status'],task['status']),
             'case':work.get(conn,user,saved['case_id'])}
+
+
+def overview(conn, user, doc_id):
+    """Document-scoped summary; work details retain their separate access checks."""
+    doc = docs.get(conn, user, doc_id)
+    if doc['direction'] != 'IN':
+        return None
+    values = understanding.read(conn, doc_id)
+    editable = work.enabled(conn) and understanding.can_edit(conn, user, doc)
+    items=[]
+    for index in range(understanding.MAX_REQUESTS):
+        prefix=f'need_{index}_'
+        action=values.get(prefix+'action','')
+        receipt=conn.execute('SELECT case_id,task_id FROM document_request_work WHERE document_id=? AND request_index=?', (doc_id,index)).fetchone()
+        accessible=None
+        if receipt:
+            try:
+                work.get(conn,user,receipt[0])
+                accessible=existing(conn,user,doc_id,index)
+            except permissions.Denied:
+                pass
+        # A cleared source position remains discoverable only to its work readers.
+        if not action and not accessible:
+            continue
+        missing=[label for key,label in (
+            ('output','Expected output'),('recipient','Requested from'),('deadline','Request deadline'),
+            ('submission','Submission instructions'),('evidence','Supporting passage'),('page','Source location'))
+            if not values.get(prefix+key)] if action else []
+        confirmed=bool(action and values.get(prefix+'confirmed')=='yes'
+                       and values.get(prefix+'kind') in ('explicit','inferred','manual')
+                       and values.get('needs_status')=='requests')
+        task=None
+        if accessible:
+            tasks=rows(conn,'SELECT status FROM work_task WHERE id=? AND case_id=?',(receipt[1],receipt[0]))
+            if tasks:
+                task={'status':work_tasks.LABELS.get(tasks[0]['status'],tasks[0]['status']),
+                      'changed':accessible['changed']}
+        items.append({'index':index,'action':action,'removed':not action,'confirmed':confirmed,
+                      'missing':missing,'task':task,
+                      'url':f'/documents/{doc_id}/requests/{index}/work' if accessible or (not receipt and editable and confirmed) else None,
+                      'can_propose':not receipt and editable and confirmed})
+    focus=values.get('focus_primary','')
+    return {'items':items,'request_count':sum(not item['removed'] for item in items),
+            'needs_review':sum(not item['confirmed'] and not item['removed'] for item in items),
+            'visible_work_count':sum(bool(item['task']) for item in items),
+            'focus':understanding.FOCUS_AREAS.get(focus,''),
+            'focus_confirmed':values.get('focus_confirmed')=='yes',
+            'status':values.get('needs_status') or 'Not reviewed'}

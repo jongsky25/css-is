@@ -112,6 +112,7 @@ def make_router(templates,get_conn):
         values={'doc':doc,**details,'policy':policy,'duplicates':d.duplicate_candidates(conn,user,doc_id),
                 'file_indexes':{row['version_id']:row for row in rows(conn,
                     'SELECT version_id,indexed_at,chars FROM document_file_index WHERE document_id=?',(doc_id,))},
+                'request_overview':request_work.overview(conn,user,doc_id),
                 'understanding_values':understanding.read(conn,doc_id),'email_bodies':rows(conn,"SELECT body_text FROM document_intake_email WHERE document_id=? AND body_text<>''",(doc_id,)),
                 'filing_rows':rows(conn,"SELECT id,original_name,filing_state,filing_attempts,filing_next_at,filing_last_at,filing_blocked,error FROM document_intake WHERE document_id=? AND filing_state<>'none'",(doc_id,)),
                 'instruction_recipients':rows(conn,'SELECT r.directive_id,r.user_id FROM document_instruction_recipient r JOIN document_directive d ON d.id=r.directive_id WHERE d.document_id=?',(doc_id,)),
@@ -492,7 +493,7 @@ def make_router(templates,get_conn):
             doc=doc,values=values,error=error,understanding_review_mode=True,form_revision=data.get('revision',doc['revision']) if data is not None else doc['revision'],
             review_reason=data.get('reason','') if data is not None else '',
             editable=d.enabled(conn) and understanding.can_edit(conn,user,doc),
-            review_history=entries,history_more=more, saved_requests=understanding.read(conn,doc_id), work_enabled=work.enabled(conn)),status_code=status)
+            review_history=entries,history_more=more, request_overview=request_work.overview(conn,user,doc_id)),status_code=status)
         response.headers.update({'Cache-Control':'no-store','Pragma':'no-cache'})
         return response
 

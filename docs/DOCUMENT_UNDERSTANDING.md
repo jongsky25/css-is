@@ -205,3 +205,27 @@ change. No automatic reconciliation or new workflow action is introduced.
 All source text remains escaped. The responsive comparison works without scripts
 and wraps long source passages at phone width. No schema, dependency or relay
 change. Drive analysis still needs the existing manual Apps Script relay activation.
+
+
+## Request follow-up overview (10.03)
+
+Incoming document detail and review pages summarize the latest saved review:
+request count, interpretations needing review, visible contribution count, request
+status and primary focus/confirmation. Each current request lists missing output,
+recipient, deadline, submission instructions, supporting passage and source
+location. These are not mandatory-source requirements: absent details may simply
+not appear in the document. This is not a new OCR run or a completeness score.
+
+Accessible contributions show their current status and source-change warning,
+with a link to the preserved source/comparison. Cleared request positions retain
+that link for current work readers. Work status/counts and cleared receipts are
+omitted for document readers who cannot access that work. No staff assignment or
+completion is inferred from a confirmed interpretation. Proposal links require
+an actionable confirmed request, no existing receipt, enabled modules and the
+existing editable incoming-document predicate; the proposal submission still
+checks Director routing, document revision and official deadlines.
+
+The overview is read-only and uses the same document/work access checks as the
+receipt. Disabled modules retain readable existing work but do not offer new
+proposals. No new schema, dependency or relay change. Drive text analysis still
+requires manual activation of the existing Apps Script relay update.
