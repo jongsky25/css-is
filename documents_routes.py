@@ -30,6 +30,7 @@ import documents_dashboard as dashboard
 import dashboard_pdf
 import work
 import work_intake
+import documents_request_work as request_work
 import documents_understanding as understanding
 import work_readiness
 import work_review
@@ -491,7 +492,7 @@ def make_router(templates,get_conn):
             doc=doc,values=values,error=error,understanding_review_mode=True,form_revision=data.get('revision',doc['revision']) if data is not None else doc['revision'],
             review_reason=data.get('reason','') if data is not None else '',
             editable=d.enabled(conn) and understanding.can_edit(conn,user,doc),
-            review_history=entries,history_more=more),status_code=status)
+            review_history=entries,history_more=more, saved_requests=understanding.read(conn,doc_id), work_enabled=work.enabled(conn)),status_code=status)
         response.headers.update({'Cache-Control':'no-store','Pragma':'no-cache'})
         return response
 
@@ -529,6 +530,58 @@ def make_router(templates,get_conn):
                 return understanding_page(request,conn,doc_id,data,str(exc),409 if isinstance(exc,d.Conflict) else 400)
             except p.Denied:
                 return HTMLResponse('Document not found.',status_code=404,headers={'Cache-Control':'no-store'})
+        finally: conn.close()
+
+    def request_work_page(request,conn,doc_id,index,data=None,error='',status=200):
+        user=p.actor(conn,request.state.user)
+        doc=d.get(conn,user,doc_id)
+        snapshot=request_work.source(conn,doc_id,index)
+        saved=request_work.existing(conn,user,doc_id,index)
+        prefix=f'need_{index}_'
+        values=data if data is not None else {
+            'title':snapshot.get(prefix+'action','')[:250],
+            'expected_output':snapshot.get(prefix+'output',''),
+            'due_date':snapshot.get(prefix+'deadline',''), 'unit_id':str(doc['unit_id'] or ''),
+            'source_hash':request_work.digest(snapshot),'revision':str(doc['revision'])}
+        response=templates.TemplateResponse(request,'documents/request_work.html',context(request,conn,
+            doc=doc,index=index,values=values,snapshot=snapshot,saved=saved,error=error,
+            editable=work.enabled(conn) and understanding.can_edit(conn,user,doc)),status_code=status)
+        response.headers['Cache-Control']='no-store'
+        return response
+
+    @router.get('/documents/{doc_id}/requests/{index}/work',response_class=HTMLResponse)
+    def request_work_review(request:Request,doc_id:int,index:int):
+        conn=get_conn()
+        try:
+            return request_work_page(request,conn,doc_id,index)
+        except p.Denied:
+            return HTMLResponse('Document or work not found.',status_code=404,headers={'Cache-Control':'no-store'})
+        except ValueError as exc:
+            return HTMLResponse(str(exc),status_code=400,headers={'Cache-Control':'no-store'})
+        finally: conn.close()
+
+    @router.post('/documents/{doc_id}/requests/{index}/work',response_class=HTMLResponse)
+    async def request_work_save(request:Request,doc_id:int,index:int):
+        try:
+            data=await posted(request)
+        except (p.Denied,ValueError) as exc:
+            return HTMLResponse(str(exc),status_code=403 if isinstance(exc,p.Denied) else 400)
+        return await asyncio.to_thread(request_work_submit,request,doc_id,index,data)
+
+    def request_work_submit(request,doc_id,index,data):
+        conn=get_conn()
+        try:
+            request_work.propose(conn,request.state.user,doc_id,index,data)
+            return RedirectResponse(f'/documents/{doc_id}/requests/{index}/work',status_code=303,headers={'Cache-Control':'no-store'})
+        except p.Denied:
+            return HTMLResponse('Document or work unavailable.',status_code=403,headers={'Cache-Control':'no-store'})
+        except ValueError as exc:
+            try:
+                return request_work_page(request,conn,doc_id,index,data,str(exc),409 if isinstance(exc,d.Conflict) else 400)
+            except p.Denied:
+                return HTMLResponse('Document or work not found.',status_code=404,headers={'Cache-Control':'no-store'})
+            except ValueError:
+                return HTMLResponse('Invalid request.',status_code=400,headers={'Cache-Control':'no-store'})
         finally: conn.close()
 
     @router.get('/documents/{doc_id}',response_class=HTMLResponse)

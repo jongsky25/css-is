@@ -11,6 +11,7 @@ import documents as docs
 import documents_permissions as permissions
 from documents_storage import rows
 import work
+import documents_request_work
 import work_tasks
 import work_compat
 import work_inbox
@@ -88,6 +89,7 @@ def make_router(templates, get_conn):
         next_steps = []
         for task in tasks:
             counts[task['status']] += 1
+            task['request_source'] = documents_request_work.task_source(conn,user,task['id'])
             task['pending_decisions'] = work_decisions.pending(conn,task['id'])
             task['source_message'] = work_decisions.task_source(conn,user,case_id,task['id'])
             task['dependencies'] = work_blockers.dependencies(conn,task['id'])

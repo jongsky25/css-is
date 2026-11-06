@@ -50,6 +50,13 @@ def install(conn):
       values_json TEXT NOT NULL, actor_id INTEGER NOT NULL REFERENCES admin_user(id),
       created_at TEXT NOT NULL, reason TEXT NOT NULL,
       PRIMARY KEY(document_id,revision));
+    CREATE TABLE IF NOT EXISTS document_request_work (
+      document_id INTEGER NOT NULL REFERENCES document(id), request_index INTEGER NOT NULL CHECK(request_index BETWEEN 0 AND 4),
+      source_json TEXT NOT NULL, source_hash TEXT NOT NULL, payload_hash TEXT NOT NULL,
+      case_id INTEGER NOT NULL REFERENCES work_case(id), task_id INTEGER NOT NULL REFERENCES work_task(id),
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), created_at TEXT NOT NULL,
+      PRIMARY KEY(document_id,request_index));
+    CREATE INDEX IF NOT EXISTS document_request_work_task ON document_request_work(task_id);
     CREATE TABLE IF NOT EXISTS document_registration (
       actor_id INTEGER NOT NULL REFERENCES admin_user(id), submission_id TEXT NOT NULL,
       payload_hash TEXT NOT NULL, document_id INTEGER NOT NULL REFERENCES document(id),
