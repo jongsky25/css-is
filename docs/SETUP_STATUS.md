@@ -75,6 +75,37 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 6, 2026: request/source comparison, candidate 10.02.**
+Ready [PR #592](https://github.com/jongsky25/css-is/pull/592), implementation
+`5fc20e7` on `feat/document-request-comparison`, is stacked on #591 (`be5ae4b`). It adds
+read-only comparison of the preserved source, latest saved request/focus fields,
+and current contribution details. Changed fields are expanded, unchanged fields
+remain available, cleared requests are explicit, and source/work differences are
+not treated as errors. Both current permissions remain required; viewing never
+acknowledges changes or modifies work. No schema or dependency change.
+
+The owner requested building and queuing this next increment, including #591 as
+its prerequisite. This supersedes earlier draft-only restrictions below. #591 is
+ready and the existing hourly task now handles #588 → #589 → #590 → #591 → the
+10.02 comparison PR once published and ready. Each merge requires fresh normal/
+shuffled CI, metadata/audit checks and successful predecessor deployment. #588 is
+deployed; #589 merged as `26d14ab` and deployment 42237842415 is in progress.
+#590 is updated against main at `7b9fbc7` with fresh checks pending. No further
+increment beyond 10.02 is authorized. Preserve active branches/dirty worktrees.
+
+84 comparison/proposal/review/route/browser/release checks passed without failures
+or skips, including a real 390×844 no-script comparison with a 1,000-character
+unbroken source passage. Tests cover cleared requests, independently changed
+work, source escaping, access loss, disabled modules and unchanged revisions on
+read. An initial missing fixture import was corrected before the passing run.
+Release metadata and whitespace checks passed. Existing Starlette/httpx warning
+only. Full CI remains required; no preview or production release of 10.02 yet.
+Drive analysis still requires manual activation of the existing Docs/travel relay.
+Next: inspect #592’s fresh full CI and let the checked merge queue advance in
+order. Do not claim deployment or relay activation from branch/test success.
+
+### Earlier handoff (authorization superseded above)
+
 **Queue update — November 6, 2026, 14:52 UTC.** #588's guarded production
 workflow 42223684442 completed successfully, including deployment and diagnostics.
 #589 passed all current-head checks at `af7abd7` with no unresolved review threads

@@ -83,3 +83,8 @@ html:has(.doc-intake-review){scroll-padding-top:calc(var(--topnav-h,53px) + 70px
 .doc-next-action { display: inline-block; padding: .6rem .75rem; font-weight: 600; }
 .doc-next p, .doc-next li { overflow-wrap: anywhere; }
 [id^="document-action-"], [id^="document-contribution-"], #document-operations, #document-recipient-outcomes, #collaborative-work, #documents-feature { scroll-margin-top: 6rem; }
+
+/* Source comparison stays readable without scripts and at phone widths. */
+.documents .request-comparison-values {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:1rem}
+.documents .request-comparison-field {min-width:0;overflow-wrap:anywhere}
+.documents .request-comparison-field p {white-space:pre-wrap}

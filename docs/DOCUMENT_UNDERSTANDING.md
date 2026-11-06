@@ -180,3 +180,28 @@ Receipt access requires both current document and linked work access; history
 snapshots do not introduce additional readership. The receipt retains the original
 source, not the complete OCR text. Drive analysis still requires manual activation
 of the existing Docs/travel relay update; this increment adds no relay changes.
+
+
+## Source and work comparison (10.02)
+
+The request work receipt now compares the preserved source to the latest saved
+review, alongside current contribution title, output and target where applicable.
+Changed fields are expanded; unchanged fields are available in a disclosure.
+The comparison covers requested action, output, deadline, recipient, submission,
+evidence/location, interpretation/confirmation, request status and focus areas/
+evidence/confirmation. It counts source-field changes, not work edits. Differences
+between source and work may be intentional and are labelled without declaring the
+work incorrect or complete. Current case title/status and contribution status,
+unit and revision help staff identify the work they are reviewing.
+
+A cleared request is identified explicitly while its original evidence and work
+remain available. Current document AND work access are rechecked; removing the
+original source link does not grant source access to other work readers. The
+comparison is read-only, remains available when modules are disabled, and never
+changes assignments, targets, source hashes, reconciliation flags or acknowledgments.
+Use existing work controls or review the interpretation to make an authorized
+change. No automatic reconciliation or new workflow action is introduced.
+
+All source text remains escaped. The responsive comparison works without scripts
+and wraps long source passages at phone width. No schema, dependency or relay
+change. Drive analysis still needs the existing manual Apps Script relay activation.

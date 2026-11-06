@@ -83,3 +83,47 @@ def task_source(conn, user, task_id):
         return existing(conn, user, item[0], item[1])
     except permissions.Denied:
         return None
+
+
+def comparison(conn, user, doc_id, index):
+    """Read-only comparison; both document and case access are checked afresh."""
+    saved = existing(conn, user, doc_id, index)
+    if not saved:
+        return None
+    current = source(conn, doc_id, index)
+    tasks = rows(conn, '''SELECT t.*,u.name AS unit_name FROM work_task t
+        JOIN org_unit u ON u.id=t.unit_id WHERE t.id=? AND t.case_id=?''',
+        (saved['task_id'], saved['case_id']))
+    if not tasks:
+        raise ValueError('The original contribution is unavailable.')
+    task = tasks[0]
+    prefix = f'need_{index}_'
+    fields = [(prefix+key, label, target) for key,label,target in (
+        ('action','Requested action','title'), ('output','Expected output','expected_output'),
+        ('deadline','Request deadline / work target','due_date'),
+        ('recipient','Requested from',None), ('submission','Where / how to submit',None),
+        ('evidence','Supporting passage',None), ('page','Source location',None),
+        ('kind','Interpretation',None), ('confirmed','Request confirmed',None))]
+    fields += [(key,label,None) for key,label in (
+        ('needs_status','Request status'), ('focus_primary','Primary focus'),
+        ('focus_secondary','Secondary focus'), ('focus_evidence','Focus evidence'),
+        ('focus_confirmed','Focus confirmed'))]
+    def display(key, value):
+        if not value:
+            return 'Not recorded'
+        if key in ('focus_primary','focus_secondary'):
+            return understanding.FOCUS_AREAS.get(value,value)
+        if key.endswith('_confirmed'):
+            return 'Yes' if value=='yes' else 'Not confirmed'
+        return value.replace('_',' ') if key in ('needs_status',prefix+'kind') else value
+    result=[]
+    for key,label,target in fields:
+        before=saved['values'].get(key,'')
+        after=current.get(key,'')
+        result.append({'label':label, 'before':display(key,before), 'after':display(key,after),
+                       'changed':before!=after, 'work':(task[target] or 'Not set') if target else None,
+                       'different':bool(target and (task[target] or '')!=after)})
+    return {'rows':result, 'changed_count':sum(row['changed'] for row in result),
+            'removed':not current.get(prefix+'action'), 'task':task,
+            'task_status':work_tasks.LABELS.get(task['status'],task['status']),
+            'case':work.get(conn,user,saved['case_id'])}

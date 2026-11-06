@@ -545,6 +545,7 @@ def make_router(templates,get_conn):
             'source_hash':request_work.digest(snapshot),'revision':str(doc['revision'])}
         response=templates.TemplateResponse(request,'documents/request_work.html',context(request,conn,
             doc=doc,index=index,values=values,snapshot=snapshot,saved=saved,error=error,
+            comparison=request_work.comparison(conn,user,doc_id,index) if saved else None,
             editable=work.enabled(conn) and understanding.can_edit(conn,user,doc)),status_code=status)
         response.headers['Cache-Control']='no-store'
         return response

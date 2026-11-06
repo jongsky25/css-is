@@ -1,3 +1,9 @@
+## 10.02 — November 6, 2026
+
+- Compare changed request details and focus areas with the source preserved when work was proposed.
+- See current contribution details and removed requests without changing work or acknowledging source changes.
+- Read the comparison on a phone with or without JavaScript.
+
 ## 10.01 — November 6, 2026
 
 - Turn a confirmed incoming request into a shared work item and an unassigned proposed contribution.
