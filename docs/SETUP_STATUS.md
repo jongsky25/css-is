@@ -1,5 +1,18 @@
 # Cloud/mobile setup status
 
+## Documents next phase — verified post-10.12 handoff
+
+PRs #596–603 are merged and their guarded deployments completed successfully.
+Final main is `6452931b25d953b10a20dcea4750003e2ecd147d`; final deployment
+[42411602460](https://github.com/jongsky25/css-is/actions/runs/42411602460)
+succeeded including diagnostics. See the [complete next-phase handoff](DOCUMENTS_NEXT_PHASE_HANDOFF.md)
+for shipped evidence, source map, My desk count/filter contract, request-execution
+assessment, synthetic staff study plan and new-chat starter. This review branch
+contains documentation/planning only; do not merge its draft PR automatically or
+implement later phases without a new instruction. Older queue snapshots below
+are historical. The first next action is the bounded My desk count-contract assessment.
+
+
 Updated: 2026-11-03. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Integration branch: `setup/cloud-mobile-continuity`; default startup branch after
 merge: `main`.
