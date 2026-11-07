@@ -75,6 +75,18 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 7, 2026: #596 release requested, then next intake increment.**
+The user explicitly requested merging #596 and then building the next improvement.
+Both full CI orders at `2e32c2c` had one identical browser failure (10,786 passes):
+the registration test expected source details to be initially visible after they
+became an intentional disclosure. Update that journey to open the disclosure,
+retain all persistence/confirmation/escaping assertions, and require fresh full
+CI on the repaired head. Do not bypass the gate. After checked merge, build the
+intake reading/prefilling increment on a separate branch; that next increment is
+not yet authorized for production merge. Earlier draft-only restriction for #596
+below is superseded by this user instruction.
+
+
 **November 7, 2026: document navigation and workspace, candidate 10.05.**
 The user requested implementation after assessment of document-module friction.
 The first navigation/workspace increment is on `feat/documents-my-desk`:
