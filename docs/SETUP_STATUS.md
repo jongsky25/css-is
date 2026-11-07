@@ -75,6 +75,44 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 7, 2026, 05:37 UTC: #596 merged; #597 checked release queued.**
+#596 passed all six checks at `067f128`, including both complete test orders,
+metadata/audit, avatar acceptance and Required checks. No unresolved review
+threads; strict active main protection and no bypass actors were freshly verified.
+It merged normally as `4c9657d`. Guarded deployment 42343521324 is queued; do not
+claim production completion yet.
+
+#597 is authorized and ready, retargeted to main and updated to `4d7dc8b`.
+Require fresh full CI on that reconciled head and successful #596 deployment
+before merging it. The existing hourly task continues through #597 deployment.
+The next increment is already saved as [draft #598](https://github.com/jongsky25/css-is/pull/598),
+implementation `4943f9c`, on `feat/documents-request-entry`. 102 regressions plus
+five final browser checks passed, including real saves with/without JavaScript.
+Its branch incorporates the reconciled #597 ancestry; preserve it and retarget
+it to main after #597 merges. #598 is NOT authorized for merge/deployment.
+Do not rebuild any of these completed increments or weaken existing gates.
+
+
+**November 7, 2026: #597 merge authorized; progressive entry candidate 10.07.**
+The owner's latest "merge when ready then do the next" authorizes #597 after
+#596, superseding earlier draft-only restrictions for #597. #597 was marked
+ready; all five checks at `40fdb04` passed against its stacked base. Require fresh
+CI after main reconciliation and successful #596 deployment before its merge.
+#596's repaired head `067f128` has normal tests, metadata, audit and avatar checks
+passing; shuffled tests and the aggregate gate remain pending. Main protection
+is active and strict with no bypass actors; #596 has no unresolved review threads.
+The existing hourly task now handles #596 then #597 and verifies both deployments.
+
+The next authorized implementation, candidate 10.07, is on
+`feat/documents-request-entry`, based on #597. It adds progressive request forms
+with stable slots, preserved partial entries/suggestions and no-script editing.
+See [request-entry guide](DOCUMENT_REQUEST_ENTRY.md). 102 focused checks passed;
+final browser save cases cover both script modes. Save as a draft stacked on
+#597, then reconcile with main after predecessors merge. Neither the task nor
+this request authorizes merging 10.07. Preserve all pending work; do not duplicate
+these already implemented increments.
+
+
 **November 7, 2026: checked merge follow-up and next draft saved.**
 #596 is ready for review at `067f128`; full CI is running after its single browser
 expectation repair. It is NOT merged yet. The user authorized its merge and normal

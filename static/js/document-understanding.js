@@ -5,6 +5,43 @@
   const field = name => form.elements.namedItem(name);
   const changed = input => input.dispatchEvent(new Event('input', {bubbles: true}));
   const set = (name, value) => { const input = field(name); input.value = value || ''; changed(input); };
+  const requests = Array.from(panel.querySelectorAll('[data-request]'));
+  const entryControls = panel.querySelector('#request-entry-controls');
+  const addRequest = panel.querySelector('#request-entry-add');
+  const entryStatus = panel.querySelector('#request-entry-status');
+  // Keep stable slots and every entered value; hide only completely blank forms.
+  function hasEntry(request) {
+    return Array.from(request.querySelectorAll('input, textarea, select')).some(input => {
+      if (input.type === 'checkbox') return input.checked;
+      if (input.name.endsWith('_kind')) return input.value !== 'manual';
+      return Boolean(input.value.trim());
+    });
+  }
+  function updateAddRequest() {
+    if (addRequest) addRequest.disabled = requests.every(request => !request.hidden);
+  }
+  function revealRequest(index) {
+    const request = requests.find(item => item.dataset.request === String(index));
+    if (!request) return;
+    request.hidden = false;
+    request.open = true;
+    updateAddRequest();
+  }
+  if (entryControls && addRequest) {
+    requests.forEach(request => {
+      request.hidden = !hasEntry(request);
+      if (!request.hidden) request.open = true;
+    });
+    entryControls.hidden = false;
+    updateAddRequest();
+    addRequest.addEventListener('click', () => {
+      const request = requests.find(item => item.hidden);
+      if (!request) return;
+      revealRequest(request.dataset.request);
+      entryStatus.textContent = `Request ${Number(request.dataset.request) + 1} opened.${addRequest.disabled ? ' All five request forms are shown.' : ''}`;
+      field(`need_${request.dataset.request}_action`).focus();
+    });
+  }
   function resetConfirmations() {
     panel.querySelectorAll('input[type=checkbox]').forEach(input => { input.checked = false; });
   }
@@ -31,11 +68,11 @@
       const quote = document.createElement('p'); quote.textContent = `Source ${request.page}: ${request.evidence}`;
       const button = document.createElement('button'); button.type = 'button'; button.textContent = 'Use this request for review';
       button.addEventListener('click', () => {
-        const index = [0,1,2,3,4].find(i => ['action','output','recipient','deadline','submission','evidence','page'].every(key => !field(`need_${i}_${key}`).value.trim()));
+        const index = [0,1,2,3,4].find(i => !hasEntry(requests.find(item => item.dataset.request === String(i))));
         if (index === undefined) { panel.querySelector('#understanding-warning').textContent = 'All five request slots contain entries. Review existing requests or record remaining requests separately.'; return; }
         for (const key of ['action','output','recipient','deadline','submission','evidence','page','kind']) set(`need_${index}_${key}`, request[key]);
         set('needs_status', 'requests');
-        panel.querySelector(`[data-request="${index}"]`).open = true;
+        revealRequest(index);
         button.disabled = true; button.textContent = 'Added — check and confirm below';
         field(`need_${index}_action`).focus();
       });

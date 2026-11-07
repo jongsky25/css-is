@@ -180,7 +180,7 @@ def test_understanding_review_confirmation_persistence_and_safe_text(registratio
 
 def test_understanding_source_change_preserves_corrections_but_requires_review(registration_page):
     page, _, _ = registration_page
-    page.locator('[data-request="0"] summary').click()
+    page.get_by_role('button',name='Add request',exact=True).click()
     page.locator('[name=need_0_action]').fill('Manually corrected request')
     page.locator('[name=need_0_confirmed]').check()
     page.locator('#intake-source').fill('https://example.invalid/changed.pdf')

@@ -5,6 +5,7 @@
 <label>Request status<select name="needs_status">{% for key,label in [('', 'Not yet reviewed'),('requests','Requests identified'),('information_only','For information only'),('unclear','Unclear — needs review')] %}<option value="{{ key }}" {% if values.get('needs_status','')==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
 <label class="doc-check"><input type="checkbox" name="needs_status_confirmed" value="yes" {% if values.get('needs_status_confirmed')=='yes' %}checked{% endif %}> I checked any “for information only” conclusion against the source.</label>
 <div id="understanding-suggestions"></div>
+<div id="request-entry-controls" hidden><button type="button" id="request-entry-add">Add request</button><p id="request-entry-status" role="status" aria-live="polite"></p></div>
 {% for i in range(5) %}{% set prefix='need_' ~ i ~ '_' %}
 <details data-request="{{ i }}" {% if values.get(prefix ~ 'action') %}open{% endif %}><summary>Request {{ i+1 }}{% if not values.get(prefix ~ 'action') %} (optional){% endif %}</summary>
 {% for key,label,limit in [('action','Requested action',700),('output','Expected output / deliverable',500),('recipient','Requested from (as stated in source)',300),('submission','Where / how to submit',500),('evidence','Supporting source passage',1000),('page','Source page or location',50)] %}
@@ -19,4 +20,4 @@
 <label class="doc-check"><input type="checkbox" name="focus_confirmed" value="yes" {% if values.get('focus_confirmed')=='yes' %}checked{% endif %}> I checked the focus-area classification.</label>
 {% if item is defined and item.suggestions.get('understanding') %}<script type="application/json" id="understanding-initial">{{ item.suggestions.understanding|tojson }}</script>{% endif %}
 </section>
-<script src="/static/js/document-understanding.js" defer></script>
+<script src="/static/js/document-understanding.js?v=10.07" defer></script>
