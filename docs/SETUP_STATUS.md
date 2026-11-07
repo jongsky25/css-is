@@ -4242,3 +4242,23 @@ and synthetic staff usability planning; no later implementation is authorized.
 Recovery action: original push workflow 42371458688 was retried in full (attempt 2),
 with all gates retained. Test repair f8e9c72 is saved on #600 and propagated to
 #601 532f130, #602 3358a7f and this branch. Fresh CI is pending on these heads.
+
+## Registration merged; Inbox reconciliation — November 7, 2026
+
+#599 guarded deployment 42371458688 attempt 2 completed successfully, including
+post-deploy diagnostics. #600 merged as
+`55ffa5e598ad7d1e9c2a802ba5f4b685cd2c329f` from
+`f8e9c72e16183b8ab5087411ae2d882187599d60` after both complete CI orders
+passed 10,825 tests with no failures/skips, metadata/audit/Required checks passed,
+and current head/main, reviews/threads and active strict no-bypass protection
+were reverified. No avatar acceptance paths changed. Guarded deployment
+[42381842494](https://github.com/jongsky25/css-is/actions/runs/42381842494)
+must complete successfully before merging #601.
+
+#601 retargeted/reconciled to main at
+`87d19da15fd33d780e0886096466ccc85eb4ef81`; fresh full CI
+[42381850727](https://github.com/jongsky25/css-is/actions/runs/42381850727)
+is queued. #602 and #603 remain stacked and passed their prior full CI; each
+still needs reconciliation and fresh checks after its predecessor merges.
+Continue sequentially through #603, then publish the authorized documentation
+handoff draft. Existing automation remains responsible for guarded continuation.
