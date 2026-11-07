@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.09"
+APP_VERSION = "10.10"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.10",
+        "date": "November 7, 2026",
+        "summary": "Find the next available Inbox review.",
+        "changes": [
+            "Filter the Inbox to available files, your active reviews, or reviews held by other staff.",
+            "See matching counts across the whole permitted status queue."
+        ]
+    },
     {
         "version": "10.09",
         "date": "November 7, 2026",

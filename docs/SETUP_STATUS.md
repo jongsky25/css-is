@@ -4067,6 +4067,37 @@ fresh CI; verify each guarded deployment before proceeding. Existing automation
 beyond registration entry is authorized for merge. Preserve concurrent work.
 A further 30 service-worker retry and release-gate checks passed without skips.
 
+## Inbox review availability 10.10 — November 7, 2026
+
+Implemented on `feat/documents-inbox-focus` behind #600 `9fd7375`. See
+[Inbox availability](DOCUMENT_INBOX_FOCUS.md). Available/unclaimed, own active and
+other active reviews are filtered before pagination, with full permitted status
+counts and preserved return context. No claim, provider or workflow side effects
+on reads; existing claim and access safeguards remain.
+
+The owner requested the next improvement and queueing, then supplied a queue
+instruction explicitly limiting merge authorization through #600. This next
+increment is therefore saved as a draft behind #600; do not merge it under that
+cutoff. The existing automation continues the authorized sequence only.
+
+#596 deployment `42343521324` completed successfully. #597 merged at verified head
+`4d7dc8b` as `0ee1cffffebe69147ba951fd1d71fda1b13bf0b4` after both full suites
+passed 10,804 tests with no failures/skips, metadata/audit/aggregate checks passed,
+no reviews or unresolved threads, and current strict no-bypass protection was
+verified. Guarded deployment `42348890661` is running. #598 was retargeted to main
+and reconciled through GitHub update-branch to `fbcc376`; fresh CI `42348932141`
+is running. #599 and #600 remain stacked; require reconciliation and fresh full
+CI for each, plus predecessor deployment success, before regular SHA-bound merge.
+No manual deployment, production data, notifications or relay changes occurred.
+
+Verification: 65 initial intake regressions passed. The broader run passed 70
+existing regressions and three new service/route cases; two browser cases exposed
+the synthetic redirect interceptor, which was corrected to follow the POST via
+the isolated TestClient (the route case separately asserts the 303 location).
+All five final new tests then passed, including both phone script modes. Groups
+overlap. No skips in these runs. Release metadata 10.10 and whitespace checks pass.
+Full fresh CI remains required after main reconciliation. Saved as a draft PR;
+latest explicit merge cutoff remains #600.
 ## Queue recovery checkpoint — November 7, 2026
 
 This checkpoint supersedes earlier queue cutoffs: owner authorization extends

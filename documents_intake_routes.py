@@ -35,9 +35,12 @@ def make_router(templates,get_conn):
         page=max(1,int(request.query_params.get('page','1')))
         state=request.query_params.get('state','waiting')
         if state not in ('waiting','attention','registered','dismissed'): state='waiting'
-        items,more,counts=intake.list_page(conn,user,state,page)
+        now=tz.now_iso()
+        review=intake.review_filter(state,request.query_params.get('review','all'))
+        items,more,counts=intake.list_page(conn,user,state,page,review,now=now)
+        review_counts=intake.review_counts(conn,user,state,now=now) if state in ('waiting','attention') else {}
         return render(request,conn,'intake_queue',status,items=items,more=more,page=page,state=state,
-                      counts=counts,config=intake.settings(conn),sync_progress=sync_jobs.progress(conn),now=tz.now_iso(),error=error)
+                      counts=counts,review=review,review_counts=review_counts,config=intake.settings(conn),sync_progress=sync_jobs.progress(conn),now=now,error=error)
 
     def review_page(request,conn,item_id,error='',status=200,values=None):
         item=intake.get(conn,request.state.user,item_id)
