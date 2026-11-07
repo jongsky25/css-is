@@ -75,6 +75,26 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 7, 2026: #597 merge authorized; progressive entry candidate 10.07.**
+The owner's latest "merge when ready then do the next" authorizes #597 after
+#596, superseding earlier draft-only restrictions for #597. #597 was marked
+ready; all five checks at `40fdb04` passed against its stacked base. Require fresh
+CI after main reconciliation and successful #596 deployment before its merge.
+#596's repaired head `067f128` has normal tests, metadata, audit and avatar checks
+passing; shuffled tests and the aggregate gate remain pending. Main protection
+is active and strict with no bypass actors; #596 has no unresolved review threads.
+The existing hourly task now handles #596 then #597 and verifies both deployments.
+
+The next authorized implementation, candidate 10.07, is on
+`feat/documents-request-entry`, based on #597. It adds progressive request forms
+with stable slots, preserved partial entries/suggestions and no-script editing.
+See [request-entry guide](DOCUMENT_REQUEST_ENTRY.md). 102 focused checks passed;
+final browser save cases cover both script modes. Save as a draft stacked on
+#597, then reconcile with main after predecessors merge. Neither the task nor
+this request authorizes merging 10.07. Preserve all pending work; do not duplicate
+these already implemented increments.
+
+
 **November 7, 2026: checked merge follow-up and next draft saved.**
 #596 is ready for review at `067f128`; full CI is running after its single browser
 expectation repair. It is NOT merged yet. The user authorized its merge and normal

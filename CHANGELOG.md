@@ -1,3 +1,9 @@
+## 10.07 — November 7, 2026
+
+- Add request forms on demand while keeping populated requests visible.
+- Reveal suggested requests without overwriting partial entries or renumbering saved requests.
+- Preserve all five native request forms when JavaScript is unavailable.
+
 ## 10.06 — November 7, 2026
 
 - Start or resume an intake review directly from the Inbox.
