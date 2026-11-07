@@ -4191,3 +4191,25 @@ implementation/merge, production-data testing, or staff invitations. Do not merg
 the handoff PR automatically. Keep automation
 `Automation_38e6d990e1f08191ab61d12a19909f16` active until all authorized deployments
 and the remotely saved handoff are complete, or a user-only blocker needs action.
+
+## Queue advanced through return context merge — November 7, 2026
+
+#598 guarded deployment `42362949336` completed successfully. #599 merged as
+`1bb67b198c2a4515377e0f86cd4ebbfb0c66ce30` from verified head
+`e3e6fb113408b0f4cc4f9be1eb9ce118215b495d`. CI `42362957347` passed both
+complete orders (10,822 tests each with no failures/skips), metadata, dependency
+audit and aggregate Required checks. Immediately before merge, current main/head,
+clean reviews/unresolved-thread state and active strict no-bypass protection were
+verified; no avatar acceptance path was changed. Its guarded deployment
+`42371458688` is queued/running and must succeed before the next merge.
+
+#600 retargeted and reconciled with main at
+`0bc066eec728eff890a8ccabff81064bd95b0b88`; require its fresh full CI.
+Repaired stacked heads #601 `f88cdb8`, #602 `22622ff` and #603 `5a87bc5` each
+passed all five checks at this inspection. These successes do not replace fresh
+checks after their later main reconciliation. This documentation update gives
+#603 a newer head and fresh CI as well. No new feature work was introduced.
+
+Continue #600 → #601 → #602 → #603 under all existing release/deployment gates,
+then publish the requested next-phase documentation handoff from verified main.
+No authorization extends to merging that handoff PR or implementing later phases.
