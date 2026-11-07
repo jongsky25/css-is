@@ -29,3 +29,13 @@ is unchanged apart from the release cache version.
 Remaining work: truthful scoped queue counts/ready-waiting filters and closer
 request-execution/source-reconciliation flows. Staff completion times have not
 been measured. Full current-head normal/shuffled CI remains required before merge.
+
+CI repair — November 7: both full test orders hit a synthetic native-POST redirect
+failure in the no-script browser test (Chromium left the intercepted host for a
+network/error page). This same inherited test failed #600–603; all other tests
+passed in the inspected normal-order runs. The no-script test now uses a loopback
+HTTP bridge to the isolated TestClient and a context with JavaScript disabled at
+creation. It asserts the actual 303 and destination, one POST, one document and
+one registration. No application behavior or assertion was bypassed. All ten
+registration browser checks passed after repair, with no failures or skips.
+Fresh full CI remains required on each affected branch and after reconciliation.
