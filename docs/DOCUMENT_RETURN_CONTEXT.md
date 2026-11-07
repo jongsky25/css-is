@@ -29,3 +29,9 @@ page/filter/sort restoration and native navigation with scripts disabled; existi
 intake, workspace, pagination, guidance and progressive request-entry regressions;
 and release metadata/deployment bundle checks. Full normal/shuffled CI is still
 required on the eventual main-reconciled head before merge.
+
+CI repair (November 7): dashboard links without explicit sort parameters must use
+`registered` / `desc`, not empty values rejected by the grid validator. Both full
+orders exposed the same four dashboard browser failures (10,818 other tests
+passed); 19 dashboard/grid browser checks passed after restoring defaults.
+Explicit return-link sorting remains intact. Fresh full CI is required.

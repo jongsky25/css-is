@@ -149,8 +149,10 @@ def make_router(templates,get_conn):
             linked={}
             if linked_view:
                 linked={'queue':queue,'q':query, 'interactive':'1',
+                        'sort':request.query_params.get('sort','registered'),
+                        'dir':request.query_params.get('dir','desc'),
                         **{field:request.query_params.get(field,'') for field in
-                           ('status','verification','deadline',*grid.LEAD_DATE_FIELDS,'group_by','sort','dir')}}
+                           ('status','verification','deadline',*grid.LEAD_DATE_FIELDS,'group_by')}}
                 data=grid.page(conn,request.state.user,{**linked,'page':request.query_params.get('page','1')})
                 page={'documents':data['data'],'total':data['last_row'],'before':False,'more':False,
                       'linked_page':data['page'],'linked_last_page':data['last_page'],
