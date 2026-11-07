@@ -4126,3 +4126,28 @@ sequence. Inspect actual head/main, tests, metadata/audit/aggregate and applicab
 avatar checks, reviews/threads and strict no-bypass protection immediately before
 each SHA-bound merge. Verify each predecessor deployment succeeds before merging
 its successor. Retarget/reconcile each next branch to main without losing work.
+## Queue recovery checkpoint — November 7, 2026
+
+This checkpoint supersedes earlier queue cutoffs: owner authorization extends
+through #603 only, followed by a documentation-only next-phase handoff draft.
+#596–598 merged and their guarded deployments succeeded. #599 merged as
+`1bb67b198c2a4515377e0f86cd4ebbfb0c66ce30`; deployment workflow
+[42371458688](https://github.com/jongsky25/css-is/actions/runs/42371458688)
+failed verification before deployment. #600 CI 42371466854 hit the same
+Files-disclosure browser timing race in normal order; shuffled orders passed.
+
+The browser changes its fragment before the hashchange callback opens Files.
+The immediate assertion raced that callback. The test now waits for the open
+attribute and summary focus, retaining form-value, authorization, revision and
+no-write assertions. A delayed-callback case reproduced the old failure. Eight
+workspace/guidance browser checks passed with zero failures/errors/skips using
+`.venv/bin/python scripts/cloud_workspace.py test -q tests/test_document_workspace_navigation.py tests/test_document_guidance_browser.py --junitxml=/tmp/files-reveal-repair.xml`. No application code changed. Fresh full CI is required.
+
+Resume the original guarded push workflow for #599 with all verification jobs
+and backup/version guards intact; do not merge #600 until that deployment fully
+succeeds. Carry this test repair through #601–603, reconcile each successor with
+main after its predecessor, and require fresh full CI and live merge checks.
+The existing automation owns continuation. After #603 deployment succeeds, save
+`docs/DOCUMENTS_NEXT_PHASE_HANDOFF.md` on a dedicated review branch and open a
+draft documentation PR for My desk counts/filters, request-execution integration
+and synthetic staff usability planning; no later implementation is authorized.
