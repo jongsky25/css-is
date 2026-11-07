@@ -75,6 +75,26 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Queue complete — November 7, 2026, 01:06 UTC.** All authorized PRs #588–#594
+are merged and all seven guarded deployment workflows completed successfully.
+Final release 10.04 is merge `9ad7459`; workflow
+[42317012991](https://github.com/jongsky25/css-is/actions/runs/42317012991) passed
+metadata, dependency audit, normal/shuffled suites, Required checks, deployment
+and post-deploy diagnostics. Predecessor successful runs: 42223684442 (#588),
+42237842415 (#589), 42249433586 (#590), 42268096935 (#591, successful retry after
+a timeout), 42295411492 (#592), 42309730784 (#593). No gates were bypassed.
+The conditional merge automation is now disabled. No later increment is authorized.
+Completion is recorded on `docs/ocr-release-queue-handoff`; this documentation
+branch is not a further production release.
+
+Remaining manual step: update `documents_relay.gs` in the existing Docs/travel
+Apps Script project and publish a new version of its existing web-app deployment.
+Keep the existing endpoint, secrets and properties. Instructions were supplied to
+the owner; activation has not been performed or verified. See
+[Drive relay activation](DOCUMENT_UNDERSTANDING.md#drive-relay-activation).
+Local PDF reading does not require this relay update.
+
+
 **Queue update — November 7, 2026, 00:14 UTC.** #593 deployed successfully:
 workflow 42309730784 passed verification, deploy and diagnostics. #594 at
 `0154206` passed all five CI checks in 42309778160; no unresolved review threads,
