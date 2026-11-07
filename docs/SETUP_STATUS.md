@@ -88,6 +88,30 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 7, 2026: My next steps implementation authorized; candidate 10.14.**
+The owner's “do that” authorized implementing the count/filter specification.
+The feature is isolated on `feat/my-next-steps-filters`, based on the planning
+branch and #604 repair `7de2a9b`. It adds full-scope permitted document counts,
+ready/waiting/attention and same-step overdue filters, matching-card display,
+stable return anchors and native no-script controls. See the
+[contract and measured evidence](MY_NEXT_STEPS_COUNT_CONTRACT.md).
+
+348 relevant regressions passed; the final 15 focused filter/browser checks also
+passed (overlapping groups), with no failures/errors/skips. Nine synthetic
+benchmark scenarios completed. At 10,000 records candidate median/p95 were
+164/259 ms ordinary, 434/469 ms linked contributions and 58/66 ms restricted/alias
+fixtures. The provisional <=20% median overhead goal is NOT met; retain this as
+an explicit draft-review limitation. Complex consolidation/release graphs need
+separate profiling. Metadata 10.14, JS syntax, Markdown links and whitespace pass.
+
+Save/open this feature as a DRAFT stacked on #604 while it is unmerged. Do not
+change #604's branch or its dedicated merge follow-up. After #604 merges, reconcile
+and retarget this feature to main, requiring fresh full CI. Review the performance
+budget or optimize further before release readiness. Only #604 has merge/deployment
+authorization; the new feature, division rollout and later phases do not. No
+production-data testing, staff contact, relay activation or manual deployment.
+
+
 **November 7, 2026: My next steps count/filter specification prepared.**
 The owner selected My next steps as the first planning slice. The proposed
 [count contract](MY_NEXT_STEPS_COUNT_CONTRACT.md) is saved separately on

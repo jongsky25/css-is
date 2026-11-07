@@ -30,8 +30,11 @@ def build(conn, user, values):
     can_work=values['can_work']
     coordinator=officer or doc['lead_id']==user['id']
     lead=doc['lead_id']
-    cases=values['work_cases']  # Already filtered through work visibility.
-    case_link='/work/'+str(cases[0]['id']) if cases else None
+    def case_link():
+        # Action-list counts can supply lazy facts. Early workflow stages need
+        # no work graph; when needed, its strict visibility service still owns it.
+        cases=values['work_cases']
+        return '/work/'+str(cases[0]['id']) if cases else None
     contributions=[{'label':a['progress_choices'][0][1]+': '+a['action'],
                     'href':'#document-contribution-'+str(a['id'])}
                    for a in values['assignments'] if a['progress_choices']][:4]
@@ -62,7 +65,7 @@ def build(conn, user, values):
             if code=='contributions':
                 return result('contributions','Finish the required contributions',
                     'Contributors submit their work; the lead or records officer confirms completion. Open shared work for migrated assignments.',
-                    href=case_link,label='Open shared work',allowed=bool(case_link),
+                    href=case_link(),label='Open shared work',allowed=bool(case_link()),
                     blocker=first['message'],personal=True)
             if code=='reply':
                 return result('reply','Release and link the outgoing reply',
@@ -110,9 +113,9 @@ def build(conn, user, values):
     if not lead:
         return result('lead','Identify the responsible lead',
             'The records officer confirms ownership. Migrated assignments are managed in shared work.',
-            owner=None,role='Concerned records officer',action='lead',href=case_link if values['assignments_migrated'] else None,
+            owner=None,role='Concerned records officer',action='lead',href=case_link() if values['assignments_migrated'] else None,
             label='Open shared work' if values['assignments_migrated'] else 'Confirm the lead',
-            allowed=bool(case_link) if values['assignments_migrated'] else officer,
+            allowed=bool(case_link()) if values['assignments_migrated'] else officer,
             blocker='No document lead has been confirmed.')
     if doc['reconcile']:
         return result('reconcile','Reconcile the changed instructions',
@@ -181,7 +184,7 @@ def build(conn, user, values):
     except ValueError:
         return result('release_contributions','Finish shared-work contributions before release',
             'Ask the lead to resolve outstanding contributions and changed-input blockers.',
-            href=case_link,label='Open shared work',allowed=bool(case_link),
+            href=case_link(),label='Open shared work',allowed=bool(case_link()),
             blocker='Shared-work contributions are not ready for release.',personal=True)
     if 'delivery_state' in prepared:
         outcomes=prepared['delivery_state']!='none'

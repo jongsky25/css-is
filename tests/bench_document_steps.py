@@ -1,0 +1,95 @@
+"""Opt-in synthetic benchmark, not collected by the normal test suite.
+
+Run explicitly with cloud_workspace.py test tests/bench_document_steps.py -s.
+Compares shipped 6452931 with the working tree on identical disposable fixtures.
+No real database, provider, browser or notification calls are used.
+"""
+import json
+import statistics
+import subprocess
+import time
+import tracemalloc
+import types
+
+import pytest
+import documents_actions as candidate
+from tests.test_documents import registry
+from tests.test_document_registry_pagination import seed_many
+
+
+class MeasuredCursor:
+    def __init__(self,cursor,metrics):
+        self.cursor=cursor;self.metrics=metrics
+
+    def __getattr__(self,key):return getattr(self.cursor,key)
+
+    def record(self,rows):
+        self.metrics['rows']+=len(rows)
+        self.metrics['logical_bytes']+=sum(sum(len(str(v).encode()) for v in row if v is not None) for row in rows)
+        return rows
+
+    def fetchone(self):
+        row=self.cursor.fetchone()
+        if row is not None:self.record([row])
+        return row
+
+    def fetchall(self):return self.record(self.cursor.fetchall())
+    def fetchmany(self,*args):return self.record(self.cursor.fetchmany(*args))
+    def __iter__(self):return self
+    def __next__(self):return self.record([next(self.cursor)])[0]
+
+
+class MeasuredConnection:
+    def __init__(self,conn):
+        self.conn=conn;self.metrics={'rows':0,'logical_bytes':0}
+
+    def __getattr__(self,key):return getattr(self.conn,key)
+    def execute(self,*args):return MeasuredCursor(self.conn.execute(*args),self.metrics)
+
+
+def shipped():
+    source=subprocess.run(['git','show','6452931b25d953b10a20dcea4750003e2ecd147d:documents_actions.py'],
+                          check=True,text=True,capture_output=True).stdout
+    module=types.ModuleType('shipped_document_actions');exec(compile(source,'shipped_document_actions.py','exec'),module.__dict__)
+    return module
+
+
+def seed_scenario(c,u,unit,size,scenario):
+    ids=seed_many(c,u[0],unit,size)
+    c.execute("UPDATE document SET lead_id=?,instruction_state='routed'",(u[0]['id'],))
+    if scenario=='linked_contributions':
+        c.execute("UPDATE document SET direction='IN',policy_json=?",(json.dumps({'closure':[]}),))
+        c.executemany("""INSERT INTO work_case(id,title,outcome,unit_id,creator_id,created_at,updated_at)
+            VALUES (?,'Synthetic linked case','Synthetic',?,?,'2026-11-01','2026-11-01')""",[(did,unit,u[0]['id']) for did in ids])
+        c.executemany("INSERT INTO work_document VALUES (?,?,'reference',?,'2026-11-01')",[(did,did,u[0]['id']) for did in ids])
+        c.executemany("""INSERT INTO document_assignment(document_id,user_id,role,action,status,created_at)
+            VALUES (?,?,'contributor','Synthetic','assigned','2026-11-01')""",[(did,u[0]['id']) for did in ids])
+    elif scenario=='restricted_aliases':
+        for n,did in enumerate(ids):
+            if n%3==0:c.execute("UPDATE document SET visibility='restricted' WHERE id=?",(did,))
+            elif n%3==1:c.execute('UPDATE document SET canonical_id=? WHERE id=?',(ids[n+1] if n+1<len(ids) else ids[0],did))
+    c.commit()
+
+
+@pytest.mark.parametrize('scenario',['ordinary','linked_contributions','restricted_aliases'])
+@pytest.mark.parametrize('size',[100,1000,10000])
+def test_measure_document_steps(registry,size,scenario,tmp_path):
+    c,u,unit,_=registry;seed_scenario(c,u,unit,size,scenario)
+    result={'size':size,'scenario':scenario,'samples':30,'page_size':30}
+    for name,module in [('baseline',shipped()),('candidate',candidate)]:
+        start=time.perf_counter();module.page(c,u[0],today='2026-11-07');cold=time.perf_counter()-start
+        samples=[]
+        for _ in range(30):
+            start=time.perf_counter();module.page(c,u[0],today='2026-11-07');samples.append(time.perf_counter()-start)
+        sql=[];c.set_trace_callback(sql.append)
+        tracemalloc.start();module.page(c,u[0],today='2026-11-07');_,peak=tracemalloc.get_traced_memory();tracemalloc.stop()
+        c.set_trace_callback(None)
+        measured=MeasuredConnection(c);module.page(measured,u[0],today='2026-11-07')
+        query=next(s for s in sql if 'action_candidates AS (' in s)
+        plan=[row[3] for row in c.execute('EXPLAIN QUERY PLAN '+query)]
+        result[name]={'first_ms':round(cold*1000,3),'median_ms':round(statistics.median(samples)*1000,3),
+                      'p95_ms':round(sorted(samples)[28]*1000,3),'python_peak_bytes':peak,
+                      'queries':sum(s.lstrip().upper().startswith(('SELECT','WITH')) for s in sql),
+                      **measured.metrics,'plan':plan}
+    (tmp_path/'result.json').write_text(json.dumps(result,indent=2))
+    print('DOCUMENT_STEPS_BENCHMARK '+json.dumps(result),flush=True)

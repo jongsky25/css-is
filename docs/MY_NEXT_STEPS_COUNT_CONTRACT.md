@@ -1,9 +1,11 @@
-# My next steps: proposed count and filter contract
+# My next steps: count and filter contract
 
-Planning specification, November 7, 2026. No implementation or release authority.
-Branch: `docs/my-next-steps-count-contract`, based on #604 head
+Implementation candidate 10.14, November 7, 2026. The owner's subsequent “do that”
+authorized implementing this specification. Branch: `feat/my-next-steps-filters`,
+based on the planning commit `a50807c` and #604 head
 `7de2a9be7b15f535ed3aeb9c1811fc778ee09ca4`. #604 has its own checked-merge
-authorization; this branch does not inherit that authorization.
+authorization; this feature does not inherit its merge/deployment authorization.
+The original proposal is retained on `docs/my-next-steps-count-contract`.
 
 ## Outcome and scope
 
@@ -15,7 +17,7 @@ Scope is `/documents/actions?view=mine` only. Division follow-up, request-execut
 changes, new workflow actions, staff studies, schema changes and notifications
 are deferred. Preserve shipped #596–603. See the [handoff](DOCUMENTS_NEXT_PHASE_HANDOFF.md).
 
-## Current evidence
+## Baseline evidence (before this candidate)
 
 - [documents_actions.py](../documents_actions.py) selects up to 30 documents before
   card generation; `document_count` is selected page length, not a full-scope total.
@@ -32,7 +34,7 @@ are deferred. Preserve shipped #596–603. See the [handoff](DOCUMENTS_NEXT_PHAS
 
 These are source observations, not measured performance or staff-usability results.
 
-## Recommended rules
+## Implemented rules
 
 1. Keep existing current-account, canonical active-document and personal candidate
    selection. Do not broaden assignment or Director scope through a count feature.
@@ -118,9 +120,9 @@ Revalidate permissions on every request. Cursors contain ordering values only,
 never grants. Show snapshot time and Refresh/First page. Between requests,
 changed access or deadlines may move results; do not promise frozen traversal.
 
-## Proposed implementation boundaries, after authorization
+## Implementation approach
 
-Build a compact, uncapped classification projection shared by cards and counts.
+Use a compact classification projection shared by cards and counts.
 Keep instruction/assignment IDs, state, due date and permitted navigation facts;
 load display bodies only for the selected page. Reuse guidance policy with
 batched facts, rather than reproducing its decision tree in independent SQL.
@@ -130,8 +132,8 @@ discrepancy needs explicit characterization rather than a silent counting change
 
 Measure linked-work visibility and review/release readiness separately. A design
 that invokes expensive detail context once per full-scope document is unacceptable
-without a demonstrated bound. Decide SQL projection versus bounded internal scans
-after profiling; a bounded scan may limit memory but does not make total work constant.
+without a demonstrated bound. This candidate uses bounded internal scans with shared SQL visibility facts;
+a bounded scan limits Python row batches but does not make total work constant.
 Do not add cross-user count caching in this first slice.
 
 ## Acceptance and performance plan
@@ -163,14 +165,115 @@ Provisional goals: no per-document detail fetch growth for ordinary records,
 bounded display-body loading and no more than 20% median regression against the
 same baseline. Set an absolute p95 budget only after baseline measurement. Do not
 hide linked-work costs in the ordinary average or ship inaccurate counts to meet
-a budget. Baseline measurements and executable tests have NOT been run here.
+a budget. The original planning stage ran neither benchmarks nor executable tests;
+candidate validation and performance evidence are recorded below.
 
 ## Review and next action
 
-This document supplies recommended semantics, not owner-approved product decisions.
-Review overlapping document counts, same-step overdue intersection, matching-card
-display and retained document ordering. Then explicitly authorize the bounded
-My next steps implementation. Division counts and later phases remain separate.
+The owner selected implementation of the bounded My next steps contract. Review
+the candidate, validation evidence and performance limitation below before any
+release decision. Division counts and later phases remain separate.
 Before any future release reconcile with then-current main, synchronize release
-metadata and pass every existing release/backup gate. This planning branch carries
-10.13 only through its parent #604; it is not a separate release candidate.
+metadata and pass every existing release/backup gate. Candidate 10.14 must be reconciled with main after #604 merges and then pass
+fresh complete normal/shuffled CI, audit, metadata and Required checks. It remains
+a draft; no feature merge or deployment is authorized.
+
+
+## Candidate implementation details
+
+`documents_actions.page` scans permitted candidate facts in 1,024-row batches in
+one read snapshot, counts matching distinct documents, and retains only the next
+page plus one matching document. Cards and counts call the same guidance builder.
+It does not invoke document detail context for every candidate.
+
+The complete child sets are represented exactly for document/state/overdue counts:
+all eligible contributions on a document share its paused/ready state, so the
+minimum effective deadline establishes overdue membership; all unread instructions
+share its module-enabled state and document deadline. SQL selects those representatives
+from the entire eligible child set before any display cap. This is NOT an exact
+step total. For display, overdue filtering occurs before child ranking/caps; text
+is fetched only for displayed children. A change to per-child state semantics must
+update this projection and its independent expected-set tests together.
+
+Visible work links use RegistryScope.work_view_sql, the existing SQL counterpart
+of strict work visibility, with alias resolution and every linked source checked.
+Only the newest permitted case ID is projected, without case/task bodies. The
+existing consolidation/release services remain authoritative where the actual
+workflow branch needs them. Consolidation facts are loaded lazily; no shared
+state is cached across requests. Complex review/release graphs still have costs
+beyond the ordinary batch count and require separate profiling.
+
+The route preserves validated filter keys and stable workflow/instruction/assignment
+anchors, and sends private/no-store responses. It uses a native GET form without
+JavaScript. Filter changes reset pagination. Division controls and count semantics
+are unchanged. No new schema, dependency, workflow action, provider or background job.
+
+### Reproducible validation
+
+Use the isolated commands in [CLOUD_WORKSPACE.md](CLOUD_WORKSPACE.md). The optional
+benchmark is intentionally outside normal pytest filename discovery:
+
+```bash
+.venv/bin/python scripts/cloud_workspace.py test tests/bench_document_steps.py -s --junitxml=/tmp/document-step-benchmark.xml
+.venv/bin/python scripts/cloud_workspace.py test tests/test_document_action_pages.py tests/test_document_action_routes.py tests/test_document_action_browser.py tests/test_documents_navigation.py tests/test_documents_guidance.py tests/test_document_guidance_routes.py tests/test_document_guidance_browser.py tests/test_document_step_filters.py tests/test_document_step_filters_browser.py tests/test_document_workspace_navigation.py --junitxml=/tmp/document-step-checks.xml
+.venv/bin/python scripts/check_release.py junit /tmp/document-step-checks.xml
+```
+
+The benchmark loads the shipped action-page module from `6452931` and compares
+it to the candidate on the same disposable fixture. Its first request is reported
+separately, followed by 30 warm requests per scenario/size. Rows and logical UTF-8
+value bytes measure data fetched into Python, not physical database I/O. Peak
+memory is Python tracemalloc, not total SQLite/process RSS. Each result also
+includes SQL count and EXPLAIN QUERY PLAN; temporary sort structures remain in
+SQLite. These synthetic local measurements do not establish production latency
+or staff completion times. Detailed output remains in local /tmp test artifacts.
+
+### Measured read cost and remaining performance decision
+
+Nine scenarios completed on Python 3.11.17 in the managed workspace. Times below
+are milliseconds, page size 30; each warm distribution contains 30 requests.
+Linked scenarios have one visible case and one contribution per document.
+Restricted/alias scenarios hide one third and alias one third of the seeded rows.
+
+| Records | Scenario | Baseline median | Candidate median | Candidate p95 | Candidate SQL reads | Python peak MiB |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 100 | ordinary | 2.31 | 3.50 | 3.97 | 25 | 0.20 |
+| 100 | linked contributions | 5.67 | 5.45 | 7.14 | 26 | 0.29 |
+| 100 | restricted aliases | 2.43 | 2.81 | 3.08 | 25 | 0.10 |
+| 1,000 | ordinary | 3.03 | 18.08 | 20.10 | 25 | 1.91 |
+| 1,000 | linked contributions | 17.01 | 29.02 | 34.58 | 26 | 2.87 |
+| 1,000 | restricted aliases | 2.72 | 7.33 | 8.10 | 25 | 0.64 |
+| 10,000 | ordinary | 10.02 | 164.10 | 258.67 | 79 | 3.55 |
+| 10,000 | linked contributions | 149.13 | 434.32 | 469.31 | 80 | 3.83 |
+| 10,000 | restricted aliases | 6.00 | 58.24 | 65.75 | 43 | 3.33 |
+
+The provisional <=20% median-regression goal is **not met** in most scenarios.
+Complete scope classification adds work that the shipped page-only view avoids;
+the batch design bounds Python materialization, not total classification cost.
+This is an explicit draft-review limitation, not a passed performance gate or
+permission to relax one. The largest measured p95 was below 500 ms, but that is
+an observation, not an approved production budget. Complex consolidation/release
+review graphs are not represented by these simple linked-contribution fixtures;
+profile those before claiming a general bound. Release readiness needs an explicit
+performance-budget decision or further optimization, plus normal full CI.
+
+At 10,000 records the candidate projects approximately 10,050 rows / 689,905 logical bytes (ordinary), 30,140 rows / 1,066,656 logical bytes (linked contributions), 3,377 rows / 230,610 logical bytes (restricted aliases). Subject/number and child text are limited to the selected page.
+Query plans use the existing document/assignment indexes and SQLite temporary
+sorting; no schema/index change was made. A rollback needs only code/navigation
+restoration, preserving every document, receipt, work item and audit record.
+
+
+### Candidate verification result
+
+348 document/shared-work/registry/navigation/guidance regressions passed in 92.03s.
+A final focused run including the added migrated-child check passed 15 filter and
+browser cases in 14.83s. Groups overlap and are not additive unique-test totals.
+Both JUnit reports passed the no-failures/errors/skips gate. Nine benchmark scenarios
+also completed; their completion does not mean the latency goal passed. Existing
+Starlette/httpx deprecation warning only. Phone/desktop, keyboard, no-script,
+filter reset, return links and actual HTTP save/redirect context are covered.
+Synthetic screenshots were inspected. Cross-SQLite tests execute actual selection,
+child and permission statements under the OS SQLite parser as well as Python's.
+Release metadata 10.14, JavaScript syntax, local Markdown links and diff whitespace
+passed. Full normal/shuffled CI and dependency/release gates are still required;
+there is no production preview, staff study, merge or deployment claim.

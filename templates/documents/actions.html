@@ -13,22 +13,40 @@
 {% else %}
 <p>Division documents with unresolved ownership, overdue dates, changed instructions or contributions needing follow-up. Your current document access still applies.</p>
 {% endif %}
+{% if view=='mine' %}
+<form method="get" action="/documents/actions" class="doc-card" aria-label="Filter My next steps">
+<input type="hidden" name="view" value="mine">
+<label for="step-state">Documents with…</label>
+<select id="step-state" name="step_state">
+{% for value,label in [('all','All'),('ready','Ready for you'),('waiting','Waiting'),('attention','Needs attention')] %}
+<option value="{{ value }}" {% if step_state==value %}selected{% endif %}>{{ label }} ({{ counts[value] }})</option>
+{% endfor %}
+</select>
+<label class="doc-check"><input type="checkbox" name="overdue" value="1" {% if overdue=='1' %}checked{% endif %}> Overdue only</label>
+<button type="submit">Apply filters</button>
+<a href="/documents/actions">Reset filters</a>
+</form>
+<p>A document can appear in more than one group. Overdue applies to the matching step. Unknown deadlines are not overdue.</p>
+<p role="status">{{ counts[step_state] }} matching documents · {{ document_count }} documents on this page · {{ cards|length }} steps shown.</p>
+<p>As of {{ snapshot_at|replace('T',' ') }}. Priorities and access can change. <a href="{{ first_url }}">Refresh from first page</a>.</p>
+{% else %}
 <p>{{ document_count }} documents on this page · {{ cards|length }} steps shown. An unknown deadline is never counted as overdue.</p>
+{% endif %}
 {% if has_before or more %}<nav class="doc-tabs" aria-label="Action pages">
 {% if has_before %}<a href="{{ first_url }}">First page</a>{% endif %}
 {% if more %}<a href="{{ older_url }}" rel="next">Next page</a>{% endif %}
 </nav>{% endif %}
 <div class="doc-action-list">
 {% for card in cards %}
-<article id="document-step-{{ card.document_id }}-{{ loop.index }}" class="doc-card doc-action-card" data-state="{{ card.state }}">
+<article id="{{ card.anchor }}" class="doc-card doc-action-card" data-state="{{ card.state }}">
 <p><strong>{{ card.state_label }}</strong></p>
 <div><span class="doc-action-kind">{{ card.kind }}</span> <span class="doc-action-due{% if card.overdue %} doc-action-overdue{% endif %}">{{ card.due_label }}</span></div>
-<h3><a href="{{ document_url(card.url, 'document-step-' ~ card.document_id ~ '-' ~ loop.index) }}">{{ card.number }} · {{ card.subject }}</a></h3>
+<h3><a href="{{ document_url(card.url, card.anchor) }}">{{ card.number }} · {{ card.subject }}</a></h3>
 <p><strong>{{ card.action }}</strong></p>
 {% if card.owner_role %}<p>Responsible: {% if card.owner_id %}<strong>{{ names.get(card.owner_id,'Former staff member') }}</strong> · {% endif %}{{ card.owner_role }}</p>{% endif %}
 {% if card.detail %}<p class="doc-action-detail">{{ card.detail }}</p>{% endif %}
 {% if card.blocker %}<p class="doc-alert">{{ card.blocker }}</p>{% endif %}
-<p><a href="{{ document_url(card.url, 'document-step-' ~ card.document_id ~ '-' ~ loop.index) }}">{{ card.cta }}</a></p>
+<p><a href="{{ document_url(card.url, card.anchor) }}">{{ card.cta }}</a></p>
 </article>
 {% else %}<p>No {{ 'division exceptions' if view=='division' else 'document steps' }} on this page.</p>{% endfor %}
 </div>

@@ -6,10 +6,10 @@ QUEUE_FIELDS = {
     '/documents': {'queue', 'q', 'before', 'interactive', 'status', 'verification',
                    'deadline', 'lead_id', 'due_from', 'due_to', 'group_by', 'sort',
                    'dir', 'page', 'saved_view'},
-    '/documents/actions': {'view', 'before', 'due'},
+    '/documents/actions': {'view', 'before', 'due', 'step_state', 'overdue'},
     '/documents/intake': {'state', 'page', 'review', 'q'},
 }
-ROW = re.compile(r'(?:document-row|registry-row|intake-row)-[0-9]+|document-step-[0-9]+-[0-9]+')
+ROW = re.compile(r'(?:document-row|registry-row|intake-row)-[0-9]+|document-step-[0-9]+-(?:[0-9]+|workflow|(?:instruction|contribution)-[0-9]+)')
 RECORD = re.compile(r'/documents/(?:intake/)?[0-9]+(?:/[A-Za-z0-9_/-]+)?')
 
 
