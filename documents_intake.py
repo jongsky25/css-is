@@ -163,6 +163,15 @@ QUEUE_VISIBLE="""i.email_primary=1 AND (i.document_id IS NULL OR (d.canonical_id
         (d.visibility<>'restricted' OR EXISTS(SELECT 1 FROM document_access a WHERE a.document_id=d.id AND a.user_id=:viewer))))"""
 
 
+QUEUE_SEARCH="""(:query='' OR instr(lower(i.original_name),lower(:query))>0 OR
+    EXISTS(SELECT 1 FROM document_intake_email search_email WHERE search_email.id=i.email_id
+        AND instr(lower(search_email.subject),lower(:query))>0))"""
+
+
+def queue_query(value):
+    return str(value or '').strip()[:120]
+
+
 def review_filter(state, review):
     return review if state in ('waiting','attention') and review in ('ready','mine','others') else 'all'
 
@@ -173,25 +182,25 @@ def _review_sql(review):
             'others':f'{active} AND i.claimed_by<>:viewer'}.get(review,'1=1')
 
 
-def review_counts(conn, user, state='waiting', *, now=None):
+def review_counts(conn, user, state='waiting', *, now=None, query=''):
     user=reviewer(conn,user)
-    params={'viewer':user['id'],'now':now or tz.now_iso(),'state':state}
+    params={'viewer':user['id'],'now':now or tz.now_iso(),'state':state,'query':queue_query(query)}
     columns=', '.join('SUM(CASE WHEN '+_review_sql(key)+' THEN 1 ELSE 0 END) AS '+key
                      for key in ('ready','mine','others'))
     row=conn.execute('SELECT COUNT(*) AS total,'+columns+
         ' FROM document_intake i LEFT JOIN document d ON d.id=i.document_id WHERE '+
-        QUEUE_VISIBLE+' AND i.state=:state',params).fetchone()
+        QUEUE_VISIBLE+' AND '+QUEUE_SEARCH+' AND i.state=:state',params).fetchone()
     return dict(zip(('all','ready','mine','others'),(value or 0 for value in row)))
 
 
-def list_page(conn, user, state='waiting', page=1, review='all', *, now=None):
+def list_page(conn, user, state='waiting', page=1, review='all', *, now=None, query=''):
     user=reviewer(conn,user)
     if state not in ('waiting','attention','registered','dismissed'):
         state='waiting'
     page=max(1,min(int(page),100000))
     # Only small metadata is loaded; drafts/OCR do not travel with queue listings.
     review=review_filter(state,review)
-    params={'viewer':user['id'],'state':state,'offset':(page-1)*30,'now':now or tz.now_iso()}
+    params={'viewer':user['id'],'state':state,'offset':(page-1)*30,'now':now or tz.now_iso(),'query':queue_query(query)}
     items=rows(conn,'''SELECT i.id,i.original_name,i.discovered_at,i.state,i.revision,i.claimed_by,
         i.claim_until,i.document_id,i.filing_state,i.filing_attempts,i.filing_next_at,i.filing_last_at,i.filing_blocked,i.error,i.email_id,e.subject AS email_subject,u.username AS reviewer,
         (SELECT COUNT(*) FROM document_intake sibling WHERE sibling.email_id=i.email_id
@@ -200,8 +209,8 @@ def list_page(conn, user, state='waiting', page=1, review='all', *, now=None):
             AND sibling.filing_state IN ('pending','running','error') AND sibling.filing_blocked=1) AS filing_review
         FROM document_intake i LEFT JOIN admin_user u ON u.id=i.claimed_by
         LEFT JOIN document_intake_email e ON e.id=i.email_id LEFT JOIN document d ON d.id=i.document_id WHERE ''' + QUEUE_VISIBLE +
-        ' AND i.state=:state AND ('+_review_sql(review)+') ORDER BY i.id LIMIT 31 OFFSET :offset',params)
-    counts=dict(conn.execute('SELECT i.state,COUNT(*) FROM document_intake i LEFT JOIN document d ON d.id=i.document_id WHERE '+QUEUE_VISIBLE+' GROUP BY i.state',params))
+        ' AND '+QUEUE_SEARCH+' AND i.state=:state AND ('+_review_sql(review)+') ORDER BY i.id LIMIT 31 OFFSET :offset',params)
+    counts=dict(conn.execute('SELECT i.state,COUNT(*) FROM document_intake i LEFT JOIN document d ON d.id=i.document_id WHERE '+QUEUE_VISIBLE+' AND '+QUEUE_SEARCH+' GROUP BY i.state',params))
 
     return items[:30],len(items)>30,counts
 

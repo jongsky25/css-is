@@ -4098,6 +4098,34 @@ All five final new tests then passed, including both phone script modes. Groups
 overlap. No skips in these runs. Release metadata 10.10 and whitespace checks pass.
 Full fresh CI remains required after main reconciliation. Saved as a draft PR;
 latest explicit merge cutoff remains #600.
+
+## Inbox name/subject search 10.11 — November 7, 2026
+
+Latest owner instruction “do the next and queue in the merging” authorizes #601
+and the next Inbox search increment for the guarded sequential merge queue,
+superseding the earlier #600 cutoff. #601 was marked ready; this implementation
+is on `feat/documents-inbox-search`, stacked on #601 `85b3f72`.
+See [Inbox search](DOCUMENT_INBOX_SEARCH.md). Search runs before pagination with
+matching full-status and availability counts; native links preserve it through
+filtering and return navigation. No provider, claim or workflow mutation on reads.
+
+75 existing regressions and six new tests passed without failures/skips, including
+phone/no-script journeys and permission/count scope. Release metadata 10.11 and
+whitespace checks pass. Full CI will run after publication; no merge gate bypass.
+No schema/dependency/relay/notification changes or production data use.
+
+Current sequence: #596 deployed successfully; #597 merged as `0ee1cff`, guarded
+deployment `42348890661` still running. #598 is reconciled to main at `fbcc376`,
+fresh CI `42348932141` running. #599 repair `b484970` restored absent dashboard
+sort defaults; 19 dashboard/grid browser checks passed and fresh CI is running.
+#600 `9234926` and #601 `85b3f72` incorporate that repair and need their current
+checks plus fresh main-reconciled CI after predecessors merge. Queue this next
+search PR behind #601; no subsequent increment is authorized to merge.
+Existing automation `Automation_38e6d990e1f08191ab61d12a19909f16` continues the
+sequence. Inspect actual head/main, tests, metadata/audit/aggregate and applicable
+avatar checks, reviews/threads and strict no-bypass protection immediately before
+each SHA-bound merge. Verify each predecessor deployment succeeds before merging
+its successor. Retarget/reconcile each next branch to main without losing work.
 ## Queue recovery checkpoint — November 7, 2026
 
 This checkpoint supersedes earlier queue cutoffs: owner authorization extends
