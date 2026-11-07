@@ -75,6 +75,19 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 7, 2026: intake experience candidate 10.06 prepared separately.**
+The next authorized implementation is on `feat/documents-intake-review`, based on
+#596's repaired head `067f128`. It adds Inbox Review/Resume buttons and one
+read-and-fill action that preserves corrections and source/claim checks. See
+[intake experience](DOCUMENT_INTAKE_EXPERIENCE.md). 138 focused tests and 23
+subsequent browser/email checks passed (overlapping groups). It is review-only;
+only #596 is authorized to merge. #596's new complete CI 42339512542 is pending
+at this handoff; metadata and dependency audit passed. Native auto-merge is disabled.
+Merge #596 only after its actual final head passes every required check and
+review/protection requirements. Then reconcile/retarget the intake review to main
+and require its own fresh CI. Do not claim either release from local test success.
+
+
 **November 7, 2026: #596 release requested, then next intake increment.**
 The user explicitly requested merging #596 and then building the next improvement.
 Both full CI orders at `2e32c2c` had one identical browser failure (10,786 passes):

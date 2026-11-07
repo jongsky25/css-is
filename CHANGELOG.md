@@ -1,3 +1,9 @@
+## 10.06 — November 7, 2026
+
+- Start or resume an intake review directly from the Inbox.
+- Read a source and fill empty document details in one action, preserving existing entries and requiring human review.
+- Show document details before request interpretation and keep completion choices together.
+
 ## 10.05 — November 7, 2026
 
 - Open Documents at My desk and use a shorter navigation for Inbox, Register and Overview.

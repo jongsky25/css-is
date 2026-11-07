@@ -54,6 +54,7 @@ def make_router(templates,get_conn):
             if p.can_view(conn,request.state.user,doc)]
         return render(request,conn,'intake_review',status,item=item,values=item['draft'] if values is None else values,
                       editable=editable,candidates=candidates,error=error,possible_duplicates=possible_duplicates,
+                      can_read_source=item['mime_type'] in intake.OCR_MIMES and (not item['email_id'] or bool(item['email_files'])),
                       claimant=conn.execute('SELECT username FROM admin_user WHERE id=?',(item['claimed_by'],)).fetchone(),now=tz.now_iso())
 
     async def posted(request):
@@ -164,9 +165,11 @@ def make_router(templates,get_conn):
                         except d.Conflict: pass
                     return RedirectResponse('/documents/intake?registered=1',status_code=303)
                 return RedirectResponse('/documents/'+str(doc['id']),status_code=303)
-            elif action in ('save','release','attention','dismiss','extract','reread','apply'):
+            elif action in ('save','release','attention','dismiss','extract','reread','apply','read_fill','reread_fill'):
                 saved=intake.save(conn,user,item_id,rev,data,action if action in ('release','attention','dismiss') else 'save')
-                if action in ('extract','reread'): intake.extract(conn,user,item_id,saved['revision'],force=action=='reread')
+                if action in ('extract','reread','read_fill','reread_fill'):
+                    intake.extract(conn,user,item_id,saved['revision'],force=action in ('reread','reread_fill'),
+                                   fill_empty=action in ('read_fill','reread_fill'))
                 if action=='apply':
                     # Apply to empty inputs only; never overwrite a reviewer's corrections.
                     values=saved['draft']
@@ -194,7 +197,7 @@ def make_router(templates,get_conn):
         except (ValueError,p.Denied) as exc: return HTMLResponse(str(exc),status_code=403 if isinstance(exc,p.Denied) else 400)
         # OCR and Drive checks execute off the event loop, with a connection owned
         # by that worker thread. No SQLite transaction spans external I/O.
-        if data.get('action') in ('extract', 'reread', 'register', 'register_next'):
+        if data.get('action') in ('extract', 'reread', 'read_fill', 'reread_fill', 'register', 'register_next'):
             try:
                 return await external.run(handle, request, item_id, data)
             except (external.Busy, external.Unconfirmed) as exc:

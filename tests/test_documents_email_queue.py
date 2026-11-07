@@ -166,6 +166,7 @@ def test_email_review_screen_registers_group_and_redirects_children(app_mod,admi
         if body_only:
             assert 'No attachment' in page.text and '&lt;script&gt;' in page.text
             assert 'Read scan with OCR' not in page.text and '/preview' not in page.text
+            assert 'Read and fill empty fields' not in page.text
         else: assert 'All 2 attachments' in page.text
         assert payload()['subject'] in admin.get('/documents/intake').text
         if not body_only:
