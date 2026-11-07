@@ -2,8 +2,9 @@
 
 Prepared November 7, 2026 after the complete guarded deployment of PR #603.
 Repository: **jongsky25/css-is**, Office Connect BLHSD (Python 3.11, FastAPI/Jinja).
-Review branch: **docs/documents-next-phase-handoff**. This is a documentation draft,
-not a release or authorization to implement the next phase.
+Review branch: **docs/documents-next-phase-handoff**, PR #604. Candidate **10.13**
+promotes this documentation under the repository release policy; it does not
+implement the next phase.
 
 ## Goal and authority
 
@@ -11,11 +12,13 @@ Make Documents intuitive on a phone: show what needs the current person's action
 retain context and entered information, and avoid repeated navigation and entry.
 Keep accountable human decisions and server safeguards visible at the moment needed.
 
-The owner authorized feature merges/deployments through #603 only. Those are now
-complete. This handoff authorizes assessment/planning of **My desk counts/filters,
-closer request-execution integration, and staff usability testing**. Obtain a new
-implementation instruction before building those phases; obtain release authorization
-before merging/deploying them. Do not merge this documentation PR automatically.
+The owner authorized feature merges/deployments through #603; those are complete.
+The subsequent instruction “assess and fix 604 then merge when ready” authorizes
+repairing and merging #604 after all gates pass, including its normal guarded
+deployment. It does not authorize implementing later features. This handoff covers
+assessment/planning of **My desk counts/filters, closer request-execution integration,
+and staff usability testing**. Obtain a new implementation instruction before
+building those phases and release authorization before merging/deploying them.
 No staff invitations, notifications, production-data testing, relay activation,
 repository-setting changes or manual deployment are authorized.
 
@@ -316,14 +319,15 @@ post-deploy verification/diagnostics. Never bypass a gate or manually activate/d
 Historical DEPLOY.md storage claims conflict: verify effective persistence before
 any future restore; this handoff does not resolve those operations questions.
 
-This documentation draft changes only two Markdown files. Pinned source/test paths, the new setup-status link, all eight PR head/merge
-SHAs and successful deployment run SHAs, and whitespace were checked; application tests
-are not rerun for prose. Version remains 10.12. The current release metadata gate
-requires an increase even for a documentation PR. The local metadata command
-returned “Version 10.12 must increase from 10.12”, so this draft is **not merge-ready**;
-do not weaken the gate or invent a release just to save planning. Any later authorized
-promotion must follow repository version/release policy. Full shipped CI evidence
-above is not a claim that the documentation PR's checks pass.
+The original documentation draft at `e97835e` retained version 10.12. CI
+[42419745505](https://github.com/jongsky25/css-is/actions/runs/42419745505)
+passed both complete test orders and dependency audit, but failed release metadata
+and the aggregate gate. Candidate 10.13 synchronizes version.py, CHANGELOG.md and
+the service-worker cache, and corrects this handoff and the current setup next action.
+No workflow policy, schema, dependency or feature implementation changes are included.
+The new head must pass fresh complete CI; earlier successful tests do not establish
+its readiness. Merge only with current reviews, resolved threads, strict no-bypass
+protection and a SHA-bound regular merge. Verify the resulting guarded deployment.
 
 ## Decisions, risks and rollback
 
@@ -345,11 +349,13 @@ normal backup/version gates. This documentation branch needs no data rollback.
 
 ## New-chat starter
 
-Use the exact remotely saved handoff commit supplied with the draft PR/link. The
+Use the current merged handoff on main after #604, or its current review head
+before merge. The original planning snapshot remains available at `e97835e`. The
 starter below is planning-only; it must not be read as feature implementation approval.
 
 > Continue Office Connect in jongsky25/css-is. Read docs/DOCUMENTS_NEXT_PHASE_HANDOFF.md
-> on branch docs/documents-next-phase-handoff at `9404a2037a0fce3cdc7a30b275bf51afad695688` (the complete handoff content snapshot). Read current AGENTS.md,
+> on current main after PR #604, or the current docs/documents-next-phase-handoff
+> review head if it is still open; verify and record its exact SHA. Read current AGENTS.md,
 > docs/CLOUD_COLLABORATION.md and docs/SETUP_STATUS.md; verify current main, PRs and
 > deployment state before assessing/planning phase 0: My desk count/filter semantics.
 > Baseline #596–603 is shipped through 6452931b25d953b10a20dcea4750003e2ecd147d;

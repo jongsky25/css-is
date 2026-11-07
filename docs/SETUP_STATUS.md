@@ -88,6 +88,23 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 7, 2026: #604 repair and checked merge authorized; candidate 10.13.**
+The owner requested “assess and fix 604 then merge when ready.” #596–603 are
+merged through `6452931b25d953b10a20dcea4750003e2ecd147d`; final guarded deployment
+42411602460 succeeded, including diagnostics. Do not resume the historical queue
+below. [The handoff](DOCUMENTS_NEXT_PHASE_HANDOFF.md) records the shipped baseline.
+
+#604 at `e97835e` passed both full test orders and dependency audit, but CI
+42419745505 failed release metadata and Required checks because version 10.12
+was unchanged. The repair synchronizes 10.13 metadata and corrects stale authority
+and continuation text. Require fresh complete CI on the repaired head, current
+main/reviews/threads and strict no-bypass protection before a regular SHA-bound
+merge. Verify the normal guarded deployment afterward. No later feature work,
+staff contact, production-data testing, relay activation or manual deployment is
+authorized. My desk count/filter planning remains the next feature-phase action.
+
+### Historical queue snapshots (superseded)
+
 **November 7, 2026, 05:37 UTC: #596 merged; #597 checked release queued.**
 #596 passed all six checks at `067f128`, including both complete test orders,
 metadata/audit, avatar acceptance and Required checks. No unresolved review
