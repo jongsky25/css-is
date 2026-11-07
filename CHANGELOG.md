@@ -1,3 +1,7 @@
+## 10.11 — November 7, 2026
+
+- Search Inbox file names and email subjects with matching counts and retained review filters.
+
 ## 10.10 — November 7, 2026
 
 - Find available Inbox reviews or resume your active reviews with full-queue counts.
