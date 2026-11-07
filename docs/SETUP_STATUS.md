@@ -75,6 +75,115 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Queue update — November 6, 2026, 23:08 UTC.** #593 passed all five checks
+at `cc6427c` (CI 42295427614), including both full test orders and Required checks.
+With #592 deployed, no unresolved threads and active strict/no-bypass main rules
+verified, #593 merged as `9ee4790`. Its guarded deployment is pending. #594, the
+last authorized increment, was retargeted to main and updated from its predecessor.
+The clean local branch was fast-forwarded to that remote update before this
+handoff-only edit. Require fresh full CI on the final resulting #594 head and
+successful #593 deployment before its checked merge. Verify #594 deployment before
+disabling the task. No later increment is authorized. Drive relay activation
+remains manual and unclaimed.
+
+
+**Queue update — November 6, 2026, 22:19 UTC.** #592 deployed successfully:
+workflow 42295411492 passed all verification, deploy and diagnostic jobs at
+`9e4cfbc`. #593 head `cc6427c` remains unmerged: metadata, audit and shuffled
+suite passed, while normal tests in 42295427614 are still running and the final
+gate has not completed. No unresolved review threads; main ruleset remains active
+without bypass actors. Merge only after full success, then retarget/reconcile
+#594 and require its fresh checks plus #593 deployment success. Keep the task
+enabled through #594; no later increment authorized. Clean review work preserved.
+Drive relay activation remains manual and unclaimed.
+
+
+**Queue update — November 6, 2026, 21:17 UTC.** #591's deployment retry
+42268096935 completed successfully: all verification, deploy and diagnostics jobs
+passed. No timeout or release guard was relaxed. #592 at `bcfaab4` passed all five
+CI checks in 42268117855; review threads were resolved and the main ruleset was
+confirmed active, strict and without bypass actors. #592 merged as `9e4cfbc` and
+its guarded deployment is pending. #593 was retargeted to main and its branch
+update requested; inspect fresh checks on the resulting head and wait for #592
+deployment success before merging. #594 remains queued last. The task remains
+enabled. Clean review-branch work was preserved; this is a handoff-only edit.
+Drive relay activation remains manual and unclaimed.
+
+
+**Queue update — November 6, 2026, 19:36 UTC.** #591's guarded deployment
+42268096935 did not deploy: normal test job 128065195613 exceeded its 75-minute
+limit (GitHub check annotation), so Required checks failed and deploy/diagnostics
+were skipped. Shuffled tests, metadata and dependency audit passed. A targeted
+rerun of the cancelled normal job was accepted; retain the existing timeout and
+all verification/backup/version gates. Inspect the new attempt and downstream
+gate/deploy outcomes; if it times out again, investigate before further retries.
+#592 at `bcfaab4` passed every CI check in 42268117855 but remains unmerged until
+#591 deployment succeeds. #593–#594 remain queued. Task stays enabled: this is a
+routine retry, not a user-only blocker. No code or dirty-tree edits were made;
+this handoff is saved on the clean latest review branch. Drive relay activation
+remains manual and unclaimed.
+
+
+**Queue update — November 6, 2026, 18:09 UTC.** #591 passed all five required
+checks at `e7c5c58` (CI 42249455058); its normal suite and final gate completed.
+With #590 deployed, no unresolved threads and the active strict/no-bypass main
+ruleset verified, #591 merged as `e8714ec`. Its guarded deployment is pending.
+#592 was retargeted to main and its branch update requested. Require fresh checks
+on its resulting head plus successful #591 deployment before merging. #593 and
+#594 remain queued in order; no further feature work authorized. The task remains
+enabled. The clean review branch matched remote before this handoff-only edit.
+Drive relay activation remains manual and unclaimed.
+
+
+**Queue update — November 6, 2026, 17:15 UTC.** #590 deployed successfully:
+guarded workflow 42249433586 at `39f62c0` passed all verification, deploy and
+post-deploy diagnostic jobs. #591 is next, head `e7c5c58`: metadata, dependency
+audit and shuffled suite passed, but its normal suite in 42249455058 is still
+running and Required checks has not completed. Do not merge until both pass.
+No unresolved review threads; main ruleset remains active with no bypasses.
+#592–#594 remain queued behind #591 and each successful predecessor deployment.
+The review branch was clean and matched remote before this handoff-only edit.
+Keep the task enabled. Drive relay activation remains manual, not completed.
+
+
+**Queue update — November 6, 2026, 16:07 UTC.** #589's guarded production
+workflow 42237842415 completed successfully, including deployment and diagnostics.
+#590 passed all five checks at `7b9fbc7` (CI 42237860045), with no unresolved
+review threads. Main ruleset remains active, strict and without bypass actors.
+#590 merged as `39f62c0`; its production deployment remains pending. #591 was
+retargeted to main and its branch update requested; require fresh checks on the
+resulting head and successful #590 deployment before merging. #592–#594 remain
+queued in order. Latest branch was clean and its work preserved; this handoff
+updates only the review branch. The task remains enabled through #594. Drive
+relay activation remains manual and is not claimed.
+
+
+**November 6, 2026: abbreviated request deadlines, candidate 10.04.**
+Ready [PR #594](https://github.com/jongsky25/css-is/pull/594), implementation
+`dc87848` on `feat/document-request-abbreviated-dates`, is stacked on #593 (`1b3f8e4`).
+The common parser now recognizes complete English abbreviated-month deadlines,
+including dotted and wrapped dates, without splitting their request at the month
+period. Source evidence preserves its original spelling and punctuation. Parsing
+uses an explicit English month map, validates the calendar, requires four-digit
+years and keeps event/ambiguous/relative/conflicting dates out of deadline fields.
+No schema, dependency, relay API or saved-review rewrite.
+
+The owner's “do the same for next” authorizes this release after #593, superseding
+the previous limit at 10.03. Extend the existing checked queue through the ready
+10.04 PR only. Require fresh full normal/shuffled CI, metadata and audit on each
+main-reconciled head, and successful guarded predecessor deployment. Never bypass
+backup/version gates. #588 is deployed; #589 deployment 42237842415 remains in
+progress and #590's fresh checks remain pending at this handoff. No later increment
+is authorized. Drive analysis still needs the manual Docs/travel relay activation.
+
+Initial parser regression: 119 tests passed. Expanded reader/intake/browser/release
+regression passed 237 tests without failures or skips after correcting a test
+import to the actual local-reader summarizer. Release metadata and whitespace checks passed. Full CI remains required;
+no shared preview or production release of this increment. The existing task now
+queues #594 after #593. Next: inspect fresh full CI and advance only after all gates.
+
+### Earlier handoff (authorization superseded above)
+
 **November 6, 2026: request follow-up overview, candidate 10.03.**
 Ready [PR #593](https://github.com/jongsky25/css-is/pull/593), implementation
 `aeda449` on `feat/document-request-overview`, is stacked on #592 (`a935b31`). Incoming

@@ -1,3 +1,9 @@
+## 10.04 — November 6, 2026
+
+- Recognize explicit request deadlines using common English month abbreviations, including dotted and wrapped dates.
+- Preserve the original evidence and keep requests together across date abbreviation periods.
+- Leave invalid, incomplete, relative, ambiguous and conflicting dates for human review.
+
 ## 10.03 — November 6, 2026
 
 - Show saved requests, review needs, missing details and focus-area gaps on incoming document pages.

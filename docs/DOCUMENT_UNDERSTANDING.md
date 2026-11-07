@@ -107,8 +107,8 @@ Multiple explicit requests within a sentence are split at their request phrases.
 Named recipients are extracted only when their subject is wholly present, never
 from a “to” destination or inferred organizational responsibility. Pronoun-only
 outputs remain blank. Long passages are bounded and warn that additional details
-may be outside the reading. Adjacent sentences, unmarked imperatives, complex
-coordination and abbreviated months remain manual-review cases.
+may be outside the reading. Adjacent sentences, unmarked imperatives and complex
+coordination remain manual-review cases. Abbreviated month support is described below.
 
 ## Saved-review corrections and history (10.00)
 
@@ -229,3 +229,27 @@ The overview is read-only and uses the same document/work access checks as the
 receipt. Disabled modules retain readable existing work but do not offer new
 proposals. No new schema, dependency or relay change. Drive text analysis still
 requires manual activation of the existing Apps Script relay update.
+
+
+## Abbreviated deadline dates (10.04)
+
+Explicit request deadlines now accept Jan, Feb, Mar, Apr, Jun, Jul, Aug, Sep/Sept,
+Oct, Nov and Dec, with an optional period, in either day-month-year or
+month-day-year order. May remains a complete month name. A four-digit year and
+explicit deadline marker are still required. Examples: `by 20 Nov. 2026`,
+`on or before NOV 20, 2026`. Existing full names and ISO dates remain supported.
+English month parsing uses an explicit map rather than the process locale.
+
+Sentence splitting protects abbreviation periods only inside complete recognized
+date spans; ordinary sentence endings and paragraph breaks still separate text.
+Wrapped dates stay together, with the existing whitespace normalization. Original
+spelling and punctuation are retained in evidence; only the proposed deadline is
+normalized to ISO. No rewriting of OCR text or persisted reviews occurs.
+
+Calendar validation and all uncertainty safeguards still apply. Invalid leap days,
+missing/two-digit years, numeric ambiguity, alternatives/ranges, conflicting and
+relative dates remain blank with a warning. Event dates without deadline markers
+do not become request deadlines. Local-reader and Drive-relay text use this same
+parser. Review and confirmation remain mandatory; no automatic document deadline
+or assignment change. No dependency/schema/relay API change. The prior Drive relay
+activation requirement remains.
