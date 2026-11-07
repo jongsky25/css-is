@@ -1,3 +1,9 @@
+## 10.05 — November 7, 2026
+
+- Open Documents at My desk and use a shorter navigation for Inbox, Register and Overview.
+- Choose register queues in one place and jump directly to source, requests and work, files or history.
+- Bring the existing authorized next-action form beside the source without duplicating or submitting it.
+
 ## 10.04 — November 6, 2026
 
 - Recognize explicit request deadlines using common English month abbreviations, including dotted and wrapped dates.

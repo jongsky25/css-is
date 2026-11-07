@@ -1,4 +1,15 @@
 (() => {
+  // Reuse the authorized form once; its action, revision and CSRF stay intact.
+  const mount = document.getElementById('document-current-action');
+  const primary = document.querySelector('#document-next a.doc-next-action');
+  if (mount && primary && primary.getAttribute('href').startsWith('#')) {
+    const target = document.getElementById(primary.getAttribute('href').slice(1));
+    if (target && target.tagName === 'DETAILS' && target.querySelector('form')) {
+      mount.append(target);
+      target.open = true;
+    }
+  }
+
   function reveal() {
     if (!location.hash) return;
     let id;

@@ -682,7 +682,7 @@ NAV_GROUPS = [
     {"name": "Office", "items": [
         {"key": "supplies", "url": "/supplies", "label": "Supplies", "section": "Supplies", "hint": "Requests, approvals, handovers and stock warnings", "kw": "supplies overview dashboard requests approval inventory catalog stock custodian", "cap": None},
         {"key": "work", "url": "/work/mine", "label": "My work", "section": "Documents", "hint": "Shared outcomes, ownership, and related correspondence", "kw": "work item shared outcome accountable lead", "cap": None},
-        {"key": "documents", "url": "/documents", "label": "Documents", "hint": "Incoming and outgoing document register", "kw": "documents correspondence registry incoming outgoing", "cap": None},
+        {"key": "documents", "url": "/documents/actions", "label": "Documents", "hint": "Your next actions and document register", "kw": "documents correspondence registry incoming outgoing", "cap": None},
         {"key": "rooms", "url": "/rooms", "label": "Conference room",
          "section": "Reserve",
          "hint": "See what is free and request a slot",

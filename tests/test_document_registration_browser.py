@@ -168,6 +168,9 @@ def test_understanding_review_confirmation_persistence_and_safe_text(registratio
     page.locator('#document-understanding').screenshot(path='/tmp/document-understanding-phone.png')
     submit(page)
     page.wait_for_url(re.compile(r'/documents/\d+$'))
+    # Full source interpretation is now an explicit disclosure in Requests & work.
+    details = page.get_by_text('Source requests and focus details', exact=True)
+    details.click()
     assert page.get_by_text('Final comments matrix',exact=True).is_visible()
     doc_id=conn.execute('SELECT id FROM document').fetchone()[0]
     saved=documents_understanding.read(conn,doc_id)

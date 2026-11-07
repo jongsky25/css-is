@@ -88,3 +88,26 @@ html:has(.doc-intake-review){scroll-padding-top:calc(var(--topnav-h,53px) + 70px
 .documents .request-comparison-values {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:1rem}
 .documents .request-comparison-field {min-width:0;overflow-wrap:anywhere}
 .documents .request-comparison-field p {white-space:pre-wrap}
+
+/* Daily document workspace: source and the current authorized action stay together. */
+.doc-primary-nav a{padding:.6rem .8rem;border-radius:.5rem;min-height:44px;box-sizing:border-box}
+.doc-primary-nav a[aria-current=page]{background:var(--surface-2,#edf2fa)}
+.doc-queue-filter{display:flex;align-items:end;gap:.75rem;flex-wrap:wrap}
+.doc-queue-filter label{flex:1;min-width:12rem;max-width:28rem}
+.doc-detail h2,.doc-record-status{overflow-wrap:anywhere}
+.doc-action-workspace{min-width:0}
+.doc-action-workspace>.doc-next{margin-top:0}
+#document-current-action:empty{display:none}
+#document-current-action>.doc-card{border-inline-start:.3rem solid var(--primary,#2563eb)}
+#document-next,#document-requests-work,#document-source,#document-files,#document-history{scroll-margin-top:6rem}
+.doc-detail .doc-preview{top:calc(var(--topnav-h,53px) + 12px)}
+body:has(.doc-detail) .sf-float{position:static;margin:1rem auto;display:flex;width:auto;max-width:calc(100% - 2rem)}
+.doc-detail input[type=checkbox]{display:inline-block;width:auto}
+@media(max-width:760px){
+ .doc-detail .doc-action-workspace{grid-row:1}
+ .doc-detail .doc-preview{grid-row:2}
+ .doc-primary-nav{gap:.25rem}
+ .doc-primary-nav a{padding:.6rem .4rem}
+ .doc-section-nav{gap:.5rem}
+ .doc-section-nav a{padding:.5rem .25rem}
+}

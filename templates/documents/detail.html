@@ -1,9 +1,18 @@
 {% extends 'documents/base.html' %}{% from 'documents/forms.html' import start,end,field,text,person,select,receipt_channel %}
+{% block documents_class %}doc-detail{% endblock %}
 {% block documents_content %}
 <h2>{{ doc.number }} · {{ doc.subject }}</h2>
-{% include 'documents/next_step.html' %}
+<p class="doc-record-status">{{ doc.status|replace('_',' ')|capitalize }} · Lead: {{ names.get(doc.lead_id,'Not assigned') if doc.lead_id else 'Not assigned' }} · Due: {{ doc.due_date or 'Not recorded' }}</p>
+<nav class="doc-tabs doc-section-nav" aria-label="This document">
+<a href="#document-next">Next action</a><a href="#document-source">Source</a><a href="#document-requests-work">Requests &amp; work</a><a href="#document-files">Files</a><a href="#document-history">History</a>
+</nav>
 {% include 'documents/workspace.html' %}
+<section id="document-requests-work" tabindex="-1">
+<h3>Requests &amp; work</h3>
 {% include 'documents/understanding_detail.html' %}
+{% include 'documents/assignments.html' %}
+{% if work_cases or work_enabled %}<h3>Shared work</h3><ul>{% for item in work_cases %}<li><a href="/work/{{ item.id }}">{{ item.title }}</a></li>{% else %}<li>No permitted work items linked.</li>{% endfor %}</ul>{% if work_enabled %}<p><a href="/work/new?source_document_id={{ doc.id }}">Start a work item from this document</a> · <a href="/work">Find existing work</a></p>{% endif %}{% endif %}
+</section>
 {% if enabled and can_work and doc.direction=='OUT' and doc.status not in ['closed','cancelled','released','awaiting_acknowledgment'] and not doc.archived_at %}
 <details class="doc-card"><summary>Start from a memorandum template</summary>
 <p>Download an editable Word draft, review it in your office format, then attach its final Drive copy to this record. Downloading does not approve, sign or send it.</p>
@@ -42,13 +51,12 @@
 <p>Suggestions do not verify the record or change fields until you confirm them. Extraction supports Google Docs/Sheets, plain text, PDF and PNG/JPEG/GIF scans through the configured relay. For other files, use manual correction below.</p>{{ end('Read attachment suggestions') }}
 {% endif %}</section>{% endif %}
 <h3>References and receipts</h3><ul>{% for r in references %}<li>{{ r.kind }}: {{ r.value }}</li>{% endfor %}{% for r in receipts %}<li>{{ r.received_at }} · {{ r.channel }} · {{ r.sender }} · {{ r.evidence }}</li>{% endfor %}</ul>
-{% include 'documents/assignments.html' %}
+
 {% if consolidation %}<section class="doc-card"><h3>Consolidation review</h3><p><a href="/work/{{ consolidation.case.id }}/consolidation">{{ consolidation.case.title }} — inputs and review history</a></p><p>Requested version #{{ consolidation.version.id }} · {{ consolidation.version.fingerprint }}. {{ consolidation.accepted }} accepted inputs; {{ consolidation.missing }} required inputs outstanding at request.</p>{% if not consolidation.current %}{% if doc.status in ('released','awaiting_acknowledgment','closed','cancelled') %}<p>Historical review context is retained. Use the work item completion checklist to check current requirements.</p>{% else %}<p class="doc-alert">Inputs or the exact draft changed. Request renewed consolidation review.</p>{% endif %}{% endif %}</section>{% endif %}
 <h3>Review feedback</h3><ul>{% for review in reviews %}<li>Version #{{ review.version_id }} · {{ review.decision|replace('_',' ') }} · {{ names.get(review.actor_id,'Former staff member') }} · {{ review.created_at }}<p>{{ review.reason }}</p></li>{% else %}<li>No formal review recorded.</li>{% endfor %}</ul>
-<h3>Files and versions</h3><p>Drive permissions are managed in Drive. An adapter check establishes access for its identity only.</p><ul>{% for v in versions %}<li>#{{ v.id }} · <a href="{{ v.url }}" target="_blank" rel="noopener noreferrer">{{ v.role }} file</a> · <a href="/documents/{{ doc.id }}/annotate/{{ v.id }}">Page notes and pen marks</a> · Exact version: {{ v.fingerprint or 'Not checked — reference only' }}{% if file_indexes.get(v.id) %} · Text indexed {{ file_indexes[v.id].indexed_at }}{% endif %}{% if enabled and can_work and not doc.archived_at and doc.status not in ['closed','cancelled'] %}<form method="post" action="/documents/{{ doc.id }}/index-file"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}"><input type="hidden" name="version_id" value="{{ v.id }}"><button>Index text for this version</button></form>{% if file_indexes.get(v.id) %}<form method="post" action="/documents/{{ doc.id }}/unindex-file"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}"><input type="hidden" name="version_id" value="{{ v.id }}"><button>Remove indexed text</button></form>{% endif %}{% endif %}{% if v.id==doc.current_version %} · Current{% endif %}</li>{% else %}<li>No scan or draft attached.</li>{% endfor %}</ul>
 <h3>Directives</h3><ul>{% for x in directives %}<li>{{ x.created_at }} · {{ x.text }}</li>{% else %}<li>No Director directive recorded.</li>{% endfor %}</ul>
 <h3>Related records</h3><ul>{% for x in related %}<li><a href="/documents/{{ x.id }}">{{ x.number }} · {{ x.subject }}</a></li>{% else %}<li>No visible related records.</li>{% endfor %}</ul>
-{% if work_cases or work_enabled %}<h3>Shared work</h3><ul>{% for item in work_cases %}<li><a href="/work/{{ item.id }}">{{ item.title }}</a></li>{% else %}<li>No permitted work items linked.</li>{% endfor %}</ul>{% if work_enabled %}<p><a href="/work/new?source_document_id={{ doc.id }}">Start a work item from this document</a> · <a href="/work">Find existing work</a></p>{% endif %}{% endif %}
+
 {% if duplicates %}<h3>Possible duplicates</h3><p>These are warnings, not confirmed duplicates.</p><ul>{% for x in duplicates %}<li><a href="/documents/{{ x.id }}">{{ x.number }} · {{ x.subject }}</a></li>{% endfor %}</ul>{% endif %}
 {% if enabled and not doc.archived_at %}<h3>Actions</h3>
 {% if officer %}
@@ -101,8 +109,9 @@
 {% if job.state == 'pending' %}{{ select('outcome','Outcome',[('confirmed_no_effect','Confirmed no external effect'),('cancelled','Cancel unexecuted request')]) }}{% else %}<input type="hidden" name="outcome" value="confirmed_no_effect"><p>Confirm no external effect only after checking with the service.</p>{% endif %}
 {{ text('evidence','Evidence checked with the service; do not retry an uncertain send') }}{{ end() }}{% endif %}
 </li>{% else %}<li>No external operations.</li>{% endfor %}</ul>
-<h3>Timeline</h3><ol>{% for e in history %}<li>{{ e.recorded_at }} · {{ e.action|replace('_',' ') }} · {{ names.get(e.actor_id,'Former staff member') }}{% if e.note %}<p>{{ e.note }}</p>{% endif %}<details><summary>Evidence</summary><pre>{{ e.detail|tojson(indent=2) }}</pre></details></li>{% endfor %}</ol>
 </details>
+<details class="doc-card" id="document-files"><summary>Files and versions</summary><p>Drive permissions are managed in Drive. An adapter check establishes access for its identity only.</p><ul>{% for v in versions %}<li>#{{ v.id }} · <a href="{{ v.url }}" target="_blank" rel="noopener noreferrer">{{ v.role }} file</a> · <a href="/documents/{{ doc.id }}/annotate/{{ v.id }}">Page notes and pen marks</a> · Exact version: {{ v.fingerprint or 'Not checked — reference only' }}{% if file_indexes.get(v.id) %} · Text indexed {{ file_indexes[v.id].indexed_at }}{% endif %}{% if enabled and can_work and not doc.archived_at and doc.status not in ['closed','cancelled'] %}<form method="post" action="/documents/{{ doc.id }}/index-file"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}"><input type="hidden" name="version_id" value="{{ v.id }}"><button>Index text for this version</button></form>{% if file_indexes.get(v.id) %}<form method="post" action="/documents/{{ doc.id }}/unindex-file"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}"><input type="hidden" name="version_id" value="{{ v.id }}"><button>Remove indexed text</button></form>{% endif %}{% endif %}{% if v.id==doc.current_version %} · Current{% endif %}</li>{% else %}<li>No scan or draft attached.</li>{% endfor %}</ul></details>
+<details class="doc-card" id="document-history"><summary>Timeline</summary><ol>{% for e in history %}<li>{{ e.recorded_at }} · {{ e.action|replace('_',' ') }} · {{ names.get(e.actor_id,'Former staff member') }}{% if e.note %}<p>{{ e.note }}</p>{% endif %}<details><summary>Evidence</summary><pre>{{ e.detail|tojson(indent=2) }}</pre></details></li>{% endfor %}</ol></details>
 <script src="/static/js/document_mentions.js?v=1" defer></script>
-<script src="/static/js/document_action_link.js?v=3" defer></script>
+<script src="/static/js/document_action_link.js?v=4" defer></script>
 {% endblock %}
