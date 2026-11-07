@@ -88,6 +88,20 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 7, 2026: My next steps count/filter specification prepared.**
+The owner selected My next steps as the first planning slice. The proposed
+[count contract](MY_NEXT_STEPS_COUNT_CONTRACT.md) is saved separately on
+`docs/my-next-steps-count-contract`, based on #604 repair `7de2a9b` so its ongoing
+CI remains unchanged. It defines overlapping document counts, same-step overdue
+intersection, uncapped classification before pagination, matching-card display,
+return context, an independent synthetic truth table and performance/acceptance
+plans. No application implementation, benchmark or staff study was performed.
+Review the proposed contract before explicitly authorizing implementation.
+This branch is not authorized for merge or release. #604 alone retains its
+checked-merge authorization and dedicated conditional follow-up; its CI
+42424944568 was still in progress when this planning snapshot was prepared.
+
+
 **November 7, 2026: #604 repair and checked merge authorized; candidate 10.13.**
 The owner requested “assess and fix 604 then merge when ready.” #596–603 are
 merged through `6452931b25d953b10a20dcea4750003e2ecd147d`; final guarded deployment
