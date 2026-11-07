@@ -8,8 +8,8 @@ from tests.test_document_intake_friction import intake_http
 import documents_intake as intake
 
 
-@pytest.mark.parametrize('width,scripts', [(390, True), (1280, True), (390, False)])
-def test_inbox_to_read_fill_and_register_next(browser, intake_http, admin, width, scripts):
+@pytest.mark.parametrize('width,scripts,filtered', [(390, True, False), (1280, True, False), (390, False, False), (390, True, True), (390, False, True)])
+def test_inbox_to_read_fill_and_register_next(browser, intake_http, admin, width, scripts, filtered):
     conn, user, drive = intake_http
     context = browser.new_context(viewport={'width': width, 'height': 844}, java_script_enabled=scripts)
     page = context.new_page()
@@ -35,7 +35,7 @@ def test_inbox_to_read_fill_and_register_next(browser, intake_http, admin, width
 
     page.route('**/*', serve)
     try:
-        page.goto('http://office.test/documents/intake')
+        page.goto('http://office.test/documents/intake' + ('?q=Letter+1' if filtered else ''))
         page.get_by_role('button', name='Review', exact=True).first.click()
         assert len(posts) == 1
         page.locator('[name=subject]').fill('My reviewed title')
@@ -56,14 +56,19 @@ def test_inbox_to_read_fill_and_register_next(browser, intake_http, admin, width
         page.locator('[name=confirmed]').check()
         page.get_by_role('button', name='Register and review next', exact=True).click()
         assert len(posts) == 3
-        assert page.get_by_role('heading', name='Letter 2.pdf', exact=True).is_visible()
-        assert intake.get(conn, user, 2)['claimed_by'] == user['id']
+        if filtered:
+            assert page.get_by_role('searchbox', name='File name or email subject').input_value() == 'Letter 1'
+            assert page.get_by_text('Document registered. No next review was opened', exact=False).is_visible()
+            assert intake.get(conn, user, 2)['claimed_by'] is None
+        else:
+            assert page.get_by_role('heading', name='Letter 2.pdf', exact=True).is_visible()
+            assert intake.get(conn, user, 2)['claimed_by'] == user['id']
         doc = conn.execute('SELECT subject,instruction_state,lead_id FROM document').fetchone()
         assert tuple(doc) == ('My reviewed title', 'pending', None)
         assert conn.execute('SELECT COUNT(*) FROM document').fetchone()[0] == 1
         assert conn.execute('SELECT COUNT(*) FROM document_assignment').fetchone()[0] == 0
         assert not errors
         page.evaluate('window.scrollTo(0, 0)')
-        page.screenshot(path=f'/tmp/intake-review-{width}-{scripts}.png', full_page=True)
+        page.screenshot(path=f'/tmp/intake-review-{width}-{scripts}-{filtered}.png', full_page=True)
     finally:
         context.close()
