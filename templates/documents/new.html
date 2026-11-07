@@ -1,4 +1,4 @@
-{% extends "documents/base.html" %}{% from 'documents/forms.html' import field,text,receipt_channel %}
+{% extends "documents/base.html" %}{% from 'documents/forms.html' import field,text,receipt_channel with context %}
 {% block documents_content %}<h2>Receive or prepare correspondence</h2>
 <p>Choose what the correspondence is for, check its details, then register it. Permanent incoming/outgoing numbers are assigned only when registration succeeds. You can enter everything manually without a scan.</p>
 {% if enabled %}<form method="post" action="/documents/new" class="doc-card" id="intake-form" data-ux-ignore data-telemetry-ignore><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="intake" value="guided"><input type="hidden" name="submission_id" value="{{ submission_id }}">

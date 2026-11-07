@@ -10,8 +10,8 @@
 {% if not item.removed %}<p>{{ 'Confirmed interpretation' if item.confirmed else 'Review and confirm this request' }}.</p>{% endif %}
 {% if item.missing %}<p>Not recorded: {{ item.missing|join(', ') }}. Check the source before filling these in.</p>{% endif %}
 {% if item.task %}<p>Contribution: <strong>{{ item.task.status }}</strong>.{% if item.task.changed %} Source changed — compare with the existing work.{% endif %}</p>{% endif %}
-{% if item.url %}<p><a href="{{ item.url }}">{{ 'Review a work proposal' if item.can_propose else 'Open preserved source and work comparison' }}</a></p>{% endif %}
+{% if item.url %}<p><a href="{{ document_url(item.url) }}">{{ 'Review a work proposal' if item.can_propose else 'Open preserved source and work comparison' }}</a></p>{% endif %}
 </article>
 {% else %}<p>No saved requests or accessible request-work receipts to show.</p>{% endfor %}
-<p><a href="/documents/{{ doc.id }}/understanding">Review saved requests and focus areas</a></p>
+<p><a href="{{ document_url('/documents/' ~ doc.id ~ '/understanding') }}">Review saved requests and focus areas</a></p>
 </section>{% endif %}

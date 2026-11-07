@@ -22,6 +22,7 @@
   const fields = ['number', 'subject', 'verification', 'status', 'due_date', 'lead'];
   let savedViews = null, loadingViews = null, saving = false;
   let table = null, controller = null, generation = 0;
+  let returnView = null;
   const filterFields = ['status', 'verification', 'deadline', 'lead_id', 'due_from', 'due_to', 'group_by'];
   const defaultFilters = () => Object.fromEntries(filterFields.map(field => [field, '']));
   let applied = defaultFilters();
@@ -35,7 +36,10 @@
   }
   function link(cell) {
     const a = document.createElement('a');
-    a.href = '/documents/' + Number(cell.getRow().getData().id);
+    const id = Number(cell.getRow().getData().id);
+    const target = new URL('/documents/' + id, window.location.origin);
+    if (returnView) target.searchParams.set('return_to', returnView + '#registry-row-' + id);
+    a.href = target;
     a.textContent = String(cell.getValue() ?? '');
     return a;
   }
@@ -122,6 +126,11 @@
         }
         groupSummary.append(list);
       }
+      const origin = new URL(target);
+      origin.pathname = '/documents';
+      origin.searchParams.set('interactive', '1');
+      origin.searchParams.set('page', data.page);
+      returnView = origin.pathname + origin.search;
       exportReady = true;
       return data;
     } catch (error) {
@@ -142,6 +151,9 @@
     standard.hidden = true;
     toggle.textContent = 'Standard table';
     toggle.setAttribute('aria-expanded', 'true');
+    const incoming = new URL(window.location.href).searchParams;
+    const incomingSort = incoming.get('interactive') === '1' &&
+      [...sort.options].some(option => option.value === incoming.get('sort') + ':' + incoming.get('dir'));
     try {
       table = new Tabulator(element, {
         layout: 'fitColumns', maxHeight: '65vh', renderVertical: 'basic', placeholder: 'No matching documents.',
@@ -149,13 +161,14 @@
         paginationInitialPage: saved ? 1 : (new URL(window.location.href).searchParams.get('interactive') === '1'
           ? Number(new URL(window.location.href).searchParams.get('page')) || 1 : 1),
         paginationOutOfRange: 'last', sortMode: 'remote', columnHeaderSortMulti: false,
-        initialSort: [{column: saved?.sort || 'registered', dir: saved?.dir || 'desc'}], ajaxURL: panel.dataset.url,
+        initialSort: [{column: saved?.sort || (incomingSort ? incoming.get('sort') : 'registered'), dir: saved?.dir || (incomingSort ? incoming.get('dir') : 'desc')}], ajaxURL: panel.dataset.url,
         groupBy: applied.group_by ? 'group_key' : false,
         groupStartOpen: true, groupToggleElement: false,
         groupHeader: (value, count, data) => {
           const group = groupCounts.get(value);
           return plain(`${group?.group_label || data[0]?.group_label || ''} · ${group?.count ?? count} matching records · ${count} on this page`);
         },
+        rowFormatter: row => { row.getElement().id = 'registry-row-' + Number(row.getData().id); },
         ajaxRequestFunc: request, dataLoaderError: 'Unable to load documents.',
         columns: [
           {title: 'Number', field: 'number', minWidth: 155, formatter: link},
@@ -178,6 +191,12 @@
         checkbox.addEventListener('change', () => table?.getColumn(field).toggle());
         option.append(checkbox, document.createTextNode(label)); choices.append(option);
       }
+      let restoreRow = /^#registry-row-[0-9]+$/.test(window.location.hash);
+      table.on('renderComplete', () => {
+        if (!restoreRow) return;
+        const row = document.getElementById(window.location.hash.slice(1));
+        if (row) { restoreRow = false; row.scrollIntoView({block: 'nearest'}); }
+      });
       table.on('dataSorted', () => {
         const order = table?.getSorters()[0];
         sort.value = order ? order.field + ':' + order.dir : 'registered:desc';

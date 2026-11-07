@@ -12,6 +12,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 import auth
 import storage as st
+import documents_navigation as navigation
 import documents as d
 import documents_permissions as p
 import documents_operations as ops
@@ -50,7 +51,7 @@ def make_router(templates,get_conn):
         page_ids=sorted({card['owner_id'] for card in values.get('cards',[]) if card['owner_id']})
         person_filter=' WHERE u.id IN (SELECT value FROM json_each(?))' if compact else ''
         person_params=(json.dumps(page_ids),) if compact else ()
-        return {'nav_active':'documents','enabled':d.enabled(conn),'csrf':csrf(request),'error':'',
+        return {**navigation.context(request),'nav_active':'documents','enabled':d.enabled(conn),'csrf':csrf(request),'error':'',
                 'focus_areas':understanding.FOCUS_AREAS,'submitted':{},'intake_access':p.has_role(conn,user,'records'),'is_director':p.director(conn,user),'workflow_admin':p.has_role(conn,user,'workflow_admin'),
                 'archive_admin':bool(conn.execute("SELECT 1 FROM document_role_grant WHERE user_id=? AND role='workflow_admin' AND revoked_at IS NULL",(user['id'],)).fetchone()),
                 'people':[] if compact else rows(conn,"SELECT u.id,u.username,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id WHERE u.active=1 ORDER BY name"),
@@ -149,7 +150,7 @@ def make_router(templates,get_conn):
             if linked_view:
                 linked={'queue':queue,'q':query, 'interactive':'1',
                         **{field:request.query_params.get(field,'') for field in
-                           ('status','verification','deadline',*grid.LEAD_DATE_FIELDS,'group_by')}}
+                           ('status','verification','deadline',*grid.LEAD_DATE_FIELDS,'group_by','sort','dir')}}
                 data=grid.page(conn,request.state.user,{**linked,'page':request.query_params.get('page','1')})
                 page={'documents':data['data'],'total':data['last_row'],'before':False,'more':False,
                       'linked_page':data['page'],'linked_last_page':data['last_page'],
@@ -523,7 +524,7 @@ def make_router(templates,get_conn):
             if not isinstance(revision,(int,str)) or isinstance(revision,bool):
                 raise ValueError('Invalid document revision. Reload the review.')
             understanding.revise(conn,request.state.user,doc_id,int(revision),data)
-            return RedirectResponse(f'/documents/{doc_id}/understanding?saved=1',status_code=303,headers={'Cache-Control':'no-store'})
+            return RedirectResponse(navigation.return_to_record(request,f'/documents/{doc_id}/understanding?saved=1'),status_code=303,headers={'Cache-Control':'no-store'})
         except p.Denied:
             return HTMLResponse('This document review is unavailable to this account or document state.',status_code=403,headers={'Cache-Control':'no-store'})
         except ValueError as exc:
@@ -574,7 +575,7 @@ def make_router(templates,get_conn):
         conn=get_conn()
         try:
             request_work.propose(conn,request.state.user,doc_id,index,data)
-            return RedirectResponse(f'/documents/{doc_id}/requests/{index}/work',status_code=303,headers={'Cache-Control':'no-store'})
+            return RedirectResponse(navigation.return_to_record(request,f'/documents/{doc_id}/requests/{index}/work'),status_code=303,headers={'Cache-Control':'no-store'})
         except p.Denied:
             return HTMLResponse('Document or work unavailable.',status_code=403,headers={'Cache-Control':'no-store'})
         except ValueError as exc:
@@ -592,7 +593,7 @@ def make_router(templates,get_conn):
         try:
             values=detail_context(conn,request.state.user,doc_id)
             if 'redirect' in values:
-                return RedirectResponse('/documents/'+str(values['redirect']),status_code=303)
+                return RedirectResponse(navigation.return_to_record(request,'/documents/'+str(values['redirect'])),status_code=303)
             selected=request.query_params.get('file','')
             values['preview_file']=next((v for v in values['versions'] if str(v['id'])==selected),
                                         next((v for v in values['versions'] if v['id']==values['doc']['current_version']),
@@ -693,7 +694,7 @@ def make_router(templates,get_conn):
                 await external.run(save)
             else:
                 await asyncio.to_thread(save)
-            return RedirectResponse(f'/documents/{doc_id}/annotate/{version_id}', status_code=303)
+            return RedirectResponse(navigation.return_to_record(request,f'/documents/{doc_id}/annotate/{version_id}'), status_code=303)
         except p.Denied as exc:
             return HTMLResponse(str(exc), status_code=403)
         except (external.Busy, external.Unconfirmed) as exc:
@@ -714,7 +715,7 @@ def make_router(templates,get_conn):
                 finally:
                     conn.close()
             await external.run(index)
-            return RedirectResponse(f'/documents/{doc_id}?file={version_id}', status_code=303)
+            return RedirectResponse(navigation.return_to_record(request,f'/documents/{doc_id}?file={version_id}'), status_code=303)
         except p.Denied as exc:
             return HTMLResponse(str(exc), status_code=403)
         except (external.Busy, external.Unconfirmed) as exc:
@@ -729,7 +730,7 @@ def make_router(templates,get_conn):
             data = await posted(request)
             version_id = int(data.get('version_id'))
             file_text.remove(conn, request.state.user, doc_id, version_id, data.get('revision'))
-            return RedirectResponse(f'/documents/{doc_id}', status_code=303)
+            return RedirectResponse(navigation.return_to_record(request,f'/documents/{doc_id}'), status_code=303)
         except p.Denied as exc:
             return HTMLResponse(str(exc), status_code=403)
         except (ValueError, TypeError) as exc:
@@ -1006,7 +1007,7 @@ def make_router(templates,get_conn):
                 d.merge(conn,user,data['preview'],data['reason'])
             else:
                 d.mutate(conn,user,doc_id,revision,action,data)
-            return RedirectResponse('/documents/'+str(doc_id),status_code=303)
+            return RedirectResponse(navigation.return_to_record(request,'/documents/'+str(doc_id)),status_code=303)
         except (ValueError,KeyError,sqlite3.IntegrityError,http_error(),TimeoutError) as e:
             status=403 if isinstance(e,p.Denied) else 409 if isinstance(e,d.Conflict) else 400
             message = ('The external service did not confirm the result. Check this document before retrying.'

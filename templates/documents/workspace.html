@@ -4,7 +4,7 @@
 <div class="doc-workspace">
 <section class="doc-preview" id="document-source" tabindex="-1"><h3>Document</h3>
 {% for email in email_bodies %}<section class="doc-card"><h3>Email body</h3><p><strong>No attachment</strong></p><div class="doc-email-body" role="region" aria-label="Email body">{{ email.body_text }}</div></section>{% endfor %}
-{% if source %}<nav class="doc-tabs" aria-label="Document files">{% for v in versions %}<a href="?file={{ v.id }}" {% if v.id==source.id %}aria-current="page"{% endif %}>{{ v.role|capitalize }} {{ loop.index }}</a>{% endfor %}</nav>
+{% if source %}<nav class="doc-tabs" aria-label="Document files">{% for v in versions %}<a href="{{ document_url('/documents/' ~ doc.id ~ '?file=' ~ v.id) }}" {% if v.id==source.id %}aria-current="page"{% endif %}>{{ v.role|capitalize }} {{ loop.index }}</a>{% endfor %}</nav>
 <p><a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">Open in Drive</a> if the preview asks you to sign in.</p>
 <iframe src="https://drive.google.com/file/d/{{ source.file_id }}/preview" title="Document preview" loading="lazy" referrerpolicy="no-referrer" allow="fullscreen"></iframe>
 {% elif not email_bodies %}<p>No source file is attached yet.</p>{% endif %}</section>
@@ -16,9 +16,9 @@
 {% for directive in directives %}<article id="instruction-{{ directive.id }}"><p><strong>{{ names.get(directive.actor_id,'Former staff member') }}</strong> · {{ directive.created_at }} · {{ 'Instruction note' if directive.kind=='note' else 'Director directive' }}</p><p class="doc-instruction">{{ directive.text }}</p>
 {% for tag in instruction_tags if tag.directive_id==directive.id %}<span class="doc-tag">@{{ tag.name or 'Former staff member' }} ({{ tag.target_type }})</span> {% endfor %}
 {% if instruction_recipients %}<p>{% for recipient in instruction_recipients if recipient.directive_id==directive.id %}{{ names.get(recipient.user_id,'Former staff member') }}{% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
-{% if directive.id in unread_instructions %}<form method="post" action="/documents/{{ doc.id }}/instruction_read"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}"><input type="hidden" name="directive_id" value="{{ directive.id }}"><button type="submit">Mark instruction read</button></form>{% endif %}</article>{% else %}<p>{{ 'Waiting for the Director’s instruction.' if doc.instruction_state=='pending' else 'No Director instruction recorded.' }}</p>{% endfor %}
+{% if directive.id in unread_instructions %}<form method="post" action="{{ document_url('/documents/' ~ doc.id ~ '/instruction_read') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}"><input type="hidden" name="directive_id" value="{{ directive.id }}"><button type="submit">Mark instruction read</button></form>{% endif %}</article>{% else %}<p>{{ 'Waiting for the Director’s instruction.' if doc.instruction_state=='pending' else 'No Director instruction recorded.' }}</p>{% endfor %}
 {% if enabled and is_director and doc.instruction_state=='pending' and not doc.archived_at %}
-<form id="document-action-route_instruction" tabindex="-1" method="post" action="/documents/{{ doc.id }}/route_instruction" data-ux-ignore data-telemetry-ignore>
+<form id="document-action-route_instruction" tabindex="-1" method="post" action="{{ document_url('/documents/' ~ doc.id ~ '/route_instruction') }}" data-ux-ignore data-telemetry-ignore>
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}">
 {{ person('lead_id','Lead person',people) }}
 <label>Lead office or division<select name="unit_id" required><option value="">Choose office or division</option>{% for unit in units %}<option value="{{ unit.id }}">{{ unit.name }}</option>{% endfor %}</select></label>
@@ -30,7 +30,7 @@
 <button>Send instruction</button></form>
 {% endif %}
 {% if enabled and can_work and doc.instruction_state!='pending' and doc.status not in ['closed','cancelled'] and not doc.archived_at %}
-<details><summary>Write an instruction or update</summary><form method="post" action="/documents/{{ doc.id }}/instruction_note">
+<details><summary>Write an instruction or update</summary><form method="post" action="{{ document_url('/documents/' ~ doc.id ~ '/instruction_note') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}">
 {{ text('reason','Instruction or update',value=submitted.get('reason','')) }}
 {% include 'documents/instruction_mentions.html' %}

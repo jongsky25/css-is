@@ -1,4 +1,4 @@
-{% extends 'documents/base.html' %}{% from 'documents/forms.html' import start,end %}
+{% extends 'documents/base.html' %}{% from 'documents/forms.html' import start,end with context %}
 {% block documents_content %}
 <h2>Review your signature placement</h2>
 <p><a href="{{ preview.url }}" target="_blank" rel="noopener noreferrer">Open the exact approved Google Doc</a> and check its final content. The relay found one <code>{{ preview.marker }}</code> on a paragraph of its own.</p>

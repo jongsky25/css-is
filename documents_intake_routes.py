@@ -1,4 +1,5 @@
 """Focused intake screens, authenticated with the existing Documents session."""
+import documents_navigation as navigation
 import documents_understanding as understanding
 import asyncio
 import json
@@ -20,7 +21,7 @@ def make_router(templates,get_conn):
 
     def context(request,conn,**values):
         user=p.actor(conn,request.state.user)
-        return {'nav_active':'documents','enabled':d.enabled(conn),'csrf':csrf(request),'error':'',
+        return {**navigation.context(request),'nav_active':'documents','enabled':d.enabled(conn),'csrf':csrf(request),'error':'',
                 'focus_areas':understanding.FOCUS_AREAS,'submitted':{},'intake_access':intake.can_review(conn,user),'is_director':p.director(conn,user),
                 'workflow_admin':p.has_role(conn,user,'workflow_admin'),'archive_admin':p.has_role(conn,user,'workflow_admin'),**values}
 
@@ -41,10 +42,10 @@ def make_router(templates,get_conn):
     def review_page(request,conn,item_id,error='',status=200,values=None):
         item=intake.get(conn,request.state.user,item_id)
         if item['email_id'] and not item['email_primary']:
-            return RedirectResponse('/documents/intake/'+str(item['email']['primary_intake_id']),status_code=303)
+            return RedirectResponse(navigation.return_to_record(request,'/documents/intake/'+str(item['email']['primary_intake_id'])),status_code=303)
         if item['document_id']:
             d.get(conn,request.state.user,item['document_id'])
-            return RedirectResponse('/documents/'+str(item['document_id']),status_code=303)
+            return RedirectResponse(navigation.return_to_record(request,'/documents/'+str(item['document_id'])),status_code=303)
         editable=item['state'] in ('waiting','attention') and item['claimed_by']==request.state.user['id'] and (item['claim_until'] or '')>tz.now_iso()
         candidates=rows(conn,"""SELECT id,original_name,revision FROM document_intake WHERE id<>? AND state='waiting' AND email_id IS NULL
             AND (claimed_by IS NULL OR claimed_by=? OR claim_until<=?) ORDER BY id LIMIT 30""",
@@ -161,10 +162,10 @@ def make_router(templates,get_conn):
                     if following:
                         try:
                             intake.claim(conn,user,following[0]['id'],following[0]['revision'])
-                            return RedirectResponse('/documents/intake/'+str(following[0]['id'])+'?registered=1',status_code=303)
+                            return RedirectResponse(navigation.return_to_record(request,'/documents/intake/'+str(following[0]['id'])+'?registered=1'),status_code=303)
                         except d.Conflict: pass
                     return RedirectResponse('/documents/intake?registered=1',status_code=303)
-                return RedirectResponse('/documents/'+str(doc['id']),status_code=303)
+                return RedirectResponse(navigation.return_to_record(request,'/documents/'+str(doc['id'])),status_code=303)
             elif action in ('save','release','attention','dismiss','extract','reread','apply','read_fill','reread_fill'):
                 saved=intake.save(conn,user,item_id,rev,data,action if action in ('release','attention','dismiss') else 'save')
                 if action in ('extract','reread','read_fill','reread_fill'):
@@ -177,9 +178,9 @@ def make_router(templates,get_conn):
                         if key in intake.FIELDS and not values.get(key): values[key]=value
                     intake.save(conn,user,item_id,saved['revision'],values)
                 if action in ('release','attention','dismiss'):
-                    return RedirectResponse('/documents/intake',status_code=303)
+                    return RedirectResponse(navigation.safe_return(request.query_params.get('return_to','')) or '/documents/intake',status_code=303)
             else: raise ValueError('Choose a supported review action.')
-            return RedirectResponse('/documents/intake/'+str(item_id),status_code=303)
+            return RedirectResponse(navigation.return_to_record(request,'/documents/intake/'+str(item_id)),status_code=303)
         except (ValueError,KeyError) as exc:
             if conn.in_transaction: conn.rollback()
             if isinstance(exc,p.Denied): return HTMLResponse(str(exc),status_code=403)

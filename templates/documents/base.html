@@ -12,6 +12,7 @@
 <a href="/documents/dashboard" {% if path=='/documents/dashboard' %}aria-current="page"{% endif %}>Overview</a>
 {% if workflow_admin %}<a href="/documents/rules" {% if path=='/documents/rules' %}aria-current="page"{% endif %}>Settings</a>{% endif %}
 </nav>
+{% if show_queue_return %}<p><a class="doc-queue-return" href="{{ return_url }}">← {{ return_label }}</a></p>{% endif %}
 {% if not enabled %}<p class="doc-alert" role="status">Documents is not enabled. You can read records you have access to; new work and sending are disabled.</p>{% endif %}
 {% if error %}<p class="doc-alert" role="alert">{{ error }}</p>{% endif %}
 {% if submitted %}<details open><summary>Your submitted values</summary><dl>{% for k,v in submitted.items() if k not in ['csrf','revision'] %}<dt>{{ k|replace('_',' ') }}</dt><dd>{{ v }}</dd>{% endfor %}</dl><p>Reload the current record before resubmitting a stale action.</p></details>{% endif %}

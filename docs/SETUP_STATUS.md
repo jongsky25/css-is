@@ -4006,3 +4006,35 @@ No skips; existing Starlette/httpx deprecation warning only. Release metadata
 (9.97) and whitespace checks passed. Normal/shuffled full CI and dependency audit
 remain pending after push. Next: review the draft PR and current-head CI before
 any separately authorized release. No deployment was requested for this branch.
+
+## Documents return context 10.08 — November 7, 2026
+
+Latest owner instruction: “do the next improvement and queue in the merging”.
+This authorizes PR #598 request-entry and the next return-context increment for
+the guarded sequential merge queue, superseding earlier draft-only restrictions
+for #598. No subsequent increment is authorized for merge.
+
+Implemented on `feat/documents-return-context`, stacked on #598 head `30dceec`.
+See [return-context behavior and limits](DOCUMENT_RETURN_CONTEXT.md). Preserve
+queue/search/page and row context through record links and ordinary saves;
+interactive returns restore applied filters and sorting. URL context is bounded
+and validated, with all existing server authorization checks retained.
+
+Verification: 91 grid/pagination/workspace checks and 32 navigation/guidance/intake
+checks passed; a final 56 grid (including new filter/sort and no-script return),
+deployment, release, guidance-browser and request-entry checks passed. Groups
+overlap. No failures/skips; existing Starlette/httpx deprecation warning only.
+Version 10.08 release metadata, JavaScript syntax and whitespace checks passed.
+No production data, notifications, relay changes or manual deployment.
+
+Sequence at handoff: #596 merged as `4c9657d`; guarded deployment `42343521324`
+is still running. #597 is ready, based on main at `4d7dc8b`, with fresh CI
+`42343527614` running. #598 is ready at `30dceec`, stacked on #597; its current CI
+is `42343580748`. The next return-context PR is ready to queue behind #598.
+Existing automation `Automation_38e6d990e1f08191ab61d12a19909f16` owns follow-through.
+Retarget/reconcile each next PR with main after its predecessor merges; require
+fresh complete normal/shuffled suites, metadata/audit/aggregate and applicable
+avatar checks. Inspect current reviews, threads, actual head/main and active
+strict no-bypass protection immediately before regular SHA-bound merge. Verify
+each guarded main deployment succeeds before merging the next increment.
+Never bypass backup/version gates; retain other worktrees and concurrent changes.

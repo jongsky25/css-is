@@ -1,12 +1,12 @@
 {% extends 'documents/base.html' %}
 {% block documents_content %}
-<p><a href="/documents/{{ doc.id }}">← {{ doc.number }} · {{ doc.subject }}</a></p>
+<p><a href="{{ document_url('/documents/' ~ doc.id) }}">← {{ doc.number }} · {{ doc.subject }}</a></p>
 <h2>Review requests and focus areas</h2>
 {% if request.query_params.get('saved') %}<p role="status">Review saved. Previous versions remain in the history below.</p>{% endif %}
-{% if error %}<p role="alert">{{ error }}</p><p><a href="/documents/{{ doc.id }}/understanding" target="_blank" rel="noopener">Open the latest saved review in a new tab</a> to compare it with your entries. A newer saved review won’t be overwritten.</p>{% endif %}
+{% if error %}<p role="alert">{{ error }}</p><p><a href="{{ document_url('/documents/' ~ doc.id ~ '/understanding') }}" target="_blank" rel="noopener">Open the latest saved review in a new tab</a> to compare it with your entries. A newer saved review won’t be overwritten.</p>{% endif %}
 {% if editable %}
 <p>Correct the sender’s requests after checking the source. Saving records your name, time and reason and flags the document for reconciliation. Assignments, internal instructions and the document-wide deadline are managed separately.</p>
-<form method="post" action="/documents/{{ doc.id }}/understanding" data-ux-ignore data-telemetry-ignore>
+<form method="post" action="{{ document_url('/documents/' ~ doc.id ~ '/understanding') }}" data-ux-ignore data-telemetry-ignore>
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ form_revision }}">
 {% include 'documents/understanding_form.html' %}
 <label>Reason for this review / source checked<textarea name="reason" maxlength="4000" required>{{ review_reason }}</textarea></label>
@@ -22,6 +22,6 @@
 {% with understanding_values=entry['values'] %}{% include 'documents/understanding_snapshot.html' %}{% endwith %}
 </details>
 {% else %}<p>No request review has been saved yet.</p>{% endfor %}
-{% if history_more %}<p><a href="/documents/{{ doc.id }}/understanding?before={{ review_history[-1].revision }}">Older reviews</a></p>{% endif %}
+{% if history_more %}<p><a href="{{ document_url('/documents/' ~ doc.id ~ '/understanding?before=' ~ review_history[-1].revision) }}">Older reviews</a></p>{% endif %}
 </section>
 {% endblock %}
