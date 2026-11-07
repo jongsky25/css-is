@@ -17,6 +17,7 @@ import uvicorn
 import storage as st
 import documents_routes
 import work_intake
+import documents_understanding
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import DecodedStreamObject
 sys.path.insert(0, str(ROOT / 'tests'))
@@ -47,7 +48,7 @@ with tempfile.TemporaryDirectory(prefix='pdf-page-browser-') as directory:
     def form(request:Request):
         env=Environment(loader=FileSystemLoader(str(ROOT/'templates')),autoescape=True)
         source=(ROOT/'templates/documents/new.html').read_text().replace('{% extends "documents/base.html" %}', '')
-        html=env.from_string(source).render(enabled=True, csrf=documents_routes.csrf(request),values={},work_enabled=False,scenarios=work_intake.SCENARIOS,preview=None,people=[],units=[])
+        html=env.from_string(source).render(enabled=True, csrf=documents_routes.csrf(request),values={},work_enabled=False,scenarios=work_intake.SCENARIOS,preview=None,people=[],units=[],focus_areas=documents_understanding.FOCUS_AREAS)
         return HTMLResponse('<meta name="viewport" content="width=device-width, initial-scale=1">'+html)
     @app.get('/fixture.pdf')
     def pdf(): return Response(fixture, media_type='application/pdf')

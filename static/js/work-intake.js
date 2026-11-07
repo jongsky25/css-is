@@ -75,7 +75,9 @@
   form.addEventListener('input', event => { if (event.target !== form.elements.confirmed) form.elements.confirmed.checked = false; });
   let approved = false;
   const approval = document.getElementById('intake-approval');
-  document.getElementById('intake-details').hidden = !form.elements.subject.value;
+  document.getElementById('intake-details').hidden = false;
+  // Direction lives before the optional reader; changing it still invalidates review.
+  form.elements.direction?.addEventListener('change', invalidateApproval);
   document.getElementById('intake-work').hidden = true; document.getElementById('intake-register').hidden = true;
   function invalidateApproval() { approved = false; approval.textContent = 'Details need your review.'; document.getElementById('intake-work').hidden = true; document.getElementById('intake-register').hidden = true; }
   document.getElementById('intake-details').addEventListener('input', invalidateApproval);

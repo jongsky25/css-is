@@ -4038,3 +4038,31 @@ avatar checks. Inspect current reviews, threads, actual head/main and active
 strict no-bypass protection immediately before regular SHA-bound merge. Verify
 each guarded main deployment succeeds before merging the next increment.
 Never bypass backup/version gates; retain other worktrees and concurrent changes.
+
+## Registration entry 10.09 — November 7, 2026
+
+Owner's next instruction, “do the next and queue in the merging”, authorizes this
+bounded next increment behind #599, including its guarded merge/deployment.
+Implemented on `feat/documents-registration-entry`, based on #599 `eff246f`.
+See [registration entry](DOCUMENT_REGISTRATION_ENTRY.md): choose direction first,
+enter details immediately, open optional PDF/link reading when needed. Direction
+changes invalidate approval without erasing entries; native manual registration
+and existing confirmations, permissions and retry safeguards remain.
+
+Thirty focused registration/request-entry checks passed across the initial run
+and two corrected new-test assertions (the fixture returns tuples, not named
+rows). Three synthetic Node/browser reader-feedback, approval and worker harnesses
+passed after refreshing stale fixture context and replay-policy expectations.
+Release metadata 10.09, JS syntax and whitespace checks pass. Full PR CI remains
+pending. No production data, notifications, manual deployment or relay changes.
+
+Merge queue now continues #597 → #598 → #599 → this registration-entry PR.
+#596 is merged (`4c9657d`); its deployment job succeeded in `42343521324`, while
+post-deploy diagnostics were still running at this inspection. #597's fresh CI
+`42343527614` passed all five checks. Verify the entire predecessor deployment,
+current main/head, all checks/reviews/threads and strict no-bypass protection
+before merging. Retarget/reconcile each stacked successor to main and require
+fresh CI; verify each guarded deployment before proceeding. Existing automation
+`Automation_38e6d990e1f08191ab61d12a19909f16` continues this sequence. No increment
+beyond registration entry is authorized for merge. Preserve concurrent work.
+A further 30 service-worker retry and release-gate checks passed without skips.

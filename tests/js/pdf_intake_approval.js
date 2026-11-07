@@ -13,11 +13,12 @@ const root=path.resolve(__dirname,'../..');
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.context().addCookies([{name:'css_session',value:'synthetic',url:base}]);
   await page.goto(base+'/fixture');
+  await page.locator('#intake-source-options > summary').click();
   const code=fs.readFileSync(path.join(root,'static/js/app.js'),'utf8');
   const end=code.indexOf('/* Searchable combobox');
   const start=code.lastIndexOf('(function () {',code.indexOf('function enhance(input)',code.indexOf('function shortFmt')));
   await page.addScriptTag({content:code.slice(start,end)});
-  assert(await page.locator('#intake-details').isHidden());
+  assert(await page.locator('#intake-details').isVisible());
   if(process.env.PDF_TEST_FILE){
    await page.locator('#intake-pdf').setInputFiles(process.env.PDF_TEST_FILE);
    await page.waitForFunction(()=>document.querySelector('[name=document_date]').value==='2026-10-14',{},{timeout:60000});

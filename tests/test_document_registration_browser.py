@@ -58,7 +58,8 @@ def registration_page(browser, app_mod, viewer):
             headers={k: v for k, v in response.headers.items() if k.lower() not in ('content-length', 'content-encoding', 'set-cookie')})
     page.route('**/*', serve)
     page.goto('http://office.test/documents/new')
-    page.locator('#intake-skip').click()
+    assert page.locator('#intake-details').is_visible()
+    assert not page.locator('#intake-source-options').evaluate('(element) => element.open')
     page.locator('[name=subject]').fill('Browser retry correspondence')
     page.locator('[name=type]').fill('memorandum')
     page.locator('#intake-approve').click()
@@ -183,6 +184,7 @@ def test_understanding_source_change_preserves_corrections_but_requires_review(r
     page.get_by_role('button',name='Add request',exact=True).click()
     page.locator('[name=need_0_action]').fill('Manually corrected request')
     page.locator('[name=need_0_confirmed]').check()
+    page.locator('#intake-source-options > summary').click()
     page.locator('#intake-source').fill('https://example.invalid/changed.pdf')
     assert page.locator('[name=need_0_action]').input_value()=='Manually corrected request'
     assert not page.locator('[name=need_0_confirmed]').is_checked()
@@ -211,3 +213,46 @@ def test_structured_request_suggestion_reviews_and_saves_deadline(registration_p
     assert saved['need_0_deadline']=='2026-11-20'
     assert saved['need_0_submission']=='via email to reports@example.test'
     assert conn.execute('SELECT due_date FROM document').fetchone()[0] is None
+
+
+def test_direction_change_requires_review_without_losing_entries(registration_page):
+    page, state, conn = registration_page
+    page.set_viewport_size({'width': 390, 'height': 844})
+    page.locator('[name=direction]').select_option('OUT')
+    assert page.locator('#intake-work').is_hidden()
+    assert page.locator('#intake-register').is_hidden()
+    assert not page.locator('[name=confirmed]').is_checked()
+    assert page.locator('[name=subject]').input_value() == 'Browser retry correspondence'
+    assert not state['posts']
+    page.locator('#intake-source-options > summary').click()
+    assert page.locator('#intake-pdf').is_visible()
+    page.locator('#intake-source-options > summary').click()
+    assert page.locator('[name=subject]').input_value() == 'Browser retry correspondence'
+    page.locator('#intake-approve').click()
+    page.locator('[name=confirmed]').check()
+    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+    submit(page)
+    page.wait_for_url(re.compile(r'/documents/\d+$'))
+    row=conn.execute('SELECT direction,status FROM document').fetchone()
+    assert row[0] == 'OUT'
+    assert row[1] != 'released'
+    assert len(state['posts']) == 1
+
+
+def test_manual_registration_without_scripts_needs_no_source(registration_page):
+    page, state, conn = registration_page
+    session=page.context.new_cdp_session(page)
+    session.send('Emulation.setScriptExecutionDisabled', {'value': True})
+    page.reload()
+    assert page.locator('#intake-details').is_visible()
+    assert not page.locator('#intake-source-options').evaluate('(element) => element.open')
+    page.locator('[name=direction]').select_option('IN')
+    page.locator('[name=subject]').fill('Manual no-script incoming')
+    page.locator('[name=type]').fill('memo')
+    page.locator('[name=confirmed]').check()
+    submit(page)
+    page.wait_for_url(re.compile(r'/documents/\d+$'))
+    row=conn.execute('SELECT subject,direction FROM document').fetchone()
+    assert row[0]=='Manual no-script incoming'
+    assert row[1]=='IN'
+    assert len(state['posts'])==1

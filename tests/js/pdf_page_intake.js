@@ -38,6 +38,7 @@ const root = path.resolve(__dirname, '../..');
    await route.continue();
   });
   await page.goto(base+'/fixture');
+  await page.locator('#intake-source-options > summary').click();
   await page.evaluate(async()=>{
    await navigator.serviceWorker.register('/sw.js');
    await navigator.serviceWorker.ready;

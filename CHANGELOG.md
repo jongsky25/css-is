@@ -1,3 +1,8 @@
+## 10.09 — November 7, 2026
+
+- Choose incoming or outgoing correspondence first and enter details without a file-reading step.
+- Open optional source reading when needed; existing review and registration confirmations remain.
+
 ## 10.08 — November 7, 2026
 
 - Return from a document to your queue, search and page, including after saving an action.
