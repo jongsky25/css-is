@@ -4262,3 +4262,23 @@ is queued. #602 and #603 remain stacked and passed their prior full CI; each
 still needs reconciliation and fresh checks after its predecessor merges.
 Continue sequentially through #603, then publish the authorized documentation
 handoff draft. Existing automation remains responsible for guarded continuation.
+
+## Inbox CI stall investigation — November 7, 2026
+
+#600 guarded deployment 42381842494 completed successfully including diagnostics.
+#601 CI 42381850727 attempt 1 passed normal tests, metadata and dependency audit,
+but shuffled testing stopped after 5,328 reported completions and hit the
+75-minute job limit. The five-minute stack dump shows Playwright waiting and an
+idle loopback HTTP server; there is no assertion failure or completed JUnit.
+Required checks correctly failed. This is not release readiness.
+
+Collected the exact #601 head 87d19da shuffled order (seed 311, 10,830 tests).
+The following 72-test reporting interval contains two existing calendar browser
+journeys. Running that interval in the same order against isolated fixtures
+passed all 72 tests in 30.41s, with no failures/errors/skips. This does not prove
+the full-suite hang's cause; cumulative browser/runner state remains possible.
+No application/test/timeout changes were made. Retried the entire original CI
+42381850727 as attempt 2 with all gates intact. If the stall recurs, investigate
+the repeated location and improve diagnostics rather than repeatedly rerunning.
+#601 remains unmerged; #602–603 still await sequential reconciliation and fresh
+CI. The authorized post603 documentation handoff remains outstanding.
