@@ -75,6 +75,21 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 7, 2026: checked merge follow-up and next draft saved.**
+#596 is ready for review at `067f128`; full CI is running after its single browser
+expectation repair. It is NOT merged yet. The user authorized its merge and normal
+guarded deployment. Hourly conditional task `Automation_38e6d990e1f08191ab61d12a19909f16`
+will verify current checks/protections, merge #596 with its verified head, verify
+deployment, then reconcile the already built [draft #597](https://github.com/jongsky25/css-is/pull/597)
+with main. Task creation succeeded; do not duplicate it or claim a merge early.
+#597 implementation `7712cbf` is pushed on `feat/documents-intake-review`; its final
+28 source-control checks passed after 138 focused and 23 layout checks (overlap).
+#597 remains draft-only and is NOT authorized for merge. Preserve that boundary.
+The previous main deployment 42317012991 succeeded. Next action is to inspect
+#596 CI 42339512542 and advance only after complete success. Stop the task when
+its bounded follow-up is complete. Earlier handoffs remain as historical evidence.
+
+
 **November 7, 2026: intake experience candidate 10.06 prepared separately.**
 The next authorized implementation is on `feat/documents-intake-review`, based on
 #596's repaired head `067f128`. It adds Inbox Review/Resume buttons and one
