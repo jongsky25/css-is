@@ -3,7 +3,7 @@
 <p>Capture the sender’s requests separately from internal routing instructions. Review every relevant page. Empty fields mean not captured; they do not mean no action is needed.</p>
 <p id="understanding-warning" role="status">{% if understanding_review_mode|default(false) %}Check the saved entries against the original source. Confirm each populated request and focus area before saving.{% else %}Enter requests manually or read the document for suggestions. Suggestions do not assign work.{% endif %}</p>
 <label>Request status<select name="needs_status">{% for key,label in [('', 'Not yet reviewed'),('requests','Requests identified'),('information_only','For information only'),('unclear','Unclear — needs review')] %}<option value="{{ key }}" {% if values.get('needs_status','')==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-<label><input type="checkbox" name="needs_status_confirmed" value="yes" {% if values.get('needs_status_confirmed')=='yes' %}checked{% endif %}> I checked any “for information only” conclusion against the source.</label>
+<label class="doc-check"><input type="checkbox" name="needs_status_confirmed" value="yes" {% if values.get('needs_status_confirmed')=='yes' %}checked{% endif %}> I checked any “for information only” conclusion against the source.</label>
 <div id="understanding-suggestions"></div>
 {% for i in range(5) %}{% set prefix='need_' ~ i ~ '_' %}
 <details data-request="{{ i }}" {% if values.get(prefix ~ 'action') %}open{% endif %}><summary>Request {{ i+1 }}{% if not values.get(prefix ~ 'action') %} (optional){% endif %}</summary>
@@ -11,12 +11,12 @@
 <label>{{ label }}<textarea name="{{ prefix ~ key }}" maxlength="{{ limit }}">{{ values.get(prefix ~ key,'') }}</textarea></label>{% endfor %}
 <label>Request deadline (only if stated clearly)<input type="date" name="{{ prefix }}deadline" value="{{ values.get(prefix ~ 'deadline','') }}"></label>
 <label>Interpretation<select name="{{ prefix }}kind">{% for key,label in [('manual','Entered by reviewer'),('explicit','Explicit request'),('inferred','Inferred — verify interpretation'),('unclear','Unclear — needs review')] %}<option value="{{ key }}" {% if values.get(prefix ~ 'kind','manual')==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-<label><input type="checkbox" name="{{ prefix }}confirmed" value="yes" {% if values.get(prefix ~ 'confirmed')=='yes' %}checked{% endif %}> I checked this request and its details against the source.</label>
+<label class="doc-check"><input type="checkbox" name="{{ prefix }}confirmed" value="yes" {% if values.get(prefix ~ 'confirmed')=='yes' %}checked{% endif %}> I checked this request and its details against the source.</label>
 </details>{% endfor %}
 <h3>Focus area</h3><p>Choose the topic of the document. These starter categories do not determine the responsible section.</p>
 {% for key,label in [('focus_primary','Primary focus area'),('focus_secondary','Secondary focus area (optional)')] %}<label>{{ label }}<select name="{{ key }}"><option value="">Unclassified — needs review</option>{% for value,title in focus_areas.items() %}<option value="{{ value }}" {% if values.get(key)==value %}selected{% endif %}>{{ title }}</option>{% endfor %}</select></label>{% endfor %}
 <label>Focus-area evidence / source location<textarea name="focus_evidence" maxlength="1000">{{ values.get('focus_evidence','') }}</textarea></label>
-<label><input type="checkbox" name="focus_confirmed" value="yes" {% if values.get('focus_confirmed')=='yes' %}checked{% endif %}> I checked the focus-area classification.</label>
+<label class="doc-check"><input type="checkbox" name="focus_confirmed" value="yes" {% if values.get('focus_confirmed')=='yes' %}checked{% endif %}> I checked the focus-area classification.</label>
 {% if item is defined and item.suggestions.get('understanding') %}<script type="application/json" id="understanding-initial">{{ item.suggestions.understanding|tojson }}</script>{% endif %}
 </section>
 <script src="/static/js/document-understanding.js" defer></script>

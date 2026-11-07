@@ -111,3 +111,13 @@ body:has(.doc-detail) .sf-float{position:static;margin:1rem auto;display:flex;wi
  .doc-section-nav{gap:.5rem}
  .doc-section-nav a{padding:.5rem .25rem}
 }
+
+/* Keep all intake completion choices reachable on narrow screens. */
+.doc-intake-review .doc-review-actions{flex-wrap:wrap}
+.doc-intake-review input[type=checkbox]{display:inline-block;width:auto;min-height:0}
+@media(max-width:599px){
+ .doc-intake-review .doc-review-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.4rem}
+ .doc-intake-review .doc-review-actions button{margin:0;font-size:14px;padding:.65rem .4rem}
+ html:has(.doc-intake-review){scroll-padding-bottom:140px}
+ .doc-intake-review input,.doc-intake-review textarea,.doc-intake-review select{scroll-margin-bottom:140px}
+}

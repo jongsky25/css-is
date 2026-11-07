@@ -22,9 +22,8 @@
 <form method="post" data-ux-ignore data-telemetry-ignore>
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ item.revision }}">
 <fieldset {% if not editable or not enabled %}disabled{% endif %}>
-{% if not item.email or item.email_files %}<button name="action" value="{{ 'reread' if item.suggestions else 'extract' }}" formnovalidate>{{ 'Read scan again with OCR' if item.suggestions else 'Read scan with OCR' }}</button>{% endif %}
-{% if item.suggestions %}<details class="doc-ocr-results"><summary>Suggestions and warnings from the scan</summary><dl>{% for key,value in item.suggestions.get('suggestions',{}).items() if value %}<dt>{{ key|replace('_',' ') }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>{% for warning in item.suggestions.get('warnings',[]) %}<p>{{ warning }}</p>{% endfor %}<button name="action" value="apply" formnovalidate>Fill empty fields with suggestions</button></details>{% endif %}
-{% include 'documents/understanding_form.html' %}
+{% if can_read_source %}<button name="action" value="{{ 'reread_fill' if item.suggestions else 'read_fill' }}" formnovalidate>{{ 'Read again and fill empty fields' if item.suggestions else 'Read and fill empty fields' }}</button><p>Fills empty document details from the source. Your existing entries stay in place. Check suggestions and confirm before registering.</p>{% elif not item.email or item.email_files %}<p>Review this file in Drive and enter its details manually. Automatic reading is available for PDFs, supported images and text files.</p>{% endif %}
+{% if item.suggestions %}<details class="doc-ocr-results"><summary>Suggestions and warnings from the scan</summary><dl>{% for key,value in item.suggestions.get('suggestions',{}).items() if value %}<dt>{{ key|replace('_',' ') }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>{% for warning in item.suggestions.get('warnings',[]) %}<p>{{ warning }}</p>{% endfor %}<button name="action" value="apply" formnovalidate>Fill empty fields with saved suggestions</button><button name="action" value="reread" formnovalidate>Read scan again with OCR</button></details>{% endif %}
 <p class="doc-direction-note">BLHSD sender → Outgoing; other senders → Incoming. Updates when saved.</p>
 <div class="doc-fields">
 <label>Direction<select name="direction"><option value="">Choose direction</option>{% for key,label in [('IN','Incoming'),('OUT','Outgoing')] %}<option value="{{ key }}" {% if values.get('direction')==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
@@ -37,13 +36,13 @@
 <label class="doc-field-wide">References<textarea name="references">{{ values.get('references','') }}</textarea></label>
 <label>Priority<select name="priority">{% for key in ['normal','urgent'] %}<option {% if values.get('priority')==key %}selected{% endif %}>{{ key }}</option>{% endfor %}</select></label>
 </div>
+{% include 'documents/understanding_form.html' %}
 {% if candidates and not item.email %}<details><summary>Include other scans with this document</summary><p>Select only attachments belonging to this correspondence. Up to 20 files total.</p>{% for candidate in candidates %}<label class="doc-check"><input type="checkbox" name="attach:{{ candidate.id }}" value="{{ candidate.revision }}">{{ candidate.original_name }}</label>{% endfor %}</details>{% endif %}
 <label class="doc-check"><input type="checkbox" name="confirmed" value="yes"> I checked the source and these details.</label>
-<button name="action" value="register_next">Register and review next</button>
 <p>Incoming documents go to the Director for instructions. {% if not item.email or item.email_files %}Drive filing follows automatically.{% endif %}</p>
 <button name="action" value="release" formnovalidate>Save and return to queue</button>
 <details><summary>This scan needs attention</summary><label>Reason<textarea name="note" maxlength="1000"></textarea></label><button name="action" value="attention" formnovalidate>Request a clearer scan / flag a problem</button><button name="action" value="dismiss" formnovalidate>Dismiss duplicate or unrelated file</button><p>Dismissing retains the original file in Drive and its intake history.</p></details>
-<div class="doc-review-actions"><button name="action" value="save" formnovalidate>Save review</button><button class="doc-register" name="action" value="register">Register document</button></div>
+<div class="doc-review-actions"><button name="action" value="save" formnovalidate>Save review</button><button class="doc-register" name="action" value="register">Register document</button><button class="doc-register" name="action" value="register_next">Register and review next</button></div>
 </fieldset></form></section></div>
 <script src="/static/js/document_intake_layout.js?v=7.11" defer></script>
 {% endblock %}

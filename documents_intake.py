@@ -316,13 +316,24 @@ def save(conn,user,item_id,revision,fields,action='save'):
     return get(conn,user,item_id)
 
 
-def extract(conn,user,item_id,revision,adapter=None,force=False):
+def fill_empty_fields(draft, suggestions):
+    """Prefill source metadata only; preserve corrections and request interpretations."""
+    values=dict(draft)
+    for key in BASE_FIELDS:
+        if not values.get(key) and suggestions.get(key):
+            values[key]=suggestions[key]
+    return clean_fields(values)
+
+
+def extract(conn,user,item_id,revision,adapter=None,force=False,fill_empty=False):
     user,item=_editable(conn,user,item_id,revision)
     if item['mime_type'] not in OCR_MIMES:
         raise ValueError('OCR supports PDFs, images and text. Review this attachment in Drive and enter details manually.')
     if item['fingerprint']=='pending':
         raise ValueError('Check Drive to load attachment metadata before OCR.')
     if not force and item['suggestion_key']==item['content_key'] and item['suggestions']:
+        if fill_empty:
+            return save(conn,user,item_id,revision,fill_empty_fields(item['draft'],item['suggestions'].get('suggestions',{})))
         return item
     adapter=adapter or ops.get_adapter()
     config=_active(conn)
@@ -344,7 +355,7 @@ def extract(conn,user,item_id,revision,adapter=None,force=False):
         if current['content_key']!=item['content_key']: raise d.Conflict('The scan changed during reading.')
         conn.execute('''UPDATE document_intake SET suggestions_json=?,suggestion_key=?,fingerprint=?,revision=revision+1
                         WHERE id=?''',(json.dumps(cached),item['content_key'],str(result['fingerprint'])[:500],item_id))
-        draft=current['draft']
+        draft=(fill_empty_fields(current['draft'],cached['suggestions']) if fill_empty else current['draft'])
         for field in understanding.FIELDS:
             if field.endswith('_confirmed'): draft[field]=''
         conn.execute('UPDATE document_intake SET draft_json=? WHERE id=?',(json.dumps(draft),item_id))
