@@ -10,9 +10,14 @@
 {% endif %}
 {% if request.query_params.get('checking') %}<p role="status">Drive check queued for background processing. <a href="/documents/intake">Refresh the queue</a> to see the result.</p>{% endif %}
 {% if config.sync_error %}<p class="doc-alert" role="status">{{ config.sync_error }}</p>{% endif %}
-<nav class="doc-tabs" aria-label="Intake status">{% for key,label in [('waiting','Waiting'),('attention','Needs attention'),('registered','Registered'),('dismissed','Dismissed')] %}<a href="?state={{ key }}" {% if state==key %}aria-current="page"{% endif %}>{{ label }} ({{ counts.get(key,0) }})</a>{% endfor %}</nav>
+<form method="get" class="doc-queue-filter" role="search" aria-label="Search Inbox">
+<input type="hidden" name="state" value="{{ state }}"><input type="hidden" name="review" value="{{ review }}">
+<label>File name or email subject<input type="search" name="q" maxlength="120" value="{{ query }}"></label><button>Search Inbox</button>
+{% if query %}<a href="?state={{ state }}&amp;review={{ review }}">Clear search</a>{% endif %}</form>
+<p>Searches names and email subjects across your permitted Inbox entries. Counts below match this search; attachment contents and email bodies are not searched.</p>
+<nav class="doc-tabs" aria-label="Intake status">{% for key,label in [('waiting','Waiting'),('attention','Needs attention'),('registered','Registered'),('dismissed','Dismissed')] %}<a href="?state={{ key }}&amp;q={{ query|urlencode }}" {% if state==key %}aria-current="page"{% endif %}>{{ label }} ({{ counts.get(key,0) }})</a>{% endfor %}</nav>
 {% if state in ('waiting','attention') %}
-<nav class="doc-tabs" aria-label="Review availability">{% for key,label in [('all','All reviews'),('ready','Ready to review'),('mine','My reviews'),('others','With other reviewers')] %}<a href="?state={{ state }}&amp;review={{ key }}" {% if review==key %}aria-current="page"{% endif %}>{{ label }} ({{ review_counts[key] }})</a>{% endfor %}</nav>
+<nav class="doc-tabs" aria-label="Review availability">{% for key,label in [('all','All reviews'),('ready','Ready to review'),('mine','My reviews'),('others','With other reviewers')] %}<a href="?state={{ state }}&amp;review={{ key }}&amp;q={{ query|urlencode }}" {% if review==key %}aria-current="page"{% endif %}>{{ label }} ({{ review_counts[key] }})</a>{% endfor %}</nav>
 <p>{{ items|length }} on this page · {{ review_counts[review] }} matching reviews across this status queue. Ready means no active reviewer claim, including expired claims; it does not mean the source is verified. My reviews have your active claim.</p>
 {% endif %}
 <div class="doc-table"><table><thead><tr><th>File</th><th>Added to queue</th><th>Review</th></tr></thead><tbody>
@@ -22,7 +27,7 @@
 {% if enabled and not sync_progress.running and item.filing_state in ['error','running'] %}<form method="post" action="/documents/intake/{{ item.id }}/filing/retry"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Retry filing check</button></form>{% endif %}{% endif %}{% elif item.claimed_by and item.claim_until and item.claim_until>now %}Being reviewed by {{ item.reviewer }}{% else %}{{ 'Needs attention' if item.state=='attention' else 'Ready to review' if item.state=='waiting' else 'Dismissed' }}{% endif %}
 {% if enabled and item.state in ('waiting','attention') and (not item.claimed_by or item.claimed_by==request.state.user.id or not item.claim_until or item.claim_until<=now) %}
 <form method="post" action="{{ document_url('/documents/intake/' ~ item.id, 'intake-row-' ~ item.id) }}"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ item.revision }}"><button name="action" value="claim">{{ 'Resume review' if item.claimed_by==request.state.user.id else 'Review' }}</button></form>{% endif %}
-{% if item.error %}<p>{{ item.error }}</p>{% endif %}</td></tr>{% else %}<tr><td colspan="3">No files in this queue.</td></tr>{% endfor %}
+{% if item.error %}<p>{{ item.error }}</p>{% endif %}</td></tr>{% else %}<tr><td colspan="3">{{ 'No files match this search and review filter.' if query else 'No files in this queue.' }}</td></tr>{% endfor %}
 </tbody></table></div>
-<nav class="doc-tabs" aria-label="Intake pages">{% if page>1 %}<a href="?state={{ state }}&amp;review={{ review }}&amp;page={{ page-1 }}">Previous</a>{% endif %}<span>Page {{ page }}</span>{% if more %}<a href="?state={{ state }}&amp;review={{ review }}&amp;page={{ page+1 }}">Next</a>{% endif %}</nav>
+<nav class="doc-tabs" aria-label="Intake pages">{% if page>1 %}<a href="?state={{ state }}&amp;review={{ review }}&amp;q={{ query|urlencode }}&amp;page={{ page-1 }}">Previous</a>{% endif %}<span>Page {{ page }}</span>{% if more %}<a href="?state={{ state }}&amp;review={{ review }}&amp;q={{ query|urlencode }}&amp;page={{ page+1 }}">Next</a>{% endif %}</nav>
 {% endblock %}
