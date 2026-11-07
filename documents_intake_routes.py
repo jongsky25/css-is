@@ -3,6 +3,7 @@ import documents_navigation as navigation
 import documents_understanding as understanding
 import asyncio
 import json
+from urllib.parse import parse_qs, urlencode, urlsplit
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 import documents as d
@@ -160,15 +161,20 @@ def make_router(templates,get_conn):
                 attachments=[(key.split(':')[1],value) for key,value in data.items() if key.startswith('attach:')]
                 doc=intake.register(conn,user,item_id,rev,data,attachments)
                 if action=='register_next':
-                    following=rows(conn,'''SELECT id,revision FROM document_intake WHERE state='waiting' AND email_primary=1
-                        AND (claimed_by IS NULL OR claimed_by=? OR claim_until<=?) ORDER BY id LIMIT 1''',
-                        (user['id'],tz.now_iso()))
+                    origin=urlsplit(navigation.safe_return(request.query_params.get('return_to','')))
+                    source=parse_qs(origin.query) if origin.path=='/documents/intake' else {}
+                    state=source.get('state',['waiting'])[0]
+                    state=state if state in ('waiting','attention') else 'waiting'
+                    review=intake.review_filter(state,source.get('review',['all'])[0])
+                    query=intake.queue_query(source.get('q',[''])[0])
+                    following=intake.next_review(conn,user,state,review,query)
                     if following:
                         try:
-                            intake.claim(conn,user,following[0]['id'],following[0]['revision'])
-                            return RedirectResponse(navigation.return_to_record(request,'/documents/intake/'+str(following[0]['id'])+'?registered=1'),status_code=303)
+                            intake.claim(conn,user,following['id'],following['revision'])
+                            return RedirectResponse(navigation.return_to_record(request,'/documents/intake/'+str(following['id'])+'?registered=1'),status_code=303)
                         except d.Conflict: pass
-                    return RedirectResponse('/documents/intake?registered=1',status_code=303)
+                    destination='/documents/intake?'+urlencode({'state':state,'review':review,'q':query,'registered':'1'})
+                    return RedirectResponse(destination,status_code=303)
                 return RedirectResponse(navigation.return_to_record(request,'/documents/'+str(doc['id'])),status_code=303)
             elif action in ('save','release','attention','dismiss','extract','reread','apply','read_fill','reread_fill'):
                 saved=intake.save(conn,user,item_id,rev,data,action if action in ('release','attention','dismiss') else 'save')

@@ -193,6 +193,18 @@ def review_counts(conn, user, state='waiting', *, now=None, query=''):
     return dict(zip(('all','ready','mine','others'),(value or 0 for value in row)))
 
 
+def next_review(conn, user, state='waiting', review='all', query=''):
+    """Select one claimable match across the full scope; claiming remains a POST check."""
+    user=reviewer(conn,user)
+    state=state if state in ('waiting','attention') else 'waiting'
+    review=review_filter(state,review)
+    params={'viewer':user['id'],'state':state,'query':queue_query(query),'now':tz.now_iso()}
+    row=conn.execute('SELECT i.id,i.revision FROM document_intake i LEFT JOIN document d ON d.id=i.document_id WHERE '+
+        QUEUE_VISIBLE+' AND '+QUEUE_SEARCH+' AND i.state=:state AND i.document_id IS NULL AND ('+
+        _review_sql(review)+") AND (i.claimed_by IS NULL OR i.claimed_by=:viewer OR COALESCE(i.claim_until,'')<=:now) ORDER BY i.id LIMIT 1",params).fetchone()
+    return {'id':row[0],'revision':row[1]} if row else None
+
+
 def list_page(conn, user, state='waiting', page=1, review='all', *, now=None, query=''):
     user=reviewer(conn,user)
     if state not in ('waiting','attention','registered','dismissed'):

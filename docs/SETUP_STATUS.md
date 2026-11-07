@@ -4126,3 +4126,33 @@ sequence. Inspect actual head/main, tests, metadata/audit/aggregate and applicab
 avatar checks, reviews/threads and strict no-bypass protection immediately before
 each SHA-bound merge. Verify each predecessor deployment succeeds before merging
 its successor. Retarget/reconcile each next branch to main without losing work.
+
+## Review next stays in scope 10.12 — November 7, 2026
+
+Latest owner instruction “do the next and queue in the merging” authorizes this
+next increment after #602, including guarded merge/deployment. Implemented on
+`feat/documents-review-next-scope`, based on #602 `670364e`.
+See [review-next scope](DOCUMENT_REVIEW_NEXT_SCOPE.md). Register and review next
+uses the originating Inbox status/search/availability across the full queue,
+skips other staff claims, and returns to the same filtered Inbox when no next
+review can be opened. Existing registration and exclusive claim safeguards remain.
+No subsequent increment is authorized for merge.
+
+Six new service/route checks and five final browser journeys passed, including
+phone with/without JavaScript and concurrent claim handling. Initial browser
+checks exposed a tuple/dict return mismatch in the new selector; fixed before
+these final checks. Version 10.12 metadata and whitespace checks pass. Full PR CI
+is still required after publication and again after reconciliation with main.
+
+#596 deployed successfully. #597 merged `0ee1cff`; deployment `42348890661` remains
+running. #598 head `fbcc376` fresh CI `42348932141` remains running. #599 `b484970`,
+#600 `9234926`, #601 `85b3f72` and #602 `670364e` are ready in the existing sequence.
+Reconcile/retarget each successor with main after its predecessor merges, require
+fresh complete normal/shuffled suites, metadata/audit/aggregate and applicable
+avatar checks, reviews/threads and current strict no-bypass protection, then use
+regular SHA-bound merge only after predecessor deployment success. Automation
+`Automation_38e6d990e1f08191ab61d12a19909f16` continues through this new increment.
+No manual deployment, production data, real notifications or relay changes.
+Final combined regression run: 78 checks passed, including the five browser
+journeys above; six separate new scope checks also passed. Both JUnit reports
+have no failures, errors or skips. Working changes are ready for the stacked PR.
