@@ -407,14 +407,14 @@ def test_http_pagination_preserves_search_and_export_is_complete(app_mod, viewer
     public = seed_many(conn, user, unit, 36, subject='Review café & follow-up')
     first = viewer.get('/documents', params={'queue': 'OUT', 'q': 'café & follow-up'})
     assert first.status_code == 200
-    links = re.findall(r'href="/documents/(\d+)"', first.text)
+    links = re.findall(r'href="/documents/(\d+)(?:\?[^" ]*)?"', first.text)
     assert len(links) == 30
     assert '36 matching records you can access' in first.text
     older = html.unescape(re.search(r'href="([^"]+)" rel="next"', first.text)[1])
     params = parse_qs(urlsplit(older).query)
     assert params['q'] == ['café & follow-up'] and params['queue'] == ['OUT']
     second = viewer.get(older)
-    assert len(re.findall(r'href="/documents/(\d+)"', second.text)) == 6
+    assert len(re.findall(r'href="/documents/(\d+)(?:\?[^" ]*)?"', second.text)) == 6
     assert 'rel="next"' not in second.text
     assert 'Newest records' in second.text
     def no_unused_bodies(*args, **kwargs):

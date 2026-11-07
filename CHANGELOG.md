@@ -1,3 +1,7 @@
+## 10.08 — November 7, 2026
+
+- Return from a document to your queue, search and page, including after saving an action.
+
 ## 10.07 — November 7, 2026
 
 - Add request forms on demand while keeping populated requests visible.

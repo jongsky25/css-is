@@ -1,6 +1,6 @@
 {% extends "documents/base.html" %}
 {% block documents_content %}
-<p><a href="/documents/{{ doc.id }}">← Back to {{ doc.number }}</a></p>
+<p><a href="{{ document_url('/documents/' ~ doc.id) }}">← Back to {{ doc.number }}</a></p>
 <h2>Page notes and pen marks · {{ doc.subject }}</h2>
 <p>File version #{{ file_version.id }} · {{ file_version.role }} · {{ file_version.fingerprint or 'No confirmed exact version' }}</p>
 <p>Page notes are tied to this file version. For pen marks, select your local copy of the same PDF. The file stays in your browser; the app checks its SHA-256 against the exact Drive version before saving marks.</p>
@@ -10,7 +10,7 @@
 <p>Annotations are kept with the selected version; a new file version needs its own review.</p></section>
 {% if can_annotate %}
 <section class="doc-card"><h3>Add a page note</h3>
-<form method="post" action="/documents/{{ doc.id }}/annotate/{{ file_version.id }}">
+<form method="post" action="{{ document_url('/documents/' ~ doc.id ~ '/annotate/' ~ file_version.id) }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}">
 <input type="hidden" name="kind" value="note">
 <label>Page number<input name="page_number" type="number" min="1" max="500" required></label>

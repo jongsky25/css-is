@@ -114,7 +114,11 @@ def test_real_grid_remote_sort_filters_columns_and_safe_record_links(grid_page):
     page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('page 2 of 2')")
     assert page.locator('.tabulator-row').count() == 6
     page.locator('.tabulator-row a').first.click()
-    page.wait_for_url(re.compile(r'/documents/\d+$'))
+    page.wait_for_url(re.compile(r'/documents/\d+\?return_to='))
+    page.get_by_role('link', name='Back to register').click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('page 2 of 2')")
+    assert page.locator('.tabulator-row').count() == 6
+    assert '#registry-row-' in page.url
 
 
 def test_failed_refresh_removes_interactive_rows_and_can_retry(grid_page):
@@ -453,3 +457,40 @@ def test_grouped_workflow_global_counts_pages_saved_view_csv_and_reset(grid_page
     assert page.locator('.tabulator-group').count() == 0
     assert page.locator('#registry-group-summary').inner_text() == ''
     assert download_view(page)[0][0] == 'Number'
+
+
+def test_return_restores_applied_filters_sort_and_escapes_search(grid_page):
+    page, _ = grid_page
+    page.goto('http://office.test/documents?q=Register')
+    open_grid(page)
+    page.locator('[name=status]').select_option('in_action')
+    page.get_by_role('button', name='Apply filters', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('17 matching records')")
+    page.select_option('#registry-sort', 'due_date:asc')
+    page.wait_for_function("document.querySelector('.tabulator-row [tabulator-field=due_date]').textContent === '2026-11-02'")
+    first=page.locator('.tabulator-row a').first
+    label=first.inner_text()
+    first.click()
+    page.get_by_role('link', name='Back to register').click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('17 matching records')")
+    assert page.locator('[name=status]').input_value() == 'in_action'
+    assert page.locator('#registry-sort').input_value() == 'due_date:asc'
+    assert page.locator('.tabulator-row a').first.inner_text() == label
+    assert 'q=Register' in page.url
+
+
+def test_standard_return_without_javascript_keeps_older_page(grid_page):
+    page, _ = grid_page
+    # Disable scripts before navigation: native links and fragments still work.
+    session=page.context.new_cdp_session(page)
+    session.send('Emulation.setScriptExecutionDisabled', {'value': True})
+    page.goto('http://office.test/documents?q=Register')
+    page.get_by_role('link', name='Older documents', exact=True).click()
+    origin=page.url
+    link=page.locator('#registry-standard tbody a').first
+    label=link.inner_text()
+    link.click()
+    page.get_by_role('link', name='Back to register').click()
+    assert page.url.split('#')[0] == origin
+    assert page.locator('#registry-standard tbody a').first.inner_text() == label
+    assert '#document-row-' in page.url
