@@ -75,6 +75,18 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Queue update — November 7, 2026, 00:14 UTC.** #593 deployed successfully:
+workflow 42309730784 passed verification, deploy and diagnostics. #594 at
+`0154206` passed all five CI checks in 42309778160; no unresolved review threads,
+active strict/no-bypass main rules verified. #594 has now merged. All authorized
+PRs #588–#594 are merged; the final 10.04 guarded deployment still needs successful
+verification, backup/version checks, deployment and diagnostics before completion.
+Keep the existing task enabled until that outcome is verified, then disable it.
+No new feature/release is authorized. This post-merge handoff is saved separately
+on `docs/ocr-release-queue-handoff`, not pushed to main or the merged feature PR.
+Drive relay activation remains manual and unclaimed.
+
+
 **Queue update — November 6, 2026, 23:08 UTC.** #593 passed all five checks
 at `cc6427c` (CI 42295427614), including both full test orders and Required checks.
 With #592 deployed, no unresolved threads and active strict/no-bypass main rules
