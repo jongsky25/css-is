@@ -239,20 +239,61 @@ def test_direction_change_requires_review_without_losing_entries(registration_pa
     assert len(state['posts']) == 1
 
 
-def test_manual_registration_without_scripts_needs_no_source(registration_page):
-    page, state, conn = registration_page
-    session=page.context.new_cdp_session(page)
-    session.send('Emulation.setScriptExecutionDisabled', {'value': True})
-    page.reload()
-    assert page.locator('#intake-details').is_visible()
-    assert not page.locator('#intake-source-options').evaluate('(element) => element.open')
-    page.locator('[name=direction]').select_option('IN')
-    page.locator('[name=subject]').fill('Manual no-script incoming')
-    page.locator('[name=type]').fill('memo')
-    page.locator('[name=confirmed]').check()
-    submit(page)
-    page.wait_for_url(re.compile(r'/documents/\d+$'))
-    row=conn.execute('SELECT subject,direction FROM document').fetchone()
-    assert row[0]=='Manual no-script incoming'
-    assert row[1]=='IN'
-    assert len(state['posts'])==1
+def test_manual_registration_without_scripts_needs_no_source(browser, app_mod, viewer):
+    # Browser routing does not reliably intercept redirected native POSTs. A loopback
+    # bridge retains real HTTP/303 behavior while all app requests use synthetic data.
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from threading import Thread
+    conn = st.connect(app_mod.DB)
+    st.set_setting(conn, 'documents.enabled', '1')
+    posts, redirects = [], []
+
+    class Bridge(BaseHTTPRequestHandler):
+        def dispatch(self):
+            body = self.rfile.read(int(self.headers.get('Content-Length', '0')))
+            if self.command == 'POST':
+                posts.append(self.path)
+            result = viewer.request(self.command, self.path, content=body,
+                headers={'Content-Type': self.headers.get('Content-Type', '')}, follow_redirects=False)
+            if result.is_redirect:
+                redirects.append((result.status_code, result.headers['location']))
+            self.send_response(result.status_code)
+            for key, value in result.headers.items():
+                if key.lower() not in ('content-length', 'content-encoding', 'transfer-encoding', 'set-cookie'):
+                    self.send_header(key, value)
+            self.send_header('Content-Length', str(len(result.content)))
+            self.end_headers()
+            self.wfile.write(result.content)
+        do_GET = dispatch
+        do_POST = dispatch
+        def log_message(self, *args):
+            pass
+
+    server = ThreadingHTTPServer(('127.0.0.1', 0), Bridge)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    context = browser.new_context(java_script_enabled=False)
+    page = context.new_page()
+    page.route('**/*', lambda route: route.continue_() if urlsplit(route.request.url).hostname == '127.0.0.1' else route.abort())
+    try:
+        page.goto(f'http://127.0.0.1:{server.server_port}/documents/new')
+        assert page.locator('#intake-details').is_visible()
+        assert page.locator('#intake-source-options').get_attribute('open') is None
+        page.locator('[name=direction]').select_option('IN')
+        page.locator('[name=subject]').fill('Manual no-script incoming')
+        page.locator('[name=type]').fill('memo')
+        page.locator('[name=confirmed]').check()
+        submit(page)
+        page.wait_for_url(re.compile(r'/documents/\d+$'))
+        row = conn.execute('SELECT subject,direction FROM document').fetchone()
+        assert tuple(row) == ('Manual no-script incoming', 'IN')
+        assert posts == ['/documents/new']
+        assert redirects == [(303, urlsplit(page.url).path)]
+        assert conn.execute('SELECT COUNT(*) FROM document').fetchone()[0] == 1
+        assert conn.execute('SELECT COUNT(*) FROM document_registration').fetchone()[0] == 1
+    finally:
+        context.close()
+        server.shutdown()
+        thread.join(timeout=5)
+        server.server_close()
+        conn.close()
