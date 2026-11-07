@@ -58,7 +58,8 @@ def registration_page(browser, app_mod, viewer):
             headers={k: v for k, v in response.headers.items() if k.lower() not in ('content-length', 'content-encoding', 'set-cookie')})
     page.route('**/*', serve)
     page.goto('http://office.test/documents/new')
-    page.locator('#intake-skip').click()
+    assert page.locator('#intake-details').is_visible()
+    assert not page.locator('#intake-source-options').evaluate('(element) => element.open')
     page.locator('[name=subject]').fill('Browser retry correspondence')
     page.locator('[name=type]').fill('memorandum')
     page.locator('#intake-approve').click()
@@ -183,6 +184,7 @@ def test_understanding_source_change_preserves_corrections_but_requires_review(r
     page.get_by_role('button',name='Add request',exact=True).click()
     page.locator('[name=need_0_action]').fill('Manually corrected request')
     page.locator('[name=need_0_confirmed]').check()
+    page.locator('#intake-source-options > summary').click()
     page.locator('#intake-source').fill('https://example.invalid/changed.pdf')
     assert page.locator('[name=need_0_action]').input_value()=='Manually corrected request'
     assert not page.locator('[name=need_0_confirmed]').is_checked()
@@ -211,3 +213,87 @@ def test_structured_request_suggestion_reviews_and_saves_deadline(registration_p
     assert saved['need_0_deadline']=='2026-11-20'
     assert saved['need_0_submission']=='via email to reports@example.test'
     assert conn.execute('SELECT due_date FROM document').fetchone()[0] is None
+
+
+def test_direction_change_requires_review_without_losing_entries(registration_page):
+    page, state, conn = registration_page
+    page.set_viewport_size({'width': 390, 'height': 844})
+    page.locator('[name=direction]').select_option('OUT')
+    assert page.locator('#intake-work').is_hidden()
+    assert page.locator('#intake-register').is_hidden()
+    assert not page.locator('[name=confirmed]').is_checked()
+    assert page.locator('[name=subject]').input_value() == 'Browser retry correspondence'
+    assert not state['posts']
+    page.locator('#intake-source-options > summary').click()
+    assert page.locator('#intake-pdf').is_visible()
+    page.locator('#intake-source-options > summary').click()
+    assert page.locator('[name=subject]').input_value() == 'Browser retry correspondence'
+    page.locator('#intake-approve').click()
+    page.locator('[name=confirmed]').check()
+    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+    submit(page)
+    page.wait_for_url(re.compile(r'/documents/\d+$'))
+    row=conn.execute('SELECT direction,status FROM document').fetchone()
+    assert row[0] == 'OUT'
+    assert row[1] != 'released'
+    assert len(state['posts']) == 1
+
+
+def test_manual_registration_without_scripts_needs_no_source(browser, app_mod, viewer):
+    # Browser routing does not reliably intercept redirected native POSTs. A loopback
+    # bridge retains real HTTP/303 behavior while all app requests use synthetic data.
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from threading import Thread
+    conn = st.connect(app_mod.DB)
+    st.set_setting(conn, 'documents.enabled', '1')
+    posts, redirects = [], []
+
+    class Bridge(BaseHTTPRequestHandler):
+        def dispatch(self):
+            body = self.rfile.read(int(self.headers.get('Content-Length', '0')))
+            if self.command == 'POST':
+                posts.append(self.path)
+            result = viewer.request(self.command, self.path, content=body,
+                headers={'Content-Type': self.headers.get('Content-Type', '')}, follow_redirects=False)
+            if result.is_redirect:
+                redirects.append((result.status_code, result.headers['location']))
+            self.send_response(result.status_code)
+            for key, value in result.headers.items():
+                if key.lower() not in ('content-length', 'content-encoding', 'transfer-encoding', 'set-cookie'):
+                    self.send_header(key, value)
+            self.send_header('Content-Length', str(len(result.content)))
+            self.end_headers()
+            self.wfile.write(result.content)
+        do_GET = dispatch
+        do_POST = dispatch
+        def log_message(self, *args):
+            pass
+
+    server = ThreadingHTTPServer(('127.0.0.1', 0), Bridge)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    context = browser.new_context(java_script_enabled=False)
+    page = context.new_page()
+    page.route('**/*', lambda route: route.continue_() if urlsplit(route.request.url).hostname == '127.0.0.1' else route.abort())
+    try:
+        page.goto(f'http://127.0.0.1:{server.server_port}/documents/new')
+        assert page.locator('#intake-details').is_visible()
+        assert page.locator('#intake-source-options').get_attribute('open') is None
+        page.locator('[name=direction]').select_option('IN')
+        page.locator('[name=subject]').fill('Manual no-script incoming')
+        page.locator('[name=type]').fill('memo')
+        page.locator('[name=confirmed]').check()
+        submit(page)
+        page.wait_for_url(re.compile(r'/documents/\d+$'))
+        row = conn.execute('SELECT subject,direction FROM document').fetchone()
+        assert tuple(row) == ('Manual no-script incoming', 'IN')
+        assert posts == ['/documents/new']
+        assert redirects == [(303, urlsplit(page.url).path)]
+        assert conn.execute('SELECT COUNT(*) FROM document').fetchone()[0] == 1
+        assert conn.execute('SELECT COUNT(*) FROM document_registration').fetchone()[0] == 1
+    finally:
+        context.close()
+        server.shutdown()
+        thread.join(timeout=5)
+        server.server_close()
+        conn.close()

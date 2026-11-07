@@ -2,7 +2,11 @@
 {% block documents_content %}<h2>Receive or prepare correspondence</h2>
 <p>Choose what the correspondence is for, check its details, then register it. Permanent incoming/outgoing numbers are assigned only when registration succeeds. You can enter everything manually without a scan.</p>
 {% if enabled %}<form method="post" action="/documents/new" class="doc-card" id="intake-form" data-ux-ignore data-telemetry-ignore><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="intake" value="guided"><input type="hidden" name="submission_id" value="{{ submission_id }}">
-<h3>1. Choose a file or link</h3>
+<h3>1. What are you registering?</h3>
+<label>Direction<select name="direction">{% for value,label in [('IN','Incoming'),('OUT','Outgoing draft')] %}<option value="{{ value }}" {% if value==values.get('direction','IN') %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+<p>Incoming records something received by the office. Outgoing draft prepares correspondence for the existing review and release process.</p>
+<p>Enter the details below, or read a source to help fill them.</p>
+<details id="intake-source-options" class="doc-card"{% if preview %} open{% endif %}><summary>Read a PDF or link (optional)</summary>
 {% if preview %}<details open class="doc-card"><summary>Suggestions from the linked document</summary><p>Compare these with the scan before entering or changing the details below.</p><dl>{% for key,value in preview.suggestions.items() if value %}<dt>{{ key|replace('_',' ') }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>{% for excerpt in preview.excerpts %}<blockquote>{{ excerpt }}</blockquote>{% endfor %}{% for warning in preview.warnings %}<p>{{ warning }}</p>{% endfor %}</details>{% endif %}
 <p>Select a PDF to read its first page automatically. If it is a DTRAK routing slip, we also check the next page for the document date. The file is read temporarily and is not saved.</p>
 <label>PDF file<input type="file" id="intake-pdf" accept="application/pdf,.pdf"></label>
@@ -26,10 +30,10 @@
 <button type="button" id="intake-skip">Skip and enter manually</button>
 <p id="intake-read-status" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></p>
 <details id="intake-suggestions" aria-label="Reading notes" hidden></details>
-<noscript>PDF reading requires JavaScript. You can enter all correspondence details manually below.</noscript>
-<section id="intake-details"><h3>2. Review the details</h3><p>Fields read from the source are filled below. Check and edit them, then approve these details.</p>
+<noscript>PDF reading requires JavaScript. You can enter all correspondence details manually below.</noscript></details>
+<section id="intake-details"><h3>2. Enter or review the details</h3><p>Enter the details manually or check fields filled from a source. Approve these details when ready.</p>
 {{ field('drive_url','Attach an existing Drive reference link (optional; saved on registration)',type='url',value=values.get('drive_url',''),required=false) }}
-<label>Direction<select name="direction">{% for value,label in [('IN','Incoming'),('OUT','Outgoing draft')] %}<option value="{{ value }}" {% if value==values.get('direction','IN') %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+
 {{ text('subject','Subject',values.get('subject','')) }}{{ field('type','Document type',value=values.get('type','')) }}{{ field('sender','Sender / originating office',value=values.get('sender',''),required=false) }}
 <label>Concerned unit<select name="unit_id"><option value="">Not yet determined</option>{% for unit in units %}<option value="{{ unit.id }}" {% if unit.id==(values.get('unit_id',0)|int) %}selected{% endif %}>{{ unit.name }}</option>{% endfor %}</select></label>
 {{ field('document_date','Document date','date',values.get('document_date',''),false) }}{{ field('received_at','Received at (Manila)','datetime-local',values.get('received_at',''),false) }}{{ field('due_date','Explicit deadline stated in the source','date',values.get('due_date',''),false) }}
@@ -55,6 +59,6 @@
 <p>Keep this page open until the result is confirmed. If the connection drops, entered values stay on this page and retries use the same submission. No file or form draft is stored in your browser.</p>
 <a href="/documents?queue=mine">Check my document register</a>
 </section></form>
-<script src="/static/js/work-intake.js" defer></script>
+<script src="/static/js/work-intake.js?v=10.09" defer></script>
 <script src="/static/js/document-registration.js" defer></script>
 <script type="module" src="/static/js/pdf-page-intake.mjs"></script>{% endif %}{% endblock %}

@@ -1,4 +1,4 @@
-// Verify transient reads bypass worker body forwarding without changing other POSTs.
+// Verify transient reads and registration bypass worker replay handling.
 const assert = require('assert');
 const vm = require('vm');
 const fs = require('fs');
@@ -18,8 +18,7 @@ vm.runInNewContext(fs.readFileSync('static/js/sw.js', 'utf8'), {
  let response;
  handlers.fetch({request: {url: origin + '/documents/new', method: 'POST', clone() {return this;}},
   respondWith(value) {response = value;}});
- assert(response);
- await response;
- assert.equal(forwarded, 1);
- console.log('Temporary reads bypass worker; normal submissions retain existing handling.');
+ assert.equal(response, undefined);
+ assert.equal(forwarded, 0);
+ console.log('Temporary reads and registration bypass worker replay handling.');
 })().catch(error => {console.error(error); process.exitCode = 1;});

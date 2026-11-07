@@ -5,9 +5,10 @@ const root = path.resolve(__dirname, '../..');
 const html = execFileSync('python', ['-c', `
 from jinja2 import Environment, FileSystemLoader
 import work_intake
+import documents_understanding
 env = Environment(loader=FileSystemLoader('templates'), autoescape=True)
 source = open('templates/documents/new.html').read().replace('{% extends \"documents/base.html\" %}', '')
-print(env.from_string(source).render(enabled=True, csrf='token', values={}, work_enabled=False, scenarios=work_intake.SCENARIOS, preview=None, people=[], units=[]))
+print(env.from_string(source).render(enabled=True, csrf='token', values={}, work_enabled=False, scenarios=work_intake.SCENARIOS, preview=None, people=[], units=[], focus_areas=documents_understanding.FOCUS_AREAS))
 `], {cwd:root, encoding:'utf8'});
 const assert = require('assert');
 (async () => {
@@ -26,10 +27,11 @@ const assert = require('assert');
    return route.fulfill({json:{suggestions:{sender:'Training Office'},evidence:{},warnings:[],notice:'Review values',
     reading:{page_count:1,ocr_pages:[1]},text_preview:[{page:1,text:'<script>window.injected=true</script>\nFrom: Training Office',truncated:false}]}}).catch(()=>{});
   }
-  if(/\.m?js$/.test(route.request().url())) return route.fulfill({body:'',contentType:'application/javascript'});
+  if(/\.m?js(?:\?.*)?$/.test(route.request().url())) return route.fulfill({body:'',contentType:'application/javascript'});
   return route.fulfill({body:html,contentType:'text/html'});
  });
  await page.goto('http://intake.test/');
+  await page.locator('#intake-source-options > summary').click();
  await page.addScriptTag({path:path.join(root,'static/js/work-intake.js')});
  const legacyRead = async () => { await page.locator('#intake-read').evaluate(e=>e.hidden=false); await page.locator('#intake-read').click(); };
  const file=page.locator('#intake-pdf'), status=page.locator('#intake-read-status');

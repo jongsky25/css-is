@@ -2,6 +2,7 @@
 from urllib.parse import urlsplit
 
 import pytest
+from playwright.sync_api import expect
 
 from tests.test_document_guidance_browser import browser
 from tests.test_document_guidance_routes import detail_record, Targets
@@ -22,8 +23,8 @@ def test_register_filters_and_navigation_respect_roles(detail_record, viewer, ad
     assert all(target in targets.ids for target in targets.links)
 
 
-@pytest.mark.parametrize('width,scripts', [(390, True), (1280, True), (390, False)])
-def test_workspace_current_action_and_supporting_sections(browser, detail_record, viewer, width, scripts):
+@pytest.mark.parametrize('width,scripts,reveal_delay', [(390, True, 0), (1280, True, 0), (390, False, 0), (1280, True, 150)])
+def test_workspace_current_action_and_supporting_sections(browser, detail_record, viewer, width, scripts, reveal_delay):
     conn, user, doc, url = detail_record
     context = browser.new_context(viewport={'width': width, 'height': 844}, java_script_enabled=scripts)
     page = context.new_page()
@@ -41,7 +42,13 @@ def test_workspace_current_action_and_supporting_sections(browser, detail_record
             route.abort()
             return
         response = viewer.get(parts.path + ('?' + parts.query if parts.query else ''), follow_redirects=False)
-        route.fulfill(status=response.status_code, body=response.content,
+        body = response.content
+        if reveal_delay and parts.path.endswith('/document_action_link.js'):
+            # Model a queued hashchange handler without changing the application.
+            assert "addEventListener('hashchange', reveal);" in response.text
+            body = response.text.replace("addEventListener('hashchange', reveal);",
+                f"addEventListener('hashchange', () => setTimeout(reveal, {reveal_delay}));").encode()
+        route.fulfill(status=response.status_code, body=body,
                       headers={key: value for key, value in response.headers.items()
                                if key.lower() not in ('content-length', 'content-encoding', 'set-cookie')})
 
@@ -60,7 +67,9 @@ def test_workspace_current_action_and_supporting_sections(browser, detail_record
             assert page.locator('#document-current-action #document-action-attach').count() == 1
             form.locator('[name=url]').fill('https://drive.google.com/file/d/syntheticdraft123/view')
             page.get_by_role('navigation', name='This document').get_by_role('link', name='Files', exact=True).click()
-            assert page.locator('#document-files').evaluate('element => element.open')
+            # Fragment navigation and its hashchange callback are separate browser tasks.
+            expect(page.locator('#document-files')).to_have_attribute('open', '')
+            expect(page.locator('#document-files > summary')).to_be_focused()
             assert not page.locator('.doc-secondary').evaluate('element => element.open')
             page.get_by_role('navigation', name='This document').get_by_role('link', name='Next action', exact=True).click()
             assert form.locator('[name=url]').input_value() == 'https://drive.google.com/file/d/syntheticdraft123/view'
