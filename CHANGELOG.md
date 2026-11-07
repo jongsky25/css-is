@@ -1,3 +1,7 @@
+## 10.10 — November 7, 2026
+
+- Find available Inbox reviews or resume your active reviews with full-queue counts.
+
 ## 10.09 — November 7, 2026
 
 - Choose incoming or outgoing correspondence first and enter details without a file-reading step.
