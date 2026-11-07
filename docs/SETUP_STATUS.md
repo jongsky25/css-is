@@ -4126,6 +4126,93 @@ sequence. Inspect actual head/main, tests, metadata/audit/aggregate and applicab
 avatar checks, reviews/threads and strict no-bypass protection immediately before
 each SHA-bound merge. Verify each predecessor deployment succeeds before merging
 its successor. Retarget/reconcile each next branch to main without losing work.
+
+## Review next stays in scope 10.12 — November 7, 2026
+
+Latest owner instruction “do the next and queue in the merging” authorizes this
+next increment after #602, including guarded merge/deployment. Implemented on
+`feat/documents-review-next-scope`, based on #602 `670364e`.
+See [review-next scope](DOCUMENT_REVIEW_NEXT_SCOPE.md). Register and review next
+uses the originating Inbox status/search/availability across the full queue,
+skips other staff claims, and returns to the same filtered Inbox when no next
+review can be opened. Existing registration and exclusive claim safeguards remain.
+No subsequent increment is authorized for merge.
+
+Six new service/route checks and five final browser journeys passed, including
+phone with/without JavaScript and concurrent claim handling. Initial browser
+checks exposed a tuple/dict return mismatch in the new selector; fixed before
+these final checks. Version 10.12 metadata and whitespace checks pass. Full PR CI
+is still required after publication and again after reconciliation with main.
+
+#596 deployed successfully. #597 merged `0ee1cff`; deployment `42348890661` remains
+running. #598 head `fbcc376` fresh CI `42348932141` remains running. #599 `b484970`,
+#600 `9234926`, #601 `85b3f72` and #602 `670364e` are ready in the existing sequence.
+Reconcile/retarget each successor with main after its predecessor merges, require
+fresh complete normal/shuffled suites, metadata/audit/aggregate and applicable
+avatar checks, reviews/threads and current strict no-bypass protection, then use
+regular SHA-bound merge only after predecessor deployment success. Automation
+`Automation_38e6d990e1f08191ab61d12a19909f16` continues through this new increment.
+No manual deployment, production data, real notifications or relay changes.
+Final combined regression run: 78 checks passed, including the five browser
+journeys above; six separate new scope checks also passed. Both JUnit reports
+have no failures, errors or skips. Working changes are ready for the stacked PR.
+
+## Merge queue advancement and shared browser-test repair — November 7, 2026
+
+#598 merged as `043c9069927e4dc447a3afd1083e6ec3cf091eda` after fresh CI
+`42348932141` passed both full orders (10,809 tests each, no failures/skips),
+metadata/audit/aggregate checks passed, current main/head and clean reviews/threads
+were rechecked, and strict active protection with no bypass actors was verified.
+#597 deployment `42348890661` completed successfully before that merge.
+#598 guarded deployment `42362949336` is now running. #599 was retargeted to main
+and reconciled to `e3e6fb113408b0f4cc4f9be1eb9ce118215b495d`; fresh CI
+`42362957347` is running. Do not merge #599 before both gates complete successfully.
+
+Diagnosed #600's normal/shuffled failures and inspected normal logs for #601–603:
+the same no-script registration browser test left the synthetic intercepted host
+on its native POST redirect. Other normal-order tests passed: 10,823 / 10,828 /
+10,834 / 10,842 respectively. Replaced only that test's transport with a loopback
+HTTP bridge to the synthetic TestClient, JavaScript disabled from context creation.
+It retains and strengthens actual 303 destination, one POST, one document and one
+registration assertions. Ten registration browser checks passed; JUnit has no
+failures/errors/skips. See the repair note in DOCUMENT_REGISTRATION_ENTRY.md.
+Repair `b8048ad` is pushed on #600, merged into #601 `f88cdb8`, #602 `22622ff`, and
+this #603 branch. Fresh full CI is required; old failing heads are superseded.
+
+Authorization remains through #603 only. After #603 merges and its guarded
+deployment succeeds, prepare `docs/DOCUMENTS_NEXT_PHASE_HANDOFF.md` from verified
+main on a dedicated documentation review branch, update this status there, push
+and open a draft PR. Include shipped baseline/evidence, process/code/test map,
+prioritized My desk counts/filters and request-execution integration plans,
+synthetic staff usability study protocol/metrics, acceptance criteria, unresolved
+choices, release safeguards and a copy-ready new-chat starter with exact saved
+branch/commit and links. This authorizes handoff/planning, not future feature
+implementation/merge, production-data testing, or staff invitations. Do not merge
+the handoff PR automatically. Keep automation
+`Automation_38e6d990e1f08191ab61d12a19909f16` active until all authorized deployments
+and the remotely saved handoff are complete, or a user-only blocker needs action.
+
+## Queue advanced through return context merge — November 7, 2026
+
+#598 guarded deployment `42362949336` completed successfully. #599 merged as
+`1bb67b198c2a4515377e0f86cd4ebbfb0c66ce30` from verified head
+`e3e6fb113408b0f4cc4f9be1eb9ce118215b495d`. CI `42362957347` passed both
+complete orders (10,822 tests each with no failures/skips), metadata, dependency
+audit and aggregate Required checks. Immediately before merge, current main/head,
+clean reviews/unresolved-thread state and active strict no-bypass protection were
+verified; no avatar acceptance path was changed. Its guarded deployment
+`42371458688` is queued/running and must succeed before the next merge.
+
+#600 retargeted and reconciled with main at
+`0bc066eec728eff890a8ccabff81064bd95b0b88`; require its fresh full CI.
+Repaired stacked heads #601 `f88cdb8`, #602 `22622ff` and #603 `5a87bc5` each
+passed all five checks at this inspection. These successes do not replace fresh
+checks after their later main reconciliation. This documentation update gives
+#603 a newer head and fresh CI as well. No new feature work was introduced.
+
+Continue #600 → #601 → #602 → #603 under all existing release/deployment gates,
+then publish the requested next-phase documentation handoff from verified main.
+No authorization extends to merging that handoff PR or implementing later phases.
 ## Queue recovery checkpoint — November 7, 2026
 
 This checkpoint supersedes earlier queue cutoffs: owner authorization extends
@@ -4151,3 +4238,61 @@ The existing automation owns continuation. After #603 deployment succeeds, save
 `docs/DOCUMENTS_NEXT_PHASE_HANDOFF.md` on a dedicated review branch and open a
 draft documentation PR for My desk counts/filters, request-execution integration
 and synthetic staff usability planning; no later implementation is authorized.
+
+Recovery action: original push workflow 42371458688 was retried in full (attempt 2),
+with all gates retained. Test repair f8e9c72 is saved on #600 and propagated to
+#601 532f130, #602 3358a7f and this branch. Fresh CI is pending on these heads.
+
+## Registration merged; Inbox reconciliation — November 7, 2026
+
+#599 guarded deployment 42371458688 attempt 2 completed successfully, including
+post-deploy diagnostics. #600 merged as
+`55ffa5e598ad7d1e9c2a802ba5f4b685cd2c329f` from
+`f8e9c72e16183b8ab5087411ae2d882187599d60` after both complete CI orders
+passed 10,825 tests with no failures/skips, metadata/audit/Required checks passed,
+and current head/main, reviews/threads and active strict no-bypass protection
+were reverified. No avatar acceptance paths changed. Guarded deployment
+[42381842494](https://github.com/jongsky25/css-is/actions/runs/42381842494)
+must complete successfully before merging #601.
+
+#601 retargeted/reconciled to main at
+`87d19da15fd33d780e0886096466ccc85eb4ef81`; fresh full CI
+[42381850727](https://github.com/jongsky25/css-is/actions/runs/42381850727)
+is queued. #602 and #603 remain stacked and passed their prior full CI; each
+still needs reconciliation and fresh checks after its predecessor merges.
+Continue sequentially through #603, then publish the authorized documentation
+handoff draft. Existing automation remains responsible for guarded continuation.
+
+## Inbox CI stall investigation — November 7, 2026
+
+#600 guarded deployment 42381842494 completed successfully including diagnostics.
+#601 CI 42381850727 attempt 1 passed normal tests, metadata and dependency audit,
+but shuffled testing stopped after 5,328 reported completions and hit the
+75-minute job limit. The five-minute stack dump shows Playwright waiting and an
+idle loopback HTTP server; there is no assertion failure or completed JUnit.
+Required checks correctly failed. This is not release readiness.
+
+Collected the exact #601 head 87d19da shuffled order (seed 311, 10,830 tests).
+The following 72-test reporting interval contains two existing calendar browser
+journeys. Running that interval in the same order against isolated fixtures
+passed all 72 tests in 30.41s, with no failures/errors/skips. This does not prove
+the full-suite hang's cause; cumulative browser/runner state remains possible.
+No application/test/timeout changes were made. Retried the entire original CI
+42381850727 as attempt 2 with all gates intact. If the stall recurs, investigate
+the repeated location and improve diagnostics rather than repeatedly rerunning.
+#601 remains unmerged; #602–603 still await sequential reconciliation and fresh
+CI. The authorized post603 documentation handoff remains outstanding.
+
+## Inbox availability merged — November 7, 2026
+
+#601 CI 42381850727 attempt 2 passed both full orders: 10,830 tests each,
+no failures/skips, with metadata, dependency audit and aggregate checks passing.
+The previous browser stall did not recur; its cause remains unproven. After
+rechecking main/head, reviews/threads and active strict no-bypass protection,
+#601 merged from 87d19da15fd33d780e0886096466ccc85eb4ef81 as
+`65bde2751ebb40f6b2cb1acea8c2ca3d8796856c`. #600 deployment had completed
+successfully. #601 guarded deployment 42398402696 is queued; verify its complete
+success before the next merge. #602 retargeted/reconciled to main at
+`facdb06f76c42ced8b187b1eb77d029f57a4cdb4`; require fresh full CI. #603 remains
+stacked and awaits the same reconciliation after #602 merges. Continue through
+#603 deployment and the authorized next-phase documentation draft handoff only.

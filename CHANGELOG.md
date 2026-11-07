@@ -1,3 +1,8 @@
+## 10.12 — November 7, 2026
+
+- Keep Register and review next within the current Inbox search and filters.
+- Return to that view when no matching review can be opened.
+
 ## 10.11 — November 7, 2026
 
 - Search Inbox file names and email subjects with matching counts and retained review filters.

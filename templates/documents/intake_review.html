@@ -43,6 +43,7 @@
 <button name="action" value="release" formnovalidate>Save and return to queue</button>
 <details><summary>This scan needs attention</summary><label>Reason<textarea name="note" maxlength="1000"></textarea></label><button name="action" value="attention" formnovalidate>Request a clearer scan / flag a problem</button><button name="action" value="dismiss" formnovalidate>Dismiss duplicate or unrelated file</button><p>Dismissing retains the original file in Drive and its intake history.</p></details>
 <div class="doc-review-actions"><button name="action" value="save" formnovalidate>Save review</button><button class="doc-register" name="action" value="register">Register document</button><button class="doc-register" name="action" value="register_next">Register and review next</button></div>
+<p>Review next stays within your Inbox status, search and review filter. It skips active reviews held by other staff. If no matching review can be opened, you return to that Inbox view.</p>
 </fieldset></form></section></div>
 <script src="/static/js/document_intake_layout.js?v=7.11" defer></script>
 {% endblock %}
