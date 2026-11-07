@@ -4282,3 +4282,17 @@ No application/test/timeout changes were made. Retried the entire original CI
 the repeated location and improve diagnostics rather than repeatedly rerunning.
 #601 remains unmerged; #602–603 still await sequential reconciliation and fresh
 CI. The authorized post603 documentation handoff remains outstanding.
+
+## Inbox availability merged — November 7, 2026
+
+#601 CI 42381850727 attempt 2 passed both full orders: 10,830 tests each,
+no failures/skips, with metadata, dependency audit and aggregate checks passing.
+The previous browser stall did not recur; its cause remains unproven. After
+rechecking main/head, reviews/threads and active strict no-bypass protection,
+#601 merged from 87d19da15fd33d780e0886096466ccc85eb4ef81 as
+`65bde2751ebb40f6b2cb1acea8c2ca3d8796856c`. #600 deployment had completed
+successfully. #601 guarded deployment 42398402696 is queued; verify its complete
+success before the next merge. #602 retargeted/reconciled to main at
+`facdb06f76c42ced8b187b1eb77d029f57a4cdb4`; require fresh full CI. #603 remains
+stacked and awaits the same reconciliation after #602 merges. Continue through
+#603 deployment and the authorized next-phase documentation draft handoff only.
