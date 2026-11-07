@@ -51,11 +51,12 @@ def test_guidance_keyboard_link_reveals_and_focuses_existing_form(browser,detail
     try:
         page.goto('http://office.test'+url)
         target=page.locator(selector)
-        assert not target.evaluate('element => element.open')
+        if action == 'attach':
+            assert target.evaluate('element => element.open && element.parentElement.id === "document-current-action"')
         link=page.locator(link_selector)
         link.focus();link.press('Enter')
         page.wait_for_function("selector => document.activeElement === document.querySelector(selector + ' > summary')", arg=selector)
-        assert target.evaluate('element => element.open && element.closest(".doc-secondary").open')
+        assert target.evaluate('element => element.open && (!element.closest(".doc-secondary") || element.closest(".doc-secondary").open)')
         assert target.locator(field).is_visible()
         assert not posts
         assert target.locator('summary').evaluate('element => element.tabIndex') == 0

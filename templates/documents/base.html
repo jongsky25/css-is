@@ -1,22 +1,17 @@
 {% extends "dash_layout.html" %}
 {% block title %}Documents{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/documents.css?v=10.02">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/documents.css?v=10.05">{% endblock %}
 {% block content %}
 <div class="documents {% block documents_class %}{% endblock %}">
-<h1>Documents</h1>
-<nav aria-label="Document queues" class="doc-tabs">
-<a href="/documents/actions">My actions</a>
-<a href="/documents/dashboard">Workload dashboard</a>
-<a href="/documents?queue=mine">My document register</a>
-<a href="/documents?queue=mentions">Instructions for me</a>
-{% if intake_access %}<a href="/documents/intake">Intake</a>{% endif %}
-{% if is_director %}<a href="/documents?queue=instruction">For my instruction</a>{% endif %}
-<a href="/documents">All documents</a>
-<details><summary>More queues and settings</summary><div class="doc-tabs">
-{% for value,label in [('IN','Incoming'),('OUT','Outgoing'),('verification','For verification'),('gmail','From Gmail'),('gmail_review','Gmail: needs verification'),('review','For review'),('release','For release'),('unassigned','Unassigned')] %}<a href="/documents?queue={{ value }}">{{ label }}</a>{% endfor %}
-{% if workflow_admin %}<a href="/documents/rules">Rules and policies</a>{% endif %}
-{% if archive_admin %}<a href="/documents?queue=archived">Archive</a>{% endif %}
-</div></details></nav>
+{% set path=request.url.path %}
+<div class="doc-heading"><h1>Documents</h1>{% if enabled %}<a class="btn" href="/documents/new">New correspondence</a>{% endif %}</div>
+<nav aria-label="Documents" class="doc-tabs doc-primary-nav">
+<a href="/documents/actions" {% if path=='/documents/actions' %}aria-current="page"{% endif %}>My desk</a>
+{% if intake_access %}<a href="/documents/intake" {% if path.startswith('/documents/intake') %}aria-current="page"{% endif %}>Inbox</a>{% endif %}
+<a href="/documents" {% if path=='/documents' %}aria-current="page"{% endif %}>Register</a>
+<a href="/documents/dashboard" {% if path=='/documents/dashboard' %}aria-current="page"{% endif %}>Overview</a>
+{% if workflow_admin %}<a href="/documents/rules" {% if path=='/documents/rules' %}aria-current="page"{% endif %}>Settings</a>{% endif %}
+</nav>
 {% if not enabled %}<p class="doc-alert" role="status">Documents is not enabled. You can read records you have access to; new work and sending are disabled.</p>{% endif %}
 {% if error %}<p class="doc-alert" role="alert">{{ error }}</p>{% endif %}
 {% if submitted %}<details open><summary>Your submitted values</summary><dl>{% for k,v in submitted.items() if k not in ['csrf','revision'] %}<dt>{{ k|replace('_',' ') }}</dt><dd>{{ v }}</dd>{% endfor %}</dl><p>Reload the current record before resubmitting a stale action.</p></details>{% endif %}

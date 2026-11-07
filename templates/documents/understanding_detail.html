@@ -1,3 +1,3 @@
 {% include 'documents/request_overview.html' %}
-{% include 'documents/understanding_snapshot.html' %}
+{% if understanding_values %}<details><summary>Source requests and focus details</summary>{% include 'documents/understanding_snapshot.html' %}</details>{% endif %}
 {% if doc.direction=='IN' %}<p><a href="/documents/{{ doc.id }}/understanding">Review requests and focus areas / history</a></p>{% endif %}

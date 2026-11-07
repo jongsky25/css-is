@@ -43,7 +43,7 @@ def test_action_card_opens_the_right_current_control(browser,detail_record,viewe
             assert page.locator('#document-next').get_attribute('data-stage')=='review_authority'
         else:
             page.wait_for_function("selector => document.activeElement === document.querySelector(selector + ' > summary')",arg=selector)
-            assert page.locator(selector).evaluate('element => element.open && element.closest(".doc-secondary").open')
+            assert page.locator(selector).evaluate('element => element.open && (!element.closest(".doc-secondary") || element.closest(".doc-secondary").open)')
         assert not posts and not errors
         assert c.execute('SELECT revision FROM document WHERE id=?',(doc['id'],)).fetchone()[0]==doc['revision']
     finally:context.close()

@@ -75,6 +75,19 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 7, 2026: document navigation and workspace, candidate 10.05.**
+The user requested implementation after assessment of document-module friction.
+The first navigation/workspace increment is on `feat/documents-my-desk`:
+Documents opens My desk; queues consolidate in the register; current authorized
+forms appear beside the source; requests and assignments are grouped. See
+[experience scope and next increments](DOCUMENT_EXPERIENCE.md). Preserve all
+existing workflow/permission checks. No merge, production deployment or relay
+activation is authorized by this implementation request. 115 focused regressions and 14 final section-navigation checks passed (overlapping
+groups), with no skips. Save a draft PR and require full CI before any later
+release. Intake/registration simplification and queue-return context are subsequent
+increments recorded in the experience guide.
+
+
 **Queue update — November 6, 2026, 23:08 UTC.** #593 passed all five checks
 at `cc6427c` (CI 42295427614), including both full test orders and Required checks.
 With #592 deployed, no unresolved threads and active strict/no-bypass main rules

@@ -1,8 +1,10 @@
 {% extends "documents/base.html" %}
 {% block documents_content %}
-<h2>{{ 'Division follow-up' if view=='division' else 'My next steps' }}</h2>
+<h2>{{ 'Division follow-up' if view=='division' else 'My desk' }}</h2>
 <nav class="doc-tabs" aria-label="Action views">
 <a href="/documents/actions" {% if view=='mine' %}aria-current="page"{% endif %}>My next steps</a>
+<a href="/documents?queue=mentions">Mentions</a>
+{% if is_director %}<a href="/documents?queue=instruction">For my instruction</a>{% endif %}
 {% if division_access %}<a href="/documents/actions?view=division" {% if view=='division' %}aria-current="page"{% endif %}>Division follow-up</a>{% endif %}
 </nav>
 {% if view=='mine' %}
