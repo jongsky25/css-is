@@ -4156,3 +4156,38 @@ No manual deployment, production data, real notifications or relay changes.
 Final combined regression run: 78 checks passed, including the five browser
 journeys above; six separate new scope checks also passed. Both JUnit reports
 have no failures, errors or skips. Working changes are ready for the stacked PR.
+
+## Merge queue advancement and shared browser-test repair — November 7, 2026
+
+#598 merged as `043c9069927e4dc447a3afd1083e6ec3cf091eda` after fresh CI
+`42348932141` passed both full orders (10,809 tests each, no failures/skips),
+metadata/audit/aggregate checks passed, current main/head and clean reviews/threads
+were rechecked, and strict active protection with no bypass actors was verified.
+#597 deployment `42348890661` completed successfully before that merge.
+#598 guarded deployment `42362949336` is now running. #599 was retargeted to main
+and reconciled to `e3e6fb113408b0f4cc4f9be1eb9ce118215b495d`; fresh CI
+`42362957347` is running. Do not merge #599 before both gates complete successfully.
+
+Diagnosed #600's normal/shuffled failures and inspected normal logs for #601–603:
+the same no-script registration browser test left the synthetic intercepted host
+on its native POST redirect. Other normal-order tests passed: 10,823 / 10,828 /
+10,834 / 10,842 respectively. Replaced only that test's transport with a loopback
+HTTP bridge to the synthetic TestClient, JavaScript disabled from context creation.
+It retains and strengthens actual 303 destination, one POST, one document and one
+registration assertions. Ten registration browser checks passed; JUnit has no
+failures/errors/skips. See the repair note in DOCUMENT_REGISTRATION_ENTRY.md.
+Repair `b8048ad` is pushed on #600, merged into #601 `f88cdb8`, #602 `22622ff`, and
+this #603 branch. Fresh full CI is required; old failing heads are superseded.
+
+Authorization remains through #603 only. After #603 merges and its guarded
+deployment succeeds, prepare `docs/DOCUMENTS_NEXT_PHASE_HANDOFF.md` from verified
+main on a dedicated documentation review branch, update this status there, push
+and open a draft PR. Include shipped baseline/evidence, process/code/test map,
+prioritized My desk counts/filters and request-execution integration plans,
+synthetic staff usability study protocol/metrics, acceptance criteria, unresolved
+choices, release safeguards and a copy-ready new-chat starter with exact saved
+branch/commit and links. This authorizes handoff/planning, not future feature
+implementation/merge, production-data testing, or staff invitations. Do not merge
+the handoff PR automatically. Keep automation
+`Automation_38e6d990e1f08191ab61d12a19909f16` active until all authorized deployments
+and the remotely saved handoff are complete, or a user-only blocker needs action.
