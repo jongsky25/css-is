@@ -83,8 +83,9 @@ forms appear beside the source; requests and assignments are grouped. See
 [experience scope and next increments](DOCUMENT_EXPERIENCE.md). Preserve all
 existing workflow/permission checks. No merge, production deployment or relay
 activation is authorized by this implementation request. 115 focused regressions and 14 final section-navigation checks passed (overlapping
-groups), with no skips. Save a draft PR and require full CI before any later
-release. Intake/registration simplification and queue-return context are subsequent
+groups), with no skips; four final layout checks also passed. Saved as
+[draft PR #596](https://github.com/jongsky25/css-is/pull/596), implementation
+`e3f8a86`. Require full CI before any later release. Intake/registration simplification and queue-return context are subsequent
 increments recorded in the experience guide.
 
 
