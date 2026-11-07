@@ -1,0 +1,95 @@
+name: Avatar native handle buffer
+
+# The PR trigger validates initial setup before default-branch registration.
+# Once merged, Run workflow is available in GitHub's phone browser UI.
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened]
+    paths:
+      - .github/workflows/avatar-native-handle-buffer.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: avatar-cloud-native-handle-buffer
+  cancel-in-progress: false
+
+jobs:
+  diagnostic:
+    name: Native handle buffer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # Scope ptrace to the job container for its own synthetic renderer.
+    container:
+      image: python:3.12.14-trixie@sha256:4d1caded1f729ae443eb803f26ffde7b61e696aeaef62f099abb6dd6b14257c7
+      options: --cap-add=SYS_PTRACE
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out the frozen diagnostic harness
+        uses: actions/checkout@v4
+        with:
+          # Never check out product changes from the pull-request head.
+          ref: 76baed0e1236c089a57ae8b768e9292877aa9009
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install exact browser and hash-locked dependencies
+        run: |
+          set -euo pipefail
+          mkdir -p native-handles
+          exec > >(tee native-handles/setup.log) 2>&1
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            chromium=156.0.8078.47-1~deb13u1 \
+            chromium-common=156.0.8078.47-1~deb13u1 \
+            git procps binutils util-linux
+          python -m venv .venv
+          .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
+          .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-avatar-native.txt
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          mkdir -p /workspace/scratch/avatar-runtime/root/usr/lib/chromium
+          ln -s /usr/lib/chromium/chromium /workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium
+
+      - name: Check native buffer decoding and handle generations
+        run: |
+          set -euo pipefail
+          .venv/bin/python -m pytest -q \
+            tests/test_native_handle_buffer.py \
+            tests/test_native_recorder_selftest.py \
+            tests/test_context_handle_journal.py \
+            2>&1 | tee native-handles/preflight-tests.txt
+
+      - name: Record handle births and native caller sites
+        run: |
+          set -euo pipefail
+          .venv/bin/python -m scripts.avatar_baseline.native_recorder_selftest \
+            --out native-handles/native-preflight
+          .venv/bin/python -m scripts.avatar_baseline.native_handle_buffer \
+            --out native-handles/result \
+            2>&1 | tee native-handles/run.log
+
+      - name: Explain missing results on the phone summary
+        if: always()
+        run: |
+          if [ ! -f native-handles/result/SUMMARY.md ]; then
+            {
+              echo '# Native handle buffer'
+              echo ''
+              echo 'Setup or a prerequisite stopped before the context diagnostic completed.'
+              echo 'Open the failed step and download avatar-native-handles for retained logs.'
+              echo 'Context diagnostic only. No qualification, acceptance or deployment occurred.'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Save all results and failures for download
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-native-handles
+          path: native-handles/
+          if-no-files-found: warn
+          retention-days: 30
