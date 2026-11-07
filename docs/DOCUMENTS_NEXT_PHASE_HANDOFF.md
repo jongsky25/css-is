@@ -349,7 +349,7 @@ Use the exact remotely saved handoff commit supplied with the draft PR/link. The
 starter below is planning-only; it must not be read as feature implementation approval.
 
 > Continue Office Connect in jongsky25/css-is. Read docs/DOCUMENTS_NEXT_PHASE_HANDOFF.md
-> on branch docs/documents-next-phase-handoff at the exact commit pinned in the draft PR description. Read current AGENTS.md,
+> on branch docs/documents-next-phase-handoff at `9404a2037a0fce3cdc7a30b275bf51afad695688` (the complete handoff content snapshot). Read current AGENTS.md,
 > docs/CLOUD_COLLABORATION.md and docs/SETUP_STATUS.md; verify current main, PRs and
 > deployment state before assessing/planning phase 0: My desk count/filter semantics.
 > Baseline #596–603 is shipped through 6452931b25d953b10a20dcea4750003e2ecd147d;
