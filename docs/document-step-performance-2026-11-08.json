@@ -1,0 +1,80 @@
+{
+  "baseline": "6452931b25d953b10a20dcea4750003e2ecd147d",
+  "candidate_feature": "e00a5bee9e0aaff4de6ba49dd7887be6a6e04a32",
+  "reconciled_main": "e471261c08b8ca58a8d606dc3642ce401288242d",
+  "notes": "Synthetic local measurements, 30 warm requests each; standalone run without concurrent local test jobs. Peak excludes retained SQL trace strings. No production performance claim.",
+  "results": [
+    {
+      "size": 100,
+      "scenario": "ordinary",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 5.372,
+        "median_ms": 2.528,
+        "p95_ms": 3.229,
+        "python_peak_bytes": 114010,
+        "queries": 18,
+        "rows": 41,
+        "logical_bytes": 4624
+      },
+      "candidate": {
+        "first_ms": 6.927,
+        "median_ms": 3.817,
+        "p95_ms": 4.43,
+        "python_peak_bytes": 185562,
+        "queries": 25,
+        "rows": 141,
+        "logical_bytes": 7573
+      }
+    },
+    {
+      "size": 100,
+      "scenario": "review_release_graph",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 35.636,
+        "median_ms": 33.705,
+        "p95_ms": 37.407,
+        "python_peak_bytes": 196851,
+        "queries": 6318,
+        "rows": 5651,
+        "logical_bytes": 433072
+      },
+      "candidate": {
+        "first_ms": 93.781,
+        "median_ms": 84.917,
+        "p95_ms": 89.262,
+        "python_peak_bytes": 337432,
+        "queries": 15885,
+        "rows": 14961,
+        "logical_bytes": 1395337
+      }
+    },
+    {
+      "size": 1000,
+      "scenario": "review_release_graph",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 44.835,
+        "median_ms": 40.758,
+        "p95_ms": 45.838,
+        "python_peak_bytes": 210350,
+        "queries": 6318,
+        "rows": 5651,
+        "logical_bytes": 439856
+      },
+      "candidate": {
+        "first_ms": 682.698,
+        "median_ms": 678.922,
+        "p95_ms": 727.21,
+        "python_peak_bytes": 2811168,
+        "queries": 125685,
+        "rows": 118461,
+        "logical_bytes": 11247220
+      }
+    }
+  ]
+}

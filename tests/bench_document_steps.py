@@ -5,6 +5,9 @@ Compares shipped 6452931 with the working tree on identical disposable fixtures.
 No real database, provider, browser or notification calls are used.
 """
 import json
+import cProfile
+import pstats
+import io
 import statistics
 import subprocess
 import time
@@ -68,10 +71,26 @@ def seed_scenario(c,u,unit,size,scenario):
         for n,did in enumerate(ids):
             if n%3==0:c.execute("UPDATE document SET visibility='restricted' WHERE id=?",(did,))
             elif n%3==1:c.execute('UPDATE document SET canonical_id=? WHERE id=?',(ids[n+1] if n+1<len(ids) else ids[0],did))
+    if scenario == 'review_release_graph':
+        import work_review
+        # Ten linked outgoing sources and three accepted tasks per case. Every
+        # source has a current review packet and reaches the release gate.
+        for start in range(0,len(ids),10):
+            group=ids[start:start+10];cid=group[0]
+            c.execute("INSERT INTO work_case(id,title,outcome,unit_id,creator_id,created_at,updated_at) VALUES (?,'Graph','Synthetic',?,?,'2026-11-01','2026-11-01')",(cid,unit,u[0]['id']))
+            for did in group:
+                c.execute("INSERT INTO work_document VALUES (?,?,'reference',?,'2026-11-01')",(cid,did,u[0]['id']))
+                c.execute("INSERT INTO document_file_version(id,document_id,url,file_id,fingerprint,role,actor_id,created_at) VALUES (?,?,'https://example.test/draft','fake','hash','draft',?,'2026-11-01')",(did,did,u[0]['id']))
+                c.execute("UPDATE document SET current_version=?,approved_version=?,status='approved',policy_json=? WHERE id=?",(did,did,json.dumps({'closure':[],'signature_required':False,'release':[],'ack_required':False}),did))
+            for n in range(3):
+                c.execute("INSERT INTO work_task(case_id,title,expected_output,unit_id,creator_id,status,submission,created_at,updated_at) VALUES (?,'Accepted task','Synthetic',?,?,'done','Synthetic evidence','2026-11-01','2026-11-01')",(cid,unit,u[0]['id']))
+            for did in group:
+                snapshot,digest=work_review.snapshot(c,cid,did)
+                c.execute("INSERT INTO work_review_packet(case_id,document_id,version_id,reviewer_id,actor_id,snapshot_json,snapshot_hash,reason,created_at) VALUES (?,?,?,?,?,?,?,'Synthetic benchmark','2026-11-01')",(cid,did,did,u[0]['id'],u[0]['id'],json.dumps(snapshot),digest))
     c.commit()
 
 
-@pytest.mark.parametrize('scenario',['ordinary','linked_contributions','restricted_aliases'])
+@pytest.mark.parametrize('scenario',['ordinary','linked_contributions','restricted_aliases','review_release_graph'])
 @pytest.mark.parametrize('size',[100,1000,10000])
 def test_measure_document_steps(registry,size,scenario,tmp_path):
     c,u,unit,_=registry;seed_scenario(c,u,unit,size,scenario)
@@ -82,11 +101,16 @@ def test_measure_document_steps(registry,size,scenario,tmp_path):
         for _ in range(30):
             start=time.perf_counter();module.page(c,u[0],today='2026-11-07');samples.append(time.perf_counter()-start)
         sql=[];c.set_trace_callback(sql.append)
-        tracemalloc.start();module.page(c,u[0],today='2026-11-07');_,peak=tracemalloc.get_traced_memory();tracemalloc.stop()
+        module.page(c,u[0],today='2026-11-07')
         c.set_trace_callback(None)
+        # Do not charge retained SQL trace strings to application peak memory.
+        tracemalloc.start();module.page(c,u[0],today='2026-11-07');_,peak=tracemalloc.get_traced_memory();tracemalloc.stop()
         measured=MeasuredConnection(c);module.page(measured,u[0],today='2026-11-07')
         query=next(s for s in sql if 'action_candidates AS (' in s)
         plan=[row[3] for row in c.execute('EXPLAIN QUERY PLAN '+query)]
+        profile=cProfile.Profile();profile.runcall(module.page,c,u[0],today='2026-11-07')
+        stream=io.StringIO();pstats.Stats(profile,stream=stream).sort_stats('cumulative').print_stats(15)
+        (tmp_path/f'{name}-profile.txt').write_text(stream.getvalue())
         result[name]={'first_ms':round(cold*1000,3),'median_ms':round(statistics.median(samples)*1000,3),
                       'p95_ms':round(sorted(samples)[28]*1000,3),'python_peak_bytes':peak,
                       'queries':sum(s.lstrip().upper().startswith(('SELECT','WITH')) for s in sql),

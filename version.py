@@ -37,7 +37,7 @@ CHANGELOG = [
         "summary": "Document the next improvements planned for Documents.",
         "changes": [
             "Record the completed Documents improvements and the plan for counts, request follow-up and usability testing.",
-            "Document workflows remain unchanged in this release."
+            "Add CI browser diagnostics; document workflows remain unchanged."
         ]
     },
     {

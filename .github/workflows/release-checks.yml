@@ -127,11 +127,16 @@ jobs:
         env:
           TEST_ORDER: ${{ matrix.order }}
           CSS_TEST_NOW: "2026-10-20T06:00:00"
+          # Browser lifecycle only (no API payloads): retain launch/exit evidence
+          # when a driver stalls before pytest can finish its report.
+          DEBUG: pw:browser
         run: |
           mkdir -p test-results
           args=()
           if [ "$TEST_ORDER" = shuffled ]; then args+=(--shuffle-seed=311); fi
-          python -m pytest "${args[@]}" --tb=short --junitxml=test-results/results.xml --ai-evaluation-report=test-results/ai-evaluation.json
+          # pytest.ini supplies -q; -vv restores individual test names. Stream
+          # captured output so a cancelled job still identifies its last test.
+          python -m pytest "${args[@]}" -vv --capture=tee-sys --tb=short --junitxml=test-results/results.xml --ai-evaluation-report=test-results/ai-evaluation.json
       - name: Reject empty reports, failures and skipped tests
         run: python scripts/check_release.py junit test-results/results.xml
       - name: Require complete current AI evaluation evidence

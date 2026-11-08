@@ -8,8 +8,8 @@ Final main is `6452931b25d953b10a20dcea4750003e2ecd147d`; final deployment
 succeeded including diagnostics. See the [complete next-phase handoff](DOCUMENTS_NEXT_PHASE_HANDOFF.md)
 for shipped evidence, source map, My desk count/filter contract, request-execution
 assessment, synthetic staff study plan and new-chat starter. This review branch
-contains documentation/planning only; do not merge its draft PR automatically or
-implement later phases without a new instruction. Older queue snapshots below
+contains the handoff and CI diagnostics; #604 has explicit checked-release
+authorization. Later feature releases require their own instruction. Older queue snapshots below
 are historical. The first next action is the bounded My desk count-contract assessment.
 
 
@@ -88,6 +88,27 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 8, 2026: #604 merged and deployed; #605 performance review.**
+#604 merged normally at `e471261c08b8ca58a8d606dc3642ce401288242d` after exact-head
+normal/shuffled suites (10,844 tests and 447 AI cases each), audit, metadata and
+Required checks passed. Reviews/threads were empty and strict no-bypass protection
+was rechecked. [Deployment 42443789666](https://github.com/jongsky25/css-is/actions/runs/42443789666)
+completed successfully, including all verification, guarded deployment and diagnostics.
+
+The owner explicitly authorized the ordered checked-release queue #604 → #605 →
+#606. #605 is reconciled with that main baseline; candidate 10.14 remains a draft
+with an unmet performance gate. #606 is already implemented at `8a17617` on
+`feat/request-work-navigation`; do not rebuild or release it ahead of #605.
+The older implementation-only authorization statements below are historical.
+The 1,000-document review/release graph measured 678.922 ms median versus
+40.758 ms baseline (target at most 48.91 ms), with 125,685 SQL reads. The 15 focused
+checks pass but do not waive this gate. Release queue paused for the owner to
+choose a redesign retaining the target or a new explicit absolute budget to test.
+See [updated performance evidence](MY_NEXT_STEPS_COUNT_CONTRACT.md). No production
+data, staff contact, provider activation, manual deployment or gate bypass.
+
+
+
 **November 7, 2026: My next steps implementation authorized; candidate 10.14.**
 The owner's “do that” authorized implementing the count/filter specification.
 The feature is isolated on `feat/my-next-steps-filters`, based on the planning
@@ -140,6 +161,23 @@ main/reviews/threads and strict no-bypass protection before a regular SHA-bound
 merge. Verify the normal guarded deployment afterward. No later feature work,
 staff contact, production-data testing, relay activation or manual deployment is
 authorized. My desk count/filter planning remains the next feature-phase action.
+
+**November 8, 2026: diagnostic CI follow-up.** Run 42424944568 at `7de2a9b`
+passed shuffled verification (10,844 tests; 447 AI cases), metadata and dependency
+audit. Normal order stalled after 2,304 reported passes and was cancelled at the
+existing 75-minute limit; Required checks failed. Its five-minute thread dump
+shows Playwright's sync event loop and an idle local HTTP server, but does not
+identify the test or operation. Collection places the remaining partial line at
+cases 2,305–2,376, including the calendar workspace browser tests (2,336–2,341).
+The 95-test calendar neighborhood passed locally with no failures/errors/skips;
+this does not establish the CI root cause or complete-suite readiness.
+
+The shared release workflow now prints individual test names and streams
+Playwright browser lifecycle diagnostics (not API payload logging). No timeout,
+selection, assertion, report gate or dependency changes. Fresh full normal and
+shuffled CI on this diagnostic head is required. If it stalls again, inspect the
+identified test and browser launch/exit evidence before further retries. Preserve
+the separate `feat/my-next-steps-filters` work; it is outside this release.
 
 ### Historical queue snapshots (superseded)
 

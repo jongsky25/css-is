@@ -3,8 +3,9 @@
 Implementation candidate 10.14, November 7, 2026. The owner's subsequent “do that”
 authorized implementing this specification. Branch: `feat/my-next-steps-filters`,
 based on the planning commit `a50807c` and #604 head
-`7de2a9be7b15f535ed3aeb9c1811fc778ee09ca4`. #604 has its own checked-merge
-authorization; this feature does not inherit its merge/deployment authorization.
+`7de2a9be7b15f535ed3aeb9c1811fc778ee09ca4`. The owner later explicitly queued #605 after #604, authorizing its checked release
+without waiving the performance criteria. #604 is now merged and deployed at
+`e471261c08b8ca58a8d606dc3642ce401288242d` (workflow 42443789666).
 The original proposal is retained on `docs/my-next-steps-count-contract`.
 
 ## Outcome and scope
@@ -176,7 +177,8 @@ release decision. Division counts and later phases remain separate.
 Before any future release reconcile with then-current main, synchronize release
 metadata and pass every existing release/backup gate. Candidate 10.14 must be reconciled with main after #604 merges and then pass
 fresh complete normal/shuffled CI, audit, metadata and Required checks. It remains
-a draft; no feature merge or deployment is authorized.
+a draft because the performance gate remains unmet; checked release is now authorized
+only after that blocker and all release gates are satisfied.
 
 
 ## Candidate implementation details
@@ -277,3 +279,56 @@ child and permission statements under the OS SQLite parser as well as Python's.
 Release metadata 10.14, JavaScript syntax, local Markdown links and diff whitespace
 passed. Full normal/shuffled CI and dependency/release gates are still required;
 there is no production preview, staff study, merge or deployment claim.
+
+
+### November 8 release assessment — blocked on performance criteria
+
+#604 is merged/deployed; this review branch is reconciled with main `e471261`.
+The owner authorized releasing #605 when ready, but did not waive the <=20%
+median-regression goal. No runtime optimization or policy change is claimed in
+this follow-up: it adds missing graph profiling and fixes benchmark accounting.
+
+The extended fixture links ten outgoing documents per shared case, with three
+accepted contributions, current exact versions and current consolidation packets.
+Every document reaches both consolidation-current and release-contribution checks.
+The final measurement ran alone, with 30 warm requests per implementation/scenario.
+[Compact reproducible results](document-step-performance-2026-11-08.json):
+
+| Records / scenario | Baseline median ms | Candidate median ms | Candidate p95 ms | Baseline / candidate SQL reads |
+| --- | ---: | ---: | ---: | ---: |
+| 100 ordinary | 2.528 | 3.817 | 4.430 | 18 / 25 |
+| 100 review/release graph | 33.705 | 84.917 | 89.262 | 6,318 / 15,885 |
+| 1,000 review/release graph | 40.758 | 678.922 | 727.210 | 6,318 / 125,685 |
+
+At 1,000 graph records the allowed median under the existing target is 48.91 ms;
+the candidate is approximately 16.7 times baseline. This is a diagnostic fixture,
+not a production forecast. The 10,000-record graph was not measured, and no bound
+for larger graphs or concurrent users is asserted. Profiles locate the dominant
+cost in guidance → consolidation summaries → strict work access and review snapshot
+construction. Those checks enforce current source access and exact review inputs;
+removing them or copying approximate status rules would be incorrect. The existing
+bounded scan/compact projections already avoid full ordinary document detail loads;
+small rendering changes cannot remove this whole-scope review cost.
+
+Memory-accounting correction: the earlier table's tracemalloc peak also retained
+SQL trace strings, so it is not an application-only memory estimate. The benchmark
+now records SQL separately from peak allocation. Corrected candidate peaks for
+these three scenarios are 185,562 / 337,432 / 2,811,168 bytes respectively. Raw query
+plans and cumulative profiles are emitted with each optional benchmark run.
+
+Reproduce with the cloud test wrapper and `tests/bench_document_steps.py -s -k
+'100-ordinary or 100-review_release_graph or 1000-review_release_graph'`. Three
+selected benchmark cases completed; completion is not acceptance of their latency.
+The 15 focused filter/browser checks also passed after reconciliation, without
+failures/errors/skips. Release metadata 10.14 passed against current main. Fresh
+full CI remains required for the new head, even though the performance gate blocks
+release independently.
+
+Owner decision needed: retain the relative target and expand the design beyond
+this bounded scan (shared batched classification or explicitly maintained facts,
+with a separate permission/revision invalidation design), or agree an absolute
+latency and supported-scope budget and measure that budget before release. An
+absolute budget has not been selected or approved. Recommend retaining the target
+and reviewing a redesign rather than releasing this scan on green CI alone.
+#605 remains draft; #606 remains queued. The release automation is paused at this
+user decision, not marked complete. Staff testing and production data are not used.
