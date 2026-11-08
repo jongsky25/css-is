@@ -1,3 +1,8 @@
+## 10.13 — November 7, 2026
+
+- Record the shipped Documents baseline and the next-phase plan for counts, request follow-up and usability testing.
+- Add test names and browser lifecycle diagnostics to investigate intermittent CI stalls; document workflows are unchanged.
+
 ## 10.12 — November 7, 2026
 
 - Keep Register and review next within the current Inbox search and filters.
