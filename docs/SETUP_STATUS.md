@@ -88,6 +88,26 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 8, 2026: request-to-work navigation implemented; candidate 10.15.**
+The owner clarified #605's checked-release queue and then explicitly requested
+this slice be implemented and queued behind #605. Branch
+`feat/request-work-navigation` is stacked on `feat/my-next-steps-filters` at
+`e00a5be`. See [scope and verification contract](REQUEST_WORK_NAVIGATION.md).
+Preserve the #604 diagnostic worktree and #605 performance work. Release in order
+#604 → #605 → navigation, verifying each guarded deployment; do not waive #605's
+performance acceptance or any release gate. The older implementation-only
+restrictions below are historical and superseded by these explicit instructions.
+No staff contact, production-data testing, relay activation or manual deployment.
+
+Validation: 214 request/proposal/comparison/work regressions passed, followed by
+16 final focused navigation checks (overlapping groups), with no failures/errors/
+skips. Phone (390px) and desktop (1280px), JavaScript enabled/disabled, native
+keyboard round trips and mobile screenshot inspection passed. Candidate 10.15
+metadata, dependency lock inputs, vendor integrity, AI contract, JS syntax,
+Markdown links and whitespace checks passed. Full CI remains pending.
+
+
+
 **November 7, 2026: My next steps implementation authorized; candidate 10.14.**
 The owner's “do that” authorized implementing the count/filter specification.
 The feature is isolated on `feat/my-next-steps-filters`, based on the planning

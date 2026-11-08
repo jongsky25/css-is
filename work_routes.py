@@ -2,6 +2,7 @@
 import hashlib
 import hmac
 import json
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -12,6 +13,7 @@ import documents_permissions as permissions
 from documents_storage import rows
 import work
 import documents_request_work
+import documents_navigation as navigation
 import work_tasks
 import work_compat
 import work_inbox
@@ -59,9 +61,25 @@ def make_router(templates, get_conn):
             raise permissions.Denied('The form expired. Reload this page and try again.')
         return fields
 
+    def source_navigation(request, conn, case_id):
+        # Never turn a client-supplied task ID into source disclosure. The existing
+        # service checks both document and work access, including current aliases.
+        value = request.query_params.get('source_task', '')
+        saved = None
+        if value.isascii() and value.isdecimal() and len(value) <= 18:
+            saved = documents_request_work.task_source(conn, request.state.user, int(value))
+        if not saved or saved['case_id'] != case_id:
+            return {'request_back': '', 'request_query': '', 'request_queue': '', 'request_changed': False}
+        origin = navigation.safe_return(request.query_params.get('return_to', ''))
+        target = f"/documents/{saved['document_id']}/requests/{saved['request_index']}/work"
+        return {'request_back': navigation.record_url(target, origin),
+                'request_query': '?' + urlsplit(navigation.request_work_url(saved, origin)).query,
+                'request_queue': origin, 'request_changed': saved['changed']}
+
     def detail(request, conn, case_id, status_code=200, error='', submitted=None):
         user = permissions.actor(conn, request.state.user)
         case = work.get(conn, user, case_id)
+        source_nav = source_navigation(request, conn, case_id)
         events = rows(conn, '''SELECT e.action,e.created_at,e.detail_json,COALESCE(NULLIF(r.name,''),u.username) AS actor
                                FROM work_event e JOIN admin_user u ON u.id=e.actor_id
                                LEFT JOIN resource_person r ON r.id=u.rp_id
@@ -90,6 +108,10 @@ def make_router(templates, get_conn):
         for task in tasks:
             counts[task['status']] += 1
             task['request_source'] = documents_request_work.task_source(conn,user,task['id'])
+            source = task['request_source']
+            task['request_source_url'] = navigation.record_url(
+                f"/documents/{source['document_id']}/requests/{source['request_index']}/work",
+                source_nav['request_queue']) if source else ''
             task['pending_decisions'] = work_decisions.pending(conn,task['id'])
             task['source_message'] = work_decisions.task_source(conn,user,case_id,task['id'])
             task['dependencies'] = work_blockers.dependencies(conn,task['id'])
@@ -126,7 +148,7 @@ def make_router(templates, get_conn):
                 next_steps.append(task)
         unfinished = [task for task in tasks if task['mandatory'] and task['status'] not in ('done','cancelled')]
 
-        return render(request, conn, 'detail', status_code=status_code, error=error, case=case,
+        return render(request, conn, 'detail', status_code=status_code, error=error, case=case, **source_nav,
                       tasks=tasks, task_labels=work_tasks.LABELS, counts=counts, next_steps=next_steps, unfinished=unfinished, blocked=blocked, can_link=work.can_link(conn, user, case),
                       documents=work.linked_documents(conn, user, case_id), history=events, working_draft=work_handoff.current(conn,case_id),
                       choices=work.document_choices(conn, user, request.query_params.get('q', '')),
@@ -671,7 +693,7 @@ def make_router(templates, get_conn):
             service = work_blockers.mutate if action in work_blockers.ACTIONS else work_tasks.mutate
             service(conn, request.state.user, case_id, task_id,
                               int(fields.get('revision', '')), action, fields)
-            return RedirectResponse('/work/' + str(case_id) + '#task-' + str(task_id), status_code=303)
+            return RedirectResponse('/work/' + str(case_id) + source_navigation(request, conn, case_id)['request_query'] + '#task-' + str(task_id), status_code=303)
         except permissions.Denied:
             return HTMLResponse('Contribution or action not available to you. Reload the page.', status_code=403)
         except (ValueError, TypeError) as e:

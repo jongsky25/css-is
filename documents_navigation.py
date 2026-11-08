@@ -55,8 +55,18 @@ def context(request):
              '/documents/intake': 'Back to Inbox'}.get(urlsplit(origin).path, '')
     return {'return_url': origin, 'return_label': label,
             'show_queue_return': bool(origin and path not in QUEUE_FIELDS),
+            'request_work_url': lambda saved: request_work_url(saved, origin),
             'document_url': lambda target, anchor='': record_url(target, origin, anchor)}
 
 
 def return_to_record(request, target):
     return record_url(target, request.query_params.get('return_to', ''))
+
+
+def request_work_url(saved, origin=''):
+    """An existing permitted receipt supplies identity; query data grants no access."""
+    query = {'source_task': str(saved['task_id'])}
+    origin = safe_return(origin)
+    if origin:
+        query['return_to'] = origin
+    return f"/work/{saved['case_id']}?{urlencode(query)}#task-{saved['task_id']}"
