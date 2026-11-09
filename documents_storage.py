@@ -271,3 +271,29 @@ def event(conn, doc_id, actor, action, detail):
     st.audit(conn, actor['username'], 'document_' + action, target_type='document', target_id=doc_id,
              after=payload, commit=False)
     return eid
+
+
+def install_step_generation(conn):
+    """Invalidate actor-specific read indexes atomically with every dependency write.
+
+    Random generations prevent reuse after rollback/replacement; indexes contain
+    only IDs/order/state bits and live in bounded process memory, never SQLite.
+    Broad table families deliberately over-invalidate rather than miss a policy input.
+    """
+    conn.execute("CREATE TABLE IF NOT EXISTS document_step_generation (id INTEGER PRIMARY KEY CHECK(id=1), token TEXT NOT NULL)")
+    conn.execute("INSERT OR IGNORE INTO document_step_generation VALUES (1,lower(hex(randomblob(24))))")
+    names=[r[1] for r in conn.execute("PRAGMA table_list")
+           if r[0]=='main' and r[2]=='table'
+           and (r[1]=='document' or r[1].startswith(('document_', 'work_'))
+               or r[1] in ('admin_user','resource_person','org_unit','section_oic','app_setting'))
+           and r[1]!='document_step_generation']
+    installed={r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='trigger'")}
+    for table in names:
+        quoted='"'+table.replace('"','""')+'"'
+        for action in ('INSERT','UPDATE','DELETE'):
+            name='step_generation_'+table+'_'+action.lower()
+            if name not in installed:
+                conn.execute(f'CREATE TRIGGER "{name}" AFTER {action} ON {quoted} BEGIN '
+                             "UPDATE document_step_generation SET token=lower(hex(randomblob(24))) WHERE id=1; END")
+    # Startup/migrations invalidate any preexisting process-local snapshot.
+    conn.execute("UPDATE document_step_generation SET token=lower(hex(randomblob(24))) WHERE id=1")

@@ -88,6 +88,19 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 9, 2026: owner selected redesign, keeping the 20% target.**
+#605 now has an actor-specific generation-bound membership index with transactional
+invalidation and fresh page authority/guidance. See [current design and evidence](MY_NEXT_STEPS_COUNT_CONTRACT.md).
+160 focused regressions passed. All 12 original 30-warm-request median benchmarks
+meet the unchanged target. Cold invalidation misses remain costly (10k review/release
+graph: 6.83 seconds median over five committed changes); do not treat warm success
+as complete performance acceptance. Keep #605 draft for full CI, avatar acceptance
+and cold-path release assessment. The owner decision pause is resolved; resume
+engineering and verification without waiving criteria. #606 remains ordered behind
+#605; #604 deployment 42443789666 is already verified successful.
+
+
+
 **November 8, 2026: #604 merged and deployed; #605 performance review.**
 #604 merged normally at `e471261c08b8ca58a8d606dc3642ce401288242d` after exact-head
 normal/shuffled suites (10,844 tests and 447 AI cases each), audit, metadata and

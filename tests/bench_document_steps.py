@@ -96,6 +96,7 @@ def test_measure_document_steps(registry,size,scenario,tmp_path):
     c,u,unit,_=registry;seed_scenario(c,u,unit,size,scenario)
     result={'size':size,'scenario':scenario,'samples':30,'page_size':30}
     for name,module in [('baseline',shipped()),('candidate',candidate)]:
+        if name=='candidate':candidate.clear_step_indexes()
         start=time.perf_counter();module.page(c,u[0],today='2026-11-07');cold=time.perf_counter()-start
         samples=[]
         for _ in range(30):
@@ -111,9 +112,17 @@ def test_measure_document_steps(registry,size,scenario,tmp_path):
         profile=cProfile.Profile();profile.runcall(module.page,c,u[0],today='2026-11-07')
         stream=io.StringIO();pstats.Stats(profile,stream=stream).sort_stats('cumulative').print_stats(15)
         (tmp_path/f'{name}-profile.txt').write_text(stream.getvalue())
+        misses=[]
+        if name=='candidate':
+            for _ in range(5):
+                # Real committed dependency changes, not just a manual cache clear.
+                c.execute('UPDATE document SET revision=revision+1 WHERE id=(SELECT MIN(id) FROM document)');c.commit()
+                start=time.perf_counter();module.page(c,u[0],today='2026-11-07');misses.append(time.perf_counter()-start)
         result[name]={'first_ms':round(cold*1000,3),'median_ms':round(statistics.median(samples)*1000,3),
                       'p95_ms':round(sorted(samples)[28]*1000,3),'python_peak_bytes':peak,
                       'queries':sum(s.lstrip().upper().startswith(('SELECT','WITH')) for s in sql),
-                      **measured.metrics,'plan':plan}
+                      **measured.metrics,'plan':plan,
+                      'invalidation_miss_samples':len(misses),
+                      'invalidation_miss_median_ms':round(statistics.median(misses)*1000,3) if misses else None}
     (tmp_path/'result.json').write_text(json.dumps(result,indent=2))
     print('DOCUMENT_STEPS_BENCHMARK '+json.dumps(result),flush=True)

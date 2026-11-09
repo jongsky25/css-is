@@ -1,0 +1,342 @@
+{
+  "baseline": "6452931b25d953b10a20dcea4750003e2ecd147d",
+  "method": "Standalone synthetic runs, 30 warm requests, first request separate, 5 real committed invalidation misses. Warm peak excludes pre-existing resident cache and SQLite/process memory. All 12 warm medians meet <=1.2x baseline; cache-miss latency does not.",
+  "results": [
+    {
+      "size": 100,
+      "scenario": "linked_contributions",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 8.105,
+        "median_ms": 5.909,
+        "p95_ms": 6.608,
+        "python_peak_bytes": 172667,
+        "queries": 318,
+        "rows": 311,
+        "logical_bytes": 22555,
+        "invalidation_miss_samples": 0,
+        "invalidation_miss_median_ms": null
+      },
+      "candidate": {
+        "first_ms": 12.412,
+        "median_ms": 3.078,
+        "p95_ms": 3.863,
+        "python_peak_bytes": 136081,
+        "queries": 20,
+        "rows": 131,
+        "logical_bytes": 5763,
+        "invalidation_miss_samples": 5,
+        "invalidation_miss_median_ms": 7.654
+      }
+    },
+    {
+      "size": 100,
+      "scenario": "ordinary",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 4.737,
+        "median_ms": 2.257,
+        "p95_ms": 4.195,
+        "python_peak_bytes": 114330,
+        "queries": 18,
+        "rows": 41,
+        "logical_bytes": 4624,
+        "invalidation_miss_samples": 0,
+        "invalidation_miss_median_ms": null
+      },
+      "candidate": {
+        "first_ms": 9.323,
+        "median_ms": 2.271,
+        "p95_ms": 2.544,
+        "python_peak_bytes": 112071,
+        "queries": 19,
+        "rows": 41,
+        "logical_bytes": 4528,
+        "invalidation_miss_samples": 5,
+        "invalidation_miss_median_ms": 5.38
+      }
+    },
+    {
+      "size": 100,
+      "scenario": "restricted_aliases",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 4.4,
+        "median_ms": 2.222,
+        "p95_ms": 2.423,
+        "python_peak_bytes": 115000,
+        "queries": 18,
+        "rows": 41,
+        "logical_bytes": 4620,
+        "invalidation_miss_samples": 0,
+        "invalidation_miss_median_ms": null
+      },
+      "candidate": {
+        "first_ms": 8.137,
+        "median_ms": 2.311,
+        "p95_ms": 2.609,
+        "python_peak_bytes": 112645,
+        "queries": 19,
+        "rows": 41,
+        "logical_bytes": 4526,
+        "invalidation_miss_samples": 5,
+        "invalidation_miss_median_ms": 4.706
+      }
+    },
+    {
+      "size": 100,
+      "scenario": "review_release_graph",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 36.063,
+        "median_ms": 31.545,
+        "p95_ms": 34.429,
+        "python_peak_bytes": 196519,
+        "queries": 6318,
+        "rows": 5651,
+        "logical_bytes": 433072,
+        "invalidation_miss_samples": 0,
+        "invalidation_miss_median_ms": null
+      },
+      "candidate": {
+        "first_ms": 99.847,
+        "median_ms": 21.195,
+        "p95_ms": 22.866,
+        "python_peak_bytes": 193984,
+        "queries": 3679,
+        "rows": 3461,
+        "logical_bytes": 325830,
+        "invalidation_miss_samples": 5,
+        "invalidation_miss_median_ms": 82.304
+      }
+    },
+    {
+      "size": 1000,
+      "scenario": "linked_contributions",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 18.159,
+        "median_ms": 16.204,
+        "p95_ms": 17.069,
+        "python_peak_bytes": 176885,
+        "queries": 318,
+        "rows": 311,
+        "logical_bytes": 22887,
+        "invalidation_miss_samples": 0,
+        "invalidation_miss_median_ms": null
+      },
+      "candidate": {
+        "first_ms": 35.801,
+        "median_ms": 4.082,
+        "p95_ms": 4.625,
+        "python_peak_bytes": 141143,
+        "queries": 20,
+        "rows": 131,
+        "logical_bytes": 5973,
+        "invalidation_miss_samples": 5,
+        "invalidation_miss_median_ms": 31.986
+      }
+    },
+    {
+      "size": 1000,
+      "scenario": "ordinary",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 5.101,
+        "median_ms": 2.824,
+        "p95_ms": 3.076,
+        "python_peak_bytes": 115385,
+        "queries": 18,
+        "rows": 41,
+        "logical_bytes": 4686,
+        "invalidation_miss_samples": 0,
+        "invalidation_miss_median_ms": null
+      },
+      "candidate": {
+        "first_ms": 23.357,
+        "median_ms": 2.343,
+        "p95_ms": 2.581,
+        "python_peak_bytes": 114139,
+        "queries": 19,
+        "rows": 41,
+        "logical_bytes": 4588,
+        "invalidation_miss_samples": 5,
+        "invalidation_miss_median_ms": 19.76
+      }
+    },
+    {
+      "size": 1000,
+      "scenario": "restricted_aliases",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 5.399,
+        "median_ms": 2.901,
+        "p95_ms": 3.401,
+        "python_peak_bytes": 114200,
+        "queries": 18,
+        "rows": 41,
+        "logical_bytes": 4684,
+        "invalidation_miss_samples": 0,
+        "invalidation_miss_median_ms": null
+      },
+      "candidate": {
+        "first_ms": 18.883,
+        "median_ms": 2.368,
+        "p95_ms": 4.189,
+        "python_peak_bytes": 114713,
+        "queries": 19,
+        "rows": 41,
+        "logical_bytes": 4586,
+        "invalidation_miss_samples": 5,
+        "invalidation_miss_median_ms": 9.638
+      }
+    },
+    {
+      "size": 1000,
+      "scenario": "review_release_graph",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 41.721,
+        "median_ms": 37.373,
+        "p95_ms": 43.496,
+        "python_peak_bytes": 208823,
+        "queries": 6318,
+        "rows": 5651,
+        "logical_bytes": 439856,
+        "invalidation_miss_samples": 0,
+        "invalidation_miss_median_ms": null
+      },
+      "candidate": {
+        "first_ms": 678.079,
+        "median_ms": 23.199,
+        "p95_ms": 24.85,
+        "python_peak_bytes": 202358,
+        "queries": 3679,
+        "rows": 3461,
+        "logical_bytes": 330990,
+        "invalidation_miss_samples": 5,
+        "invalidation_miss_median_ms": 665.86
+      }
+    },
+    {
+      "size": 10000,
+      "scenario": "linked_contributions",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 150.665,
+        "median_ms": 149.02,
+        "p95_ms": 195.535,
+        "python_peak_bytes": 177008,
+        "queries": 318,
+        "rows": 311,
+        "logical_bytes": 23222,
+        "invalidation_miss_samples": 0,
+        "invalidation_miss_median_ms": null
+      },
+      "candidate": {
+        "first_ms": 457.713,
+        "median_ms": 19.182,
+        "p95_ms": 23.05,
+        "python_peak_bytes": 139622,
+        "queries": 20,
+        "rows": 131,
+        "logical_bytes": 6184,
+        "invalidation_miss_samples": 5,
+        "invalidation_miss_median_ms": 486.863
+      }
+    },
+    {
+      "size": 10000,
+      "scenario": "ordinary",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 12.136,
+        "median_ms": 8.829,
+        "p95_ms": 9.43,
+        "python_peak_bytes": 115417,
+        "queries": 18,
+        "rows": 41,
+        "logical_bytes": 4749,
+        "invalidation_miss_samples": 0,
+        "invalidation_miss_median_ms": null
+      },
+      "candidate": {
+        "first_ms": 174.426,
+        "median_ms": 2.323,
+        "p95_ms": 2.827,
+        "python_peak_bytes": 113592,
+        "queries": 19,
+        "rows": 41,
+        "logical_bytes": 4649,
+        "invalidation_miss_samples": 5,
+        "invalidation_miss_median_ms": 182.215
+      }
+    },
+    {
+      "size": 10000,
+      "scenario": "restricted_aliases",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 9.245,
+        "median_ms": 7.052,
+        "p95_ms": 8.796,
+        "python_peak_bytes": 114231,
+        "queries": 18,
+        "rows": 41,
+        "logical_bytes": 4746,
+        "invalidation_miss_samples": 0,
+        "invalidation_miss_median_ms": null
+      },
+      "candidate": {
+        "first_ms": 73.49,
+        "median_ms": 2.553,
+        "p95_ms": 3.17,
+        "python_peak_bytes": 113589,
+        "queries": 19,
+        "rows": 41,
+        "logical_bytes": 4646,
+        "invalidation_miss_samples": 5,
+        "invalidation_miss_median_ms": 70.351
+      }
+    },
+    {
+      "size": 10000,
+      "scenario": "review_release_graph",
+      "samples": 30,
+      "page_size": 30,
+      "baseline": {
+        "first_ms": 142.356,
+        "median_ms": 138.677,
+        "p95_ms": 153.973,
+        "python_peak_bytes": 206988,
+        "queries": 6318,
+        "rows": 5651,
+        "logical_bytes": 446683,
+        "invalidation_miss_samples": 0,
+        "invalidation_miss_median_ms": null
+      },
+      "candidate": {
+        "first_ms": 6733.601,
+        "median_ms": 46.793,
+        "p95_ms": 49.862,
+        "python_peak_bytes": 202871,
+        "queries": 3679,
+        "rows": 3461,
+        "logical_bytes": 336182,
+        "invalidation_miss_samples": 5,
+        "invalidation_miss_median_ms": 6830.107
+      }
+    }
+  ]
+}

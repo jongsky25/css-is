@@ -8,6 +8,77 @@ without waiving the performance criteria. #604 is now merged and deployed at
 `e471261c08b8ca58a8d606dc3642ce401288242d` (workflow 42443789666).
 The original proposal is retained on `docs/my-next-steps-count-contract`.
 
+## November 9 redesign — current assessment
+
+The owner accepted the recommendation to retain the <=20% target and redesign
+count computation. This supersedes the earlier no-schema/no-cross-request-state
+implementation notes below. The historical measurements remain evidence.
+
+The redesign adds an **actor-specific, generation-bound membership index** in
+bounded process memory. It stores document ID/deadline ordering and state/overdue
+membership only—no source text, work bodies, advice or cross-actor results. A new
+single-row `document_step_generation` table holds a random 192-bit generation.
+SQLite INSERT/UPDATE/DELETE triggers on ordinary document/work table families,
+accounts, directory, organization, OIC and settings tables change that generation
+in the SAME transaction as a dependency write. FTS virtual/shadow tables are not
+classification inputs and are excluded. Startup/schema installation rotates it
+and installs coverage for newly created dependency tables. Reinstallation is safe.
+
+Every request still resolves the current active account and RegistryScope before
+looking up `(generation, actor ID, local date)`. Authority, generation, membership
+and page facts are read in one SQLite snapshot. Another connection's commit cannot
+make new data use an old index; a held old snapshot consistently sees old data.
+Random generations prevent rollback/rewrite ABA reuse. Token updates roll back
+with their writes. Copied databases initially share identical membership state;
+any relevant write or schema installation rotates the token. No GET writes to
+SQLite, acquires claims, acknowledges work or invokes a provider.
+
+Each process retains at most 16 actor snapshots and 100,000 index references.
+Construction is capped too: larger scopes fall back to the exact bounded streaming
+implementation, never truncated counts. Cached sequences are immutable; eviction
+cannot change an in-flight reader. The caller's current permission-filtered SQL
+fetches only selected page IDs and rebuilds every displayed card/action from current
+guidance. State/overdue filter changes and paging reuse the same complete index.
+No independent classifier, weakened review hash or approximate permission policy.
+
+This is a cache of exact read membership, not an asynchronously maintained source
+of truth. Misses—including process restart, actor changes, midnight and relevant
+writes—still run the full shared classifier. Concurrent cold readers may compute
+independently. Future policy dependencies outside the covered families must extend
+the generation trigger coverage. Rollback can leave this additive table/triggers
+in place: older code ignores them, records and review history are retained; no data
+restore is required. The normal pre-deploy backup and version guards still apply.
+
+### Redesign validation and performance
+
+160 focused cache/filter, browser, navigation, guidance and registry regressions
+passed without failures/errors/skips. Added tests exercise unchanged hits without
+full rescans, current page reads/no writes, other-connection revocation and deadlines,
+account deactivation, actor/date separation, rollback/rewrite, a held snapshot
+across a writer commit, bounded fallback, schema reinstall, directory/settings
+changes and shared-work revision invalidation across linked sources.
+
+All 12 original-plus-graph scenarios met the **original 30-warm-request median
+criterion**, each <=1.2 times baseline. The target was not raised. At 10,000 records:
+
+| Scenario | Baseline warm median ms | Candidate warm median ms | Candidate warm p95 ms | Median after invalidation ms (5 samples) |
+| --- | ---: | ---: | ---: | ---: |
+| Ordinary | 8.829 | 2.323 | 2.827 | 182.215 |
+| Linked contributions | 149.020 | 19.182 | 23.050 | 486.863 |
+| Restricted/aliases | 7.052 | 2.553 | 3.170 | 70.351 |
+| Review/release graph | 138.677 | 46.793 | 49.862 | 6,830.107 |
+
+[All measurements and methodology](document-step-performance-2026-11-09.json).
+The optional benchmark explicitly clears memory before the first request and
+commits five real document writes to measure invalidation misses. Ordinary warm
+tracemalloc excludes the already-resident index; it is not a total process bound.
+Do not represent warm improvements as cold/churn improvements: the 10k graph miss
+is still about 6.8 seconds. No production concurrency, cache hit-rate or staff timing
+claim is made. Full CI, applicable avatar acceptance (storage.py changed), strict
+protected review/merge and the remaining cold-path release assessment are pending.
+The release queue may resume engineering/verification; #605 remains draft and must
+not be released merely because warm tests passed. #606 remains behind #605.
+
 ## Outcome and scope
 
 A person can identify documents with ready, waiting or attention steps across
