@@ -1,5 +1,16 @@
 # Cloud/mobile setup status
 
+## Current work: #605 (My next steps, 10.14) — draft
+
+Branch `feat/my-next-steps-filters`, head `0e365a6`, exact-head CI green. Still
+draft: the user's cold-path target (graph first read after a change under 1 s
+median at 10k) is **not met** (about 1.3 s; was about 3.6 s). Next action: decide
+whether to pursue per-case classification/reuse (needs a design call against the
+no-cross-request-cache rule), then repeat exact-head CI and avatar checks. #606
+stays queued behind #605. Nothing merged, released or deployed. Details:
+[contract](MY_NEXT_STEPS_COUNT_CONTRACT.md). Workspace note: this image has Node 22
+and no Tesseract, so `cloud_setup.sh` exits 1 and OCR tests fail locally.
+
 ## Documents next phase — verified post-10.12 handoff
 
 PRs #596–603 are merged and their guarded deployments completed successfully.

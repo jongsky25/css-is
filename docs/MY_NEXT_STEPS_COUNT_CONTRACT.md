@@ -87,6 +87,36 @@ engineering on whole-scope rebuild and repeated exact snapshot serialization,
 preserving byte-for-byte hashes and complete dependencies. Keep #605 draft;
 #606 remains behind its successful guarded deployment.
 
+### Cold-path target and third follow-up
+
+The user set a concrete cold-path target: **graph first read after a committed
+change under 1,000 ms median at 10k synthetic records** (warm targets unchanged).
+Cold work is not accepted until it is met and exact-head CI passes.
+
+Profiling showed the case-lookup statement re-evaluated the work-visibility
+predicate for every document-to-case link (about 1.2 s of about 3.2 s). It now
+evaluates visibility once per reached case. Each read batch also prefetches its
+newest compact review packets with retirement flags, release-gate case sets and
+linked source records. Review digests are composed from per-source fragments and
+are byte-identical to `snapshot()` (parity tests incl. aliases, closed sources,
+Unicode, missing linked records and alias loops). Review inputs, hashes, version
+lineage and authority checks are unchanged; nothing survives the batch.
+
+In one session the 10k graph miss median moved from 3,570 ms (p95 4,573) to about
+1,300 ms (p95 about 1,640) over three 30-sample runs; run-to-run noise is about
++/-15% and baseline timing varied 249-352 ms, so these are not controlled
+production figures. **The 1,000 ms target is not yet met.** A serializer-template
+experiment was slower and was reverted. Remaining cost is spread across about 15k
+SQL statements and per-document guidance work; the next step likely needs
+per-case classification or reuse between rebuilds, which conflicts with the
+no-cross-request-cache rule and needs a design decision. Results are saved in
+[the cold-target evidence](document-step-performance-2026-11-09-cold-target.json).
+
+Exact-head CI at 0e365a6 passed (normal, shuffled, metadata, dependency audit,
+functional). Locally, 44 cache/filter tests passed without skips; OCR-dependent
+tests fail only because this workspace lacks Tesseract. Avatar acceptance for the
+changed storage.py has not been re-checked in this session.
+
 ### Second cold-path follow-up
 
 The read batch now requests only the consolidation fields guidance consumes,
