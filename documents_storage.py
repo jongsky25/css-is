@@ -287,13 +287,22 @@ def install_step_generation(conn):
            and (r[1]=='document' or r[1].startswith(('document_', 'work_'))
                or r[1] in ('admin_user','resource_person','org_unit','section_oic','app_setting'))
            and r[1]!='document_step_generation']
-    installed={r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='trigger'")}
+    installed=dict(conn.execute("SELECT name,sql FROM sqlite_master WHERE type='trigger'"))
+    changed=False
     for table in names:
         quoted='"'+table.replace('"','""')+'"'
+        columns=['"'+r[1].replace('"','""')+'"' for r in conn.execute(f'PRAGMA table_info({quoted})')]
+        differences=' OR '.join(f'(OLD.{col} IS NOT NEW.{col} COLLATE BINARY OR typeof(OLD.{col})<>typeof(NEW.{col}))' for col in columns)
         for action in ('INSERT','UPDATE','DELETE'):
             name='step_generation_'+table+'_'+action.lower()
-            if name not in installed:
-                conn.execute(f'CREATE TRIGGER "{name}" AFTER {action} ON {quoted} BEGIN '
-                             "UPDATE document_step_generation SET token=lower(hex(randomblob(24))) WHERE id=1; END")
-    # Startup/migrations invalidate any preexisting process-local snapshot.
-    conn.execute("UPDATE document_step_generation SET token=lower(hex(randomblob(24))) WHERE id=1")
+            condition=f' WHEN {differences}' if action=='UPDATE' else ''
+            sql=(f'CREATE TRIGGER "{name}" AFTER {action} ON {quoted}{condition} BEGIN '
+                 "UPDATE document_step_generation SET token=lower(hex(randomblob(24))) WHERE id=1; END")
+            if installed.get(name)!=sql:
+                conn.execute(f'DROP TRIGGER IF EXISTS "{name}"')
+                conn.execute(sql)
+                changed=True
+    # New dependency coverage/columns invalidate indexes. A no-op restart is
+    # byte-for-byte idempotent; real migration writes also fire existing triggers.
+    if changed:
+        conn.execute("UPDATE document_step_generation SET token=lower(hex(randomblob(24))) WHERE id=1")

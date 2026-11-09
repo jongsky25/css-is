@@ -89,15 +89,24 @@ access remains necessary in a fresh chat.
 ## Next action
 
 **November 9, 2026: owner selected redesign, keeping the 20% target.**
-#605 now has an actor-specific generation-bound membership index with transactional
-invalidation and fresh page authority/guidance. See [current design and evidence](MY_NEXT_STEPS_COUNT_CONTRACT.md).
-160 focused regressions passed. All 12 original 30-warm-request median benchmarks
-meet the unchanged target. Cold invalidation misses remain costly (10k review/release
-graph: 6.83 seconds median over five committed changes); do not treat warm success
-as complete performance acceptance. Keep #605 draft for full CI, avatar acceptance
-and cold-path release assessment. The owner decision pause is resolved; resume
-engineering and verification without waiving criteria. #606 remains ordered behind
-#605; #604 deployment 42443789666 is already verified successful.
+#605 remains draft. The owner decision pause is resolved; continue engineering.
+CI 42552166679 failed both test orders at 6fefcbd; the confirmed normal failure
+was restart-idempotence in the Telegram migration test. No-op startup/UPDATE
+generation handling is repaired without changing that assertion. Shuffled logs
+and artifacts returned access errors; do not assume its failure details.
+Avatar acceptance 42552166652 passed on that old head; fresh gates remain required.
+
+Cold reads now reuse one authorized case and compact review inputs per read batch,
+preserving per-document hash/invalidation/version checks. First standalone 10k
+graph miss median improved from 6.83s to 2.45s in the full rerun; this is not
+cold-path acceptance. All 12 original warm median targets still pass.
+232 focused cache/filter/work/guidance/Telegram/browser regressions passed with
+zero failures/errors/skips. Metadata 10.14, locks, vendor integrity, AI contract,
+JS syntax and whitespace passed. Updated full synthetic matrix and cold profiles
+are recorded in the [count contract](MY_NEXT_STEPS_COUNT_CONTRACT.md).
+Continue cold-path optimization and fresh exact-head full CI/avatar acceptance
+before marking ready. Do not waive the target. #606 stays behind #605's successful
+guarded deployment; #604 deployment 42443789666 is already verified successful.
 
 
 

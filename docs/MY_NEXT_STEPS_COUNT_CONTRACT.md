@@ -21,8 +21,11 @@ single-row `document_step_generation` table holds a random 192-bit generation.
 SQLite INSERT/UPDATE/DELETE triggers on ordinary document/work table families,
 accounts, directory, organization, OIC and settings tables change that generation
 in the SAME transaction as a dependency write. FTS virtual/shadow tables are not
-classification inputs and are excluded. Startup/schema installation rotates it
-and installs coverage for newly created dependency tables. Reinstallation is safe.
+classification inputs and are excluded. Schema installation rotates the token when
+trigger coverage changes (including new tables/columns). No-op UPDATEs and repeated
+no-op startup preserve the token and database dump; actual value/type changes
+invalidate, including case-only changes on NOCASE columns. Process restart starts
+with empty memory. This preserves the existing restart-idempotence contract.
 
 Every request still resolves the current active account and RegistryScope before
 looking up `(generation, actor ID, local date)`. Authority, generation, membership
@@ -30,7 +33,7 @@ and page facts are read in one SQLite snapshot. Another connection's commit cann
 make new data use an old index; a held old snapshot consistently sees old data.
 Random generations prevent rollback/rewrite ABA reuse. Token updates roll back
 with their writes. Copied databases initially share identical membership state;
-any relevant write or schema installation rotates the token. No GET writes to
+any actual dependency change or new trigger coverage rotates the token. No GET writes to
 SQLite, acquires claims, acknowledges work or invokes a provider.
 
 Each process retains at most 16 actor snapshots and 100,000 index references.
@@ -48,6 +51,37 @@ independently. Future policy dependencies outside the covered families must exte
 the generation trigger coverage. Rollback can leave this additive table/triggers
 in place: older code ignores them, records and review history are retained; no data
 restore is required. The normal pre-deploy backup and version guards still apply.
+
+### Cold-path follow-up
+
+The full CI at 6fefcbd found a restart-idempotence failure: repeated schema setup
+changed the generation token despite no state change. Trigger installation now
+compares definitions, extends column coverage, and invalidates only actual UPDATE
+changes. INSERT/DELETE still invalidate atomically. The existing Telegram migration
+dump-equality test is preserved.
+
+Cold classification now reuses one authorized consolidation case and its compact
+snapshot inputs within each caller-held SQLite read snapshot/batch. Every target
+still receives the existing exact snapshot hash, invalidation and draft-lineage
+checks; ordinary review/mutation services use fresh inputs. Nothing survives the
+batch or crosses actors. Shared summary assembly keeps the guidance policy aligned.
+The first standalone 10k graph measurement reduced the five-write miss median from
+6,830.107 ms to 2,683.811 ms (first read 2,383.596 ms; warm 35.519 ms against baseline
+137.150 ms). This is progress, not cold-path acceptance. Further profiling and full
+exact-head CI remain required before ready/release.
+
+The complete follow-up matrix again passed all 12 original warm median targets.
+At 10k, baseline/candidate warm medians were ordinary 9.858/2.642 ms, linked
+146.135/18.030 ms, aliases 5.583/2.323 ms and graph 132.558/34.613 ms.
+Committed-change miss medians were respectively 177.222, 460.236, 60.092 and
+2,452.172 ms; graph first read was 2,606.296 ms. The follow-up results and cold
+profiles are appended to the same JSON evidence file, preserving the older results.
+232 final focused regressions passed without failures/errors/skips, including the
+unchanged restart assertion, NOCASE/new-column invalidation, batch/ordinary review
+parity, authority revocation, stale inputs, full work workflows and browser filters.
+These overlap earlier runs and are not additive. Metadata/locks/vendor/AI contract,
+JS syntax, local Markdown links and whitespace passed. No full local suite claim.
+
 
 ### Redesign validation and performance
 

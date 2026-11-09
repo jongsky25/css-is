@@ -18,13 +18,30 @@ def latest(conn, document_id):
     return found[0] if found else None
 
 
-def snapshot(conn,case_id,document_id):
+def _snapshot_inputs(conn,case_id):
     case=work.raw(conn,case_id)
     sources=[]
     for (linked_id,) in conn.execute('SELECT document_id FROM work_document WHERE case_id=? ORDER BY document_id',(case_id,)):
         doc=work.resolved_document(conn,linked_id)
         if not doc:
             raise ValueError('A linked source is unavailable. Reconcile correspondence before review.')
+        directive=conn.execute('SELECT MAX(id) FROM document_directive WHERE document_id=?',(doc['id'],)).fetchone()[0]
+        # Retain only hash inputs, not extracted source bodies or unrelated fields.
+        keys=('id','subject','type','sender','document_date','due_date','verification','policy_json',
+              'canonical_id','status','approved_version','reconcile','current_version')
+        sources.append((linked_id,{key:doc[key] for key in keys},directive))
+    tasks=rows(conn,'SELECT id,title,status,revision,mandatory,owner_id,submission FROM work_task WHERE case_id=? ORDER BY id',(case_id,))
+    import work_handoff
+    draft=work_handoff.current(conn,case_id)
+    support=rows(conn,'''SELECT id FROM work_support_file f WHERE case_id=? AND NOT EXISTS
+        (SELECT 1 FROM work_support_retired r WHERE r.file_id=f.id) ORDER BY id''',(case_id,))
+    return case,sources,tasks,draft,support
+
+
+def snapshot(conn,case_id,document_id,*,_inputs=None):
+    case,linked,tasks,draft,support=_inputs if _inputs is not None else _snapshot_inputs(conn,case_id)
+    sources=[]
+    for linked_id,doc,directive in linked:
         keys=('id','subject','type','sender','document_date','due_date','verification','policy_json','canonical_id')
         source={key:doc[key] for key in keys}
         source['lifecycle']=doc['status'] if doc['id']!=document_id and doc['status'] in ('closed','cancelled') else None
@@ -32,15 +49,10 @@ def snapshot(conn,case_id,document_id):
         source['approved_version']=doc['approved_version'] if doc['id']!=document_id else None
         source['reconcile']=doc['reconcile'] if doc['id']!=document_id else None
         source['current_version']=doc['current_version'] if doc['id']!=document_id else None
-        source['directive_id']=conn.execute('SELECT MAX(id) FROM document_directive WHERE document_id=?',(doc['id'],)).fetchone()[0]
+        source['directive_id']=directive
         sources.append(source)
     if document_id not in {s['id'] for s in sources}:
         raise ValueError('Link this outgoing document to the work item before requesting review.')
-    tasks=rows(conn,'SELECT id,title,status,revision,mandatory,owner_id,submission FROM work_task WHERE case_id=? ORDER BY id',(case_id,))
-    import work_handoff
-    draft=work_handoff.current(conn,case_id)
-    support=rows(conn,'''SELECT id FROM work_support_file f WHERE case_id=? AND NOT EXISTS
-        (SELECT 1 FROM work_support_retired r WHERE r.file_id=f.id) ORDER BY id''',(case_id,))
     value={'case_id':case_id,'case_revision':case['revision'],'tasks':tasks,'sources':sources,
            'draft_id':draft['id'] if draft else None,'support_ids':[f['id'] for f in support]}
     raw=json.dumps(value,sort_keys=True)
@@ -59,10 +71,10 @@ def version_matches(conn,packet,doc):
     return False
 
 
-def current(conn,packet):
+def current(conn,packet,*,_inputs=None):
     if conn.execute('SELECT 1 FROM work_review_invalidation WHERE packet_id=?',(packet['id'],)).fetchone():return False
     try:
-        return snapshot(conn,packet['case_id'],packet['document_id'])[1]==packet['snapshot_hash'] and version_matches(conn,packet,docs.raw(conn,packet['document_id']))
+        return snapshot(conn,packet['case_id'],packet['document_id'],_inputs=_inputs)[1]==packet['snapshot_hash'] and version_matches(conn,packet,docs.raw(conn,packet['document_id']))
     except ValueError:return False
 
 
@@ -161,9 +173,38 @@ def summaries(conn,user,documents):
         if not packet:continue
         try:case=work.get(conn,user,packet['case_id'])
         except permissions.Denied:continue
-        value=json.loads(packet['snapshot_json'])
-        version=rows(conn,'SELECT * FROM document_file_version WHERE id=?',(packet['version_id'],))[0]
-        result[doc['id']]={'case':case,'packet':packet,'version':version,'current':current(conn,packet),
+        result[doc['id']]=_summary_value(conn,packet,case,current(conn,packet))
+    return result
+
+
+class ReadBatch:
+    """Reuse one case within a caller-held, read-only SQLite snapshot only."""
+    def __init__(self,conn,user):
+        self.conn=conn;self.user=user
+        self.case_id=None;self.case=None;self.inputs=None
+
+    def summary(self,doc):
+        conn=self.conn;packet=latest(conn,doc['id'])
+        if not packet:return None
+        cid=packet['case_id']
+        if cid!=self.case_id:
+            # Keep only one case, never an actor-wide cache of source/work bodies.
+            self.case_id=None;self.case=None;self.inputs=None
+            try:case=work.get(conn,self.user,cid)
+            except permissions.Denied:return None
+            self.case=case;self.case_id=cid
+        valid=False
+        if not conn.execute('SELECT 1 FROM work_review_invalidation WHERE packet_id=?',(packet['id'],)).fetchone():
+            try:
+                if self.inputs is None:self.inputs=_snapshot_inputs(conn,cid)
+                valid=current(conn,packet,_inputs=self.inputs)
+            except ValueError:pass
+        return _summary_value(conn,packet,self.case,valid)
+
+
+def _summary_value(conn,packet,case,is_current):
+    value=json.loads(packet['snapshot_json'])
+    version=rows(conn,'SELECT * FROM document_file_version WHERE id=?',(packet['version_id'],))[0]
+    return {'case':case,'packet':packet,'version':version,'current':is_current,
             'accepted':sum(t['status']=='done' for t in value['tasks']),
             'missing':sum(t['mandatory'] and t['status'] not in ('done','cancelled') for t in value['tasks'])}
-    return result

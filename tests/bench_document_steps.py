@@ -118,6 +118,10 @@ def test_measure_document_steps(registry,size,scenario,tmp_path):
                 # Real committed dependency changes, not just a manual cache clear.
                 c.execute('UPDATE document SET revision=revision+1 WHERE id=(SELECT MIN(id) FROM document)');c.commit()
                 start=time.perf_counter();module.page(c,u[0],today='2026-11-07');misses.append(time.perf_counter()-start)
+            c.execute('UPDATE document SET revision=revision+1 WHERE id=(SELECT MIN(id) FROM document)');c.commit()
+            profile=cProfile.Profile();profile.runcall(module.page,c,u[0],today='2026-11-07')
+            stream=io.StringIO();pstats.Stats(profile,stream=stream).sort_stats('cumulative').print_stats(30)
+            (tmp_path/'candidate-cold-profile.txt').write_text(stream.getvalue())
         result[name]={'first_ms':round(cold*1000,3),'median_ms':round(statistics.median(samples)*1000,3),
                       'p95_ms':round(sorted(samples)[28]*1000,3),'python_peak_bytes':peak,
                       'queries':sum(s.lstrip().upper().startswith(('SELECT','WITH')) for s in sql),

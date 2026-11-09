@@ -91,15 +91,18 @@ def test_schema_install_and_all_dependency_writes_rotate_generation(registry):
     c,u=setup(registry)
     # Exercise less obvious dependencies: reviewer directory, OIC and module switches.
     for sql,args in [
-        ('UPDATE resource_person SET designation=designation',()),
-        ('UPDATE org_unit SET path=path',()),
-        ("UPDATE app_setting SET value=value WHERE key='documents.enabled'",()),
+        ("UPDATE resource_person SET designation='New role'",()),
+        ("UPDATE org_unit SET path=path||'/new'",()),
+        ("UPDATE app_setting SET value='0' WHERE key='documents.enabled'",()),
         ('INSERT INTO document_access VALUES (1,?,?)',(u[0]['id'],'test')),
     ]:
         old=c.execute('SELECT token FROM document_step_generation').fetchone()[0]
         c.execute(sql,args);c.commit()
         assert c.execute('SELECT token FROM document_step_generation').fetchone()[0]!=old
     old=c.execute('SELECT token FROM document_step_generation').fetchone()[0]
+    st.init_db(c)
+    assert c.execute('SELECT token FROM document_step_generation').fetchone()[0]==old
+    c.execute("CREATE TABLE document_future_fact(id INTEGER PRIMARY KEY, value TEXT)")
     st.init_db(c)
     assert c.execute('SELECT token FROM document_step_generation').fetchone()[0]!=old
 
@@ -112,3 +115,46 @@ def test_shared_work_revision_invalidates_all_affected_source_counts(registry):
     c.execute('UPDATE work_task SET revision=revision+1');c.commit()
     changed=read(c,u[0]);assert changed['counts']['attention']==10
     assert all(card['state']=='attention' for card in changed['cards'])
+
+
+@pytest.mark.parametrize('change',[
+    None,
+    'UPDATE work_task SET revision=revision+1',
+    "UPDATE document SET status='closed' WHERE id=1",
+    'UPDATE document SET current_version=NULL WHERE id=1',
+    "UPDATE document SET visibility='restricted',lead_id=NULL WHERE id=1",
+])
+def test_batch_review_matches_uncached_authority_and_exact_hash(registry,change):
+    import documents
+    import documents_registry
+    import work_review
+    c,u,unit,_=registry
+    seed_scenario(c,u,unit,20,'review_release_graph')
+    if change:c.execute(change);c.commit()
+    docs=[documents.raw(c,n) for n in range(1,21)]
+    before=c.total_changes
+    with documents_registry.snapshot(c):
+        batch=work_review.ReadBatch(c,u[0])
+        expected=work_review.summaries(c,u[0],docs)
+        assert {d['id']:value for d in docs if (value:=batch.summary(d)) is not None}==expected
+    assert c.total_changes==before
+
+
+def test_generation_distinguishes_noop_case_and_new_columns(registry):
+    c,*_=registry
+    c.execute('CREATE TABLE document_cache_probe(id INTEGER PRIMARY KEY, value TEXT COLLATE NOCASE)')
+    st.init_db(c)
+    c.execute("INSERT INTO document_cache_probe VALUES (1,'x')")
+    token=lambda:c.execute('SELECT token FROM document_step_generation').fetchone()[0]
+    before=token()
+    c.execute('UPDATE document_cache_probe SET value=value')
+    assert token()==before
+    c.execute("UPDATE document_cache_probe SET value='X'")
+    assert token()!=before
+    before=token()
+    c.execute('ALTER TABLE document_cache_probe ADD COLUMN extra TEXT')
+    st.init_db(c)
+    assert token()!=before
+    before=token()
+    c.execute("UPDATE document_cache_probe SET extra='new'")
+    assert token()!=before
