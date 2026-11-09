@@ -112,6 +112,17 @@ per-case classification or reuse between rebuilds, which conflicts with the
 no-cross-request-cache rule and needs a design decision. Results are saved in
 [the cold-target evidence](document-step-performance-2026-11-09-cold-target.json).
 
+Scaling is close to linear (graph, cold read after a change, median): 100 records
+about 13-19 ms, 1,000 about 100-136 ms (p95 up to about 164 ms), 10,000 about 1,300 ms.
+Concurrent cold readers of one generation/actor/day now share one rebuild
+(single-flight): later readers wait for the first builder and reuse its published
+index; a failed builder hands over to a waiter; keys known to be uncacheable
+(oversize) are never queued and keep the independent streaming path. This adds no
+source/work cache and no cross-generation reuse. Batch prefetch queries run only
+for documents whose guidance can consult review packets or the release gate. At 100
+records the aliases warm read measured 1.02-1.24x its baseline over five runs
+(sub-millisecond timings); treat that smallest size as borderline, not as a clean pass.
+
 Exact-head CI at 0e365a6 passed (normal, shuffled, metadata, dependency audit,
 functional). Locally, 44 cache/filter tests passed without skips; OCR-dependent
 tests fail only because this workspace lacks Tesseract. Avatar acceptance for the

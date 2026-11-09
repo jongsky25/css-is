@@ -3,7 +3,7 @@ from datetime import date
 import json
 from bisect import bisect_right
 from collections import OrderedDict
-from threading import RLock
+from threading import Lock, RLock
 
 import documents as docs
 import documents_guidance as guidance
@@ -25,11 +25,19 @@ _INDEXES=OrderedDict()
 _INDEX_LOCK=RLock()
 _INDEX_REFERENCES=100_000
 _INDEX_ACTORS=16
+# One rebuild per (generation, actor, day): concurrent readers of the same key wait
+# for the first builder instead of each repeating the full scan. Slots exist only
+# while a build runs; keys whose result cannot be cached are remembered briefly so
+# their readers keep the previous independent streaming behavior, never queueing.
+_BUILDS={}
+_UNCACHEABLE=OrderedDict()
+_UNCACHEABLE_LIMIT=64
 
 
 def clear_step_indexes():
     with _INDEX_LOCK:
         _INDEXES.clear()
+        _UNCACHEABLE.clear()
 
 LIVE="d.archived_at IS NULL AND d.canonical_id IS NULL AND d.status NOT IN ('closed','cancelled')"
 
@@ -174,17 +182,25 @@ def _load(conn,scope,documents,*,summary=False,overdue=False,today=None):
         SELECT a.document_id,MAX(link.case_id) AS id FROM aliases a
         JOIN work_document link ON link.document_id=a.id
         WHERE link.case_id IN (SELECT id FROM permitted) GROUP BY a.document_id""",params))
-    # Newest compact review packet and its retirement flag, read in the same
-    # snapshot; the review batch then needs no per-document packet queries.
-    packets={r['document_id']:r for r in rows(conn,f"""SELECT p.document_id,p.id,p.case_id,p.version_id,p.snapshot_hash,
-        EXISTS(SELECT 1 FROM work_review_invalidation i WHERE i.packet_id=p.id) AS invalidated
-        FROM work_review_packet p WHERE p.document_id IN ({ids})
-          AND p.id=(SELECT MAX(newer.id) FROM work_review_packet newer WHERE newer.document_id=p.document_id)""",params)}
+    # Newest compact review packet (with its retirement flag) and release-gate case
+    # sets, read in the same snapshot only for documents guidance will consult them
+    # for; a record without the classification columns is always included.
+    def subset(column):
+        return json.dumps([d['id'] for d in documents if d.get(column,True)])
+    packets={}
+    with_packet=subset('action_packet')
+    if with_packet!='[]':
+        packets={r['document_id']:r for r in rows(conn,'''SELECT p.document_id,p.id,p.case_id,p.version_id,p.snapshot_hash,
+            EXISTS(SELECT 1 FROM work_review_invalidation i WHERE i.packet_id=p.id) AS invalidated
+            FROM work_review_packet p WHERE p.document_id IN (SELECT value FROM json_each(:subset_ids))
+              AND p.id=(SELECT MAX(newer.id) FROM work_review_packet newer WHERE newer.document_id=p.document_id)''',{'subset_ids':with_packet})}
     release_cases={}
-    for did,cid in conn.execute(f"""SELECT document_id,case_id FROM work_review_packet WHERE document_id IN ({ids})
-        UNION SELECT document_id,case_id FROM work_completion_requirement WHERE document_id IN ({ids})
-        UNION SELECT document_id,case_id FROM work_legacy_document WHERE document_id IN ({ids})""",params):
-        release_cases.setdefault(did,set()).add(cid)
+    with_release=subset('action_release_check')
+    if with_release!='[]':
+        for did,cid in conn.execute('''SELECT document_id,case_id FROM work_review_packet WHERE document_id IN (SELECT value FROM json_each(:subset_ids))
+            UNION SELECT document_id,case_id FROM work_completion_requirement WHERE document_id IN (SELECT value FROM json_each(:subset_ids))
+            UNION SELECT document_id,case_id FROM work_legacy_document WHERE document_id IN (SELECT value FROM json_each(:subset_ids))''',{'subset_ids':with_release}):
+            release_cases.setdefault(did,set()).add(cid)
     return assignments,instructions,versions,jobs,packets,release_cases,cases
 
 
@@ -286,16 +302,37 @@ def _display(conn,cards,state,overdue):
     return selected
 
 
+def _cached_index(key):
+    with _INDEX_LOCK:
+        cached=_INDEXES.get(key)
+        if cached is not None:_INDEXES.move_to_end(key)
+        return cached
+
+
 def _personal_index(conn,scope,today):
     generation=conn.execute('SELECT token FROM document_step_generation WHERE id=1').fetchone()[0]
     # Read in the SAME snapshot as authority and data. An uncommitted writer's
     # random token cannot later be reused by a different committed transaction.
     key=(generation,scope.uid,today)
+    cached=_cached_index(key)
+    if cached is not None:return cached
     with _INDEX_LOCK:
-        cached=_INDEXES.get(key)
-        if cached is not None:
-            _INDEXES.move_to_end(key)
-            return cached
+        queue=key not in _UNCACHEABLE
+        if queue:
+            slot=_BUILDS.setdefault(key,[Lock(),0]);slot[1]+=1
+    if not queue:return _build_personal_index(conn,scope,today,key)
+    try:
+        with slot[0]:
+            # A builder that finished while this reader waited published the index.
+            cached=_cached_index(key)
+            return cached if cached is not None else _build_personal_index(conn,scope,today,key)
+    finally:
+        with _INDEX_LOCK:
+            slot[1]-=1
+            if slot[1]==0 and _BUILDS.get(key) is slot:del _BUILDS[key]
+
+
+def _build_personal_index(conn,scope,today,key):
     indexes={(state,late):[] for state in STATES for late in (False,True)}
     cursor=_page_records(conn,scope,'mine',today,0,'',PAGE_SIZE,scan=True)
     columns=[c[0] for c in cursor.description]
@@ -312,11 +349,13 @@ def _personal_index(conn,scope,today):
                         indexes['all',late].append(order)
                         for state in states:indexes[state,late].append(order)
             if sum(map(len,indexes.values()))>_INDEX_REFERENCES:
+                _mark_uncacheable(key)
                 return None  # Bound cache construction too; use the streaming path.
     finally:
         cursor.close()
     result={k:tuple(v) for k,v in indexes.items()}
     size=sum(map(len,result.values()))
+    if size>_INDEX_REFERENCES:_mark_uncacheable(key)
     if size<=_INDEX_REFERENCES:
         with _INDEX_LOCK:
             # Drop obsolete generations for this actor; other snapshots held by
@@ -328,6 +367,12 @@ def _personal_index(conn,scope,today):
                    sum(len(v) for item in _INDEXES.values() for v in item.values())>_INDEX_REFERENCES):
                 _INDEXES.popitem(last=False)
     return result
+
+
+def _mark_uncacheable(key):
+    with _INDEX_LOCK:
+        _UNCACHEABLE[key]=True
+        while len(_UNCACHEABLE)>_UNCACHEABLE_LIMIT:_UNCACHEABLE.popitem(last=False)
 
 
 def _personal_page(conn,scope,today,before,before_due,limit,state,overdue):

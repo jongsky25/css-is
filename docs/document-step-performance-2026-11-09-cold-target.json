@@ -1,5 +1,5 @@
 {
- "note": "Synthetic 10k review/release-graph cold-path runs on one noisy cloud workspace, 30 committed-change samples each. Baseline medians varied 249-352 ms between runs, so cross-run ratios are not controlled speedups. Pre-change reference in the same session: miss median 3570.458 ms, p95 4573.248 ms. Target set by the user: cold graph median under 1000 ms at 10k. Not yet met.",
+ "note": "Synthetic 10k review/release-graph cold-path runs on one noisy cloud workspace, 30 committed-change samples each. Baseline medians varied 249-352 ms between runs, so cross-run ratios are not controlled speedups. Pre-change reference in the same session: miss median 3570.458 ms, p95 4573.248 ms. Target set by the user: cold graph median under 1000 ms at 10k. Not yet met. smaller_scope_runs: 100/1000-record runs (the second file was run before the prefetch queries were restricted to documents that need them). Warm aliases at 100 records measured 1.02-1.24x baseline over five later runs (sub-millisecond timings, about 0.2 ms noise).",
  "runs": [
   {
    "size": 10000,
@@ -1767,6 +1767,98 @@
     "invalidation_miss_median_ms": 1297.347
    },
    "label": "after serializer experiment (later reverted; code at 0e365a6 omits it)"
+  }
+ ],
+ "smaller_scope_runs": [
+  {
+   "source": "small.jsonl",
+   "size": 100,
+   "scenario": "review_release_graph",
+   "baseline_warm_median_ms": 72.172,
+   "candidate_warm_median_ms": 4.845,
+   "cold_after_change_median_ms": 18.508,
+   "cold_after_change_p95_ms": 20.229
+  },
+  {
+   "source": "small.jsonl",
+   "size": 1000,
+   "scenario": "review_release_graph",
+   "baseline_warm_median_ms": 79.148,
+   "candidate_warm_median_ms": 3.812,
+   "cold_after_change_median_ms": 127.905,
+   "cold_after_change_p95_ms": 154.029
+  },
+  {
+   "source": "small2.jsonl",
+   "size": 100,
+   "scenario": "ordinary",
+   "baseline_warm_median_ms": 1.746,
+   "candidate_warm_median_ms": 1.784,
+   "cold_after_change_median_ms": 6.295,
+   "cold_after_change_p95_ms": 6.722
+  },
+  {
+   "source": "small2.jsonl",
+   "size": 100,
+   "scenario": "linked_contributions",
+   "baseline_warm_median_ms": 8.901,
+   "candidate_warm_median_ms": 2.981,
+   "cold_after_change_median_ms": 9.908,
+   "cold_after_change_p95_ms": 10.285
+  },
+  {
+   "source": "small2.jsonl",
+   "size": 100,
+   "scenario": "restricted_aliases",
+   "baseline_warm_median_ms": 1.732,
+   "candidate_warm_median_ms": 2.178,
+   "cold_after_change_median_ms": 4.264,
+   "cold_after_change_p95_ms": 4.773
+  },
+  {
+   "source": "small2.jsonl",
+   "size": 100,
+   "scenario": "review_release_graph",
+   "baseline_warm_median_ms": 49.267,
+   "candidate_warm_median_ms": 3.599,
+   "cold_after_change_median_ms": 13.787,
+   "cold_after_change_p95_ms": 19.402
+  },
+  {
+   "source": "small2.jsonl",
+   "size": 1000,
+   "scenario": "ordinary",
+   "baseline_warm_median_ms": 4.325,
+   "candidate_warm_median_ms": 2.247,
+   "cold_after_change_median_ms": 44.295,
+   "cold_after_change_p95_ms": 48.609
+  },
+  {
+   "source": "small2.jsonl",
+   "size": 1000,
+   "scenario": "linked_contributions",
+   "baseline_warm_median_ms": 25.123,
+   "candidate_warm_median_ms": 4.557,
+   "cold_after_change_median_ms": 70.265,
+   "cold_after_change_p95_ms": 73.914
+  },
+  {
+   "source": "small2.jsonl",
+   "size": 1000,
+   "scenario": "restricted_aliases",
+   "baseline_warm_median_ms": 1.619,
+   "candidate_warm_median_ms": 1.569,
+   "cold_after_change_median_ms": 11.357,
+   "cold_after_change_p95_ms": 11.956
+  },
+  {
+   "source": "small2.jsonl",
+   "size": 1000,
+   "scenario": "review_release_graph",
+   "baseline_warm_median_ms": 87.18,
+   "candidate_warm_median_ms": 5.317,
+   "cold_after_change_median_ms": 136.416,
+   "cold_after_change_p95_ms": 163.601
   }
  ]
 }

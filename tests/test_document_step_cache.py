@@ -300,3 +300,61 @@ def test_batched_snapshot_inputs_match_per_source_reads(registry,change):
             with pytest.raises(ValueError,match=str(error)):work_review._snapshot_inputs(c,case_id)
             continue
         assert work_review._snapshot_inputs(c,case_id)==expected
+
+
+def _concurrent_reads(registry,workers,monkeypatch,*,delay=0.2):
+    import threading
+    import time
+    c,u=setup(registry);path=c.execute('PRAGMA database_list').fetchone()[2]
+    expected=read(c,u[0]);actions.clear_step_indexes()
+    scans=[];original=actions._page_records
+    def slow_scan(*args,**kwargs):
+        if kwargs.get('scan'):scans.append(1);time.sleep(delay)  # widen the overlap window
+        return original(*args,**kwargs)
+    monkeypatch.setattr(actions,'_page_records',slow_scan)
+    results=[None]*workers;errors=[]
+    def worker(n):
+        conn=st.connect(path)
+        try:results[n]=read(conn,u[0])
+        except Exception as error:errors.append(error)
+        finally:conn.close()
+    threads=[threading.Thread(target=worker,args=(n,)) for n in range(workers)]
+    [t.start() for t in threads];[t.join(30) for t in threads]
+    assert not errors and all(r==expected for r in results)
+    assert not actions._BUILDS,'build slots must not outlive their readers'
+    return scans
+
+
+def test_concurrent_cold_readers_share_one_rebuild(registry,monkeypatch):
+    assert len(_concurrent_reads(registry,6,monkeypatch))==1
+
+
+def test_failed_builder_does_not_strand_waiters(registry,monkeypatch):
+    import threading
+    state={'failed':False};guard=threading.Lock();original=actions._build_personal_index
+    def flaky(*args,**kwargs):
+        with guard:
+            first=not state['failed'];state['failed']=True
+        if first:
+            import time;time.sleep(0.2);raise RuntimeError('builder failed')
+        return original(*args,**kwargs)
+    c,u=setup(registry);path=c.execute('PRAGMA database_list').fetchone()[2]
+    expected=read(c,u[0]);actions.clear_step_indexes()
+    monkeypatch.setattr(actions,'_build_personal_index',flaky)
+    results=[];errors=[]
+    def worker():
+        conn=st.connect(path)
+        try:results.append(read(conn,u[0]))
+        except RuntimeError as error:errors.append(error)
+        finally:conn.close()
+    threads=[threading.Thread(target=worker) for _ in range(4)]
+    [t.start() for t in threads];[t.join(30) for t in threads]
+    assert len(errors)==1 and len(results)==3 and all(r==expected for r in results)
+    assert not actions._BUILDS
+
+
+def test_uncacheable_scopes_never_queue_behind_a_builder(registry,monkeypatch):
+    monkeypatch.setattr(actions,'_INDEX_REFERENCES',10)
+    scans=_concurrent_reads(registry,4,monkeypatch,delay=0.05)
+    assert len(scans)>=2,'streaming readers must stay independent once a key is known uncacheable'
+    assert not actions._INDEXES
