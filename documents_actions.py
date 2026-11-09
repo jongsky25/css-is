@@ -166,11 +166,26 @@ def _load(conn,scope,documents,*,summary=False,overdue=False,today=None):
     # Every linked source (including aliases) must remain readable.
     cases=_group(rows(conn,f"""WITH RECURSIVE aliases(document_id,id) AS (
         SELECT id,id FROM document WHERE id IN ({ids}) UNION
-        SELECT a.document_id,d.id FROM document d JOIN aliases a ON d.canonical_id=a.id)
-        SELECT a.document_id,MAX(w.id) AS id FROM aliases a
-        JOIN work_document link ON link.document_id=a.id JOIN work_case w ON w.id=link.case_id
-        WHERE {scope.work_view_sql('w')} GROUP BY a.document_id""",params))
-    return assignments,instructions,versions,jobs,cases
+        SELECT a.document_id,d.id FROM document d JOIN aliases a ON d.canonical_id=a.id),
+        reached(case_id) AS (
+          SELECT DISTINCT link.case_id FROM aliases a JOIN work_document link ON link.document_id=a.id),
+        permitted(id) AS (
+          SELECT w.id FROM work_case w WHERE w.id IN (SELECT case_id FROM reached) AND {scope.work_view_sql('w')})
+        SELECT a.document_id,MAX(link.case_id) AS id FROM aliases a
+        JOIN work_document link ON link.document_id=a.id
+        WHERE link.case_id IN (SELECT id FROM permitted) GROUP BY a.document_id""",params))
+    # Newest compact review packet and its retirement flag, read in the same
+    # snapshot; the review batch then needs no per-document packet queries.
+    packets={r['document_id']:r for r in rows(conn,f"""SELECT p.document_id,p.id,p.case_id,p.version_id,p.snapshot_hash,
+        EXISTS(SELECT 1 FROM work_review_invalidation i WHERE i.packet_id=p.id) AS invalidated
+        FROM work_review_packet p WHERE p.document_id IN ({ids})
+          AND p.id=(SELECT MAX(newer.id) FROM work_review_packet newer WHERE newer.document_id=p.document_id)""",params)}
+    release_cases={}
+    for did,cid in conn.execute(f"""SELECT document_id,case_id FROM work_review_packet WHERE document_id IN ({ids})
+        UNION SELECT document_id,case_id FROM work_completion_requirement WHERE document_id IN ({ids})
+        UNION SELECT document_id,case_id FROM work_legacy_document WHERE document_id IN ({ids})""",params):
+        release_cases.setdefault(did,set()).add(cid)
+    return assignments,instructions,versions,jobs,packets,release_cases,cases
 
 
 class _GuidanceValues(dict):
@@ -190,11 +205,11 @@ def _cards(conn,scope,documents,today,view,*,summary=False,overdue=False):
     # unread instructions share its enabled state. For DOCUMENT counts a single
     # earliest-due contribution and an instruction represent each whole set,
     # including overdue membership; this is not a total of individual steps.
-    assignments,instructions,versions,jobs,cases=_load(
+    assignments,instructions,versions,jobs,packets,release_cases,cases=_load(
         conn,scope,documents,summary=summary,overdue=overdue,today=today)
     user=scope.user;uid=user['id'];enabled=docs.enabled(conn);cards=[]
     review_batch=work_review.ReadBatch(conn,user,scope=scope)
-    completion_batch=work_completion.ReadBatch(conn)
+    completion_batch=work_completion.ReadBatch(conn,cases=release_cases)
     for doc in documents:
         did=doc['id'];base=f'/documents/{did}'
         own=assignments.get(did,[])
@@ -210,7 +225,7 @@ def _cards(conn,scope,documents,today,view,*,summary=False,overdue=False):
                 'release_gate':completion_batch.release_gate,
                 'delivery_state':'unknown' if doc['action_unknown'] else 'partial' if doc['action_delivery'] else 'none'}},
             {'work_cases':lambda: cases.get(did,[]),
-             'consolidation':lambda: review_batch.summary(doc,details=False) if doc['action_packet'] else None})
+             'consolidation':lambda: review_batch.summary(doc,details=False,packet=packets.get(did)) if doc['action_packet'] else None})
         advice=guidance.build(conn,user,values)
         step=advice['stage']
         if view=='mine':

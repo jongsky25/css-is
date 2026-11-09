@@ -187,9 +187,13 @@ def test_batch_release_gate_matches_all_linked_cases(registry,change):
     before=c.total_changes
     with documents_registry.snapshot(c):
         batch=work_completion.ReadBatch(c)
-        for did in [1,2,11,12,1,11]:
+        scope=permissions.RegistryScope(c,u[0])
+        prefetched=work_completion.ReadBatch(c,cases=actions._load(c,scope,[documents.raw(c,n) for n in range(1,21)])[-2])
+        for did in [1,2,11,12,1,11,20]:
             doc=documents.raw(c,did)
-            assert outcome(batch.release_gate,doc)==outcome(lambda d:work_completion.release_gate(c,d),doc)
+            expected=outcome(lambda d:work_completion.release_gate(c,d),doc)
+            assert outcome(batch.release_gate,doc)==expected
+            assert outcome(prefetched.release_gate,doc)==expected
     assert c.total_changes==before
 
 
@@ -223,3 +227,76 @@ def test_compact_review_reads_preserve_hash_without_full_document_reads(registry
         for doc in docs:
             assert batch.summary(doc,details=False)=={
                 k:expected[doc['id']][k] for k in ('case','current')}
+
+
+@pytest.mark.parametrize('change',[
+    None,
+    "UPDATE document SET status='closed' WHERE id IN (2,3)",
+    'UPDATE document SET canonical_id=2 WHERE id=1',
+    "UPDATE document SET subject='Café \"quoted\" ☃',policy_json='{\"closure\": [], \"x\": 1.5}' WHERE id=4",
+    'UPDATE document SET current_version=NULL,approved_version=NULL,reconcile=1 WHERE id=5',
+])
+def test_batched_snapshot_digests_are_byte_identical(registry,change):
+    import documents
+    import work_review
+    c,u,unit,_=registry
+    seed_scenario(c,u,unit,20,'review_release_graph')
+    if change:c.execute(change);c.commit()
+    for case_id in (1,11):
+        inputs=work_review._snapshot_inputs(c,case_id)
+        digests=work_review.SnapshotDigests(case_id,inputs)
+        members=[r[0] for r in c.execute('SELECT document_id FROM work_document WHERE case_id=?',(case_id,))]
+        for document_id in members:
+            if document_id in digests.ids:
+                assert digests.digest(document_id)==work_review.snapshot(c,case_id,document_id,_inputs=inputs)[1]
+            else:  # An alias resolves to another source; both paths reject it identically.
+                with pytest.raises(ValueError):digests.digest(document_id)
+                with pytest.raises(ValueError):work_review.snapshot(c,case_id,document_id,_inputs=inputs)
+        outsider=max(members)+1000
+        with pytest.raises(ValueError):digests.digest(outsider)
+        with pytest.raises(ValueError):work_review.snapshot(c,case_id,outsider,_inputs=inputs)
+
+
+def _legacy_snapshot_inputs(conn,case_id):
+    """The per-source implementation that batched input reads must reproduce exactly."""
+    import work
+    import work_review
+    import work_handoff
+    from documents_storage import rows
+    case=work.raw(conn,case_id);sources=[]
+    for (linked_id,) in conn.execute('SELECT document_id FROM work_document WHERE case_id=? ORDER BY document_id',(case_id,)):
+        doc=work.resolved_document(conn,linked_id,_load=work_review._review_source)
+        if not doc:raise ValueError('A linked source is unavailable. Reconcile correspondence before review.')
+        directive=conn.execute('SELECT MAX(id) FROM document_directive WHERE document_id=?',(doc['id'],)).fetchone()[0]
+        keys=('id','subject','type','sender','document_date','due_date','verification','policy_json',
+              'canonical_id','status','approved_version','reconcile','current_version')
+        sources.append((linked_id,{key:doc[key] for key in keys},directive))
+    tasks=rows(conn,'SELECT id,title,status,revision,mandatory,owner_id,submission FROM work_task WHERE case_id=? ORDER BY id',(case_id,))
+    draft=work_handoff.current(conn,case_id)
+    support=rows(conn,'''SELECT id FROM work_support_file f WHERE case_id=? AND NOT EXISTS
+        (SELECT 1 FROM work_support_retired r WHERE r.file_id=f.id) ORDER BY id''',(case_id,))
+    return case,sources,tasks,draft,support
+
+
+@pytest.mark.parametrize('change',[
+    None,
+    'UPDATE document SET canonical_id=2 WHERE id=1',
+    'UPDATE document SET canonical_id=3 WHERE id=2; UPDATE document SET canonical_id=12 WHERE id=3',  # chain leaves the case
+    'UPDATE document SET canonical_id=2 WHERE id=1; UPDATE document SET canonical_id=1 WHERE id=2',    # alias loop
+    'UPDATE work_document SET document_id=999 WHERE document_id=4',                                  # missing source
+    "INSERT INTO document_directive(document_id,actor_id,text,created_at) VALUES (5,1,'x','2026-11-01')",
+])
+def test_batched_snapshot_inputs_match_per_source_reads(registry,change):
+    import work_review
+    c,u,unit,_=registry
+    seed_scenario(c,u,unit,20,'review_release_graph')
+    c.execute('PRAGMA foreign_keys=OFF')  # a missing linked record is exactly the case under test
+    if change:
+        for statement in change.split(';'):c.execute(statement)
+        c.commit()
+    for case_id in (1,11):
+        try:expected=_legacy_snapshot_inputs(c,case_id)
+        except ValueError as error:
+            with pytest.raises(ValueError,match=str(error)):work_review._snapshot_inputs(c,case_id)
+            continue
+        assert work_review._snapshot_inputs(c,case_id)==expected

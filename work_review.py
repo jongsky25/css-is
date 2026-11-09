@@ -27,18 +27,31 @@ def _review_source(conn,document_id):
     return found[0] if found else None
 
 
+_SOURCE_KEYS=('id','subject','type','sender','document_date','due_date','verification','policy_json',
+              'canonical_id','status','approved_version','reconcile','current_version')
+
+
 def _snapshot_inputs(conn,case_id):
     case=work.raw(conn,case_id)
-    sources=[]
-    for (linked_id,) in conn.execute('SELECT document_id FROM work_document WHERE case_id=? ORDER BY document_id',(case_id,)):
-        doc=work.resolved_document(conn,linked_id,_load=_review_source)
+    linked_ids=[r[0] for r in conn.execute('SELECT document_id FROM work_document WHERE case_id=? ORDER BY document_id',(case_id,))]
+    # One read for the linked records; aliases are followed locally with the same
+    # loop/missing-record rules as work.resolved_document, fetching only uncached targets.
+    fetched={r['id']:r for r in rows(conn,'''SELECT id,subject,type,sender,document_date,due_date,verification,
+        policy_json,canonical_id,status,approved_version,reconcile,current_version
+        FROM document WHERE id IN (SELECT document_id FROM work_document WHERE case_id=?)''',(case_id,))}
+    def load(_conn,document_id):
+        if document_id not in fetched:fetched[document_id]=_review_source(conn,document_id)
+        return fetched[document_id]
+    resolved=[]
+    for linked_id in linked_ids:
+        doc=work.resolved_document(conn,linked_id,_load=load)
         if not doc:
             raise ValueError('A linked source is unavailable. Reconcile correspondence before review.')
-        directive=conn.execute('SELECT MAX(id) FROM document_directive WHERE document_id=?',(doc['id'],)).fetchone()[0]
-        # Retain only hash inputs, not unrelated registry fields.
-        keys=('id','subject','type','sender','document_date','due_date','verification','policy_json',
-              'canonical_id','status','approved_version','reconcile','current_version')
-        sources.append((linked_id,{key:doc[key] for key in keys},directive))
+        resolved.append((linked_id,doc))
+    directives=dict(conn.execute('SELECT document_id,MAX(id) FROM document_directive WHERE document_id IN (SELECT value FROM json_each(?)) GROUP BY document_id',
+                                 (json.dumps(sorted({doc['id'] for _,doc in resolved})),)))
+    # Retain only hash inputs, not unrelated registry fields.
+    sources=[(linked_id,{key:doc[key] for key in _SOURCE_KEYS},directives.get(doc['id'])) for linked_id,doc in resolved]
     tasks=rows(conn,'SELECT id,title,status,revision,mandatory,owner_id,submission FROM work_task WHERE case_id=? ORDER BY id',(case_id,))
     import work_handoff
     draft=work_handoff.current(conn,case_id)
@@ -47,25 +60,66 @@ def _snapshot_inputs(conn,case_id):
     return case,sources,tasks,draft,support
 
 
+def _source_value(linked_id,doc,directive,target):
+    """One source's hash input; only the document under review keeps its live lineage."""
+    keys=('id','subject','type','sender','document_date','due_date','verification','policy_json','canonical_id')
+    source={key:doc[key] for key in keys}
+    source['lifecycle']=doc['status'] if not target and doc['status'] in ('closed','cancelled') else None
+    source['linked_id']=linked_id
+    source['approved_version']=doc['approved_version'] if not target else None
+    source['reconcile']=doc['reconcile'] if not target else None
+    source['current_version']=doc['current_version'] if not target else None
+    source['directive_id']=directive
+    return source
+
+
+_NOT_LINKED='Link this outgoing document to the work item before requesting review.'
+
+
 def snapshot(conn,case_id,document_id,*,_inputs=None):
     case,linked,tasks,draft,support=_inputs if _inputs is not None else _snapshot_inputs(conn,case_id)
-    sources=[]
-    for linked_id,doc,directive in linked:
-        keys=('id','subject','type','sender','document_date','due_date','verification','policy_json','canonical_id')
-        source={key:doc[key] for key in keys}
-        source['lifecycle']=doc['status'] if doc['id']!=document_id and doc['status'] in ('closed','cancelled') else None
-        source['linked_id']=linked_id
-        source['approved_version']=doc['approved_version'] if doc['id']!=document_id else None
-        source['reconcile']=doc['reconcile'] if doc['id']!=document_id else None
-        source['current_version']=doc['current_version'] if doc['id']!=document_id else None
-        source['directive_id']=directive
-        sources.append(source)
+    sources=[_source_value(linked_id,doc,directive,doc['id']==document_id) for linked_id,doc,directive in linked]
     if document_id not in {s['id'] for s in sources}:
-        raise ValueError('Link this outgoing document to the work item before requesting review.')
+        raise ValueError(_NOT_LINKED)
     value={'case_id':case_id,'case_revision':case['revision'],'tasks':tasks,'sources':sources,
            'draft_id':draft['id'] if draft else None,'support_ids':[f['id'] for f in support]}
     raw=json.dumps(value,sort_keys=True)
     return value,hashlib.sha256(raw.encode()).hexdigest()
+
+
+class SnapshotDigests:
+    """Exact snapshot() digests for every document of one case, serialized once.
+
+    The canonical JSON is sort_keys output with default separators; the case-wide
+    fields and each source (as reviewed document or as another source) are
+    serialized once and joined, producing byte-for-byte the same text and hash.
+    Lives only inside a caller-held read batch for a single case's inputs.
+    """
+    def __init__(self,case_id,inputs):
+        case,linked,tasks,draft,support=inputs
+        self.linked=linked;self.ids={doc['id'] for _,doc,_ in linked};self.memo={};self.others=None;self.positions=None
+        self.head=('{"case_id": '+json.dumps(case_id)+', "case_revision": '+json.dumps(case['revision'])
+                   +', "draft_id": '+json.dumps(draft['id'] if draft else None)+', "sources": [')
+        self.tail=('], "support_ids": '+json.dumps([f['id'] for f in support])
+                   +', "tasks": '+json.dumps(tasks,sort_keys=True)+'}')
+
+    def _fragment(self,n,target):
+        key=(n,target)
+        part=self.memo.get(key)
+        if part is None:
+            linked_id,doc,directive=self.linked[n]
+            part=self.memo[key]=json.dumps(_source_value(linked_id,doc,directive,target),sort_keys=True)
+        return part
+
+    def digest(self,document_id):
+        if document_id not in self.ids:raise ValueError(_NOT_LINKED)
+        if self.others is None:
+            self.others=[self._fragment(n,False) for n in range(len(self.linked))]
+            self.positions={}
+            for n,(_,doc,_) in enumerate(self.linked):self.positions.setdefault(doc['id'],[]).append(n)
+        parts=list(self.others)
+        for n in self.positions[document_id]:parts[n]=self._fragment(n,True)
+        return hashlib.sha256((self.head+', '.join(parts)+self.tail).encode()).hexdigest()
 
 
 def version_matches(conn,packet,doc):
@@ -80,10 +134,12 @@ def version_matches(conn,packet,doc):
     return False
 
 
-def current(conn,packet,*,_inputs=None):
-    if conn.execute('SELECT 1 FROM work_review_invalidation WHERE packet_id=?',(packet['id'],)).fetchone():return False
+def current(conn,packet,*,_inputs=None,_digests=None,_invalidation_checked=False):
+    if not _invalidation_checked and conn.execute('SELECT 1 FROM work_review_invalidation WHERE packet_id=?',(packet['id'],)).fetchone():return False
     try:
-        if snapshot(conn,packet['case_id'],packet['document_id'],_inputs=_inputs)[1]!=packet['snapshot_hash']:
+        digest=(_digests.digest(packet['document_id']) if _digests is not None
+                else snapshot(conn,packet['case_id'],packet['document_id'],_inputs=_inputs)[1])
+        if digest!=packet['snapshot_hash']:
             return False
         # The held read snapshot already resolved this source, including its
         # actual current version. Avoid fetching the full registry record again.
@@ -198,15 +254,17 @@ class ReadBatch:
         if scope is not None and scope.uid!=user['id']:
             raise ValueError('Review read scope must belong to the current actor.')
         self.conn=conn;self.user=user;self.scope=scope
-        self.case_id=None;self.case=None;self.inputs=None
+        self.case_id=None;self.case=None;self.inputs=None;self.digests=None
 
-    def summary(self,doc,*,details=True):
-        conn=self.conn;packet=latest(conn,doc['id'],details=details)
+    def summary(self,doc,*,details=True,packet=None):
+        # `packet` may be this document's newest compact packet, read with its
+        # invalidation flag in the same held snapshot (see documents_actions._load).
+        conn=self.conn;packet=packet if packet is not None else latest(conn,doc['id'],details=details)
         if not packet:return None
         cid=packet['case_id']
         if cid!=self.case_id:
             # Keep only one case, never an actor-wide cache of source/work bodies.
-            self.case_id=None;self.case=None;self.inputs=None
+            self.case_id=None;self.case=None;self.inputs=None;self.digests=None
             if self.scope is None:
                 try:case=work.get(conn,self.user,cid)
                 except permissions.Denied:return None
@@ -219,10 +277,13 @@ class ReadBatch:
                 case=found[0]
             self.case=case;self.case_id=cid
         valid=False
-        if not conn.execute('SELECT 1 FROM work_review_invalidation WHERE packet_id=?',(packet['id'],)).fetchone():
+        invalidated=(packet['invalidated'] if 'invalidated' in packet else
+                     bool(conn.execute('SELECT 1 FROM work_review_invalidation WHERE packet_id=?',(packet['id'],)).fetchone()))
+        if not invalidated:
             try:
-                if self.inputs is None:self.inputs=_snapshot_inputs(conn,cid)
-                valid=current(conn,packet,_inputs=self.inputs)
+                if self.inputs is None:
+                    self.inputs=_snapshot_inputs(conn,cid);self.digests=SnapshotDigests(cid,self.inputs)
+                valid=current(conn,packet,_inputs=self.inputs,_digests=self.digests,_invalidation_checked=True)
             except ValueError:pass
         if not details:return {'case':self.case,'current':valid}
         return _summary_value(conn,packet,self.case,valid)
