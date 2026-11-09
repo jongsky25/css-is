@@ -44,6 +44,9 @@ def test_migration_preserves_registered_payloads_and_operations(registry):
     c,u,unit,path=registry;filing(registry)
     previous=item(c)
     c.execute('DROP INDEX document_intake_retry')
+    # A legacy database predates the step-generation triggers; init_db reinstalls them.
+    for trigger in ('insert','update','delete'):
+        c.execute(f'DROP TRIGGER IF EXISTS step_generation_document_intake_{trigger}')
     for name in ('filing_attempts','filing_next_at','filing_last_at','filing_blocked'):
         c.execute('ALTER TABLE document_intake DROP COLUMN '+name)
     c.execute('DROP TABLE document_intake_sync');c.commit()
