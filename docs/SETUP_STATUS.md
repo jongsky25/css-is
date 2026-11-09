@@ -89,32 +89,34 @@ access remains necessary in a fresh chat.
 ## Next action
 
 **November 9, 2026: owner selected redesign, keeping the 20% target.**
-#605 remains draft; the owner decision pause is resolved. Latest cold-path changes
-reuse current RegistryScope work access inside the held snapshot, load only the
-consolidation summary fields guidance needs, and memoize one case's shared
-contribution-gap result. Exact review hashes, version lineage, all linked release
-cases and ordinary write guards remain intact. No cross-request body cache.
+#605 remains draft. Latest changes project exact review-source/packet fields and
+reuse the actual current source version already held in the read snapshot.
+Canonical resolution, exact snapshot JSON/hash, signed lineage, permissions and
+ordinary write guards are preserved. No new cross-request cache or GET mutation.
 
-306 focused cache/filter/work/guidance/registry/browser regressions passed, zero
-failures/errors/skips. All 12 original warm median targets pass. New 30-invalidation
-samples at 10k graph: median 1,894.914 ms, p95 2,159.830 ms; first read 1,879.414 ms.
-Warm baseline/candidate medians: 195.262/37.813 ms. Resident membership objects:
-1,591,828 bytes; process RSS snapshot 159,936,512 bytes includes other allocations.
-See [full evidence and limitations](MY_NEXT_STEPS_COUNT_CONTRACT.md). Cold latency
-is still unresolved; do not mark ready based on warm success or assume production
-hit rates. Continue cold rebuild optimization with complete dependency coverage.
+The benchmark baseline is corrected: it now pins all five changed read modules
+(actions/guidance/work/review/completion) to6452931; older records pinned only actions
+while using current shared helpers. All12 original warm targets still pass.
+10k graph: warm baseline/candidate137.573/34.463ms; first1332.704ms; 30 committed-change
+median/p95 1469.044/1625.376ms. Cold cost remains unresolved. See the
+[count contract](MY_NEXT_STEPS_COUNT_CONTRACT.md) and appended projected-review
+JSON evidence. Continue optimizing full rebuild/exact serialization without
+weakened hashes, incomplete dependency coverage or assumed production hit rates.
 
-Metadata10.14, locks/vendor/AI contract/JS syntax/links/whitespace passed.
-At prior head00b890c, avatar42558555972, metadata and audit passed; normal/shuffled
-CI42558555952 were still running when checked. Fresh full exact-head verification
-is required after these changes. Prior failed run42552166679's normal restart
-idempotence regression is repaired; shuffled failure details remain unavailable
-because log/artifact access failed. Never blindly rerun a repeated browser hang.
+306 broad focused tests plus a final21 cache tests passed (overlap, not additive),
+zero failures/errors/skips. New cases compare projected/full-record hashes, aliases,
+signed lineage and prohibit full document reads in the compact path. Metadata10.14,
+locks/vendor/AI contract/JS syntax/links/whitespace passed. Full local suites not run.
+Prior e1a664b avatar42561940586, metadata/audit passed; normal/shuffled CI42561940641
+were still running at last inspection. Fresh exact-head full CI/avatar required.
+Older restart-idempotence regression is repaired without changing its assertion;
+unavailable historical shuffled logs do not establish that failure's cause.
 
-The ordered release remains #605 then #606, each followed by the entire guarded
-deployment and diagnostics. #604 deployment42443789666 is already verified.
-No new owner decision is needed to continue engineering; production-data tests
-and gate waivers remain outside authorization. Preserve the independent #604 and #606 worktrees.
+Owner redesign decision is resolved; continue engineering without another
+redesign/waiver question. Keep the ordered release #605 then #606, each followed
+by entire guarded deployment/diagnostics. #604 deployment42443789666 is complete.
+Preserve independent worktrees. No production-data tests, staff contact, manual
+deployment, relay activation or repository-setting changes.
 
 
 

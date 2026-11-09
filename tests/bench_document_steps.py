@@ -53,10 +53,20 @@ class MeasuredConnection:
 
 
 def shipped():
-    source=subprocess.run(['git','show','6452931b25d953b10a20dcea4750003e2ecd147d:documents_actions.py'],
-                          check=True,text=True,capture_output=True).stdout
-    module=types.ModuleType('shipped_document_actions');exec(compile(source,'shipped_document_actions.py','exec'),module.__dict__)
-    return module
+    # Pin every changed read module, not just the entry point: otherwise a
+    # candidate helper optimization also changes the supposedly shipped baseline.
+    modules={}
+    for name in ('documents_actions','documents_guidance','work_review','work_completion','work'):
+        source=subprocess.run(['git','show',f'6452931b25d953b10a20dcea4750003e2ecd147d:{name}.py'],
+                              check=True,text=True,capture_output=True).stdout
+        module=types.ModuleType('shipped_'+name)
+        exec(compile(source,'shipped_'+name+'.py','exec'),module.__dict__)
+        modules[name]=module
+    for module in modules.values():
+        for alias,value in list(module.__dict__.items()):
+            if isinstance(value,types.ModuleType) and value.__name__ in modules:
+                module.__dict__[alias]=modules[value.__name__]
+    return modules['documents_actions']
 
 
 def seed_scenario(c,u,unit,size,scenario):

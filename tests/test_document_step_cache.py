@@ -191,3 +191,35 @@ def test_batch_release_gate_matches_all_linked_cases(registry,change):
             doc=documents.raw(c,did)
             assert outcome(batch.release_gate,doc)==outcome(lambda d:work_completion.release_gate(c,d),doc)
     assert c.total_changes==before
+
+
+@pytest.mark.parametrize('alias',[False,True])
+@pytest.mark.parametrize('signed',[False,True])
+def test_compact_review_reads_preserve_hash_without_full_document_reads(registry,monkeypatch,alias,signed):
+    import documents
+    import documents_registry
+    import work_review
+    c,u,unit,_=registry
+    seed_scenario(c,u,unit,10,'review_release_graph')
+    if signed:
+        vid=c.execute('''INSERT INTO document_file_version(document_id,url,file_id,fingerprint,role,parent_id,actor_id,created_at)
+            VALUES (2,'https://example.test/signed','fake-signed','signed-hash','signed',2,?,'2026-11-01')''',(u[0]['id'],)).lastrowid
+        c.execute('UPDATE document SET current_version=?,signed_version=? WHERE id=2',(vid,vid));c.commit()
+    if alias:c.execute('UPDATE document SET canonical_id=2 WHERE id=1');c.commit()
+    # Compare against the original full-record loader, including canonical resolution.
+    original=work_review._review_source
+    monkeypatch.setattr(work_review,'_review_source',documents.raw)
+    expected=work_review.snapshot(c,1,2)
+    monkeypatch.setattr(work_review,'_review_source',original)
+    assert work_review.snapshot(c,1,2)==expected
+    docs=[documents.raw(c,n) for n in range(2,11)]
+    expected=work_review.summaries(c,u[0],docs)
+    with documents_registry.snapshot(c):
+        scope=permissions.RegistryScope(c,u[0])
+        def full_record_read(*args,**kwargs):
+            raise AssertionError('Compact review must not fetch full document records')
+        monkeypatch.setattr(documents,'raw',full_record_read)
+        batch=work_review.ReadBatch(c,u[0],scope=scope)
+        for doc in docs:
+            assert batch.summary(doc,details=False)=={
+                k:expected[doc['id']][k] for k in ('case','current')}

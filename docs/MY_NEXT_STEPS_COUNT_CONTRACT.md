@@ -52,6 +52,41 @@ the generation trigger coverage. Rollback can leave this additive table/triggers
 in place: older code ignores them, records and review history are retained; no data
 restore is required. The normal pre-deploy backup and version guards still apply.
 
+### Projected review reads and benchmark baseline correction
+
+Review-source queries now select only the exact snapshot/hash and lineage fields.
+They use the shared canonical-resolution loop, including its missing/cyclic-source
+behavior. Compact guidance packet queries omit saved snapshot JSON and other
+unused detail fields. A held read batch reuses its resolved source's actual current
+version for lineage checks instead of fetching the full registry record again.
+The ordinary service path still reads fresh records. The snapshot value, canonical
+JSON serialization and digest algorithm are unchanged.
+
+The benchmark previously pinned only documents_actions to 6452931 while importing
+current shared review/guidance helpers. That was not a fully pinned comparison of
+the changed read code. New measurements pin documents_actions, documents_guidance,
+work_review, work_completion and work to that baseline commit and bind their module
+references together; unchanged services and the identical synthetic database remain
+shared. Older measurements remain historical evidence and should not be described
+as isolated measurements of the complete shipped implementation.
+
+With this corrected baseline, all 12 original 30-warm-request median targets pass.
+At 10k, baseline/candidate warm medians are ordinary 9.045/2.445 ms, linked
+152.592/19.173 ms, aliases 7.796/2.383 ms and graph 137.573/34.463 ms.
+Thirty committed-change medians/p95 are respectively 179.169/240.874 ms,
+474.723/558.675 ms, 69.283/82.165 ms and 1,469.044/1,625.376 ms. Graph first read
+is 1,332.704 ms. This does not establish cold-path release acceptance.
+
+306 broad focused tests and a final 21 cache tests passed without failures/errors/
+skips; groups overlap. Four new cases cover full-record/projected exact hash parity,
+canonical aliases, signed version lineage and forbidden full-record reads in the
+compact batch. Metadata10.14, locks/vendor/AI contract/JS syntax/links/whitespace
+passed. New full exact-head CI/avatar evidence remains required.
+The appended projected-review JSON records all scenarios and profiles. Continue
+engineering on whole-scope rebuild and repeated exact snapshot serialization,
+preserving byte-for-byte hashes and complete dependencies. Keep #605 draft;
+#606 remains behind its successful guarded deployment.
+
 ### Second cold-path follow-up
 
 The read batch now requests only the consolidation fields guidance consumes,

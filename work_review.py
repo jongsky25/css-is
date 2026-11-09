@@ -13,8 +13,17 @@ import work_decisions
 import work_compat
 
 
-def latest(conn, document_id):
-    found=rows(conn,'SELECT * FROM work_review_packet WHERE document_id=? ORDER BY id DESC LIMIT 1',(document_id,))
+def latest(conn, document_id, *, details=True):
+    fields='*' if details else 'id,case_id,document_id,version_id,snapshot_hash'
+    found=rows(conn,f'SELECT {fields} FROM work_review_packet WHERE document_id=? ORDER BY id DESC LIMIT 1',(document_id,))
+    return found[0] if found else None
+
+
+def _review_source(conn,document_id):
+    # Exact hash/lineage inputs only; omit unrelated registry fields.
+    found=rows(conn,'''SELECT id,subject,type,sender,document_date,due_date,verification,
+        policy_json,canonical_id,status,approved_version,reconcile,current_version
+        FROM document WHERE id=?''',(document_id,))
     return found[0] if found else None
 
 
@@ -22,11 +31,11 @@ def _snapshot_inputs(conn,case_id):
     case=work.raw(conn,case_id)
     sources=[]
     for (linked_id,) in conn.execute('SELECT document_id FROM work_document WHERE case_id=? ORDER BY document_id',(case_id,)):
-        doc=work.resolved_document(conn,linked_id)
+        doc=work.resolved_document(conn,linked_id,_load=_review_source)
         if not doc:
             raise ValueError('A linked source is unavailable. Reconcile correspondence before review.')
         directive=conn.execute('SELECT MAX(id) FROM document_directive WHERE document_id=?',(doc['id'],)).fetchone()[0]
-        # Retain only hash inputs, not extracted source bodies or unrelated fields.
+        # Retain only hash inputs, not unrelated registry fields.
         keys=('id','subject','type','sender','document_date','due_date','verification','policy_json',
               'canonical_id','status','approved_version','reconcile','current_version')
         sources.append((linked_id,{key:doc[key] for key in keys},directive))
@@ -74,7 +83,13 @@ def version_matches(conn,packet,doc):
 def current(conn,packet,*,_inputs=None):
     if conn.execute('SELECT 1 FROM work_review_invalidation WHERE packet_id=?',(packet['id'],)).fetchone():return False
     try:
-        return snapshot(conn,packet['case_id'],packet['document_id'],_inputs=_inputs)[1]==packet['snapshot_hash'] and version_matches(conn,packet,docs.raw(conn,packet['document_id']))
+        if snapshot(conn,packet['case_id'],packet['document_id'],_inputs=_inputs)[1]!=packet['snapshot_hash']:
+            return False
+        # The held read snapshot already resolved this source, including its
+        # actual current version. Avoid fetching the full registry record again.
+        doc=(next(doc for _,doc,_ in _inputs[1] if doc['id']==packet['document_id'])
+             if _inputs is not None else docs.raw(conn,packet['document_id']))
+        return version_matches(conn,packet,doc)
     except ValueError:return False
 
 
@@ -186,7 +201,7 @@ class ReadBatch:
         self.case_id=None;self.case=None;self.inputs=None
 
     def summary(self,doc,*,details=True):
-        conn=self.conn;packet=latest(conn,doc['id'])
+        conn=self.conn;packet=latest(conn,doc['id'],details=details)
         if not packet:return None
         cid=packet['case_id']
         if cid!=self.case_id:
