@@ -1,5 +1,7 @@
 {% extends 'work/base.html' %}
 {% block work_content %}
+{% if request_back %}<nav aria-label="Request context"><a href="{{ request_back }}">Back to reviewed request and comparison</a>{% if request_queue %} · <a href="{{ request_queue }}">Back to Documents queue</a>{% endif %}</nav>
+{% if request_changed %}<p class="work-note">The saved request changed. Compare it with the preserved source before deciding whether this work needs correction.</p>{% endif %}{% endif %}
 <h1>{{ case.title }}</h1><p><span class="work-badge">{{ case.status|capitalize }}</span> <a href="/work/{{ case.id }}/completion">Release and completion checklist</a></p><p class="work-intro work-outcome">{{ case.outcome }}</p>
 <div class="work-meta"><span>Accountable lead<strong>{{ names.get(case.lead_id, 'Inactive account') if case.lead_id else 'Awaiting confirmation' }}</strong></span><span>Concerned unit<strong>{% for unit in units if unit.id==case.unit_id %}{{ unit.name }}{% endfor %}</strong></span><span>Planning target<strong>{{ case.due_date|humandate if case.due_date else 'Not set' }}</strong></span></div>
 {% if blocked %}<p class="work-note">{{ blocked }}</p>{% endif %}

@@ -5,7 +5,7 @@
 {% if error %}<p role="alert">{{ error }}</p><p><a href="{{ document_url('/documents/' ~ doc.id ~ '/requests/' ~ index ~ '/work') }}">Reload the saved request and proposal</a></p>{% endif %}
 {% if saved %}
 <p role="status">Work was proposed on {{ saved.created_at }} by {{ names.get(saved.actor_id,'Former staff member') }}.</p>
-<p><a href="/work/{{ saved.case_id }}#task-{{ saved.task_id }}">Open the work item and contribution</a></p>
+<p><a href="{{ request_work_url(saved) }}">Open the work item and contribution</a></p>
 {% if saved.changed %}<p role="alert">The saved request or focus area has changed since this proposal. Reconcile the existing work explicitly; its details have not been overwritten. This request position cannot create a second work item.</p>{% endif %}
 {% if comparison %}
 <section aria-labelledby="comparison-title" id="request-comparison">
@@ -13,7 +13,7 @@
 <p>{{ comparison.changed_count }} source fields changed since the proposal. Differences from work may be intentional; this comparison does not decide whether work is complete or needs correction.</p>
 {% if comparison.removed %}<p role="alert">This request is no longer present in the latest saved review. Its original evidence and existing work remain available below.</p>{% endif %}
 <p>Current contribution: <strong>{{ comparison.task_status }}</strong> · {{ comparison.task.unit_name }} · revision {{ comparison.task.revision }}.<br>Work item: {{ comparison.case.title }} · {{ comparison.case.status|replace('_',' ') }}.</p>
-<p>Check changes against the source, then use the <a href="/work/{{ saved.case_id }}#task-{{ saved.task_id }}">existing work controls</a> or <a href="{{ document_url('/documents/' ~ doc.id ~ '/understanding') }}">review the interpretation</a>. Viewing this comparison does not acknowledge or apply changes.</p>
+<p>Check changes against the source, then use the <a href="{{ request_work_url(saved) }}">existing work controls</a> or <a href="{{ document_url('/documents/' ~ doc.id ~ '/understanding') }}">review the interpretation</a>. Viewing this comparison does not acknowledge or apply changes.</p>
 {% for row in comparison.rows %}
 {% if row.changed %}<article class="doc-card request-comparison-field"><h4>{{ row.label }} — Source changed</h4>
 <div class="request-comparison-values">

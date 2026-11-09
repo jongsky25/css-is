@@ -1,17 +1,11 @@
 # Cloud/mobile setup status
 
-## Current work: #605 (My next steps, 10.14) — ready for review, not merged
+## Current work: #606 (request-to-work navigation, 10.15)
 
-Branch `feat/my-next-steps-filters`. Code head `27853bf` has green exact-head CI
-(normal, shuffled, metadata, dependency audit, avatar acceptance). The user accepted
-the cold-path result (graph first read after a change about 1.3 s at 10k, target was
-under 1 s) as a documented exception: linear scaling (about 0.1 s at 1,000 records),
-shared single rebuild for concurrent readers, no cross-request cache. Details and
-numbers: [contract](MY_NEXT_STEPS_COUNT_CONTRACT.md). Next action: protected review
-and merge decision belong to the user; a production release needs an explicit
-instruction, then #606 resumes behind it. Nothing merged, released or deployed.
-Workspace note: this image has Node 22 and no Tesseract, so `cloud_setup.sh` exits 1
-and OCR tests fail locally; CI is the check for those.
+#605 (My next steps, 10.14) is merged (`a21044a`); the owner accepted its documented
+cold-path exception. #606 is merged only after #605's guarded deployment succeeds
+(owner instruction). Workspace note: this image has Node 22 and no Tesseract, so
+`cloud_setup.sh` exits 1 and OCR tests fail locally; CI is the check for those.
 
 ## Documents next phase — verified post-10.12 handoff
 
@@ -101,56 +95,17 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-**November 9, 2026: owner selected redesign, keeping the 20% target.**
-#605 remains draft. Latest changes project exact review-source/packet fields and
-reuse the actual current source version already held in the read snapshot.
-Canonical resolution, exact snapshot JSON/hash, signed lineage, permissions and
-ordinary write guards are preserved. No new cross-request cache or GET mutation.
-
-The benchmark baseline is corrected: it now pins all five changed read modules
-(actions/guidance/work/review/completion) to6452931; older records pinned only actions
-while using current shared helpers. All12 original warm targets still pass.
-10k graph: warm baseline/candidate137.573/34.463ms; first1332.704ms; 30 committed-change
-median/p95 1469.044/1625.376ms. Cold cost remains unresolved. See the
-[count contract](MY_NEXT_STEPS_COUNT_CONTRACT.md) and appended projected-review
-JSON evidence. Continue optimizing full rebuild/exact serialization without
-weakened hashes, incomplete dependency coverage or assumed production hit rates.
-
-306 broad focused tests plus a final21 cache tests passed (overlap, not additive),
-zero failures/errors/skips. New cases compare projected/full-record hashes, aliases,
-signed lineage and prohibit full document reads in the compact path. Metadata10.14,
-locks/vendor/AI contract/JS syntax/links/whitespace passed. Full local suites not run.
-Prior e1a664b avatar42561940586, metadata/audit passed; normal/shuffled CI42561940641
-were still running at last inspection. Fresh exact-head full CI/avatar required.
-Older restart-idempotence regression is repaired without changing its assertion;
-unavailable historical shuffled logs do not establish that failure's cause.
-
-Owner redesign decision is resolved; continue engineering without another
-redesign/waiver question. Keep the ordered release #605 then #606, each followed
-by entire guarded deployment/diagnostics. #604 deployment42443789666 is complete.
-Preserve independent worktrees. No production-data tests, staff contact, manual
-deployment, relay activation or repository-setting changes.
-
-
-
-**November 8, 2026: #604 merged and deployed; #605 performance review.**
-#604 merged normally at `e471261c08b8ca58a8d606dc3642ce401288242d` after exact-head
-normal/shuffled suites (10,844 tests and 447 AI cases each), audit, metadata and
-Required checks passed. Reviews/threads were empty and strict no-bypass protection
-was rechecked. [Deployment 42443789666](https://github.com/jongsky25/css-is/actions/runs/42443789666)
-completed successfully, including all verification, guarded deployment and diagnostics.
-
-The owner explicitly authorized the ordered checked-release queue #604 → #605 →
-#606. #605 is reconciled with that main baseline; candidate 10.14 remains a draft
-with an unmet performance gate. #606 is already implemented at `8a17617` on
-`feat/request-work-navigation`; do not rebuild or release it ahead of #605.
-The older implementation-only authorization statements below are historical.
-The 1,000-document review/release graph measured 678.922 ms median versus
-40.758 ms baseline (target at most 48.91 ms), with 125,685 SQL reads. The 15 focused
-checks pass but do not waive this gate. Release queue paused for the owner to
-choose a redesign retaining the target or a new explicit absolute budget to test.
-See [updated performance evidence](MY_NEXT_STEPS_COUNT_CONTRACT.md). No production
-data, staff contact, provider activation, manual deployment or gate bypass.
+**November 9, 2026: #605 (10.14) merged; request-to-work navigation (10.15, #606) follows.**
+#605 merged at `a21044a` after exact-head CI passed; its guarded deployment is
+[run 42613919486](https://github.com/jongsky25/css-is/actions/runs/42613919486).
+The owner accepted #605's cold-path result (about 1.3 s at 10k against the under-1 s
+target) as a documented exception; see [the contract](MY_NEXT_STEPS_COUNT_CONTRACT.md).
+The owner instructed that #606 be merged only after that deployment succeeds.
+Branch `feat/request-work-navigation` (candidate 10.15, see
+[scope and verification contract](REQUEST_WORK_NAVIGATION.md)) has `main` merged in;
+its exact-head CI must pass on that merged head before release. Release order is
+#604 → #605 → #606, verifying each guarded deployment. No staff contact,
+production-data testing, relay activation, manual deployment or gate bypass.
 
 
 

@@ -1,3 +1,8 @@
+## 10.15 — November 8, 2026
+
+- Preserve reviewed-request and filtered Documents queue context when opening existing work and returning from standard contribution actions.
+- Show source-change guidance beside the return link; existing source, access and action checks remain authoritative.
+
 ## 10.14 — November 7, 2026
 
 - Filter My next steps by ready, waiting or needs attention with full-scope permitted document counts.
