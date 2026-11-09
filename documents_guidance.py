@@ -180,7 +180,8 @@ def build(conn, user, values):
             label='Review signing options',allowed=values['signatory'])
     try:
         if not prepared.get('release_clear',False):
-            work_completion.release_gate(conn,doc)
+            if 'release_gate' in prepared:prepared['release_gate'](doc)
+            else:work_completion.release_gate(conn,doc)
     except ValueError:
         return result('release_contributions','Finish shared-work contributions before release',
             'Ask the lead to resolve outstanding contributions and changed-input blockers.',

@@ -13,6 +13,8 @@ import subprocess
 import time
 import tracemalloc
 import types
+import sys
+from pathlib import Path
 
 import pytest
 import documents_actions as candidate
@@ -90,9 +92,31 @@ def seed_scenario(c,u,unit,size,scenario):
     c.commit()
 
 
+def retained_bytes(value,seen=None):
+    """Count the membership graph once, including shared tuple/string references."""
+    seen=set() if seen is None else seen
+    if id(value) in seen:return 0
+    seen.add(id(value))
+    total=sys.getsizeof(value)
+    if isinstance(value,dict):
+        total+=sum(retained_bytes(k,seen)+retained_bytes(v,seen) for k,v in value.items())
+    elif isinstance(value,(tuple,list)):
+        total+=sum(retained_bytes(v,seen) for v in value)
+    return total
+
+
+def process_rss_bytes():
+    # Linux snapshot includes interpreter, SQLite and previously allocated arenas.
+    # It is not an isolated cache delta or a peak-memory claim.
+    for line in Path('/proc/self/status').read_text().splitlines():
+        if line.startswith('VmRSS:'):return int(line.split()[1])*1024
+    raise AssertionError('Process RSS is unavailable on this benchmark host.')
+
+
 @pytest.mark.parametrize('scenario',['ordinary','linked_contributions','restricted_aliases','review_release_graph'])
 @pytest.mark.parametrize('size',[100,1000,10000])
 def test_measure_document_steps(registry,size,scenario,tmp_path):
+    candidate.clear_step_indexes()
     c,u,unit,_=registry;seed_scenario(c,u,unit,size,scenario)
     result={'size':size,'scenario':scenario,'samples':30,'page_size':30}
     for name,module in [('baseline',shipped()),('candidate',candidate)]:
@@ -101,6 +125,8 @@ def test_measure_document_steps(registry,size,scenario,tmp_path):
         samples=[]
         for _ in range(30):
             start=time.perf_counter();module.page(c,u[0],today='2026-11-07');samples.append(time.perf_counter()-start)
+        rss=process_rss_bytes()
+        resident=retained_bytes(candidate._INDEXES) if name=='candidate' else 0
         sql=[];c.set_trace_callback(sql.append)
         module.page(c,u[0],today='2026-11-07')
         c.set_trace_callback(None)
@@ -114,7 +140,7 @@ def test_measure_document_steps(registry,size,scenario,tmp_path):
         (tmp_path/f'{name}-profile.txt').write_text(stream.getvalue())
         misses=[]
         if name=='candidate':
-            for _ in range(5):
+            for _ in range(30):
                 # Real committed dependency changes, not just a manual cache clear.
                 c.execute('UPDATE document SET revision=revision+1 WHERE id=(SELECT MIN(id) FROM document)');c.commit()
                 start=time.perf_counter();module.page(c,u[0],today='2026-11-07');misses.append(time.perf_counter()-start)
@@ -124,9 +150,11 @@ def test_measure_document_steps(registry,size,scenario,tmp_path):
             (tmp_path/'candidate-cold-profile.txt').write_text(stream.getvalue())
         result[name]={'first_ms':round(cold*1000,3),'median_ms':round(statistics.median(samples)*1000,3),
                       'p95_ms':round(sorted(samples)[28]*1000,3),'python_peak_bytes':peak,
+                      'resident_index_python_bytes':resident,'process_rss_bytes':rss,
                       'queries':sum(s.lstrip().upper().startswith(('SELECT','WITH')) for s in sql),
                       **measured.metrics,'plan':plan,
                       'invalidation_miss_samples':len(misses),
+                      'invalidation_miss_p95_ms':round(sorted(misses)[28]*1000,3) if misses else None,
                       'invalidation_miss_median_ms':round(statistics.median(misses)*1000,3) if misses else None}
     (tmp_path/'result.json').write_text(json.dumps(result,indent=2))
     print('DOCUMENT_STEPS_BENCHMARK '+json.dumps(result),flush=True)

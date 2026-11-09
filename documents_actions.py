@@ -12,6 +12,7 @@ import documents_registry as registry
 from documents_storage import rows
 import tzutil
 import work_review
+import work_completion
 
 PAGE_SIZE=30
 MAX_PAGE_SIZE=50
@@ -192,7 +193,8 @@ def _cards(conn,scope,documents,today,view,*,summary=False,overdue=False):
     assignments,instructions,versions,jobs,cases=_load(
         conn,scope,documents,summary=summary,overdue=overdue,today=today)
     user=scope.user;uid=user['id'];enabled=docs.enabled(conn);cards=[]
-    review_batch=work_review.ReadBatch(conn,user)
+    review_batch=work_review.ReadBatch(conn,user,scope=scope)
+    completion_batch=work_completion.ReadBatch(conn)
     for doc in documents:
         did=doc['id'];base=f'/documents/{did}'
         own=assignments.get(did,[])
@@ -205,9 +207,10 @@ def _cards(conn,scope,documents,today,view,*,summary=False,overdue=False):
             'versions':versions.get(did,[]),'jobs':jobs.get(did,[]),
             'prepared':{'enabled':enabled,'director':scope.is_director,'closure_facts':doc,
                 'packet_exists':doc['action_packet'],'release_clear':not doc['action_release_check'],
+                'release_gate':completion_batch.release_gate,
                 'delivery_state':'unknown' if doc['action_unknown'] else 'partial' if doc['action_delivery'] else 'none'}},
             {'work_cases':lambda: cases.get(did,[]),
-             'consolidation':lambda: review_batch.summary(doc) if doc['action_packet'] else None})
+             'consolidation':lambda: review_batch.summary(doc,details=False) if doc['action_packet'] else None})
         advice=guidance.build(conn,user,values)
         step=advice['stage']
         if view=='mine':

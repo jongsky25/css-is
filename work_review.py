@@ -179,19 +179,29 @@ def summaries(conn,user,documents):
 
 class ReadBatch:
     """Reuse one case within a caller-held, read-only SQLite snapshot only."""
-    def __init__(self,conn,user):
-        self.conn=conn;self.user=user
+    def __init__(self,conn,user,*,scope=None):
+        if scope is not None and scope.uid!=user['id']:
+            raise ValueError('Review read scope must belong to the current actor.')
+        self.conn=conn;self.user=user;self.scope=scope
         self.case_id=None;self.case=None;self.inputs=None
 
-    def summary(self,doc):
+    def summary(self,doc,*,details=True):
         conn=self.conn;packet=latest(conn,doc['id'])
         if not packet:return None
         cid=packet['case_id']
         if cid!=self.case_id:
             # Keep only one case, never an actor-wide cache of source/work bodies.
             self.case_id=None;self.case=None;self.inputs=None
-            try:case=work.get(conn,self.user,cid)
-            except permissions.Denied:return None
+            if self.scope is None:
+                try:case=work.get(conn,self.user,cid)
+                except permissions.Denied:return None
+            else:
+                # The caller constructed this current actor scope in the same
+                # read snapshot. Reuse its shared work visibility predicate.
+                found=rows(conn,f'SELECT w.* FROM work_case w WHERE w.id=:review_case AND {self.scope.work_view_sql("w")}',
+                           {**self.scope.params,'review_case':cid})
+                if not found:return None
+                case=found[0]
             self.case=case;self.case_id=cid
         valid=False
         if not conn.execute('SELECT 1 FROM work_review_invalidation WHERE packet_id=?',(packet['id'],)).fetchone():
@@ -199,6 +209,7 @@ class ReadBatch:
                 if self.inputs is None:self.inputs=_snapshot_inputs(conn,cid)
                 valid=current(conn,packet,_inputs=self.inputs)
             except ValueError:pass
+        if not details:return {'case':self.case,'current':valid}
         return _summary_value(conn,packet,self.case,valid)
 
 

@@ -52,6 +52,47 @@ the generation trigger coverage. Rollback can leave this additive table/triggers
 in place: older code ignores them, records and review history are retained; no data
 restore is required. The normal pre-deploy backup and version guards still apply.
 
+### Second cold-path follow-up
+
+The read batch now requests only the consolidation fields guidance consumes,
+avoiding saved-summary parsing and version-detail reads. Its work access check
+uses the existing current actor RegistryScope predicate in the same held snapshot,
+with actor-ID matching and the ordinary work.get path retained for other callers.
+A separate one-case boolean memo reuses the shared contribution-gap calculation;
+every document still resolves all its review/completion/legacy release cases.
+No review hash, version lineage, blocker rule or write guard is changed. These
+small memos end with the read batch; they add no cross-request source/work cache.
+
+306 focused regressions passed without failures/errors/skips: compact/ordinary
+review parity across all fixture actors, restricted-source denial, changed review
+inputs, multiple release cases, full work/guidance, pagination and browser checks.
+This overlaps prior groups and is not additive. Metadata, lock inputs, vendor
+integrity, AI contract, JavaScript syntax and whitespace also passed.
+
+The benchmark now separately records 30 committed-change samples with median/p95,
+resident membership-object bytes (shared references counted once), and Linux RSS
+before SQL tracing/profiling. RSS includes interpreter/SQLite/previous allocator
+arenas; it is not an isolated cache delta or a measured peak. Warm tracemalloc
+still excludes already resident memory. No production-concurrency claim.
+
+The larger run still meets all 12 original warm median targets. At 10k,
+baseline/candidate warm medians: ordinary 9.397/2.716 ms, linked 155.582/20.320 ms,
+aliases 5.883/2.467 ms and graph 195.262/37.813 ms. Thirty committed-change miss
+medians/p95: ordinary 187.113/277.196 ms, linked 500.899/561.090 ms, aliases
+65.051/70.279 ms and graph 1,894.914/2,159.830 ms. Graph first read: 1,879.414 ms.
+An earlier five-miss run of the same application changes measured 1,579.079 ms;
+baseline timing also varied, so do not interpret cross-run ratios as controlled
+production speedups. The 30-sample evidence is the current assessment.
+
+At 10k, membership objects occupy 1,591,828 bytes (aliases 531,775 bytes).
+Process RSS snapshots range from 154,750,976 to 159,936,512 bytes across these four
+scenarios and include previous allocations/SQLite, not just this cache.
+The appended second follow-up JSON preserves all scenario metrics and cold profiles.
+Cold costs remain unresolved; no production hit-rate/concurrency assumption or
+absolute latency budget is being substituted for the original target. Keep draft;
+continue reducing whole-scope invalidation rebuild work with complete dependency
+and permission regression coverage, then repeat exact-head release verification.
+
 ### Cold-path follow-up
 
 The full CI at 6fefcbd found a restart-idempotence failure: repeated schema setup
@@ -83,7 +124,7 @@ These overlap earlier runs and are not additive. Metadata/locks/vendor/AI contra
 JS syntax, local Markdown links and whitespace passed. No full local suite claim.
 
 
-### Redesign validation and performance
+### Initial redesign validation and performance (6fefcbd)
 
 160 focused cache/filter, browser, navigation, guidance and registry regressions
 passed without failures/errors/skips. Added tests exercise unchanged hits without
@@ -106,8 +147,8 @@ criterion**, each <=1.2 times baseline. The target was not raised. At 10,000 rec
 The optional benchmark explicitly clears memory before the first request and
 commits five real document writes to measure invalidation misses. Ordinary warm
 tracemalloc excludes the already-resident index; it is not a total process bound.
-Do not represent warm improvements as cold/churn improvements: the 10k graph miss
-is still about 6.8 seconds. No production concurrency, cache hit-rate or staff timing
+That initial 10k graph miss was about 6.8 seconds; later follow-ups above reduce
+it but do not establish cold-path release acceptance. No production concurrency, cache hit-rate or staff timing
 claim is made. Full CI, applicable avatar acceptance (storage.py changed), strict
 protected review/merge and the remaining cold-path release assessment are pending.
 The release queue may resume engineering/verification; #605 remains draft and must

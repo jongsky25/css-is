@@ -89,24 +89,32 @@ access remains necessary in a fresh chat.
 ## Next action
 
 **November 9, 2026: owner selected redesign, keeping the 20% target.**
-#605 remains draft. The owner decision pause is resolved; continue engineering.
-CI 42552166679 failed both test orders at 6fefcbd; the confirmed normal failure
-was restart-idempotence in the Telegram migration test. No-op startup/UPDATE
-generation handling is repaired without changing that assertion. Shuffled logs
-and artifacts returned access errors; do not assume its failure details.
-Avatar acceptance 42552166652 passed on that old head; fresh gates remain required.
+#605 remains draft; the owner decision pause is resolved. Latest cold-path changes
+reuse current RegistryScope work access inside the held snapshot, load only the
+consolidation summary fields guidance needs, and memoize one case's shared
+contribution-gap result. Exact review hashes, version lineage, all linked release
+cases and ordinary write guards remain intact. No cross-request body cache.
 
-Cold reads now reuse one authorized case and compact review inputs per read batch,
-preserving per-document hash/invalidation/version checks. First standalone 10k
-graph miss median improved from 6.83s to 2.45s in the full rerun; this is not
-cold-path acceptance. All 12 original warm median targets still pass.
-232 focused cache/filter/work/guidance/Telegram/browser regressions passed with
-zero failures/errors/skips. Metadata 10.14, locks, vendor integrity, AI contract,
-JS syntax and whitespace passed. Updated full synthetic matrix and cold profiles
-are recorded in the [count contract](MY_NEXT_STEPS_COUNT_CONTRACT.md).
-Continue cold-path optimization and fresh exact-head full CI/avatar acceptance
-before marking ready. Do not waive the target. #606 stays behind #605's successful
-guarded deployment; #604 deployment 42443789666 is already verified successful.
+306 focused cache/filter/work/guidance/registry/browser regressions passed, zero
+failures/errors/skips. All 12 original warm median targets pass. New 30-invalidation
+samples at 10k graph: median 1,894.914 ms, p95 2,159.830 ms; first read 1,879.414 ms.
+Warm baseline/candidate medians: 195.262/37.813 ms. Resident membership objects:
+1,591,828 bytes; process RSS snapshot 159,936,512 bytes includes other allocations.
+See [full evidence and limitations](MY_NEXT_STEPS_COUNT_CONTRACT.md). Cold latency
+is still unresolved; do not mark ready based on warm success or assume production
+hit rates. Continue cold rebuild optimization with complete dependency coverage.
+
+Metadata10.14, locks/vendor/AI contract/JS syntax/links/whitespace passed.
+At prior head00b890c, avatar42558555972, metadata and audit passed; normal/shuffled
+CI42558555952 were still running when checked. Fresh full exact-head verification
+is required after these changes. Prior failed run42552166679's normal restart
+idempotence regression is repaired; shuffled failure details remain unavailable
+because log/artifact access failed. Never blindly rerun a repeated browser hang.
+
+The ordered release remains #605 then #606, each followed by the entire guarded
+deployment and diagnostics. #604 deployment42443789666 is already verified.
+No new owner decision is needed to continue engineering; production-data tests
+and gate waivers remain outside authorization. Preserve the independent #604 and #606 worktrees.
 
 
 

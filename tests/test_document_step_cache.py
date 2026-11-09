@@ -137,6 +137,15 @@ def test_batch_review_matches_uncached_authority_and_exact_hash(registry,change)
         batch=work_review.ReadBatch(c,u[0])
         expected=work_review.summaries(c,u[0],docs)
         assert {d['id']:value for d in docs if (value:=batch.summary(d)) is not None}==expected
+        compact=work_review.ReadBatch(c,u[0],scope=permissions.RegistryScope(c,u[0]))
+        assert {d['id']:value for d in docs if (value:=compact.summary(d,details=False)) is not None}=={
+            did:{k:value[k] for k in ('case','current')} for did,value in expected.items()}
+
+        for actor in u[1:]:
+            expected=work_review.summaries(c,actor,docs)
+            scoped=work_review.ReadBatch(c,actor,scope=permissions.RegistryScope(c,actor))
+            assert {d['id']:value for d in docs if (value:=scoped.summary(d,details=False)) is not None}=={
+                did:{k:value[k] for k in ('case','current')} for did,value in expected.items()}
     assert c.total_changes==before
 
 
@@ -158,3 +167,27 @@ def test_generation_distinguishes_noop_case_and_new_columns(registry):
     before=token()
     c.execute("UPDATE document_cache_probe SET extra='new'")
     assert token()!=before
+
+
+@pytest.mark.parametrize('change',[None,"UPDATE work_task SET status='todo' WHERE case_id=1",
+                                  "UPDATE work_task SET status='cancelled' WHERE case_id=1"])
+def test_batch_release_gate_matches_all_linked_cases(registry,change):
+    import documents
+    import documents_registry
+    import work_completion
+    c,u,unit,_=registry
+    seed_scenario(c,u,unit,20,'review_release_graph')
+    # A document can require both its review case and another completion case.
+    c.execute("INSERT INTO work_completion_requirement VALUES (1,11,?,'Synthetic','2026-11-01')",(u[0]['id'],))
+    if change:c.execute(change)
+    c.commit()
+    def outcome(check,doc):
+        try:check(doc);return None
+        except ValueError as error:return str(error)
+    before=c.total_changes
+    with documents_registry.snapshot(c):
+        batch=work_completion.ReadBatch(c)
+        for did in [1,2,11,12,1,11]:
+            doc=documents.raw(c,did)
+            assert outcome(batch.release_gate,doc)==outcome(lambda d:work_completion.release_gate(c,d),doc)
+    assert c.total_changes==before
