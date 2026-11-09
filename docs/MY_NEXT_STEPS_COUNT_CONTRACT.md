@@ -123,6 +123,15 @@ for documents whose guidance can consult review packets or the release gate. At 
 records the aliases warm read measured 1.02-1.24x its baseline over five runs
 (sub-millisecond timings); treat that smallest size as borderline, not as a clean pass.
 
+**Decision (user, 2026-11-09):** the under-1,000 ms median target at 10k synthetic
+records is **not met** and is accepted as-is at about 1,300 ms (p95 about 1,640 ms),
+because cost is linear (about 0.1 s at 1,000 records), concurrent cold readers share
+one rebuild, and further reduction would need per-case reuse between rebuilds, which
+this design deliberately does not do (no cross-request source/work cache). This is a
+documented exception to the target, not a claim that it was achieved. Revisit with
+real staff scope sizes and timing if the My next steps scope grows toward 10k.
+Avatar release acceptance (triggered by the storage.py change) passed at 27853bf.
+
 Exact-head CI at 0e365a6 passed (normal, shuffled, metadata, dependency audit,
 functional). Locally, 44 cache/filter tests passed without skips; OCR-dependent
 tests fail only because this workspace lacks Tesseract. Avatar acceptance for the

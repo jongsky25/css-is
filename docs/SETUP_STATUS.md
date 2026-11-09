@@ -1,17 +1,17 @@
 # Cloud/mobile setup status
 
-## Current work: #605 (My next steps, 10.14) — draft
+## Current work: #605 (My next steps, 10.14) — ready for review, not merged
 
-Branch `feat/my-next-steps-filters`; code head `0e365a6` had green exact-head CI, later
-commits add single-flight rebuilds and docs (CI pending). Still draft: the user's cold-path target (graph first read after a change under 1 s
-median at 10k) is **not met** (about 1.3 s; was about 3.6 s), but realistic sizes are
-fast (1,000 records about 0.1 s) and concurrent cold readers now share one rebuild.
-Next action: the user decides whether to accept this against the 10k target or
-pursue per-case reuse (a design call against the no-cross-request-cache rule); then
-confirm exact-head CI and avatar checks before marking ready. #606
-stays queued behind #605. Nothing merged, released or deployed. Details:
-[contract](MY_NEXT_STEPS_COUNT_CONTRACT.md). Workspace note: this image has Node 22
-and no Tesseract, so `cloud_setup.sh` exits 1 and OCR tests fail locally.
+Branch `feat/my-next-steps-filters`. Code head `27853bf` has green exact-head CI
+(normal, shuffled, metadata, dependency audit, avatar acceptance). The user accepted
+the cold-path result (graph first read after a change about 1.3 s at 10k, target was
+under 1 s) as a documented exception: linear scaling (about 0.1 s at 1,000 records),
+shared single rebuild for concurrent readers, no cross-request cache. Details and
+numbers: [contract](MY_NEXT_STEPS_COUNT_CONTRACT.md). Next action: protected review
+and merge decision belong to the user; a production release needs an explicit
+instruction, then #606 resumes behind it. Nothing merged, released or deployed.
+Workspace note: this image has Node 22 and no Tesseract, so `cloud_setup.sh` exits 1
+and OCR tests fail locally; CI is the check for those.
 
 ## Documents next phase — verified post-10.12 handoff
 
