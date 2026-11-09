@@ -1,3 +1,9 @@
+## 10.14 — November 7, 2026
+
+- Filter My next steps by ready, waiting or needs attention with full-scope permitted document counts.
+- Combine states with overdue steps and retain filters when returning from a document.
+- Reuse validated personal step membership between unchanged snapshots while refreshing displayed actions and invalidating on authority or workflow changes.
+
 ## 10.13 — November 7, 2026
 
 - Record the shipped Documents baseline and the next-phase plan for counts, request follow-up and usability testing.

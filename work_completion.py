@@ -30,10 +30,29 @@ def contribution_gaps(conn,case_id):
     return result
 
 
-def release_gate(conn,doc):
-    cases={r[0] for r in conn.execute('SELECT case_id FROM work_review_packet WHERE document_id=? UNION SELECT case_id FROM work_completion_requirement WHERE document_id=? UNION SELECT case_id FROM work_legacy_document WHERE document_id=?',(doc['id'],doc['id'],doc['id']))}
-    if any(contribution_gaps(conn,cid) for cid in cases):
+def release_gate(conn,doc,*,_gaps=None,_cases=None):
+    cases=_cases if _cases is not None else {r[0] for r in conn.execute('SELECT case_id FROM work_review_packet WHERE document_id=? UNION SELECT case_id FROM work_completion_requirement WHERE document_id=? UNION SELECT case_id FROM work_legacy_document WHERE document_id=?',(doc['id'],doc['id'],doc['id']))}
+    gaps=_gaps or (lambda cid:contribution_gaps(conn,cid))
+    if any(gaps(cid) for cid in cases):
         raise ValueError('Resolve outstanding contributions before releasing this shared response.')
+
+
+class ReadBatch:
+    """Reuse a single case gap result inside one caller-held read snapshot."""
+    def __init__(self,conn,*,cases=None):
+        # `cases` optionally maps document ID -> linked case IDs, prefetched in the
+        # same held snapshot; a document absent from it has no linked case.
+        self.conn=conn;self.case_id=None;self.has_gaps=None;self.cases=cases
+
+    def _gaps(self,case_id):
+        if case_id!=self.case_id:
+            self.has_gaps=bool(contribution_gaps(self.conn,case_id))
+            self.case_id=case_id
+        return self.has_gaps
+
+    def release_gate(self,doc):
+        return release_gate(self.conn,doc,_gaps=self._gaps,
+                            _cases=None if self.cases is None else self.cases.get(doc['id'],set()))
 
 
 def closure_inputs_current(conn,packet):

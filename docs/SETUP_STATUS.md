@@ -1,5 +1,18 @@
 # Cloud/mobile setup status
 
+## Current work: #605 (My next steps, 10.14) — ready for review, not merged
+
+Branch `feat/my-next-steps-filters`. Code head `27853bf` has green exact-head CI
+(normal, shuffled, metadata, dependency audit, avatar acceptance). The user accepted
+the cold-path result (graph first read after a change about 1.3 s at 10k, target was
+under 1 s) as a documented exception: linear scaling (about 0.1 s at 1,000 records),
+shared single rebuild for concurrent readers, no cross-request cache. Details and
+numbers: [contract](MY_NEXT_STEPS_COUNT_CONTRACT.md). Next action: protected review
+and merge decision belong to the user; a production release needs an explicit
+instruction, then #606 resumes behind it. Nothing merged, released or deployed.
+Workspace note: this image has Node 22 and no Tesseract, so `cloud_setup.sh` exits 1
+and OCR tests fail locally; CI is the check for those.
+
 ## Documents next phase — verified post-10.12 handoff
 
 PRs #596–603 are merged and their guarded deployments completed successfully.
@@ -87,6 +100,97 @@ access remains necessary in a fresh chat.
 - [x] 6. Monitoring gaps assessed and reusable workflow/templates documented; no external alerts configured.
 
 ## Next action
+
+**November 9, 2026: owner selected redesign, keeping the 20% target.**
+#605 remains draft. Latest changes project exact review-source/packet fields and
+reuse the actual current source version already held in the read snapshot.
+Canonical resolution, exact snapshot JSON/hash, signed lineage, permissions and
+ordinary write guards are preserved. No new cross-request cache or GET mutation.
+
+The benchmark baseline is corrected: it now pins all five changed read modules
+(actions/guidance/work/review/completion) to6452931; older records pinned only actions
+while using current shared helpers. All12 original warm targets still pass.
+10k graph: warm baseline/candidate137.573/34.463ms; first1332.704ms; 30 committed-change
+median/p95 1469.044/1625.376ms. Cold cost remains unresolved. See the
+[count contract](MY_NEXT_STEPS_COUNT_CONTRACT.md) and appended projected-review
+JSON evidence. Continue optimizing full rebuild/exact serialization without
+weakened hashes, incomplete dependency coverage or assumed production hit rates.
+
+306 broad focused tests plus a final21 cache tests passed (overlap, not additive),
+zero failures/errors/skips. New cases compare projected/full-record hashes, aliases,
+signed lineage and prohibit full document reads in the compact path. Metadata10.14,
+locks/vendor/AI contract/JS syntax/links/whitespace passed. Full local suites not run.
+Prior e1a664b avatar42561940586, metadata/audit passed; normal/shuffled CI42561940641
+were still running at last inspection. Fresh exact-head full CI/avatar required.
+Older restart-idempotence regression is repaired without changing its assertion;
+unavailable historical shuffled logs do not establish that failure's cause.
+
+Owner redesign decision is resolved; continue engineering without another
+redesign/waiver question. Keep the ordered release #605 then #606, each followed
+by entire guarded deployment/diagnostics. #604 deployment42443789666 is complete.
+Preserve independent worktrees. No production-data tests, staff contact, manual
+deployment, relay activation or repository-setting changes.
+
+
+
+**November 8, 2026: #604 merged and deployed; #605 performance review.**
+#604 merged normally at `e471261c08b8ca58a8d606dc3642ce401288242d` after exact-head
+normal/shuffled suites (10,844 tests and 447 AI cases each), audit, metadata and
+Required checks passed. Reviews/threads were empty and strict no-bypass protection
+was rechecked. [Deployment 42443789666](https://github.com/jongsky25/css-is/actions/runs/42443789666)
+completed successfully, including all verification, guarded deployment and diagnostics.
+
+The owner explicitly authorized the ordered checked-release queue #604 → #605 →
+#606. #605 is reconciled with that main baseline; candidate 10.14 remains a draft
+with an unmet performance gate. #606 is already implemented at `8a17617` on
+`feat/request-work-navigation`; do not rebuild or release it ahead of #605.
+The older implementation-only authorization statements below are historical.
+The 1,000-document review/release graph measured 678.922 ms median versus
+40.758 ms baseline (target at most 48.91 ms), with 125,685 SQL reads. The 15 focused
+checks pass but do not waive this gate. Release queue paused for the owner to
+choose a redesign retaining the target or a new explicit absolute budget to test.
+See [updated performance evidence](MY_NEXT_STEPS_COUNT_CONTRACT.md). No production
+data, staff contact, provider activation, manual deployment or gate bypass.
+
+
+
+**November 7, 2026: My next steps implementation authorized; candidate 10.14.**
+The owner's “do that” authorized implementing the count/filter specification.
+The feature is isolated on `feat/my-next-steps-filters`, based on the planning
+branch and #604 repair `7de2a9b`. It adds full-scope permitted document counts,
+ready/waiting/attention and same-step overdue filters, matching-card display,
+stable return anchors and native no-script controls. See the
+[contract and measured evidence](MY_NEXT_STEPS_COUNT_CONTRACT.md).
+
+348 relevant regressions passed; the final 15 focused filter/browser checks also
+passed (overlapping groups), with no failures/errors/skips. Nine synthetic
+benchmark scenarios completed. At 10,000 records candidate median/p95 were
+164/259 ms ordinary, 434/469 ms linked contributions and 58/66 ms restricted/alias
+fixtures. The provisional <=20% median overhead goal is NOT met; retain this as
+an explicit draft-review limitation. Complex consolidation/release graphs need
+separate profiling. Metadata 10.14, JS syntax, Markdown links and whitespace pass.
+
+Save/open this feature as a DRAFT stacked on #604 while it is unmerged. Do not
+change #604's branch or its dedicated merge follow-up. After #604 merges, reconcile
+and retarget this feature to main, requiring fresh full CI. Review the performance
+budget or optimize further before release readiness. Only #604 has merge/deployment
+authorization; the new feature, division rollout and later phases do not. No
+production-data testing, staff contact, relay activation or manual deployment.
+
+
+**November 7, 2026: My next steps count/filter specification prepared.**
+The owner selected My next steps as the first planning slice. The proposed
+[count contract](MY_NEXT_STEPS_COUNT_CONTRACT.md) is saved separately on
+`docs/my-next-steps-count-contract`, based on #604 repair `7de2a9b` so its ongoing
+CI remains unchanged. It defines overlapping document counts, same-step overdue
+intersection, uncapped classification before pagination, matching-card display,
+return context, an independent synthetic truth table and performance/acceptance
+plans. No application implementation, benchmark or staff study was performed.
+Review the proposed contract before explicitly authorizing implementation.
+This branch is not authorized for merge or release. #604 alone retains its
+checked-merge authorization and dedicated conditional follow-up; its CI
+42424944568 was still in progress when this planning snapshot was prepared.
+
 
 **November 7, 2026: #604 repair and checked merge authorized; candidate 10.13.**
 The owner requested “assess and fix 604 then merge when ready.” #596–603 are

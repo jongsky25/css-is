@@ -47,6 +47,10 @@ def test_additive_migration_preserves_legacy_jobs(registry):
     c,u,unit,path=registry
     doc,operation,_=queued(registry)
     before=job(c,operation)
+    # A legacy database predates the step-generation triggers; SQLite refuses to
+    # drop a column a trigger references. init_db below reinstalls them.
+    for trigger in ('insert','update','delete'):
+        c.execute(f'DROP TRIGGER IF EXISTS step_generation_document_job_{trigger}')
     for name in ('lease_owner','lease_until','attempts','next_check_at','last_checked_at','recovery_blocked','recovery_note'):
         # Remove the recovery index before simulating the previous table shape.
         c.execute('DROP INDEX IF EXISTS document_job_recovery')

@@ -281,14 +281,21 @@ def make_router(templates,get_conn):
             view=request.query_params.get('view','mine')
             if view not in ('mine','division'):
                 return HTMLResponse('Unknown action view.',status_code=400)
+            if view=='division' and any(key in request.query_params for key in ('step_state','overdue')):
+                raise ValueError('Step filters are available on My next steps only.')
+            filters=({'step_state':request.query_params.get('step_state','all'),
+                      'overdue':request.query_params.get('overdue','0')} if view=='mine' else {})
             page=actions.page(conn,user,view,before=request.query_params.get('before','0'),
-                              before_due=request.query_params.get('due',''))
-            page['first_url']='/documents/actions?'+urlencode({'view':view})
-            page['older_url']=('/documents/actions?'+urlencode({'view':view,'before':page['next_before'],
+                              before_due=request.query_params.get('due',''),**filters)
+            page['first_url']='/documents/actions?'+urlencode({'view':view,**filters})
+            page['older_url']=('/documents/actions?'+urlencode({'view':view,**filters,'before':page['next_before'],
                                'due':page['next_due']}) if page['more'] else '')
-            return render(request,conn,'actions',view=view,page_people=True,**page)
+            response=render(request,conn,'actions',view=view,page_people=True,**page)
+            response.headers['Cache-Control']='private, no-store'
+            return response
         except (p.Denied,ValueError) as e:
-            return HTMLResponse(str(e),status_code=403 if isinstance(e,p.Denied) else 400)
+            return HTMLResponse('Unable to open these document steps. <a href="/documents/actions">Reset My next steps</a>.',
+                                status_code=403 if isinstance(e,p.Denied) else 400)
         finally:
             conn.close()
 
