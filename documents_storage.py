@@ -271,3 +271,38 @@ def event(conn, doc_id, actor, action, detail):
     st.audit(conn, actor['username'], 'document_' + action, target_type='document', target_id=doc_id,
              after=payload, commit=False)
     return eid
+
+
+def install_step_generation(conn):
+    """Invalidate actor-specific read indexes atomically with every dependency write.
+
+    Random generations prevent reuse after rollback/replacement; indexes contain
+    only IDs/order/state bits and live in bounded process memory, never SQLite.
+    Broad table families deliberately over-invalidate rather than miss a policy input.
+    """
+    conn.execute("CREATE TABLE IF NOT EXISTS document_step_generation (id INTEGER PRIMARY KEY CHECK(id=1), token TEXT NOT NULL)")
+    conn.execute("INSERT OR IGNORE INTO document_step_generation VALUES (1,lower(hex(randomblob(24))))")
+    names=[r[1] for r in conn.execute("PRAGMA table_list")
+           if r[0]=='main' and r[2]=='table'
+           and (r[1]=='document' or r[1].startswith(('document_', 'work_'))
+               or r[1] in ('admin_user','resource_person','org_unit','section_oic','app_setting'))
+           and r[1]!='document_step_generation']
+    installed=dict(conn.execute("SELECT name,sql FROM sqlite_master WHERE type='trigger'"))
+    changed=False
+    for table in names:
+        quoted='"'+table.replace('"','""')+'"'
+        columns=['"'+r[1].replace('"','""')+'"' for r in conn.execute(f'PRAGMA table_info({quoted})')]
+        differences=' OR '.join(f'(OLD.{col} IS NOT NEW.{col} COLLATE BINARY OR typeof(OLD.{col})<>typeof(NEW.{col}))' for col in columns)
+        for action in ('INSERT','UPDATE','DELETE'):
+            name='step_generation_'+table+'_'+action.lower()
+            condition=f' WHEN {differences}' if action=='UPDATE' else ''
+            sql=(f'CREATE TRIGGER "{name}" AFTER {action} ON {quoted}{condition} BEGIN '
+                 "UPDATE document_step_generation SET token=lower(hex(randomblob(24))) WHERE id=1; END")
+            if installed.get(name)!=sql:
+                conn.execute(f'DROP TRIGGER IF EXISTS "{name}"')
+                conn.execute(sql)
+                changed=True
+    # New dependency coverage/columns invalidate indexes. A no-op restart is
+    # byte-for-byte idempotent; real migration writes also fire existing triggers.
+    if changed:
+        conn.execute("UPDATE document_step_generation SET token=lower(hex(randomblob(24))) WHERE id=1")

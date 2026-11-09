@@ -3,9 +3,241 @@
 Implementation candidate 10.14, November 7, 2026. The owner's subsequent “do that”
 authorized implementing this specification. Branch: `feat/my-next-steps-filters`,
 based on the planning commit `a50807c` and #604 head
-`7de2a9be7b15f535ed3aeb9c1811fc778ee09ca4`. #604 has its own checked-merge
-authorization; this feature does not inherit its merge/deployment authorization.
+`7de2a9be7b15f535ed3aeb9c1811fc778ee09ca4`. The owner later explicitly queued #605 after #604, authorizing its checked release
+without waiving the performance criteria. #604 is now merged and deployed at
+`e471261c08b8ca58a8d606dc3642ce401288242d` (workflow 42443789666).
 The original proposal is retained on `docs/my-next-steps-count-contract`.
+
+## November 9 redesign — current assessment
+
+The owner accepted the recommendation to retain the <=20% target and redesign
+count computation. This supersedes the earlier no-schema/no-cross-request-state
+implementation notes below. The historical measurements remain evidence.
+
+The redesign adds an **actor-specific, generation-bound membership index** in
+bounded process memory. It stores document ID/deadline ordering and state/overdue
+membership only—no source text, work bodies, advice or cross-actor results. A new
+single-row `document_step_generation` table holds a random 192-bit generation.
+SQLite INSERT/UPDATE/DELETE triggers on ordinary document/work table families,
+accounts, directory, organization, OIC and settings tables change that generation
+in the SAME transaction as a dependency write. FTS virtual/shadow tables are not
+classification inputs and are excluded. Schema installation rotates the token when
+trigger coverage changes (including new tables/columns). No-op UPDATEs and repeated
+no-op startup preserve the token and database dump; actual value/type changes
+invalidate, including case-only changes on NOCASE columns. Process restart starts
+with empty memory. This preserves the existing restart-idempotence contract.
+
+Every request still resolves the current active account and RegistryScope before
+looking up `(generation, actor ID, local date)`. Authority, generation, membership
+and page facts are read in one SQLite snapshot. Another connection's commit cannot
+make new data use an old index; a held old snapshot consistently sees old data.
+Random generations prevent rollback/rewrite ABA reuse. Token updates roll back
+with their writes. Copied databases initially share identical membership state;
+any actual dependency change or new trigger coverage rotates the token. No GET writes to
+SQLite, acquires claims, acknowledges work or invokes a provider.
+
+Each process retains at most 16 actor snapshots and 100,000 index references.
+Construction is capped too: larger scopes fall back to the exact bounded streaming
+implementation, never truncated counts. Cached sequences are immutable; eviction
+cannot change an in-flight reader. The caller's current permission-filtered SQL
+fetches only selected page IDs and rebuilds every displayed card/action from current
+guidance. State/overdue filter changes and paging reuse the same complete index.
+No independent classifier, weakened review hash or approximate permission policy.
+
+This is a cache of exact read membership, not an asynchronously maintained source
+of truth. Misses—including process restart, actor changes, midnight and relevant
+writes—still run the full shared classifier. Concurrent cold readers may compute
+independently. Future policy dependencies outside the covered families must extend
+the generation trigger coverage. Rollback can leave this additive table/triggers
+in place: older code ignores them, records and review history are retained; no data
+restore is required. The normal pre-deploy backup and version guards still apply.
+
+### Projected review reads and benchmark baseline correction
+
+Review-source queries now select only the exact snapshot/hash and lineage fields.
+They use the shared canonical-resolution loop, including its missing/cyclic-source
+behavior. Compact guidance packet queries omit saved snapshot JSON and other
+unused detail fields. A held read batch reuses its resolved source's actual current
+version for lineage checks instead of fetching the full registry record again.
+The ordinary service path still reads fresh records. The snapshot value, canonical
+JSON serialization and digest algorithm are unchanged.
+
+The benchmark previously pinned only documents_actions to 6452931 while importing
+current shared review/guidance helpers. That was not a fully pinned comparison of
+the changed read code. New measurements pin documents_actions, documents_guidance,
+work_review, work_completion and work to that baseline commit and bind their module
+references together; unchanged services and the identical synthetic database remain
+shared. Older measurements remain historical evidence and should not be described
+as isolated measurements of the complete shipped implementation.
+
+With this corrected baseline, all 12 original 30-warm-request median targets pass.
+At 10k, baseline/candidate warm medians are ordinary 9.045/2.445 ms, linked
+152.592/19.173 ms, aliases 7.796/2.383 ms and graph 137.573/34.463 ms.
+Thirty committed-change medians/p95 are respectively 179.169/240.874 ms,
+474.723/558.675 ms, 69.283/82.165 ms and 1,469.044/1,625.376 ms. Graph first read
+is 1,332.704 ms. This does not establish cold-path release acceptance.
+
+306 broad focused tests and a final 21 cache tests passed without failures/errors/
+skips; groups overlap. Four new cases cover full-record/projected exact hash parity,
+canonical aliases, signed version lineage and forbidden full-record reads in the
+compact batch. Metadata10.14, locks/vendor/AI contract/JS syntax/links/whitespace
+passed. New full exact-head CI/avatar evidence remains required.
+The appended projected-review JSON records all scenarios and profiles. Continue
+engineering on whole-scope rebuild and repeated exact snapshot serialization,
+preserving byte-for-byte hashes and complete dependencies. Keep #605 draft;
+#606 remains behind its successful guarded deployment.
+
+### Cold-path target and third follow-up
+
+The user set a concrete cold-path target: **graph first read after a committed
+change under 1,000 ms median at 10k synthetic records** (warm targets unchanged).
+Cold work is not accepted until it is met and exact-head CI passes.
+
+Profiling showed the case-lookup statement re-evaluated the work-visibility
+predicate for every document-to-case link (about 1.2 s of about 3.2 s). It now
+evaluates visibility once per reached case. Each read batch also prefetches its
+newest compact review packets with retirement flags, release-gate case sets and
+linked source records. Review digests are composed from per-source fragments and
+are byte-identical to `snapshot()` (parity tests incl. aliases, closed sources,
+Unicode, missing linked records and alias loops). Review inputs, hashes, version
+lineage and authority checks are unchanged; nothing survives the batch.
+
+In one session the 10k graph miss median moved from 3,570 ms (p95 4,573) to about
+1,300 ms (p95 about 1,640) over three 30-sample runs; run-to-run noise is about
++/-15% and baseline timing varied 249-352 ms, so these are not controlled
+production figures. **The 1,000 ms target is not yet met.** A serializer-template
+experiment was slower and was reverted. Remaining cost is spread across about 15k
+SQL statements and per-document guidance work; the next step likely needs
+per-case classification or reuse between rebuilds, which conflicts with the
+no-cross-request-cache rule and needs a design decision. Results are saved in
+[the cold-target evidence](document-step-performance-2026-11-09-cold-target.json).
+
+Scaling is close to linear (graph, cold read after a change, median): 100 records
+about 13-19 ms, 1,000 about 100-136 ms (p95 up to about 164 ms), 10,000 about 1,300 ms.
+Concurrent cold readers of one generation/actor/day now share one rebuild
+(single-flight): later readers wait for the first builder and reuse its published
+index; a failed builder hands over to a waiter; keys known to be uncacheable
+(oversize) are never queued and keep the independent streaming path. This adds no
+source/work cache and no cross-generation reuse. Batch prefetch queries run only
+for documents whose guidance can consult review packets or the release gate. At 100
+records the aliases warm read measured 1.02-1.24x its baseline over five runs
+(sub-millisecond timings); treat that smallest size as borderline, not as a clean pass.
+
+**Decision (user, 2026-11-09):** the under-1,000 ms median target at 10k synthetic
+records is **not met** and is accepted as-is at about 1,300 ms (p95 about 1,640 ms),
+because cost is linear (about 0.1 s at 1,000 records), concurrent cold readers share
+one rebuild, and further reduction would need per-case reuse between rebuilds, which
+this design deliberately does not do (no cross-request source/work cache). This is a
+documented exception to the target, not a claim that it was achieved. Revisit with
+real staff scope sizes and timing if the My next steps scope grows toward 10k.
+Avatar release acceptance (triggered by the storage.py change) passed at 27853bf.
+
+Exact-head CI at 0e365a6 passed (normal, shuffled, metadata, dependency audit,
+functional). Locally, 44 cache/filter tests passed without skips; OCR-dependent
+tests fail only because this workspace lacks Tesseract. Avatar acceptance for the
+changed storage.py has not been re-checked in this session.
+
+### Second cold-path follow-up
+
+The read batch now requests only the consolidation fields guidance consumes,
+avoiding saved-summary parsing and version-detail reads. Its work access check
+uses the existing current actor RegistryScope predicate in the same held snapshot,
+with actor-ID matching and the ordinary work.get path retained for other callers.
+A separate one-case boolean memo reuses the shared contribution-gap calculation;
+every document still resolves all its review/completion/legacy release cases.
+No review hash, version lineage, blocker rule or write guard is changed. These
+small memos end with the read batch; they add no cross-request source/work cache.
+
+306 focused regressions passed without failures/errors/skips: compact/ordinary
+review parity across all fixture actors, restricted-source denial, changed review
+inputs, multiple release cases, full work/guidance, pagination and browser checks.
+This overlaps prior groups and is not additive. Metadata, lock inputs, vendor
+integrity, AI contract, JavaScript syntax and whitespace also passed.
+
+The benchmark now separately records 30 committed-change samples with median/p95,
+resident membership-object bytes (shared references counted once), and Linux RSS
+before SQL tracing/profiling. RSS includes interpreter/SQLite/previous allocator
+arenas; it is not an isolated cache delta or a measured peak. Warm tracemalloc
+still excludes already resident memory. No production-concurrency claim.
+
+The larger run still meets all 12 original warm median targets. At 10k,
+baseline/candidate warm medians: ordinary 9.397/2.716 ms, linked 155.582/20.320 ms,
+aliases 5.883/2.467 ms and graph 195.262/37.813 ms. Thirty committed-change miss
+medians/p95: ordinary 187.113/277.196 ms, linked 500.899/561.090 ms, aliases
+65.051/70.279 ms and graph 1,894.914/2,159.830 ms. Graph first read: 1,879.414 ms.
+An earlier five-miss run of the same application changes measured 1,579.079 ms;
+baseline timing also varied, so do not interpret cross-run ratios as controlled
+production speedups. The 30-sample evidence is the current assessment.
+
+At 10k, membership objects occupy 1,591,828 bytes (aliases 531,775 bytes).
+Process RSS snapshots range from 154,750,976 to 159,936,512 bytes across these four
+scenarios and include previous allocations/SQLite, not just this cache.
+The appended second follow-up JSON preserves all scenario metrics and cold profiles.
+Cold costs remain unresolved; no production hit-rate/concurrency assumption or
+absolute latency budget is being substituted for the original target. Keep draft;
+continue reducing whole-scope invalidation rebuild work with complete dependency
+and permission regression coverage, then repeat exact-head release verification.
+
+### Cold-path follow-up
+
+The full CI at 6fefcbd found a restart-idempotence failure: repeated schema setup
+changed the generation token despite no state change. Trigger installation now
+compares definitions, extends column coverage, and invalidates only actual UPDATE
+changes. INSERT/DELETE still invalidate atomically. The existing Telegram migration
+dump-equality test is preserved.
+
+Cold classification now reuses one authorized consolidation case and its compact
+snapshot inputs within each caller-held SQLite read snapshot/batch. Every target
+still receives the existing exact snapshot hash, invalidation and draft-lineage
+checks; ordinary review/mutation services use fresh inputs. Nothing survives the
+batch or crosses actors. Shared summary assembly keeps the guidance policy aligned.
+The first standalone 10k graph measurement reduced the five-write miss median from
+6,830.107 ms to 2,683.811 ms (first read 2,383.596 ms; warm 35.519 ms against baseline
+137.150 ms). This is progress, not cold-path acceptance. Further profiling and full
+exact-head CI remain required before ready/release.
+
+The complete follow-up matrix again passed all 12 original warm median targets.
+At 10k, baseline/candidate warm medians were ordinary 9.858/2.642 ms, linked
+146.135/18.030 ms, aliases 5.583/2.323 ms and graph 132.558/34.613 ms.
+Committed-change miss medians were respectively 177.222, 460.236, 60.092 and
+2,452.172 ms; graph first read was 2,606.296 ms. The follow-up results and cold
+profiles are appended to the same JSON evidence file, preserving the older results.
+232 final focused regressions passed without failures/errors/skips, including the
+unchanged restart assertion, NOCASE/new-column invalidation, batch/ordinary review
+parity, authority revocation, stale inputs, full work workflows and browser filters.
+These overlap earlier runs and are not additive. Metadata/locks/vendor/AI contract,
+JS syntax, local Markdown links and whitespace passed. No full local suite claim.
+
+
+### Initial redesign validation and performance (6fefcbd)
+
+160 focused cache/filter, browser, navigation, guidance and registry regressions
+passed without failures/errors/skips. Added tests exercise unchanged hits without
+full rescans, current page reads/no writes, other-connection revocation and deadlines,
+account deactivation, actor/date separation, rollback/rewrite, a held snapshot
+across a writer commit, bounded fallback, schema reinstall, directory/settings
+changes and shared-work revision invalidation across linked sources.
+
+All 12 original-plus-graph scenarios met the **original 30-warm-request median
+criterion**, each <=1.2 times baseline. The target was not raised. At 10,000 records:
+
+| Scenario | Baseline warm median ms | Candidate warm median ms | Candidate warm p95 ms | Median after invalidation ms (5 samples) |
+| --- | ---: | ---: | ---: | ---: |
+| Ordinary | 8.829 | 2.323 | 2.827 | 182.215 |
+| Linked contributions | 149.020 | 19.182 | 23.050 | 486.863 |
+| Restricted/aliases | 7.052 | 2.553 | 3.170 | 70.351 |
+| Review/release graph | 138.677 | 46.793 | 49.862 | 6,830.107 |
+
+[All measurements and methodology](document-step-performance-2026-11-09.json).
+The optional benchmark explicitly clears memory before the first request and
+commits five real document writes to measure invalidation misses. Ordinary warm
+tracemalloc excludes the already-resident index; it is not a total process bound.
+That initial 10k graph miss was about 6.8 seconds; later follow-ups above reduce
+it but do not establish cold-path release acceptance. No production concurrency, cache hit-rate or staff timing
+claim is made. Full CI, applicable avatar acceptance (storage.py changed), strict
+protected review/merge and the remaining cold-path release assessment are pending.
+The release queue may resume engineering/verification; #605 remains draft and must
+not be released merely because warm tests passed. #606 remains behind #605.
 
 ## Outcome and scope
 
@@ -176,7 +408,8 @@ release decision. Division counts and later phases remain separate.
 Before any future release reconcile with then-current main, synchronize release
 metadata and pass every existing release/backup gate. Candidate 10.14 must be reconciled with main after #604 merges and then pass
 fresh complete normal/shuffled CI, audit, metadata and Required checks. It remains
-a draft; no feature merge or deployment is authorized.
+a draft because the performance gate remains unmet; checked release is now authorized
+only after that blocker and all release gates are satisfied.
 
 
 ## Candidate implementation details
@@ -277,3 +510,56 @@ child and permission statements under the OS SQLite parser as well as Python's.
 Release metadata 10.14, JavaScript syntax, local Markdown links and diff whitespace
 passed. Full normal/shuffled CI and dependency/release gates are still required;
 there is no production preview, staff study, merge or deployment claim.
+
+
+### November 8 release assessment — blocked on performance criteria
+
+#604 is merged/deployed; this review branch is reconciled with main `e471261`.
+The owner authorized releasing #605 when ready, but did not waive the <=20%
+median-regression goal. No runtime optimization or policy change is claimed in
+this follow-up: it adds missing graph profiling and fixes benchmark accounting.
+
+The extended fixture links ten outgoing documents per shared case, with three
+accepted contributions, current exact versions and current consolidation packets.
+Every document reaches both consolidation-current and release-contribution checks.
+The final measurement ran alone, with 30 warm requests per implementation/scenario.
+[Compact reproducible results](document-step-performance-2026-11-08.json):
+
+| Records / scenario | Baseline median ms | Candidate median ms | Candidate p95 ms | Baseline / candidate SQL reads |
+| --- | ---: | ---: | ---: | ---: |
+| 100 ordinary | 2.528 | 3.817 | 4.430 | 18 / 25 |
+| 100 review/release graph | 33.705 | 84.917 | 89.262 | 6,318 / 15,885 |
+| 1,000 review/release graph | 40.758 | 678.922 | 727.210 | 6,318 / 125,685 |
+
+At 1,000 graph records the allowed median under the existing target is 48.91 ms;
+the candidate is approximately 16.7 times baseline. This is a diagnostic fixture,
+not a production forecast. The 10,000-record graph was not measured, and no bound
+for larger graphs or concurrent users is asserted. Profiles locate the dominant
+cost in guidance → consolidation summaries → strict work access and review snapshot
+construction. Those checks enforce current source access and exact review inputs;
+removing them or copying approximate status rules would be incorrect. The existing
+bounded scan/compact projections already avoid full ordinary document detail loads;
+small rendering changes cannot remove this whole-scope review cost.
+
+Memory-accounting correction: the earlier table's tracemalloc peak also retained
+SQL trace strings, so it is not an application-only memory estimate. The benchmark
+now records SQL separately from peak allocation. Corrected candidate peaks for
+these three scenarios are 185,562 / 337,432 / 2,811,168 bytes respectively. Raw query
+plans and cumulative profiles are emitted with each optional benchmark run.
+
+Reproduce with the cloud test wrapper and `tests/bench_document_steps.py -s -k
+'100-ordinary or 100-review_release_graph or 1000-review_release_graph'`. Three
+selected benchmark cases completed; completion is not acceptance of their latency.
+The 15 focused filter/browser checks also passed after reconciliation, without
+failures/errors/skips. Release metadata 10.14 passed against current main. Fresh
+full CI remains required for the new head, even though the performance gate blocks
+release independently.
+
+Owner decision needed: retain the relative target and expand the design beyond
+this bounded scan (shared batched classification or explicitly maintained facts,
+with a separate permission/revision invalidation design), or agree an absolute
+latency and supported-scope budget and measure that budget before release. An
+absolute budget has not been selected or approved. Recommend retaining the target
+and reviewing a redesign rather than releasing this scan on green CI alone.
+#605 remains draft; #606 remains queued. The release automation is paused at this
+user decision, not marked complete. Staff testing and production data are not used.

@@ -1,6 +1,9 @@
 """Paged, permission-filtered document steps using the detail workflow guidance."""
 from datetime import date
 import json
+from bisect import bisect_right
+from collections import OrderedDict
+from threading import Lock, RLock
 
 import documents as docs
 import documents_guidance as guidance
@@ -9,12 +12,33 @@ import documents_registry as registry
 from documents_storage import rows
 import tzutil
 import work_review
+import work_completion
 
 PAGE_SIZE=30
 MAX_PAGE_SIZE=50
 CHILD_LIMIT=3
 SCAN_BATCH=1024
 STATES=('all','ready','waiting','attention')
+# At most 100k compact index references across at most 16 actor snapshots.
+# No source text, advice or work bodies. Never reuse across actors/generations/days.
+_INDEXES=OrderedDict()
+_INDEX_LOCK=RLock()
+_INDEX_REFERENCES=100_000
+_INDEX_ACTORS=16
+# One rebuild per (generation, actor, day): concurrent readers of the same key wait
+# for the first builder instead of each repeating the full scan. Slots exist only
+# while a build runs; keys whose result cannot be cached are remembered briefly so
+# their readers keep the previous independent streaming behavior, never queueing.
+_BUILDS={}
+_UNCACHEABLE=OrderedDict()
+_UNCACHEABLE_LIMIT=64
+
+
+def clear_step_indexes():
+    with _INDEX_LOCK:
+        _INDEXES.clear()
+        _UNCACHEABLE.clear()
+
 LIVE="d.archived_at IS NULL AND d.canonical_id IS NULL AND d.status NOT IN ('closed','cancelled')"
 
 
@@ -62,10 +86,14 @@ def _selection(scope,view):
               AND EXISTS(SELECT 1 FROM document_instruction_tag t WHERE t.directive_id=x.id)))"""
 
 
-def _page_records(conn,scope,view,today,before,due,limit,*,scan=False):
+def _page_records(conn,scope,view,today,before,due,limit,*,scan=False,selected_ids=None):
     # Seek on the complete deadline/ID order. Authority and scope precede LIMIT.
     params={**scope.params,'action_today':today,'action_director':int(scope.is_director),
             'action_before':before,'action_due':due,'action_limit':-1 if scan else limit+1}
+    narrow=''
+    if selected_ids is not None:
+        params['selected_ids']=json.dumps(selected_ids)
+        narrow=' AND d.id IN (SELECT value FROM json_each(:selected_ids))'
     assignment_table='document_assignment_effective' if view=='division' else 'document_assignment'
     due_filter=("a.status NOT IN ('completed','superseded')" if view=='division' else
         f"""((a.user_id=:registry_actor AND a.status IN ('assigned','acknowledged','in_progress'))
@@ -79,7 +107,7 @@ def _page_records(conn,scope,view,today,before,due,limit,*,scan=False):
         SELECT d.id,MIN(COALESCE(NULLIF(d.due_date,''),'9999-12-31'),COALESCE((
             SELECT MIN(NULLIF(a.due_date,'')) FROM {assignment_table} a WHERE a.document_id=d.id
               AND {due_filter}), '9999-12-31')) AS sort_due
-        FROM document d WHERE {LIVE} AND {scope.view_sql('d')} AND ({_selection(scope,view)})
+        FROM document d WHERE {LIVE}{narrow} AND {scope.view_sql('d')} AND ({_selection(scope,view)})
     ), action_page AS MATERIALIZED (
         SELECT * FROM action_candidates WHERE :action_before=0 OR sort_due>:action_due
           OR (sort_due=:action_due AND id<:action_before)
@@ -146,11 +174,34 @@ def _load(conn,scope,documents,*,summary=False,overdue=False,today=None):
     # Every linked source (including aliases) must remain readable.
     cases=_group(rows(conn,f"""WITH RECURSIVE aliases(document_id,id) AS (
         SELECT id,id FROM document WHERE id IN ({ids}) UNION
-        SELECT a.document_id,d.id FROM document d JOIN aliases a ON d.canonical_id=a.id)
-        SELECT a.document_id,MAX(w.id) AS id FROM aliases a
-        JOIN work_document link ON link.document_id=a.id JOIN work_case w ON w.id=link.case_id
-        WHERE {scope.work_view_sql('w')} GROUP BY a.document_id""",params))
-    return assignments,instructions,versions,jobs,cases
+        SELECT a.document_id,d.id FROM document d JOIN aliases a ON d.canonical_id=a.id),
+        reached(case_id) AS (
+          SELECT DISTINCT link.case_id FROM aliases a JOIN work_document link ON link.document_id=a.id),
+        permitted(id) AS (
+          SELECT w.id FROM work_case w WHERE w.id IN (SELECT case_id FROM reached) AND {scope.work_view_sql('w')})
+        SELECT a.document_id,MAX(link.case_id) AS id FROM aliases a
+        JOIN work_document link ON link.document_id=a.id
+        WHERE link.case_id IN (SELECT id FROM permitted) GROUP BY a.document_id""",params))
+    # Newest compact review packet (with its retirement flag) and release-gate case
+    # sets, read in the same snapshot only for documents guidance will consult them
+    # for; a record without the classification columns is always included.
+    def subset(column):
+        return json.dumps([d['id'] for d in documents if d.get(column,True)])
+    packets={}
+    with_packet=subset('action_packet')
+    if with_packet!='[]':
+        packets={r['document_id']:r for r in rows(conn,'''SELECT p.document_id,p.id,p.case_id,p.version_id,p.snapshot_hash,
+            EXISTS(SELECT 1 FROM work_review_invalidation i WHERE i.packet_id=p.id) AS invalidated
+            FROM work_review_packet p WHERE p.document_id IN (SELECT value FROM json_each(:subset_ids))
+              AND p.id=(SELECT MAX(newer.id) FROM work_review_packet newer WHERE newer.document_id=p.document_id)''',{'subset_ids':with_packet})}
+    release_cases={}
+    with_release=subset('action_release_check')
+    if with_release!='[]':
+        for did,cid in conn.execute('''SELECT document_id,case_id FROM work_review_packet WHERE document_id IN (SELECT value FROM json_each(:subset_ids))
+            UNION SELECT document_id,case_id FROM work_completion_requirement WHERE document_id IN (SELECT value FROM json_each(:subset_ids))
+            UNION SELECT document_id,case_id FROM work_legacy_document WHERE document_id IN (SELECT value FROM json_each(:subset_ids))''',{'subset_ids':with_release}):
+            release_cases.setdefault(did,set()).add(cid)
+    return assignments,instructions,versions,jobs,packets,release_cases,cases
 
 
 class _GuidanceValues(dict):
@@ -170,9 +221,11 @@ def _cards(conn,scope,documents,today,view,*,summary=False,overdue=False):
     # unread instructions share its enabled state. For DOCUMENT counts a single
     # earliest-due contribution and an instruction represent each whole set,
     # including overdue membership; this is not a total of individual steps.
-    assignments,instructions,versions,jobs,cases=_load(
+    assignments,instructions,versions,jobs,packets,release_cases,cases=_load(
         conn,scope,documents,summary=summary,overdue=overdue,today=today)
     user=scope.user;uid=user['id'];enabled=docs.enabled(conn);cards=[]
+    review_batch=work_review.ReadBatch(conn,user,scope=scope)
+    completion_batch=work_completion.ReadBatch(conn,cases=release_cases)
     for doc in documents:
         did=doc['id'];base=f'/documents/{did}'
         own=assignments.get(did,[])
@@ -185,9 +238,10 @@ def _cards(conn,scope,documents,today,view,*,summary=False,overdue=False):
             'versions':versions.get(did,[]),'jobs':jobs.get(did,[]),
             'prepared':{'enabled':enabled,'director':scope.is_director,'closure_facts':doc,
                 'packet_exists':doc['action_packet'],'release_clear':not doc['action_release_check'],
+                'release_gate':completion_batch.release_gate,
                 'delivery_state':'unknown' if doc['action_unknown'] else 'partial' if doc['action_delivery'] else 'none'}},
             {'work_cases':lambda: cases.get(did,[]),
-             'consolidation':lambda: work_review.summaries(conn,user,[doc]).get(did) if doc['action_packet'] else None})
+             'consolidation':lambda: review_batch.summary(doc,details=False,packet=packets.get(did)) if doc['action_packet'] else None})
         advice=guidance.build(conn,user,values)
         step=advice['stage']
         if view=='mine':
@@ -248,7 +302,97 @@ def _display(conn,cards,state,overdue):
     return selected
 
 
+def _cached_index(key):
+    with _INDEX_LOCK:
+        cached=_INDEXES.get(key)
+        if cached is not None:_INDEXES.move_to_end(key)
+        return cached
+
+
+def _personal_index(conn,scope,today):
+    generation=conn.execute('SELECT token FROM document_step_generation WHERE id=1').fetchone()[0]
+    # Read in the SAME snapshot as authority and data. An uncommitted writer's
+    # random token cannot later be reused by a different committed transaction.
+    key=(generation,scope.uid,today)
+    cached=_cached_index(key)
+    if cached is not None:return cached
+    with _INDEX_LOCK:
+        queue=key not in _UNCACHEABLE
+        if queue:
+            slot=_BUILDS.setdefault(key,[Lock(),0]);slot[1]+=1
+    if not queue:return _build_personal_index(conn,scope,today,key)
+    try:
+        with slot[0]:
+            # A builder that finished while this reader waited published the index.
+            cached=_cached_index(key)
+            return cached if cached is not None else _build_personal_index(conn,scope,today,key)
+    finally:
+        with _INDEX_LOCK:
+            slot[1]-=1
+            if slot[1]==0 and _BUILDS.get(key) is slot:del _BUILDS[key]
+
+
+def _build_personal_index(conn,scope,today,key):
+    indexes={(state,late):[] for state in STATES for late in (False,True)}
+    cursor=_page_records(conn,scope,'mine',today,0,'',PAGE_SIZE,scan=True)
+    columns=[c[0] for c in cursor.description]
+    try:
+        while batch:=cursor.fetchmany(SCAN_BATCH):
+            documents=[dict(zip(columns,row)) for row in batch]
+            classified=_group(_cards(conn,scope,documents,today,'mine',summary=True))
+            for doc in documents:
+                cards=classified.get(doc['id'],[])
+                order=(doc['sort_due'],-doc['id'])
+                for late in (False,True):
+                    states={c['state'] for c in cards if not late or c['overdue']}
+                    if states:
+                        indexes['all',late].append(order)
+                        for state in states:indexes[state,late].append(order)
+            if sum(map(len,indexes.values()))>_INDEX_REFERENCES:
+                _mark_uncacheable(key)
+                return None  # Bound cache construction too; use the streaming path.
+    finally:
+        cursor.close()
+    result={k:tuple(v) for k,v in indexes.items()}
+    size=sum(map(len,result.values()))
+    if size>_INDEX_REFERENCES:_mark_uncacheable(key)
+    if size<=_INDEX_REFERENCES:
+        with _INDEX_LOCK:
+            # Drop obsolete generations for this actor; other snapshots held by
+            # readers remain immutable even after LRU eviction.
+            for old in list(_INDEXES):
+                if old[1]==scope.uid and old!=key:del _INDEXES[old]
+            _INDEXES[key]=result
+            while (len(_INDEXES)>_INDEX_ACTORS or
+                   sum(len(v) for item in _INDEXES.values() for v in item.values())>_INDEX_REFERENCES):
+                _INDEXES.popitem(last=False)
+    return result
+
+
+def _mark_uncacheable(key):
+    with _INDEX_LOCK:
+        _UNCACHEABLE[key]=True
+        while len(_UNCACHEABLE)>_UNCACHEABLE_LIMIT:_UNCACHEABLE.popitem(last=False)
+
+
 def _personal_page(conn,scope,today,before,before_due,limit,state,overdue):
+    indexes=_personal_index(conn,scope,today)
+    if indexes is None:
+        return _uncached_personal_page(conn,scope,today,before,before_due,limit,state,overdue)
+    counts={name:len(indexes[name,overdue]) for name in STATES}
+    matches=indexes[state,overdue]
+    start=bisect_right(matches,(before_due,-before)) if before else 0
+    selected=matches[start:start+limit]
+    more=start+limit<len(matches)
+    # Cache membership is never a substitute for reading current permitted page
+    # facts. The same snapshot binds generation, index and current display data.
+    documents=_page_records(conn,scope,'mine',today,0,'',limit,
+                            selected_ids=[-ident for _,ident in selected]) if selected else []
+    cards=_display(conn,_cards(conn,scope,documents,today,'mine',overdue=overdue),state,overdue) if documents else []
+    return documents,cards,more,counts
+
+
+def _uncached_personal_page(conn,scope,today,before,before_due,limit,state,overdue):
     counts=dict.fromkeys(STATES,0);selected=[]
     cursor=_page_records(conn,scope,'mine',today,0,'',limit,scan=True)
     columns=[c[0] for c in cursor.description]

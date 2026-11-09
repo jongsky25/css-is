@@ -324,10 +324,22 @@ The original documentation draft at `e97835e` retained version 10.12. CI
 passed both complete test orders and dependency audit, but failed release metadata
 and the aggregate gate. Candidate 10.13 synchronizes version.py, CHANGELOG.md and
 the service-worker cache, and corrects this handoff and the current setup next action.
-No workflow policy, schema, dependency or feature implementation changes are included.
+No application workflow policy, schema, dependency or feature implementation changes are included.
 The new head must pass fresh complete CI; earlier successful tests do not establish
 its readiness. Merge only with current reviews, resolved threads, strict no-bypass
 protection and a SHA-bound regular merge. Verify the resulting guarded deployment.
+
+### November 8 CI diagnosis
+
+[Run 42424944568](https://github.com/jongsky25/css-is/actions/runs/42424944568)
+at `7de2a9b` passed shuffled tests (10,844; 447 AI evaluation cases), metadata and
+audit. Normal order stalled in Playwright near the calendar workspace test interval
+and reached the unchanged 75-minute job limit. Required checks correctly failed.
+The five-minute thread dump cannot establish the exact operation or root cause.
+The 95-test calendar neighborhood passes locally without failures/errors/skips.
+The release workflow now prints individual test names and streams browser lifecycle
+diagnostics for the next complete run. This adds evidence, not a proven hang fix;
+no test selection, assertions, timeout, dependency or release gates were weakened.
 
 ## Decisions, risks and rollback
 

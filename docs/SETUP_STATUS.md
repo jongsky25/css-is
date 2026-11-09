@@ -1,5 +1,12 @@
 # Cloud/mobile setup status
 
+## Current work: #606 (request-to-work navigation, 10.15)
+
+#605 (My next steps, 10.14) is merged (`a21044a`); the owner accepted its documented
+cold-path exception. #606 is merged only after #605's guarded deployment succeeds
+(owner instruction). Workspace note: this image has Node 22 and no Tesseract, so
+`cloud_setup.sh` exits 1 and OCR tests fail locally; CI is the check for those.
+
 ## Documents next phase — verified post-10.12 handoff
 
 PRs #596–603 are merged and their guarded deployments completed successfully.
@@ -8,8 +15,8 @@ Final main is `6452931b25d953b10a20dcea4750003e2ecd147d`; final deployment
 succeeded including diagnostics. See the [complete next-phase handoff](DOCUMENTS_NEXT_PHASE_HANDOFF.md)
 for shipped evidence, source map, My desk count/filter contract, request-execution
 assessment, synthetic staff study plan and new-chat starter. This review branch
-contains documentation/planning only; do not merge its draft PR automatically or
-implement later phases without a new instruction. Older queue snapshots below
+contains the handoff and CI diagnostics; #604 has explicit checked-release
+authorization. Later feature releases require their own instruction. Older queue snapshots below
 are historical. The first next action is the bounded My desk count-contract assessment.
 
 
@@ -88,23 +95,17 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-**November 8, 2026: request-to-work navigation implemented; candidate 10.15.**
-The owner clarified #605's checked-release queue and then explicitly requested
-this slice be implemented and queued behind #605. Branch
-`feat/request-work-navigation` is stacked on `feat/my-next-steps-filters` at
-`e00a5be`. See [scope and verification contract](REQUEST_WORK_NAVIGATION.md).
-Preserve the #604 diagnostic worktree and #605 performance work. Release in order
-#604 → #605 → navigation, verifying each guarded deployment; do not waive #605's
-performance acceptance or any release gate. The older implementation-only
-restrictions below are historical and superseded by these explicit instructions.
-No staff contact, production-data testing, relay activation or manual deployment.
-
-Validation: 214 request/proposal/comparison/work regressions passed, followed by
-16 final focused navigation checks (overlapping groups), with no failures/errors/
-skips. Phone (390px) and desktop (1280px), JavaScript enabled/disabled, native
-keyboard round trips and mobile screenshot inspection passed. Candidate 10.15
-metadata, dependency lock inputs, vendor integrity, AI contract, JS syntax,
-Markdown links and whitespace checks passed. Full CI remains pending.
+**November 9, 2026: #605 (10.14) merged; request-to-work navigation (10.15, #606) follows.**
+#605 merged at `a21044a` after exact-head CI passed; its guarded deployment is
+[run 42613919486](https://github.com/jongsky25/css-is/actions/runs/42613919486).
+The owner accepted #605's cold-path result (about 1.3 s at 10k against the under-1 s
+target) as a documented exception; see [the contract](MY_NEXT_STEPS_COUNT_CONTRACT.md).
+The owner instructed that #606 be merged only after that deployment succeeds.
+Branch `feat/request-work-navigation` (candidate 10.15, see
+[scope and verification contract](REQUEST_WORK_NAVIGATION.md)) has `main` merged in;
+its exact-head CI must pass on that merged head before release. Release order is
+#604 → #605 → #606, verifying each guarded deployment. No staff contact,
+production-data testing, relay activation, manual deployment or gate bypass.
 
 
 
@@ -160,6 +161,23 @@ main/reviews/threads and strict no-bypass protection before a regular SHA-bound
 merge. Verify the normal guarded deployment afterward. No later feature work,
 staff contact, production-data testing, relay activation or manual deployment is
 authorized. My desk count/filter planning remains the next feature-phase action.
+
+**November 8, 2026: diagnostic CI follow-up.** Run 42424944568 at `7de2a9b`
+passed shuffled verification (10,844 tests; 447 AI cases), metadata and dependency
+audit. Normal order stalled after 2,304 reported passes and was cancelled at the
+existing 75-minute limit; Required checks failed. Its five-minute thread dump
+shows Playwright's sync event loop and an idle local HTTP server, but does not
+identify the test or operation. Collection places the remaining partial line at
+cases 2,305–2,376, including the calendar workspace browser tests (2,336–2,341).
+The 95-test calendar neighborhood passed locally with no failures/errors/skips;
+this does not establish the CI root cause or complete-suite readiness.
+
+The shared release workflow now prints individual test names and streams
+Playwright browser lifecycle diagnostics (not API payload logging). No timeout,
+selection, assertion, report gate or dependency changes. Fresh full normal and
+shuffled CI on this diagnostic head is required. If it stalls again, inspect the
+identified test and browser launch/exit evidence before further retries. Preserve
+the separate `feat/my-next-steps-filters` work; it is outside this release.
 
 ### Historical queue snapshots (superseded)
 

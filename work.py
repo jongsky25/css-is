@@ -53,12 +53,12 @@ def officer(conn, user, case):
     return permissions.officer(conn, user, {'unit_id': case['unit_id'], 'matches_json': '{}'})
 
 
-def resolved_document(conn, document_id):
+def resolved_document(conn, document_id, *, _load=None):
     """Follow a merge without displaying metadata from an obsolete source record."""
     seen = set()
     while document_id and document_id not in seen:
         seen.add(document_id)
-        doc = docs.raw(conn, document_id)
+        doc = (_load or docs.raw)(conn, document_id)
         if not doc or not doc['canonical_id']:
             return doc
         document_id = doc['canonical_id']
