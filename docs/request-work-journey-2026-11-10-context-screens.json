@@ -1,0 +1,43 @@
+{
+ "after_10_23": {
+  "completion": {
+   "filtered_queue": 1,
+   "links_on_screen_carrying_context": 4,
+   "receipt_any": 1,
+   "receipt_with_context": 1
+  },
+  "discussion": {
+   "filtered_queue": 1,
+   "links_on_screen_carrying_context": 3,
+   "receipt_any": 1,
+   "receipt_with_context": 1
+  },
+  "handoff": {
+   "filtered_queue": 1,
+   "links_on_screen_carrying_context": 2,
+   "receipt_any": 1,
+   "receipt_with_context": 1
+  }
+ },
+ "before_10_15_state_a695bb1": {
+  "completion": {
+   "filtered_queue": null,
+   "links_on_screen_carrying_context": 0,
+   "receipt_any": 2,
+   "receipt_with_context": null
+  },
+  "discussion": {
+   "filtered_queue": null,
+   "links_on_screen_carrying_context": 0,
+   "receipt_any": 2,
+   "receipt_with_context": null
+  },
+  "handoff": {
+   "filtered_queue": null,
+   "links_on_screen_carrying_context": 0,
+   "receipt_any": 2,
+   "receipt_with_context": null
+  }
+ },
+ "method": "Same synthetic link-following measurement as request-work-journey-2026-11-10.json (tests/measure_request_work_journey.py, journey C: the discussion, handoff and completion screens reached from the work item, 2 clicks of search). null = not found within the bound."
+}

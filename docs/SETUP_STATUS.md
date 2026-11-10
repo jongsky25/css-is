@@ -1,13 +1,15 @@
 # Cloud/mobile setup status
 
-## Current work: Documents phase 2 (request execution) — acknowledgement history built
+## Current work: Documents phase 2 (request execution) — context extension built
 
-R1 (10.18), the staff warning (10.19), R2 (10.20) and R3 (10.21) are merged. The
-acknowledgement history (10.22) lists earlier reviews of a request's source changes on
-the comparison screen (see the [design](REQUEST_RECONCILIATION_DESIGN.md)). Still open:
-extending the 10.15 return context to discussion, handoff and completion screens; phase 3
-staff study needs explicit authorization. Workspace note: this image has Node 22 and no
-Tesseract or Chromium, so `cloud_setup.sh` exits 1 and OCR/browser tests only run in CI.
+The reconciliation work (10.18 to 10.22) is merged. The 10.15 return context now also
+appears on the work item's discussion, working draft and handoff, and release and
+completion screens (10.23; see the [navigation scope](REQUEST_WORK_NAVIGATION.md) and the
+[measurement follow-up](REQUEST_WORK_JOURNEY_MEASUREMENT.md)). Still open: the remaining
+work screens listed there (consolidation, decisions, message actions, blockers, team and
+manager); phase 3 staff study needs explicit authorization. Workspace note: this image
+has Node 22 and no Tesseract or Chromium, so `cloud_setup.sh` exits 1 and OCR/browser
+tests only run in CI.
 
 ## Documents next phase — verified post-10.12 handoff
 

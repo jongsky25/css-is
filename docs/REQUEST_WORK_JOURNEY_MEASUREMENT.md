@@ -45,3 +45,13 @@ same-origin GET links (up to 4 clicks and 120 pages; 2 clicks for the other scre
 Whether to extend the context to those three screens (read-only, low risk, needs its
 own return-URL, access and stale-revision tests), and then to design reconciliation
 writes (separate design and authorization first, per the handoff).
+
+## Follow-up: the other screens (10.23)
+
+The measurement above found the discussion, handoff and completion screens lost the
+context. 10.23 extends it to them (see
+[the navigation scope](REQUEST_WORK_NAVIGATION.md)). The same script on the new code,
+from each of those screens: receipt with the same return context 1 click (was not
+found), the same filtered queue 1 click (was not found), links carrying the context 2 to
+4 (was 0). Same limits as before: a synthetic link-structure measurement, not a usability
+result. [Before and after](request-work-journey-2026-11-10-context-screens.json).

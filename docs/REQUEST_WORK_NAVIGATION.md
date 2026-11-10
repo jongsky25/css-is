@@ -39,3 +39,20 @@ skips. Phone (390px) and desktop (1280px), JavaScript enabled/disabled, native
 keyboard round trips and mobile screenshot inspection passed. Candidate 10.15
 metadata, dependency lock inputs, vendor integrity, AI contract, JS syntax,
 Markdown links and whitespace checks passed. Full CI remains pending.
+
+## Extension to the discussion, draft and completion screens (10.23)
+
+The context described above (the "Back to reviewed request and comparison" and
+"Back to Documents queue" links and the source-change note) now also appears on the work
+item's discussion, working draft and handoff, and release and completion screens when
+they are opened from a request's work. The same validated `source_task` and `return_to`
+values travel on the links from the work item to these screens and between them, in the
+form actions and redirects (posting a message, following a discussion, saving a draft or
+handoff, completion actions) and on re-shown error pages. The notice itself now lives in
+the shared work layout and is attached only to these screens and the work item. Access
+is unchanged: the request is re-checked on every page (a task from another case or a
+forged value shows nothing, and a hostile queue address is dropped).
+
+Still not extended: consolidation, decisions and decision detail, message edit history
+and actions, blocker subforms, the team and manager screens. Measured effect (synthetic):
+[before and after](request-work-journey-2026-11-10-context-screens.json).
