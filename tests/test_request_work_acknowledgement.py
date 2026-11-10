@@ -81,8 +81,14 @@ def test_changes_no_work_document_review_or_notification_state(proposal_record, 
     before = tables(c)
     proposals.acknowledge(c, u, doc['id'], 0, fields(c, doc['id'], saved['task_id']))
     assert tables(c) == before
-    # The existing warning is unchanged until the interface adopts the acknowledged baseline.
+    # The warning now compares against the last reviewed source; the proposal comparison is kept.
+    current = proposals.existing(c, u, doc['id'], 0)
+    assert current['changed'] is False and current['changed_since_proposal'] is True
+    revise_record(c, u, doc, need_0_output='Changed a second time')
     assert proposals.existing(c, u, doc['id'], 0)['changed'] is True
+    revise_record(c, u, doc, need_0_output='Comments matrix')  # back to the proposed source
+    returned = proposals.existing(c, u, doc['id'], 0)
+    assert returned['changed'] is False and returned['changed_since_proposal'] is False
 
 
 def test_nothing_to_acknowledge_before_the_source_changes(proposal_record, viewer):

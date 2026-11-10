@@ -6,7 +6,17 @@
 {% if saved %}
 <p role="status">Work was proposed on {{ saved.created_at }} by {{ names.get(saved.actor_id,'Former staff member') }}.</p>
 <p><a href="{{ request_work_url(saved) }}">Open the work item and contribution</a></p>
-{% if saved.changed %}<p role="alert">The saved request or focus area has changed since this proposal. Reconcile the existing work explicitly; its details have not been overwritten. This request position cannot create a second work item.</p>{% endif %}
+{% if saved.acknowledgement %}<p role="status">A source change was reviewed on {{ saved.acknowledgement.created_at }} by {{ names.get(saved.acknowledgement.actor_id,'Former staff member') }}{% if saved.acknowledgement.note %}: “{{ saved.acknowledgement.note }}”{% endif %}.{% if saved.changed %} The source changed again after that review.{% endif %}</p>{% endif %}
+{% if saved.changed %}<p role="alert">The saved request or focus area has changed {{ 'since the last reviewed change' if saved.acknowledgement else 'since this proposal' }}. Reconcile the existing work explicitly; its details have not been overwritten. This request position cannot create a second work item.</p>
+{% if acknowledge_form and acknowledge_form.allowed %}<form method="post" action="{{ document_url('/documents/' ~ doc.id ~ '/requests/' ~ index ~ '/work/acknowledge') }}" data-ux-ignore data-telemetry-ignore>
+<h3>Mark this source change as reviewed</h3>
+<p>Check the comparison below first. This records that you reviewed the change. It does not change the work, its owner or deadline, the document or any formal review.</p>
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="source_hash" value="{{ acknowledge_form.source_hash }}"><input type="hidden" name="task_revision" value="{{ acknowledge_form.task_revision }}">
+<label>Note (optional)<textarea name="note" maxlength="500">{{ acknowledge_values.get('note','') }}</textarea></label>
+<label><input type="checkbox" name="confirmed" value="yes" required> I checked this source change against the work.</label>
+<button type="submit">Mark as reviewed</button>
+</form>
+{% else %}<p>Only the work item lead or an authorized unit officer can mark this change as reviewed.</p>{% endif %}{% endif %}
 {% if comparison %}
 <section aria-labelledby="comparison-title" id="request-comparison">
 <h3 id="comparison-title">Compare source and current work</h3>

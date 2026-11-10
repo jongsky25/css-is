@@ -1,17 +1,16 @@
 # Cloud/mobile setup status
 
-## Current work: Documents phase 2 (request execution) — R1 built, interface not started
+## Current work: Documents phase 2 (request execution) — R2 built, awaiting review
 
-The owner approved the [reconciliation design](REQUEST_RECONCILIATION_DESIGN.md) and
-authorized slice R1: an append-only acknowledgement table and service with tests, no
-visible change (10.18). R2 (interface that adopts the acknowledged baseline) and R3
-(due-date shortcut) are not started and need their own instruction. Editing a request already
-makes a linked outgoing document's consolidation review stale (pinned in a test); the
-owner chose to warn staff, built as a read-only notice on the review screen (10.19, see
-the design). Also open: extending the 10.15 return
-context to discussion, handoff and completion screens; phase 3 staff study needs
-explicit authorization. Workspace note: this image has Node 22 and no Tesseract, so
-`cloud_setup.sh` exits 1 and OCR/browser tests only run in CI.
+R1 (record and service, 10.18) and the staff warning before a request edit (10.19) are
+merged and deployed. R2 (10.20) lets the work lead or an authorized officer mark a
+changed request as reviewed from the comparison screen; the change warning on the
+comparison, overview and work item now compares against the last reviewed change (see
+the [design](REQUEST_RECONCILIATION_DESIGN.md), "R2 result"). R3 (prefilled due-date
+link) is not started. Also open: extending the 10.15 return context to discussion,
+handoff and completion screens; phase 3 staff study needs explicit authorization.
+Workspace note: this image has Node 22 and no Tesseract, so `cloud_setup.sh` exits 1
+and OCR/browser tests only run in CI.
 
 ## Documents next phase — verified post-10.12 handoff
 

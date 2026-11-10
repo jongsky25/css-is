@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.19"
+APP_VERSION = "10.20"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.20",
+        "date": "November 10, 2026",
+        "summary": "Mark a changed request as reviewed.",
+        "changes": [
+            "The work lead or an authorized officer can now mark a changed incoming request as reviewed, with an optional note; the change warning then clears until the request changes again.",
+            "Marking a change as reviewed does not change the work, its owner or deadline, the document or any formal review."
+        ]
+    },
     {
         "version": "10.19",
         "date": "November 10, 2026",
