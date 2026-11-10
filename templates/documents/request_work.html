@@ -7,6 +7,10 @@
 <p role="status">Work was proposed on {{ saved.created_at }} by {{ names.get(saved.actor_id,'Former staff member') }}.</p>
 <p><a href="{{ request_work_url(saved) }}">Open the work item and contribution</a></p>
 {% if saved.acknowledgement %}<p role="status">A source change was reviewed on {{ saved.acknowledgement.created_at }} by {{ names.get(saved.acknowledgement.actor_id,'Former staff member') }}{% if saved.acknowledgement.note %}: “{{ saved.acknowledgement.note }}”{% endif %}.{% if saved.changed %} The source changed again after that review.{% endif %}</p>{% endif %}
+{% if acknowledgement_history and acknowledgement_history.entries|length>1 %}<details id="acknowledgement-history"><summary>History of reviews of source changes ({{ acknowledgement_history.total }})</summary>
+<ol>{% for entry in acknowledgement_history.entries %}<li>{{ entry.created_at }} · {{ names.get(entry.actor_id,'Former staff member') }} · after saved review {{ entry.understanding_revision }}{% if entry.note %}: “{{ entry.note }}”{% endif %}{% if loop.first %} (latest){% endif %}</li>{% endfor %}</ol>
+{% if acknowledgement_history.older %}<p>{{ acknowledgement_history.older }} earlier {{ 'review is' if acknowledgement_history.older==1 else 'reviews are' }} not shown. The full record is kept.</p>{% endif %}
+<p>Each entry records who checked a change to the request and when; none of them changed the work. <a href="{{ document_url('/documents/' ~ doc.id ~ '/understanding') }}">Open the saved review history</a> to see the request versions.</p></details>{% endif %}
 {% if saved.changed %}<p role="alert">The saved request or focus area has changed {{ 'since the last reviewed change' if saved.acknowledgement else 'since this proposal' }}. Reconcile the existing work explicitly; its details have not been overwritten. This request position cannot create a second work item.</p>
 {% if acknowledge_form and acknowledge_form.allowed %}<form method="post" action="{{ document_url('/documents/' ~ doc.id ~ '/requests/' ~ index ~ '/work/acknowledge') }}" data-ux-ignore data-telemetry-ignore>
 <h3>Mark this source change as reviewed</h3>
