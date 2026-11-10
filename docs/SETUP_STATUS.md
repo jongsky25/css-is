@@ -1,11 +1,18 @@
 # Cloud/mobile setup status
 
-## Current work: #606 (request-to-work navigation, 10.15)
+## Current work: Documents phase 2 (request execution) — measured, next slice undecided
 
-#605 (My next steps, 10.14) is merged (`a21044a`); the owner accepted its documented
-cold-path exception. #606 is merged only after #605's guarded deployment succeeds
-(owner instruction). Workspace note: this image has Node 22 and no Tesseract, so
-`cloud_setup.sh` exits 1 and OCR tests fail locally; CI is the check for those.
+#605 (10.14) and #606 (10.15) are merged and their guarded deployments succeeded
+(runs 42613919486 and 42625993313). A synthetic before/after measurement of the
+request-to-work journey is recorded in
+[the journey measurement](REQUEST_WORK_JOURNEY_MEASUREMENT.md) (10.16, docs only):
+10.15 gave a one-click path back to the same request and filtered queue and kept the
+context through a contribution save; discussion, handoff and completion screens still
+lose it. Next: the owner chooses whether to extend that read-only context to those
+screens, then a reconciliation-write design needs separate authorization. Phase 3
+(staff study) still needs explicit authorization. Workspace note: this image has
+Node 22 and no Tesseract, so `cloud_setup.sh` exits 1 and OCR tests fail locally;
+CI is the check for those.
 
 ## Documents next phase — verified post-10.12 handoff
 

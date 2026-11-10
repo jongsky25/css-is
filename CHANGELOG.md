@@ -1,3 +1,8 @@
+## 10.16 — November 10, 2026
+
+- Record a measured comparison of the request-to-work journey before and after 10.15, and the screens still to be covered.
+- Documentation and release metadata only; document workflows are unchanged.
+
 ## 10.15 — November 8, 2026
 
 - Preserve reviewed-request and filtered Documents queue context when opening existing work and returning from standard contribution actions.
