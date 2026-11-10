@@ -1,7 +1,10 @@
 # Request reconciliation: design proposal
 
-**Status: proposal for owner review. No code, schema or behavior changes here, and
-nothing in this document authorizes implementation or release.** It answers the open
+**Status: approved by the owner on November 10, 2026. Slice R1 (service and tests, no
+visible change) was authorized and is built in the PR that carries 10.18; R2 (interface)
+and R3 are not started and each needs its own instruction. Release always needs an
+explicit instruction.** The text below is the original proposal; the R1 result and the
+answer to verify item 1 are recorded at the end. It answers the open
 decisions in [the Documents handoff](DOCUMENTS_NEXT_PHASE_HANDOFF.md) for the case where a
 reviewed request changes after work was proposed from it. Facts below were read from the
 code at `74cefa6` (10.16); items I could not confirm are listed under "Verify before
@@ -107,3 +110,26 @@ production data, staff contact or provider activity is involved in building or t
 Approve or change each recommended answer above, and say whether R1 may be built. A
 schema addition and each release need your explicit instruction; merging to `main`
 deploys.
+
+## R1 result (10.18)
+
+Built as designed: additive table `document_request_work_review` (append-only; updates
+and deletes abort), `documents_request_work.acknowledge()` and `latest_acknowledgement()`,
+and 20 tests for the scenarios above. Nothing visible changes: the existing "changed"
+warning still compares against the original snapshot until R2 adopts the acknowledged
+baseline. Choices made while building: acknowledgement writes only its own row plus a
+global audit entry. It deliberately does **not** use `work._event`, because that also
+calls `work_review.invalidate` and would retire formal reviews. A repeat of the same
+`(document, request, source hash)` returns the original record; acknowledging an
+unchanged source is rejected; an acknowledgement of a cleared request is allowed.
+
+**Verify item 1, answered.** Pinned in a test: editing a request on an incoming document
+sets that document's `reconcile` flag, and because that flag is part of a linked
+outgoing document's consolidation snapshot, the outgoing document's review becomes not
+current. This is existing behavior, not added by R1, and acknowledgement neither causes
+nor undoes it. Whether staff should be warned before such an edit, or whether the edit
+should avoid touching linked reviews, is a separate decision for the owner.
+
+**Rollback.** The table is additive and older code ignores it. Dropping the service call
+sites restores today's behavior and keeps every record; no data restore is needed. The
+append-only triggers are created with the table.

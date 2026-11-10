@@ -57,6 +57,19 @@ def install(conn):
       actor_id INTEGER NOT NULL REFERENCES admin_user(id), created_at TEXT NOT NULL,
       PRIMARY KEY(document_id,request_index));
     CREATE INDEX IF NOT EXISTS document_request_work_task ON document_request_work(task_id);
+    -- Append-only record that an authorized person reviewed a specific change to a request
+    -- source. It never changes the work, the document or any formal review.
+    CREATE TABLE IF NOT EXISTS document_request_work_review (
+      id INTEGER PRIMARY KEY, document_id INTEGER NOT NULL, request_index INTEGER NOT NULL CHECK(request_index BETWEEN 0 AND 4),
+      source_hash TEXT NOT NULL, understanding_revision INTEGER NOT NULL, task_revision INTEGER NOT NULL,
+      case_id INTEGER NOT NULL REFERENCES work_case(id), task_id INTEGER NOT NULL REFERENCES work_task(id),
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), note TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL,
+      FOREIGN KEY(document_id,request_index) REFERENCES document_request_work(document_id,request_index),
+      UNIQUE(document_id,request_index,source_hash));
+    CREATE TRIGGER IF NOT EXISTS document_request_work_review_no_update BEFORE UPDATE ON document_request_work_review
+      BEGIN SELECT RAISE(ABORT,'Request source acknowledgements are append-only.'); END;
+    CREATE TRIGGER IF NOT EXISTS document_request_work_review_no_delete BEFORE DELETE ON document_request_work_review
+      BEGIN SELECT RAISE(ABORT,'Request source acknowledgements are append-only.'); END;
     CREATE TABLE IF NOT EXISTS document_registration (
       actor_id INTEGER NOT NULL REFERENCES admin_user(id), submission_id TEXT NOT NULL,
       payload_hash TEXT NOT NULL, document_id INTEGER NOT NULL REFERENCES document(id),

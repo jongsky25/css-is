@@ -6,7 +6,9 @@ import documents as docs
 import documents_understanding as understanding
 import documents_permissions as permissions
 from documents_storage import transaction, rows
+import storage as st
 import work
+import work_compat
 import work_tasks
 import tzutil as tz
 
@@ -73,6 +75,76 @@ def propose(conn, user, doc_id, index, fields):
             VALUES (?,?,?,?,?,?,?,?,?)''', (doc_id,index,json.dumps(values),digest(values),digest(payload),case['id'],task['id'],user['id'],tz.now_iso()))
         docs.finish(conn,user,doc,'request_work_proposed',{'request_index':index,'case_id':case['id'],'task_id':task['id']})
         return existing(conn,user,doc_id,index)
+
+
+def latest_acknowledgement(conn, user, doc_id, index):
+    """Newest acknowledgement for a request's work, after fresh document and work access checks."""
+    if not existing(conn, user, doc_id, index):
+        return None
+    found = rows(conn, 'SELECT * FROM document_request_work_review WHERE document_id=? AND request_index=? ORDER BY id DESC LIMIT 1',
+                 (doc_id, index))
+    return found[0] if found else None
+
+
+def can_acknowledge(user, case, conn):
+    """The existing work decision authority: the case lead or an authorized unit officer."""
+    return case['lead_id'] == user['id'] or work.officer(conn, user, case)
+
+
+def acknowledge(conn, user, doc_id, index, fields):
+    """Record that a named person reviewed the current source change; changes no work field.
+
+    Deliberately does not use work._event (it invalidates formal reviews) and does not
+    touch the document revision, reconcile flag, notices or any work row.
+    """
+    with transaction(conn):
+        user = permissions.actor(conn, user)
+        saved = existing(conn, user, doc_id, index)
+        if not saved:
+            raise ValueError('Choose a saved request that already has proposed work.')
+        work.writable(conn)
+        case = work.get(conn, user, saved['case_id'])
+        work_compat.require_open(conn, case['id'])
+        docs.require(can_acknowledge(user, case, conn),
+                     'Only the work item lead or an authorized unit officer can acknowledge a source change.')
+        if fields.get('confirmed') != 'yes':
+            raise ValueError('Confirm that you checked the source change against the work.')
+        submitted = fields.get('source_hash', '')
+        revision = fields.get('task_revision', '')
+        note = fields.get('note', '')
+        if not all(isinstance(value, str) for value in (submitted, revision, note)):
+            raise ValueError('Invalid acknowledgement field. Reload the comparison.')
+        note = note.strip()
+        if len(note) > 500:
+            raise ValueError('The note can be at most 500 characters.')
+        if len(submitted) != 64 or not all(c in '0123456789abcdef' for c in submitted):
+            raise ValueError('Invalid source reference. Reload the comparison.')
+        if not revision.isascii() or not revision.isdigit() or len(revision) > 10:
+            raise ValueError('Invalid work revision. Reload the comparison.')
+        repeat = rows(conn, 'SELECT * FROM document_request_work_review WHERE document_id=? AND request_index=? AND source_hash=?',
+                      (doc_id, index, submitted))
+        if repeat:
+            return repeat[0]  # A retry or double click returns the same record.
+        if submitted == saved['source_hash']:
+            raise ValueError('This request has not changed since the work was proposed.')
+        current = digest(source(conn, doc_id, index))
+        if submitted != current:
+            raise docs.Conflict('The saved request changed again. Reload the comparison before acknowledging.')
+        task = conn.execute('SELECT revision FROM work_task WHERE id=? AND case_id=?', (saved['task_id'], case['id'])).fetchone()
+        if not task or task[0] != int(revision):
+            raise docs.Conflict('This contribution changed. Reload the comparison before acknowledging.')
+        understanding_revision = conn.execute(
+            'SELECT MAX(revision) FROM document_understanding_revision WHERE document_id=?', (doc_id,)).fetchone()[0] or 0
+        now = tz.now_iso()
+        identifier = conn.execute('''INSERT INTO document_request_work_review
+            (document_id,request_index,source_hash,understanding_revision,task_revision,case_id,task_id,actor_id,note,created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?)''', (doc_id, index, submitted, understanding_revision, task[0], case['id'],
+                                                saved['task_id'], user['id'], note, now)).lastrowid
+        st.audit(conn, user['username'], 'document_request_work_acknowledged', target_type='document', target_id=doc_id,
+                 after=json.dumps({'request_index': index, 'case_id': case['id'], 'task_id': saved['task_id'],
+                                   'source_hash': submitted, 'understanding_revision': understanding_revision}, sort_keys=True),
+                 commit=False)
+        return rows(conn, 'SELECT * FROM document_request_work_review WHERE id=?', (identifier,))[0]
 
 
 def task_source(conn, user, task_id):

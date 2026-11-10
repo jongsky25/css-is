@@ -1,3 +1,8 @@
+## 10.18 — November 10, 2026
+
+- Add the private record and checks for acknowledging a changed request source, with no visible change yet.
+- Existing work, documents and formal reviews are unaffected; the new record is append-only.
+
 ## 10.17 — November 10, 2026
 
 - Record a design proposal for acknowledging changed request sources, for owner review.

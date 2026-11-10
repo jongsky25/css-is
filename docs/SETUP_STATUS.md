@@ -1,19 +1,16 @@
 # Cloud/mobile setup status
 
-## Current work: Documents phase 2 (request execution) — measured, next slice undecided
+## Current work: Documents phase 2 (request execution) — R1 built, interface not started
 
-#605 (10.14) and #606 (10.15) are merged and their guarded deployments succeeded
-(runs 42613919486 and 42625993313). A synthetic before/after measurement of the
-request-to-work journey is recorded in
-[the journey measurement](REQUEST_WORK_JOURNEY_MEASUREMENT.md) (10.16, docs only):
-10.15 gave a one-click path back to the same request and filtered queue and kept the
-context through a contribution save; discussion, handoff and completion screens still
-lose it. Next: the owner chooses whether to extend that read-only context to those
-screens and reviews the [reconciliation design proposal](REQUEST_RECONCILIATION_DESIGN.md)
-(10.17, docs only; any build, schema addition and release need explicit authorization). Phase 3
-(staff study) still needs explicit authorization. Workspace note: this image has
-Node 22 and no Tesseract, so `cloud_setup.sh` exits 1 and OCR tests fail locally;
-CI is the check for those.
+The owner approved the [reconciliation design](REQUEST_RECONCILIATION_DESIGN.md) and
+authorized slice R1: an append-only acknowledgement table and service with tests, no
+visible change (10.18). R2 (interface that adopts the acknowledged baseline) and R3
+(due-date shortcut) are not started and need their own instruction. Open decision for
+the owner: editing a request already makes a linked outgoing document's consolidation
+review stale (pinned in a test; see the design). Also open: extending the 10.15 return
+context to discussion, handoff and completion screens; phase 3 staff study needs
+explicit authorization. Workspace note: this image has Node 22 and no Tesseract, so
+`cloud_setup.sh` exits 1 and OCR/browser tests only run in CI.
 
 ## Documents next phase — verified post-10.12 handoff
 
