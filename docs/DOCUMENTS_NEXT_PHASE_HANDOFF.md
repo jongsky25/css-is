@@ -126,6 +126,16 @@ DOCUMENT_RETURN_CONTEXT.md, DOCUMENT_REGISTRATION_ENTRY.md, DOCUMENT_INBOX_FOCUS
 DOCUMENT_INBOX_SEARCH.md and DOCUMENT_REVIEW_NEXT_SCOPE.md. Do not rebuild their
 shipped increments.
 
+## Status update — November 10, 2026
+
+Phase 0 (count contract) and phase 1 (My next steps counts and filters, 10.14, #605) are
+shipped, and phase 2's first read-only slice (request-to-work navigation, 10.15, #606)
+is shipped; both deployments succeeded. See the
+[journey measurement](REQUEST_WORK_JOURNEY_MEASUREMENT.md). Still open: extending the
+context to discussion, handoff and completion screens; reconciliation writes (separate
+design and authorization); phase 3 (explicit authorization and an approved synthetic
+preview). The "first next action" wording below is historical.
+
 ## Prioritized phases (proposed, not implementation authorization)
 
 | Phase | Bounded outcome and dependency | Acceptance / exit evidence |
