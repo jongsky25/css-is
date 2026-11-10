@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.23"
+APP_VERSION = "10.24"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.24",
+        "date": "November 10, 2026",
+        "summary": "Check the request review screens in a real browser.",
+        "changes": [
+            "Add automated phone and desktop browser checks, with and without scripts and by keyboard, for marking a changed request as reviewed, the target-date link, the review history and the screens that keep the request context.",
+            "No change to how anything works in this release."
+        ]
+    },
     {
         "version": "10.23",
         "date": "November 10, 2026",

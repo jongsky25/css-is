@@ -1,3 +1,8 @@
+## 10.24 — November 10, 2026
+
+- Add automated real-browser checks (phone and desktop, with and without scripts, using the keyboard) for marking a changed request as reviewed, following the target-date link and applying it, opening the review history, and moving between the request, work item, discussion, draft and completion screens.
+- Tests and documentation only; nothing changes in how the application works.
+
 ## 10.23 — November 10, 2026
 
 - Keep the "Back to reviewed request and comparison" and "Back to Documents queue" links, and the source-change note, on the work item's discussion, working draft and handoff, and release and completion screens when they are opened from a request's work.
