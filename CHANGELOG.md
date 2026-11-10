@@ -1,3 +1,9 @@
+## 10.20 — November 10, 2026
+
+- Let the work lead or an authorized unit officer mark a changed incoming request as reviewed, with an optional note and confirmation.
+- The "request changed" warning on the request comparison, the document's request overview and the work item now compares against the last reviewed change, and returns if the request changes again.
+- Marking a change as reviewed is a record only: it does not change work, deadlines, documents or formal reviews.
+
 ## 10.19 — November 10, 2026
 
 - Show a notice on the incoming-request review screen listing linked outgoing documents whose consolidation review is current and will need renewal if the review is saved.

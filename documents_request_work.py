@@ -34,7 +34,16 @@ def existing(conn, user, doc_id, index):
     item = items[0]
     work.get(conn, user, item['case_id'])
     item['values'] = json.loads(item['source_json'])
-    item['changed'] = digest(source(conn, doc_id, index)) != item['source_hash']
+    current = digest(source(conn, doc_id, index))
+    found = rows(conn, 'SELECT * FROM document_request_work_review WHERE document_id=? AND request_index=? ORDER BY id DESC LIMIT 1',
+                 (doc_id, index))
+    item['acknowledgement'] = found[0] if found else None
+    # The source differs from what the work was proposed from, whether or not anyone reviewed it.
+    item['changed_since_proposal'] = current != item['source_hash']
+    # Needs attention: it differs from the last reviewed source (or the proposal if none was
+    # reviewed) and has not simply returned to the proposed source.
+    baseline = item['acknowledgement']['source_hash'] if item['acknowledgement'] else item['source_hash']
+    item['changed'] = current != baseline and current != item['source_hash']
     return item
 
 
@@ -84,6 +93,20 @@ def latest_acknowledgement(conn, user, doc_id, index):
     found = rows(conn, 'SELECT * FROM document_request_work_review WHERE document_id=? AND request_index=? ORDER BY id DESC LIMIT 1',
                  (doc_id, index))
     return found[0] if found else None
+
+
+def acknowledgement_state(conn, user, saved):
+    """What the comparison screen needs to offer the acknowledge form; never writes."""
+    case = work.get(conn, user, saved['case_id'])
+    allowed = work.enabled(conn) and can_acknowledge(user, case, conn)
+    if allowed:
+        try:
+            work_compat.require_open(conn, case['id'])
+        except ValueError:
+            allowed = False
+    task = conn.execute('SELECT revision FROM work_task WHERE id=? AND case_id=?', (saved['task_id'], case['id'])).fetchone()
+    return {'allowed': bool(allowed and task), 'task_revision': task[0] if task else 0,
+            'source_hash': digest(source(conn, saved['document_id'], saved['request_index']))}
 
 
 def can_acknowledge(user, case, conn):

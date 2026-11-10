@@ -146,3 +146,26 @@ disclosed), writes nothing, and the page load is covered by a no-write test. Sav
 behaves exactly as before and still marks the linked reviews not current; a renewed
 review must still be requested. Not done: any change to the edit itself, and any
 warning on the other screens that can trigger the same flag.
+
+## R2 result (10.20): acknowledge from the comparison screen
+
+Built as designed. On the request comparison/receipt screen, when the source changed,
+the case lead or an authorized unit officer sees a "Mark this source change as reviewed"
+form (confirmation required, optional note up to 500 characters); everyone else with
+access sees the warning and a sentence saying who can mark it. The submission goes to
+`POST /documents/{id}/requests/{index}/work/acknowledge`, which uses the existing form
+token check and the R1 service, then returns to the same receipt keeping the return
+context. A conflict or invalid input re-shows the page with the message, the note kept
+and a form carrying the current source reference.
+
+`existing()['changed']` now means "differs from the last reviewed source (or from the
+proposal if none was reviewed) and has not simply returned to the proposed source", so
+the comparison screen, the document's request overview and the work item all switch
+together. `changed_since_proposal` keeps the old meaning and the comparison still lists
+every field that differs from the proposal. A later source change brings the warning
+back with "changed again after that review". Acknowledging remains a record only: it
+changes no work, document or formal review (tested), and page loads write nothing.
+
+Not done: R3 (prefilled link to the existing due-date action); showing acknowledgement
+history beyond the latest entry; any browser test for the new form (the workspace has
+no Chromium; the form is a plain POST that works without JavaScript).

@@ -558,6 +558,8 @@ def make_router(templates,get_conn):
         response=templates.TemplateResponse(request,'documents/request_work.html',context(request,conn,
             doc=doc,index=index,values=values,snapshot=snapshot,saved=saved,error=error,
             comparison=request_work.comparison(conn,user,doc_id,index) if saved else None,
+            acknowledge_form=request_work.acknowledgement_state(conn,user,saved) if saved and saved['changed'] else None,
+            acknowledge_values=data if data is not None and 'task_revision' in data else {},
             editable=work.enabled(conn) and understanding.can_edit(conn,user,doc)),status_code=status)
         response.headers['Cache-Control']='no-store'
         return response
@@ -588,6 +590,30 @@ def make_router(templates,get_conn):
             return RedirectResponse(navigation.return_to_record(request,f'/documents/{doc_id}/requests/{index}/work'),status_code=303,headers={'Cache-Control':'no-store'})
         except p.Denied:
             return HTMLResponse('Document or work unavailable.',status_code=403,headers={'Cache-Control':'no-store'})
+        except ValueError as exc:
+            try:
+                return request_work_page(request,conn,doc_id,index,data,str(exc),409 if isinstance(exc,d.Conflict) else 400)
+            except p.Denied:
+                return HTMLResponse('Document or work not found.',status_code=404,headers={'Cache-Control':'no-store'})
+            except ValueError:
+                return HTMLResponse('Invalid request.',status_code=400,headers={'Cache-Control':'no-store'})
+        finally: conn.close()
+
+    @router.post('/documents/{doc_id}/requests/{index}/work/acknowledge',response_class=HTMLResponse)
+    async def request_work_acknowledge(request:Request,doc_id:int,index:int):
+        try:
+            data=await posted(request)
+        except (p.Denied,ValueError) as exc:
+            return HTMLResponse(str(exc),status_code=403 if isinstance(exc,p.Denied) else 400)
+        return await asyncio.to_thread(request_work_acknowledge_submit,request,doc_id,index,data)
+
+    def request_work_acknowledge_submit(request,doc_id,index,data):
+        conn=get_conn()
+        try:
+            request_work.acknowledge(conn,request.state.user,doc_id,index,data)
+            return RedirectResponse(navigation.return_to_record(request,f'/documents/{doc_id}/requests/{index}/work'),status_code=303,headers={'Cache-Control':'no-store'})
+        except p.Denied:
+            return HTMLResponse('Document or work unavailable, or you cannot acknowledge this change.',status_code=403,headers={'Cache-Control':'no-store'})
         except ValueError as exc:
             try:
                 return request_work_page(request,conn,doc_id,index,data,str(exc),409 if isinstance(exc,d.Conflict) else 400)
