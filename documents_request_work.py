@@ -96,6 +96,22 @@ def latest_acknowledgement(conn, user, doc_id, index):
     return found[0] if found else None
 
 
+HISTORY_LIMIT = 20
+
+
+def acknowledgement_history(conn, saved, limit=HISTORY_LIMIT):
+    """Newest-first reviews of source changes for a request's work; never writes.
+
+    `saved` comes from existing(), which already checked current document and work access,
+    so this helper takes no user and cannot be used to read another request's history.
+    """
+    key = (saved['document_id'], saved['request_index'])
+    entries = rows(conn, 'SELECT * FROM document_request_work_review WHERE document_id=? AND request_index=? ORDER BY id DESC LIMIT ?',
+                   (*key, int(limit)))
+    total = conn.execute('SELECT COUNT(*) FROM document_request_work_review WHERE document_id=? AND request_index=?', key).fetchone()[0]
+    return {'entries': entries, 'total': total, 'older': max(0, total - len(entries))}
+
+
 def acknowledgement_state(conn, user, saved):
     """What the comparison screen needs to offer the acknowledge form; never writes."""
     case = work.get(conn, user, saved['case_id'])

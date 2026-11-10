@@ -191,3 +191,18 @@ is written by loading either page.
 Not done: no change to any other work field (title and expected output stay as
 proposed); marking the change reviewed stays a separate action; no browser test for the
 link (this workspace has no Chromium; the link and form are plain HTML).
+
+## Acknowledgement history (10.22)
+
+Built after R1-R3 (November 10, 2026). When a request's source change has been reviewed
+more than once, the comparison screen lists the reviews in a "History of reviews of
+source changes" disclosure, newest first: time, who checked, the saved review it
+followed, any note, and a "(latest)" mark. One entry stays as the existing status line.
+Up to 20 entries are listed; a notice says how many earlier ones are not shown and that
+the full record is kept. It links to the saved review history for the request versions.
+
+`acknowledgement_history()` takes the object returned by `existing()`, which has already
+checked current document and work access, so it takes no user and cannot read another
+request's history. It writes nothing; notes are escaped; the warning logic is unchanged.
+Not done: paging beyond 20 entries (the record itself is complete); showing the compared
+field values inside each entry (the saved review history holds them).

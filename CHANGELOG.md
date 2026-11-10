@@ -1,3 +1,8 @@
+## 10.22 — November 10, 2026
+
+- Show the history of reviews of source changes on the request comparison once a request has been reviewed more than once: newest first, with who checked it, when, the saved review it followed, and any note.
+- Read-only. The full record is kept; up to 20 entries are listed and a notice says how many earlier ones are not shown.
+
 ## 10.21 — November 10, 2026
 
 - Add a "Review the internal target" link on the request comparison when the incoming request's deadline changed. It opens the work's existing "Adjust internal target" form with the new date filled in and a short note.
