@@ -1,3 +1,8 @@
+## 10.19 — November 10, 2026
+
+- Show a notice on the incoming-request review screen listing linked outgoing documents whose consolidation review is current and will need renewal if the review is saved.
+- Only documents the person may read are listed. The notice is read-only; saving behaves as before.
+
 ## 10.18 — November 10, 2026
 
 - Add the private record and checks for acknowledging a changed request source, with no visible change yet.
