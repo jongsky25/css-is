@@ -17,6 +17,7 @@
 <button type="submit">Mark as reviewed</button>
 </form>
 {% else %}<p>Only the work item lead or an authorized unit officer can mark this change as reviewed.</p>{% endif %}{% endif %}
+{% if target_suggestion %}<p role="note"><a href="{{ request_work_url(saved, True) }}">Review the internal target</a>: the request now asks for {{ target_suggestion.date }}. This opens the existing target form with that date filled in; nothing changes until you save it with a reason.</p>{% endif %}
 {% if comparison %}
 <section aria-labelledby="comparison-title" id="request-comparison">
 <h3 id="comparison-title">Compare source and current work</h3>

@@ -69,12 +69,18 @@ def make_router(templates, get_conn):
         if value.isascii() and value.isdecimal() and len(value) <= 18:
             saved = documents_request_work.task_source(conn, request.state.user, int(value))
         if not saved or saved['case_id'] != case_id:
-            return {'request_back': '', 'request_query': '', 'request_queue': '', 'request_changed': False}
+            return {'request_back': '', 'request_query': '', 'request_queue': '', 'request_changed': False,
+                    'suggested_due': '', 'suggested_task': 0}
         origin = navigation.safe_return(request.query_params.get('return_to', ''))
         target = f"/documents/{saved['document_id']}/requests/{saved['request_index']}/work"
+        # A flag only: the date is recomputed from the saved source, never taken from the URL.
+        suggestion = (documents_request_work.suggested_target(conn, request.state.user, saved)
+                      if request.query_params.get('suggest_target') == '1' else None)
         return {'request_back': navigation.record_url(target, origin),
                 'request_query': '?' + urlsplit(navigation.request_work_url(saved, origin)).query,
-                'request_queue': origin, 'request_changed': saved['changed']}
+                'request_queue': origin, 'request_changed': saved['changed'],
+                'suggested_due': suggestion['date'] if suggestion else '',
+                'suggested_task': suggestion['task_id'] if suggestion else 0}
 
     def detail(request, conn, case_id, status_code=200, error='', submitted=None):
         user = permissions.actor(conn, request.state.user)

@@ -169,3 +169,25 @@ changes no work, document or formal review (tested), and page loads write nothin
 Not done: R3 (prefilled link to the existing due-date action); showing acknowledgement
 history beyond the latest entry; any browser test for the new form (the workspace has
 no Chromium; the form is a plain POST that works without JavaScript).
+
+## R3 result (10.21): prefilled link to the existing target form
+
+Built as designed (November 10, 2026). When a request's source deadline changed since the
+proposal, the comparison screen shows "Review the internal target" with the new date. It
+links to the work item with a `suggest_target=1` flag; the work page then opens the
+existing "Adjust internal target" form for that task with the date filled in and a note.
+Nothing is applied by following it. The person adds a reason and saves through the
+existing form, so the form token, work revision check, lead-or-officer authority and the
+rule that a target cannot follow a linked official deadline all still apply.
+
+The link appears only when the deadline changed since the proposal, is a valid
+`YYYY-MM-DD` date different from the work's current target, shared work is enabled, the
+case is open, the task is not done or cancelled, and the same predicate that shows the
+target form would show it to this person (`work_tasks.actions`). The date is recomputed
+on the server from the saved source: a date in the URL is ignored (tested). The flag is
+dropped after a save, and the return context is kept. No work, document or review data
+is written by loading either page.
+
+Not done: no change to any other work field (title and expected output stay as
+proposed); marking the change reviewed stays a separate action; no browser test for the
+link (this workspace has no Chromium; the link and form are plain HTML).

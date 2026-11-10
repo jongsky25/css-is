@@ -1,6 +1,7 @@
 """Explicit, atomic proposals from reviewed requests; no automatic assignments."""
 import hashlib
 import json
+from datetime import date
 
 import documents as docs
 import documents_understanding as understanding
@@ -107,6 +108,37 @@ def acknowledgement_state(conn, user, saved):
     task = conn.execute('SELECT revision FROM work_task WHERE id=? AND case_id=?', (saved['task_id'], case['id'])).fetchone()
     return {'allowed': bool(allowed and task), 'task_revision': task[0] if task else 0,
             'source_hash': digest(source(conn, saved['document_id'], saved['request_index']))}
+
+
+def suggested_target(conn, user, saved):
+    """A date the person may apply with the existing "Adjust internal target" action, or None.
+
+    Never writes. Offered only when the request's deadline changed since the proposal, is a
+    valid date different from the work's current target, the work is open, shared work is
+    enabled, and the same predicate that shows the target form would show it to this person.
+    """
+    user = permissions.actor(conn, user)
+    key = f"need_{saved['request_index']}_deadline"
+    current = source(conn, saved['document_id'], saved['request_index']).get(key, '')
+    if not current or len(current) != 10 or not current.isascii():
+        return None
+    try:
+        date.fromisoformat(current)
+    except ValueError:
+        return None
+    if current == saved['values'].get(key, ''):
+        return None
+    found = rows(conn, 'SELECT * FROM work_task WHERE id=? AND case_id=?', (saved['task_id'], saved['case_id']))
+    if not found or (found[0]['due_date'] or '') == current or not work.enabled(conn):
+        return None
+    case = work.get(conn, user, saved['case_id'])
+    try:
+        work_compat.require_open(conn, case['id'])
+    except ValueError:
+        return None
+    if 'milestone' not in work_tasks.actions(conn, user, case, found[0]):
+        return None
+    return {'date': current, 'task_id': found[0]['id'], 'case_id': case['id']}
 
 
 def can_acknowledge(user, case, conn):

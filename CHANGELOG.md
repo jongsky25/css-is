@@ -1,3 +1,8 @@
+## 10.21 — November 10, 2026
+
+- Add a "Review the internal target" link on the request comparison when the incoming request's deadline changed. It opens the work's existing "Adjust internal target" form with the new date filled in and a short note.
+- Nothing is applied by the link: the person still adds a reason and saves, and the existing permission, revision and official-deadline checks apply. The date is recomputed from the saved request, not taken from the link.
+
 ## 10.20 — November 10, 2026
 
 - Let the work lead or an authorized unit officer mark a changed incoming request as reviewed, with an optional note and confirmation.

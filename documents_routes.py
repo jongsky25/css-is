@@ -559,6 +559,7 @@ def make_router(templates,get_conn):
             doc=doc,index=index,values=values,snapshot=snapshot,saved=saved,error=error,
             comparison=request_work.comparison(conn,user,doc_id,index) if saved else None,
             acknowledge_form=request_work.acknowledgement_state(conn,user,saved) if saved and saved['changed'] else None,
+            target_suggestion=request_work.suggested_target(conn,user,saved) if saved else None,
             acknowledge_values=data if data is not None and 'task_revision' in data else {},
             editable=work.enabled(conn) and understanding.can_edit(conn,user,doc)),status_code=status)
         response.headers['Cache-Control']='no-store'
