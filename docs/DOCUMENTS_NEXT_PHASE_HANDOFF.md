@@ -134,7 +134,8 @@ is shipped; both deployments succeeded. See the
 [journey measurement](REQUEST_WORK_JOURNEY_MEASUREMENT.md). Still open: extending the
 context to discussion, handoff and completion screens; reconciliation writes (separate
 design and authorization); phase 3 (explicit authorization and an approved synthetic
-preview). The "first next action" wording below is historical.
+preview). The "first next action" wording below is historical. A
+[reconciliation design proposal](REQUEST_RECONCILIATION_DESIGN.md) awaits owner review.
 
 ## Prioritized phases (proposed, not implementation authorization)
 

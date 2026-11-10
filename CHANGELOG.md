@@ -1,3 +1,8 @@
+## 10.17 — November 10, 2026
+
+- Record a design proposal for acknowledging changed request sources, for owner review.
+- Documentation and release metadata only; document workflows are unchanged.
+
 ## 10.16 — November 10, 2026
 
 - Record a measured comparison of the request-to-work journey before and after 10.15, and the screens still to be covered.
