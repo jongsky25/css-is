@@ -5,5 +5,7 @@
 <nav class="work-nav" aria-label="Work navigation"><a href="/work/mine">My work</a><a href="/work">Shared work</a><a href="/work/support">Manager support</a><a href="/work/team">Team contributions</a><a href="/work/updates">Discussion updates</a><a href="/documents">Document register</a>{% if enabled %}<a href="/work/new">Start a work item</a>{% endif %}</nav>
 {% if not enabled %}<p class="work-note" role="status">Shared work is not enabled. Existing work you have access to remains readable.</p>{% endif %}
 {% if error %}<p class="work-note work-error" role="alert">{{ error }}</p>{% endif %}
+{% if request_back %}<nav aria-label="Request context"><a href="{{ request_back }}">Back to reviewed request and comparison</a>{% if request_queue %} · <a href="{{ request_queue }}">Back to Documents queue</a>{% endif %}</nav>
+{% if request_changed %}<p class="work-note">The saved request changed. Compare it with the preserved source before deciding whether this work needs correction.</p>{% endif %}{% endif %}
 {% block work_content %}{% endblock %}
 </div>{% endblock %}

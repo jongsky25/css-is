@@ -1,3 +1,8 @@
+## 10.23 — November 10, 2026
+
+- Keep the "Back to reviewed request and comparison" and "Back to Documents queue" links, and the source-change note, on the work item's discussion, working draft and handoff, and release and completion screens when they are opened from a request's work.
+- The context is kept by the links between these screens and the work item, and through posting a message, following a discussion, saving a draft or handoff and completion actions. It grants no access: the request is re-checked on every page and a forged link shows nothing.
+
 ## 10.22 — November 10, 2026
 
 - Show the history of reviews of source changes on the request comparison once a request has been reviewed more than once: newest first, with who checked it, when, the saved review it followed, and any note.

@@ -47,9 +47,23 @@ def make_router(templates, get_conn):
                 'error': '', 'people': people, 'names': {u['id']: u['name'] for u in rows(conn, "SELECT u.id,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id")},
                 'units': rows(conn, 'SELECT id,name FROM org_unit ORDER BY path'), **values}
 
+    # Screens reached from a work item that keep the reviewed-request context (10.15 detail
+    # page, extended to these). The hook only runs when the URL names a source task.
+    context_screens = ('discussion', 'draft', 'completion')
+
     def render(request, conn, template, status_code=200, **values):
+        if (template in context_screens and 'request_back' not in values and values.get('case')
+                and request.query_params.get('source_task')):
+            values.update(source_navigation(request, conn, values['case']['id']))
         return templates.TemplateResponse(request, 'work/' + template + '.html',
                                           context(request, conn, **values), status_code=status_code)
+
+    def with_context(url, request, conn, case_id, fragment=''):
+        """Keep the validated request context on a redirect; never trusts a task not shown to this person."""
+        params = source_navigation(request, conn, case_id)['request_params']
+        if params:
+            url += ('&' if '?' in url else '?') + params
+        return url + fragment
 
     async def posted(request):
         form = await request.form()
@@ -69,15 +83,16 @@ def make_router(templates, get_conn):
         if value.isascii() and value.isdecimal() and len(value) <= 18:
             saved = documents_request_work.task_source(conn, request.state.user, int(value))
         if not saved or saved['case_id'] != case_id:
-            return {'request_back': '', 'request_query': '', 'request_queue': '', 'request_changed': False,
-                    'suggested_due': '', 'suggested_task': 0}
+            return {'request_back': '', 'request_query': '', 'request_params': '', 'request_queue': '',
+                    'request_changed': False, 'suggested_due': '', 'suggested_task': 0}
         origin = navigation.safe_return(request.query_params.get('return_to', ''))
         target = f"/documents/{saved['document_id']}/requests/{saved['request_index']}/work"
         # A flag only: the date is recomputed from the saved source, never taken from the URL.
         suggestion = (documents_request_work.suggested_target(conn, request.state.user, saved)
                       if request.query_params.get('suggest_target') == '1' else None)
+        params = urlsplit(navigation.request_work_url(saved, origin)).query
         return {'request_back': navigation.record_url(target, origin),
-                'request_query': '?' + urlsplit(navigation.request_work_url(saved, origin)).query,
+                'request_query': '?' + params, 'request_params': params,
                 'request_queue': origin, 'request_changed': saved['changed'],
                 'suggested_due': suggestion['date'] if suggestion else '',
                 'suggested_task': suggestion['task_id'] if suggestion else 0}
@@ -189,9 +204,12 @@ def make_router(templates, get_conn):
             if submitted is None:
                 submitted = {'action': 'post', 'body': loaded_draft['body']}
         private_drafts = work_comment_drafts.listing(conn, request.state.user, case_id, task_id)
-        response = render(request, conn, 'discussion', status_code=status_code, error=error,
+        ctx = source_navigation(request, conn, case_id)
+        parts = (['task_id=' + str(task_id)] if task_id else []) + ([ctx['request_params']] if ctx['request_params'] else [])
+        thread_url = '/work/' + str(case_id) + '/discussion?' + '&'.join(parts)
+        response = render(request, conn, 'discussion', status_code=status_code, error=error, **ctx,
                       loaded_comment_draft=loaded_draft, private_comment_drafts=private_drafts,
-                      thread_url='/work/' + str(case_id) + '/discussion' + ('?task_id=' + str(task_id) if task_id else '?'),
+                      thread_url=thread_url,
                       selected=selected, revisions=revisions[:30], older_history=revisions[29]['revision'] if len(revisions)>30 else None,
                       reply=reply, submitted=submitted or {}, mention_people=work_updates.candidates(conn, request.state.user, case_id),
                       following=work_updates.following(conn, request.state.user, case_id, task_id),
@@ -232,7 +250,7 @@ def make_router(templates, get_conn):
             url = '/work/' + str(case_id) + '/discussion?focus=' + str(cid)
             if task_id:
                 url += '&task_id=' + str(task_id)
-            return RedirectResponse(url + '#message-' + str(cid), status_code=303)
+            return RedirectResponse(with_context(url, request, conn, case_id, '#message-' + str(cid)), status_code=303)
         except permissions.Denied:
             return HTMLResponse('Discussion or action not available to you. Reload the page.', status_code=403)
         except (ValueError, TypeError) as e:
@@ -324,7 +342,8 @@ def make_router(templates, get_conn):
                 work_updates.mark_read(conn, request.state.user, case_id, task_id, json.loads(fields.get('observed', '[]')))
             else:
                 raise ValueError('Unknown discussion preference.')
-            return RedirectResponse('/work/' + str(case_id) + '/discussion' + ('?task_id=' + str(task_id) if task_id else ''), status_code=303)
+            return RedirectResponse(with_context('/work/' + str(case_id) + '/discussion' + ('?task_id=' + str(task_id) if task_id else ''),
+                                                 request, conn, case_id), status_code=303)
         except permissions.Denied:
             return HTMLResponse('Discussion unavailable.', status_code=403)
         except (ValueError, TypeError):
@@ -469,7 +488,7 @@ def make_router(templates, get_conn):
                     int(fields.get('draft_id','')),fields.get('note'),int(fields['support_id']) if fields.get('support_id') else None)
                 anchor='handoff-'+str(hid)
             else:raise ValueError('Choose a draft or handoff action.')
-            return RedirectResponse(f'/work/{case_id}/draft#{anchor}',status_code=303)
+            return RedirectResponse(with_context(f'/work/{case_id}/draft',request,conn,case_id,'#'+anchor),status_code=303)
         except permissions.Denied:return HTMLResponse('Draft or handoff action unavailable.',status_code=403)
         except (ValueError,TypeError) as e:
             try:return handoff_page(request,conn,case_id,409 if isinstance(e,docs.Conflict) else 400,str(e),fields)
@@ -532,7 +551,7 @@ def make_router(templates, get_conn):
             elif fields.get('action')=='reopen':
                 work_completion.reopen(conn,request.state.user,case_id,revision,fields.get('reason'))
             else:raise ValueError('Choose a completion action.')
-            return RedirectResponse(f'/work/{case_id}/completion',status_code=303)
+            return RedirectResponse(with_context(f'/work/{case_id}/completion',request,conn,case_id),status_code=303)
         except permissions.Denied:return HTMLResponse('Completion action unavailable to you.',status_code=403)
         except (ValueError,TypeError) as e:
             try:return completion_page(request,conn,case_id,409 if isinstance(e,docs.Conflict) else 400,str(e),fields)
