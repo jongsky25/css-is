@@ -62,3 +62,19 @@ Infrastructure proxy authentication remains under the platform's control.
 
 Public phone testing and a persistent staging database belong to setup step 4.
 This command does not expose a public development server or modify the live app.
+
+## Browser tests when the installed Chromium has a different revision
+
+Playwright expects a specific browser revision. If tests skip or fail with
+`Executable doesn't exist at /opt/pw-browsers/chromium_headless_shell-NNNN/...` while
+`ls /opt/pw-browsers` shows another revision, link the installed headless shell to the
+expected path, for example (revision numbers will differ):
+
+```bash
+mkdir -p /opt/pw-browsers/chromium_headless_shell-1234
+ln -sfn /opt/pw-browsers/chromium_headless_shell-1243/chrome-headless-shell-linux64 \
+        /opt/pw-browsers/chromium_headless_shell-1234/chrome-headless-shell-linux64
+```
+
+This is a local environment workaround, not a repository setup step; CI installs its own
+browser. A skipped browser test is not a passing one, so check the run reports no skips.

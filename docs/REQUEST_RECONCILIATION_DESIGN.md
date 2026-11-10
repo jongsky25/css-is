@@ -206,3 +206,26 @@ checked current document and work access, so it takes no user and cannot read an
 request's history. It writes nothing; notes are escaped; the warning logic is unchanged.
 Not done: paging beyond 20 entries (the record itself is complete); showing the compared
 field values inside each entry (the saved review history holds them).
+
+## Browser verification (10.24)
+
+The design's acceptance list included phone and desktop, keyboard only, with and without
+JavaScript. Until 10.24 the interface (10.19 to 10.23) was verified through the
+server-rendered pages and forms only. `tests/test_request_reconciliation_browser.py`
+now drives a real Chromium for 24 cases: 390 px and 1280 px wide, scripts on and off,
+activation by keyboard, requests served from the test application with every write
+recorded, and a check that nothing overflows the screen.
+
+Covered: marking a changed source as reviewed (an unconfirmed submit is stopped by native
+validation, a confirmed one writes once and returns to the receipt with the warning
+cleared); following the target link (nothing is written until the person adds a reason
+and saves, and the date is applied through the existing form); opening the review
+history disclosure; and the round trip from the request to the work item to the
+discussion, draft and completion screens and back, with the notice, source-change note
+and exact return links. Removing the confirmation requirement or the context notice
+makes these fail. The harness replays the application's 303 after a POST as a zero-delay
+refresh because Chromium does not follow a redirect fabricated for a POST; that is a
+test-harness detail, and the 303 itself is asserted at the HTTP level in the other tests.
+
+Not covered: a screen reader pass, real touch input, other browsers, and any measurement
+of time or errors (that needs the phase 3 study).
