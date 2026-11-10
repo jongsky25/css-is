@@ -503,6 +503,7 @@ def make_router(templates,get_conn):
             doc=doc,values=values,error=error,understanding_review_mode=True,form_revision=data.get('revision',doc['revision']) if data is not None else doc['revision'],
             review_reason=data.get('reason','') if data is not None else '',
             editable=d.enabled(conn) and understanding.can_edit(conn,user,doc),
+            stale_reviews=work_review.stale_if_source_edited(conn,user,doc_id) if d.enabled(conn) and understanding.can_edit(conn,user,doc) else [],
             review_history=entries,history_more=more, request_overview=request_work.overview(conn,user,doc_id)),status_code=status)
         response.headers.update({'Cache-Control':'no-store','Pragma':'no-cache'})
         return response

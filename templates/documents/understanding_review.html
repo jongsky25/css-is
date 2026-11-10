@@ -6,6 +6,11 @@
 {% if error %}<p role="alert">{{ error }}</p><p><a href="{{ document_url('/documents/' ~ doc.id ~ '/understanding') }}" target="_blank" rel="noopener">Open the latest saved review in a new tab</a> to compare it with your entries. A newer saved review won’t be overwritten.</p>{% endif %}
 {% if editable %}
 <p>Correct the sender’s requests after checking the source. Saving records your name, time and reason and flags the document for reconciliation. Assignments, internal instructions and the document-wide deadline are managed separately.</p>
+{% if stale_reviews %}<section class="doc-card" role="note" aria-labelledby="stale-review-title">
+<h3 id="stale-review-title">Saving will require a renewed formal review</h3>
+<p>This document is a linked source for {{ stale_reviews|length }} outgoing {{ 'document' if stale_reviews|length==1 else 'documents' }} whose consolidation review is current. Saving this review flags this document for reconciliation, which makes {{ 'that review' if stale_reviews|length==1 else 'those reviews' }} out of date until a renewed review is requested. Nothing changes until you save.</p>
+<ul>{% for item in stale_reviews %}<li><a href="{{ document_url('/documents/' ~ item.document_id) }}">{{ item.number }} · {{ item.subject }}</a></li>{% endfor %}</ul>
+</section>{% endif %}
 <form method="post" action="{{ document_url('/documents/' ~ doc.id ~ '/understanding') }}" data-ux-ignore data-telemetry-ignore>
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ form_revision }}">
 {% include 'documents/understanding_form.html' %}

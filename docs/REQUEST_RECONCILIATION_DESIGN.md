@@ -133,3 +133,16 @@ should avoid touching linked reviews, is a separate decision for the owner.
 **Rollback.** The table is additive and older code ignores it. Dropping the service call
 sites restores today's behavior and keeps every record; no data restore is needed. The
 append-only triggers are created with the table.
+
+## Staff warning before a request edit (10.19)
+
+The owner chose to warn staff rather than change the edit itself (November 10, 2026).
+The incoming-request review screen now lists, above the save button, the linked
+outgoing documents whose consolidation review is currently valid, and says that
+saving flags this document for reconciliation and so makes those reviews out of date.
+`work_review.stale_if_source_edited()` finds them through direct links and aliases,
+returns only items the person may read (nothing about hidden work or documents is
+disclosed), writes nothing, and the page load is covered by a no-write test. Saving
+behaves exactly as before and still marks the linked reviews not current; a renewed
+review must still be requested. Not done: any change to the edit itself, and any
+warning on the other screens that can trigger the same flag.

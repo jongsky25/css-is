@@ -5,9 +5,10 @@
 The owner approved the [reconciliation design](REQUEST_RECONCILIATION_DESIGN.md) and
 authorized slice R1: an append-only acknowledgement table and service with tests, no
 visible change (10.18). R2 (interface that adopts the acknowledged baseline) and R3
-(due-date shortcut) are not started and need their own instruction. Open decision for
-the owner: editing a request already makes a linked outgoing document's consolidation
-review stale (pinned in a test; see the design). Also open: extending the 10.15 return
+(due-date shortcut) are not started and need their own instruction. Editing a request already
+makes a linked outgoing document's consolidation review stale (pinned in a test); the
+owner chose to warn staff, built as a read-only notice on the review screen (10.19, see
+the design). Also open: extending the 10.15 return
 context to discussion, handoff and completion screens; phase 3 staff study needs
 explicit authorization. Workspace note: this image has Node 22 and no Tesseract, so
 `cloud_setup.sh` exits 1 and OCR/browser tests only run in CI.

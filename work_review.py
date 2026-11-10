@@ -185,6 +185,32 @@ def prepare(conn,user,doc,data,reviewer):
         conn.execute('INSERT INTO work_review_source VALUES (?,?)',(pid,source_id))
 
 
+def stale_if_source_edited(conn,user,source_id):
+    """Linked outgoing documents whose current consolidation review would need renewal if this
+    source's saved review were edited. Read-only. Saving an incoming document's reviewed
+    requests flags it for reconciliation, and that flag is part of a linked document's
+    review snapshot. Only items this person may read are returned, so nothing about work
+    or documents they cannot see is disclosed."""
+    user=permissions.actor(conn,user)
+    packets=rows(conn,'''WITH RECURSIVE sources(id) AS (
+            SELECT :source UNION SELECT d.id FROM document d JOIN sources s ON d.canonical_id=s.id)
+        SELECT DISTINCT p.* FROM work_document link JOIN sources ON link.document_id=sources.id
+        JOIN work_review_packet p ON p.case_id=link.case_id
+        WHERE p.document_id<>:source AND NOT EXISTS(
+            SELECT 1 FROM work_review_packet newer WHERE newer.document_id=p.document_id AND newer.id>p.id)
+        ORDER BY p.id''',{'source':source_id})
+    found=[]
+    for packet in packets:
+        try:
+            work.get(conn,user,packet['case_id'])
+            doc=docs.get(conn,user,packet['document_id'])
+        except ValueError:  # includes denied access and unavailable records
+            continue
+        if current(conn,packet):
+            found.append({'document_id':doc['id'],'number':doc['number'],'subject':doc['subject'],'case_id':packet['case_id']})
+    return found
+
+
 def invalidate(conn,user,case_id=None,document_id=None):
     """Atomically retire stale approvals, including downstream consolidation chains."""
     queue=[(case_id,document_id)];seen=set()
