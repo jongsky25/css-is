@@ -9,7 +9,8 @@ request-to-work journey is recorded in
 10.15 gave a one-click path back to the same request and filtered queue and kept the
 context through a contribution save; discussion, handoff and completion screens still
 lose it. Next: the owner chooses whether to extend that read-only context to those
-screens, then a reconciliation-write design needs separate authorization. Phase 3
+screens and reviews the [reconciliation design proposal](REQUEST_RECONCILIATION_DESIGN.md)
+(10.17, docs only; any build, schema addition and release need explicit authorization). Phase 3
 (staff study) still needs explicit authorization. Workspace note: this image has
 Node 22 and no Tesseract, so `cloud_setup.sh` exits 1 and OCR tests fail locally;
 CI is the check for those.
