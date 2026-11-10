@@ -1,16 +1,16 @@
 # Cloud/mobile setup status
 
-## Current work: Documents phase 2 (request execution) — R2 built, awaiting review
+## Current work: Documents phase 2 (request execution) — R3 built, awaiting review
 
-R1 (record and service, 10.18) and the staff warning before a request edit (10.19) are
-merged and deployed. R2 (10.20) lets the work lead or an authorized officer mark a
-changed request as reviewed from the comparison screen; the change warning on the
-comparison, overview and work item now compares against the last reviewed change (see
-the [design](REQUEST_RECONCILIATION_DESIGN.md), "R2 result"). R3 (prefilled due-date
-link) is not started. Also open: extending the 10.15 return context to discussion,
+R1 (record and service, 10.18), the staff warning (10.19) and R2 (mark a changed request
+as reviewed, 10.20) are merged. R3 (10.21) adds a link from the request comparison to the
+work's existing "Adjust internal target" form, prefilled with a changed request deadline;
+nothing is applied until the person saves with a reason (see the
+[design](REQUEST_RECONCILIATION_DESIGN.md), "R3 result"). Also open: acknowledgement
+history beyond the latest entry; extending the 10.15 return context to discussion,
 handoff and completion screens; phase 3 staff study needs explicit authorization.
-Workspace note: this image has Node 22 and no Tesseract, so `cloud_setup.sh` exits 1
-and OCR/browser tests only run in CI.
+Workspace note: this image has Node 22 and no Tesseract or Chromium, so `cloud_setup.sh`
+exits 1 and OCR/browser tests only run in CI.
 
 ## Documents next phase — verified post-10.12 handoff
 

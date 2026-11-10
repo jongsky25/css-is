@@ -55,7 +55,7 @@ def context(request):
              '/documents/intake': 'Back to Inbox'}.get(urlsplit(origin).path, '')
     return {'return_url': origin, 'return_label': label,
             'show_queue_return': bool(origin and path not in QUEUE_FIELDS),
-            'request_work_url': lambda saved: request_work_url(saved, origin),
+            'request_work_url': lambda saved, suggest_target=False: request_work_url(saved, origin, suggest_target),
             'document_url': lambda target, anchor='': record_url(target, origin, anchor)}
 
 
@@ -63,10 +63,15 @@ def return_to_record(request, target):
     return record_url(target, request.query_params.get('return_to', ''))
 
 
-def request_work_url(saved, origin=''):
-    """An existing permitted receipt supplies identity; query data grants no access."""
+def request_work_url(saved, origin='', suggest_target=False):
+    """An existing permitted receipt supplies identity; query data grants no access.
+
+    `suggest_target` is only a flag: the work page recomputes any suggested date itself.
+    """
     query = {'source_task': str(saved['task_id'])}
     origin = safe_return(origin)
     if origin:
         query['return_to'] = origin
+    if suggest_target:
+        query['suggest_target'] = '1'
     return f"/work/{saved['case_id']}?{urlencode(query)}#task-{saved['task_id']}"
