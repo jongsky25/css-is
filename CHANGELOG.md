@@ -1,3 +1,9 @@
+## 10.26 — November 11, 2026
+
+- Update the companion GovMail scripts to pull only the current Asia/Manila day without labels, keeping the configured start instant as a lower bound.
+- Exclude earlier-day saved retries and recheck eligibility before attachment processing and submission; existing files, receipts and queue entries are preserved.
+- Activation requires replacing the three scripts in the existing mail Apps Script project; the application deployment does not update that project.
+
 ## 10.25 — November 11, 2026
 
 - Bring the Documents next-phase handoff and the setup status up to date through release 10.24: which phases are done, every release with its merge and deployment, what remains open, and how to compare older pull requests now that the main branch history appears to have been rewritten.

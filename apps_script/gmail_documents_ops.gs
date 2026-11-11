@@ -21,6 +21,7 @@ function gdiHealth_(patch) {
   return next;
 }
 function gdiAttempt_(config,candidate) {
+  if(!gdiReceivedEligible_(config,Date.parse(candidate.received_at)))throw new Error('gmail_outside_current_day');
   let saved;
   try {
     saved=gdiReceipt_(config,candidate);
@@ -72,6 +73,7 @@ function gdiPendingPage_(config) {
       if(!(meta.parents || []).includes(config.folder) || (meta.appProperties || {}).gdi_receipt!==key)throw new Error('receipt_location_conflict');
       const r=JSON.parse(DriveApp.getFileById(all[key]).getBlob().getDataAsString('UTF-8'));
       if(r.binding!==config.binding)throw new Error('receipt_binding_conflict');
+      if(r.candidate && !gdiReceivedEligible_(config,Date.parse(r.candidate.received_at)))return;
       if(r.state==='needs_attention')result.needs_attention++;
       if(r.state==='pending' && r.next_attempt_at && Date.parse(r.next_attempt_at)>Date.now())result.waiting++;
       if(r.state==='pending' && r.candidate && (!r.next_attempt_at || Date.parse(r.next_attempt_at)<=Date.now()))result.candidates.push(r.candidate);

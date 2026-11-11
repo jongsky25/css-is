@@ -109,6 +109,15 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 11, 2026: same-day GovMail ported (10.26).** Older review PR #583
+(`fix/govmail-same-day`, 9.94) was re-applied onto current `main` as branch
+`port/govmail-same-day`; only release metadata conflicted. Behavior: no label gate,
+imports and saved recovery limited to the current Asia/Manila day, configured start
+as lower bound, prior-day mail missed before midnight stays unimported. The live
+Apps Script is not updated by deployment: replace all three companion scripts in the
+mail project, set `GMAIL_DOCUMENTS_START_AT`, and verify a manual run (see
+[activation instructions](GMAIL_DOCUMENT_INTAKE.md)). No production release authorized.
+
 **November 9, 2026: #605 (10.14) merged; request-to-work navigation (10.15, #606) follows.**
 #605 merged at `a21044a` after exact-head CI passed; its guarded deployment is
 [run 42613919486](https://github.com/jongsky25/css-is/actions/runs/42613919486).

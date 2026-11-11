@@ -24,7 +24,7 @@ def harness(*args):
 
 
 def test_importer_failure_contracts():
-    assert '37 Gmail importer contracts passed' in harness()
+    assert '39 Gmail importer contracts passed' in harness()
 
 
 def test_javascript_signature_and_payload_register_in_python(setup):
