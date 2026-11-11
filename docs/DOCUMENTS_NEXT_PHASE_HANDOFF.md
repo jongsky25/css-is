@@ -126,16 +126,45 @@ DOCUMENT_RETURN_CONTEXT.md, DOCUMENT_REGISTRATION_ENTRY.md, DOCUMENT_INBOX_FOCUS
 DOCUMENT_INBOX_SEARCH.md and DOCUMENT_REVIEW_NEXT_SCOPE.md. Do not rebuild their
 shipped increments.
 
-## Status update — November 10, 2026
+## Status update — November 11, 2026
 
-Phase 0 (count contract) and phase 1 (My next steps counts and filters, 10.14, #605) are
-shipped, and phase 2's first read-only slice (request-to-work navigation, 10.15, #606)
-is shipped; both deployments succeeded. See the
-[journey measurement](REQUEST_WORK_JOURNEY_MEASUREMENT.md). Still open: extending the
-context to discussion, handoff and completion screens; reconciliation writes (separate
-design and authorization); phase 3 (explicit authorization and an approved synthetic
-preview). The "first next action" wording below is historical. A
-[reconciliation design proposal](REQUEST_RECONCILIATION_DESIGN.md) awaits owner review.
+Phases 0 to 2 are built and deployed; phase 3 has not started. Everything below this
+section up to the phase table is the original November 7 plan and is kept as history:
+the "first next action" and "open decisions" wording no longer describes the current
+state.
+
+| Phase | State |
+| --- | --- |
+| 0: count contract | Done: [contract](MY_NEXT_STEPS_COUNT_CONTRACT.md) |
+| 1: My next steps counts and filters | Shipped (10.14) with a documented cold-path exception (about 1.3 s at 10k synthetic records against a under-1 s target; about 0.1 s at 1,000) |
+| 2: request execution | Shipped: return context and source-change note (10.15, extended to the discussion, draft and completion screens in 10.23); changed-source reconciliation as an acknowledge-only record (10.18), staff warning before an edit that makes a linked formal review stale (10.19), "mark as reviewed" (10.20), prefilled link to the existing target form (10.21), review history (10.22); real-browser checks (10.24) |
+| 3: staff usability study | Not started: needs the owner's explicit authorization, an approved synthetic preview and staff consent |
+
+Releases (each merged with a merge commit and followed by a successful guarded deployment):
+
+| Release | PR | Merge commit | Deployment run |
+| --- | --- | --- | --- |
+| 10.14 count and filter My next steps | #605 | `a21044a` | [42613919486](https://github.com/jongsky25/css-is/actions/runs/42613919486) |
+| 10.15 request-to-work navigation | #606 | `a695bb1` | [42625993313](https://github.com/jongsky25/css-is/actions/runs/42625993313) |
+| 10.16 journey measurement (docs and tests) | #608 | `74cefa6` | [42745280139](https://github.com/jongsky25/css-is/actions/runs/42745280139) |
+| 10.17 reconciliation design (docs) | #609 | `c7d2ccd` | [42755522405](https://github.com/jongsky25/css-is/actions/runs/42755522405) |
+| 10.18 acknowledgement record | #610 | `4d21925` | [42762918080](https://github.com/jongsky25/css-is/actions/runs/42762918080) |
+| 10.19 staff warning before a request edit | #611 | `c263ded` | [42770257312](https://github.com/jongsky25/css-is/actions/runs/42770257312) |
+| 10.20 mark a changed request as reviewed | #612 | `7519dec` | [42786828068](https://github.com/jongsky25/css-is/actions/runs/42786828068) |
+| 10.21 target-form link | #613 | `11457b3` | [42800746662](https://github.com/jongsky25/css-is/actions/runs/42800746662) |
+| 10.22 acknowledgement history | #614 | `e7f0c7b` | [42818540103](https://github.com/jongsky25/css-is/actions/runs/42818540103) |
+| 10.23 context on three more work screens | #615 | `3f6fa75` | [42902184793](https://github.com/jongsky25/css-is/actions/runs/42902184793) |
+| 10.24 real-browser checks (tests and docs) | #616 | `8f6d710` | [42917844053](https://github.com/jongsky25/css-is/actions/runs/42917844053) |
+
+Evidence and limits: [journey measurement](REQUEST_WORK_JOURNEY_MEASUREMENT.md) and its
+follow-up (synthetic link structure only, not a usability result), the
+[reconciliation design](REQUEST_RECONCILIATION_DESIGN.md) with its R1 to R3, history and
+browser-verification sections, and the [navigation scope](REQUEST_WORK_NAVIGATION.md).
+Still open: the request context is not carried onto consolidation, decisions, message
+actions, blocker subforms or the team and manager screens; there is no screen-reader pass,
+real touch input or other-browser check; the review history lists 20 entries without
+paging; editing a request still makes a linked formal review stale (the screen now warns
+first); nothing measures time or errors until phase 3.
 
 ## Prioritized phases (proposed, not implementation authorization)
 

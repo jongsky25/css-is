@@ -1,3 +1,8 @@
+## 10.25 — November 11, 2026
+
+- Bring the Documents next-phase handoff and the setup status up to date through release 10.24: which phases are done, every release with its merge and deployment, what remains open, and how to compare older pull requests now that the main branch history appears to have been rewritten.
+- Documentation and release metadata only; nothing changes in how the application works.
+
 ## 10.24 — November 10, 2026
 
 - Add automated real-browser checks (phone and desktop, with and without scripts, using the keyboard) for marking a changed request as reviewed, following the target-date link and applying it, opening the review history, and moving between the request, work item, discussion, draft and completion screens.
