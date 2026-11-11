@@ -117,6 +117,12 @@ widths against a stubbed draw response (no script errors, no losing duck past th
 Not run: full normal/shuffled suites (left to CI). Known and unchanged: the draw screen
 scrolls sideways slightly at 390px width. On branch `claude/nice-bohr-7iawvy`; not released.
 
+CI note, same day: from about 14:08 UTC the hosted runners could not resolve the default
+Ubuntu package mirrors, so the Tesseract install failed before any test ran (this PR, #623
+and the `main` deployment run for 10.29, which therefore needs its release state checked).
+The OCR install step in `release-checks.yml` now falls back to other mirrors of the same
+signed archive when the default ones are unavailable.
+
 **November 11, 2026: assistant "where is <colleague> today?" ported (10.29).** Older
 review PR #229 (`claude/home-search-assistant-phase-1-t49z0y`, 6.11) was re-applied onto
 `main` as `port/person-status`. Conflicts: release metadata and one `app.py` hunk
