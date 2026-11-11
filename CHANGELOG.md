@@ -1,3 +1,9 @@
+## 10.28 — November 11, 2026
+
+- Add up to ten account-private Travel claims saved views for applied filters and sorting, with native create/open/replace/rename/delete forms and no-JavaScript support.
+- Recheck current registered sessions and Travel availability; serialize preference writes, protect owner scope, casefold duplicate names and reject stale revisions. Opening starts at page one and reuses existing table/CSV selection validation.
+- Add an isolated preference table and atomic metadata-only audit events; preserve claim records, deadlines, approvals and payments. No provider request or new dependency is introduced.
+
 ## 10.27 — November 11, 2026
 
 - When a wellness approval email has the one-click Approve and Deny links, drop the extra "Review in the dashboard" button and the "paste this link" line, so there are only two links to click. Approve is green and Deny is red.
