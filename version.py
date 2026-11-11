@@ -33,6 +33,16 @@ CHANGELOG = [
         ]
     },
     {
+        "version": "10.26",
+        "date": "November 11, 2026",
+        "summary": "Pull only today's GovMail, without labels.",
+        "changes": [
+            "Update the companion GovMail scripts to pull only the current Asia/Manila day without labels, keeping the configured start instant as a lower bound.",
+            "Exclude earlier-day saved retries and recheck eligibility before attachment processing and submission; existing files, receipts and queue entries are preserved.",
+            "Takes effect only after the three scripts are replaced in the mail Apps Script project; the application deployment does not update it."
+        ]
+    },
+    {
         "version": "10.25",
         "date": "November 11, 2026",
         "summary": "Bring the Documents project notes up to date.",

@@ -114,8 +114,17 @@ access remains necessary in a fresh chat.
 `port/wellness-email-links` and extended to the expiry reminder email, which did not
 exist when #130 was written. Content only: the live Apps Script mail relay must also
 send the HTML part (see [MAIL_RELAY_SETUP.md](MAIL_RELAY_SETUP.md)); whether it
-does has not been verified. Version 10.27 is numbered after 10.26 (#619, GovMail); the
-second of the two to merge must be re-checked against the new `main`.
+does has not been verified. Version 10.27 follows 10.26 (#619, GovMail, merged as `c76a05c`);
+this branch was merged with that `main` before review.
+
+**November 11, 2026: same-day GovMail ported (10.26).** Older review PR #583
+(`fix/govmail-same-day`, 9.94) was re-applied onto current `main` as branch
+`port/govmail-same-day`; only release metadata conflicted. Behavior: no label gate,
+imports and saved recovery limited to the current Asia/Manila day, configured start
+as lower bound, prior-day mail missed before midnight stays unimported. The live
+Apps Script is not updated by deployment: replace all three companion scripts in the
+mail project, set `GMAIL_DOCUMENTS_START_AT`, and verify a manual run (see
+[activation instructions](GMAIL_DOCUMENT_INTAKE.md)). No production release authorized.
 
 **November 9, 2026: #605 (10.14) merged; request-to-work navigation (10.15, #606) follows.**
 #605 merged at `a21044a` after exact-head CI passed; its guarded deployment is
