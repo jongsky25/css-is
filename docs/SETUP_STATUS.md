@@ -109,6 +109,14 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 11, 2026: wellness email links ported (10.27).** Older PR #130
+(`claude/kind-mendel-h8ze8q`) was re-applied onto current `main` as
+`port/wellness-email-links` and extended to the expiry reminder email, which did not
+exist when #130 was written. Content only: the live Apps Script mail relay must also
+send the HTML part (see [MAIL_RELAY_SETUP.md](MAIL_RELAY_SETUP.md)); whether it
+does has not been verified. Version 10.27 follows 10.26 (#619, GovMail, merged as `c76a05c`);
+this branch was merged with that `main` before review.
+
 **November 11, 2026: same-day GovMail ported (10.26).** Older review PR #583
 (`fix/govmail-same-day`, 9.94) was re-applied onto current `main` as branch
 `port/govmail-same-day`; only release metadata conflicted. Behavior: no label gate,

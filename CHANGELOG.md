@@ -1,3 +1,9 @@
+## 10.27 — November 11, 2026
+
+- When a wellness approval email has the one-click Approve and Deny links, drop the extra "Review in the dashboard" button and the "paste this link" line, so there are only two links to click. Approve is green and Deny is red.
+- The same applies to the reminder sent when the decide links near expiry. Emails without those links are unchanged.
+- This changes the message content only. Whether Gmail shows the formatted card depends on the mail relay script also sending the HTML part (see the mail relay setup guide).
+
 ## 10.26 — November 11, 2026
 
 - Update the companion GovMail scripts to pull only the current Asia/Manila day without labels, keeping the configured start instant as a lower bound.
