@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.28"
+APP_VERSION = "10.29"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.29",
+        "date": "November 11, 2026",
+        "summary": "Ask the assistant where a colleague is today.",
+        "changes": [
+            "Ask something like \u201cwhere is Mimi today?\u201d and the assistant tells you whether they are in the office, working from home, in the field, on leave or off, with a link to their card.",
+            "If the name could be more than one person, it asks which one and shows who they could be instead of guessing.",
+            "Only the basic status is ever shown, and an administrator can still limit it to each person's own team."
+        ]
+    },
     {
         "version": "10.28",
         "date": "November 11, 2026",

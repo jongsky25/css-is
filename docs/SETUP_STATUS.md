@@ -109,6 +109,15 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 11, 2026: assistant "where is <colleague> today?" ported (10.29).** Older
+review PR #229 (`claude/home-search-assistant-phase-1-t49z0y`, 6.11) was re-applied onto
+`main` as `port/person-status`. Conflicts: release metadata and one `app.py` hunk
+where the AI router had been redesigned; `main` already renders known answer slots
+directly, so the old "skip the grounded call" edit was dropped. Owner confirmed the
+assistant is live and approved showing a named colleague's basic status; it follows the
+existing bureau/team switch. Not verified against a live model. Version 10.29 follows
+10.28 (#621, Travel saved views, merged as `78e89d7`).
+
 **November 11, 2026: Travel saved views ported (10.28).** Older review PR #481
 (`feat/travel-saved-views`, 8.71) was re-applied onto current `main` as
 `port/travel-saved-views`; only release metadata conflicted. Adds up to ten private
