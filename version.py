@@ -33,6 +33,16 @@ CHANGELOG = [
         ]
     },
     {
+        "version": "10.28",
+        "date": "November 11, 2026",
+        "summary": "Save private filter and sort views for your Travel claims table.",
+        "changes": [
+            "Name up to ten personal claim selections and reopen them from any signed-in device.",
+            "Save the applied filters and sorting, reopen at page one, or replace and delete a saved view using ordinary forms.",
+            "Views check current access and warn when another tab changed the saved selection."
+        ]
+    },
+    {
         "version": "10.27",
         "date": "November 11, 2026",
         "summary": "Make the wellness approval emails show only Approve and Deny.",
