@@ -109,6 +109,14 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 11, 2026: Travel saved views ported (10.28).** Older review PR #481
+(`feat/travel-saved-views`, 8.71) was re-applied onto current `main` as
+`port/travel-saved-views`; only release metadata conflicted. Adds up to ten private
+saved filter/sort views to the personal Travel claims table (new `travel_claim_view`
+table, created automatically). No change to claims, deadlines, approvals or payments.
+Verified before the PR: 44 server tests, 11 real-browser tests and 69 related Travel
+checks passed on current `main`; full CI is required on the PR head. Not merged or live.
+
 **November 11, 2026: wellness email links ported (10.27).** Older PR #130
 (`claude/kind-mendel-h8ze8q`) was re-applied onto current `main` as
 `port/wellness-email-links` and extended to the expiry reminder email, which did not
