@@ -1,3 +1,9 @@
+## 10.30 — November 11, 2026
+
+- Make the comment-raffle duck race about 20 seconds long (was about 8): a 3-2-1-GO countdown, a 13.5-second race with smoothly varying pace, lead changes and stumbles, a 3-second slow-motion photo finish, then medals for the first three.
+- Add a live commentary line, a crown on the current leader, a shared start line, and up to eight distinct entries per race (padded with "Pace duck" lanes when fewer than four entries exist). The race no longer waits the usual 3.2-second suspense hold before starting, because it has its own countdown.
+- Display only: the server still picks the winner before the race starts, and no losing duck can reach the finish flag. No database change.
+
 ## 10.29 — November 11, 2026
 
 - Ask the assistant "where is Mimi today?" and it answers whether that colleague is in the office, working from home, in the field, on leave or off, with a link to their card. The model only supplies the name as typed; the server checks every word appears in the question, finds the person in the directory and shows the directory's own name and basic status.

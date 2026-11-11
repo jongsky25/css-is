@@ -102,7 +102,11 @@
   .drop-ball.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
 
   /* ---- DUCK RACE ---- */
-  .pond{position:relative;width:min(94vw,860px);border-radius:20px;overflow:hidden;
+  .pond-wrap{width:min(94vw,860px);display:flex;flex-direction:column;gap:.6rem;}
+  .duck-call{min-height:2.3rem;display:flex;align-items:center;justify-content:center;text-align:center;
+    font-weight:800;font-size:1rem;color:#eaf2ff;padding:.35rem .8rem;border-radius:12px;
+    background:rgba(0,0,0,.28);border:1px solid var(--line);}
+  .pond{position:relative;width:100%;border-radius:20px;overflow:hidden;
     border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.45),inset 0 0 60px rgba(0,0,0,.35);
     background:linear-gradient(180deg,#0c3a6b 0%,#0a2f57 60%,#082642 100%);}
   /* moving water shimmer */
@@ -110,12 +114,19 @@
     background:repeating-linear-gradient(115deg,rgba(255,255,255,.05) 0 14px,transparent 14px 38px);
     animation:waterflow 5s linear infinite;}
   @keyframes waterflow{from{background-position:0 0;}to{background-position:240px 0;}}
-  .pond .finish{position:absolute;top:0;bottom:0;right:5%;width:14px;z-index:2;
+  .pond .finish{position:absolute;top:0;bottom:0;right:5%;width:14px;z-index:1;
     background-image:linear-gradient(45deg,#fff 25%,transparent 25%,transparent 75%,#fff 75%),
       linear-gradient(45deg,#fff 25%,#111 25%,#111 75%,#fff 75%);
     background-size:14px 14px;background-position:0 0,7px 7px;background-color:#111;
     box-shadow:0 0 12px rgba(255,255,255,.4);}
-  .lanes{position:relative;display:flex;flex-direction:column;gap:0;padding:.5rem 0;z-index:1;}
+  .pond .startline{position:absolute;top:0;bottom:0;left:-10px;width:2px;z-index:1;background:rgba(255,255,255,.3);}
+  .pond .duck-count{position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;
+    background:rgba(4,12,28,.4);color:#fff;font-weight:900;font-size:clamp(3rem,14vw,7rem);
+    text-shadow:0 6px 24px rgba(0,0,0,.6);}
+  .pond .duck-count.show{display:flex;}
+  .pond .duck-count span{animation:countpop .7s ease-out both;}
+  @keyframes countpop{from{transform:scale(2.2);opacity:0;}35%{opacity:1;}to{transform:scale(1);opacity:1;}}
+  .lanes{position:relative;display:flex;flex-direction:column;gap:0;padding:.7rem 0 .5rem;z-index:2;}
   .lane{position:relative;height:54px;display:flex;align-items:center;
     border-bottom:1px dashed rgba(255,255,255,.08);}
   .lane:last-child{border-bottom:none;}
@@ -124,12 +135,17 @@
   .lane .duck{font-size:2rem;line-height:1;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5));
     animation:bob .5s ease-in-out infinite alternate;}
   @keyframes bob{from{transform:translateY(2px) rotate(-4deg);}to{transform:translateY(-3px) rotate(4deg);}}
-  .lane .wake{position:absolute;left:-2px;top:50%;width:22px;height:10px;border-radius:50%;
-    transform:translateY(-50%);background:radial-gradient(closest-side,rgba(255,255,255,.5),transparent);opacity:.7;}
-  .lane .nm{font-size:.74rem;font-weight:700;color:#eaf2ff;white-space:nowrap;max-width:34vw;
+  .lane .nm{font-size:.74rem;font-weight:700;color:#eaf2ff;white-space:nowrap;max-width:min(28vw,200px);
     overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.6);
     background:rgba(0,0,0,.28);padding:.08rem .4rem;border-radius:6px;}
-  .lane.win .duck{animation:bob .26s ease-in-out infinite alternate;}
+  .lane .crown{position:absolute;right:.35rem;top:-.6rem;font-size:.85rem;opacity:0;transition:opacity .2s ease;}
+  .lane.lead .crown{opacity:1;}
+  .lane .fx{position:absolute;right:1.7rem;top:-.5rem;font-size:.9rem;}
+  .pond.big .lane{height:44px;}
+  .pond.big .lane .duck{font-size:1.7rem;}
+  .pond.final .lane .duck{animation-duration:.26s;}
+  .pond.slowmo .lane .duck{animation-duration:.9s;}
+  .pond.slowmo::before{animation-duration:14s;}
   .lane.crossed .nm{background:linear-gradient(180deg,var(--gold),var(--gold2));color:#2a1c00;}
 
   /* ---- WINNER OVERLAY ---- */
@@ -231,7 +247,11 @@
         <div class="tumbler"><div class="glass" id="tumblerGlass"></div><div class="drop-ball" id="dropBall">—</div></div>
       </div>
       <div class="anim" id="anim-duckrace">
-        <div class="pond" id="pond"><div class="finish"></div><div class="lanes" id="duckLanes"></div></div>
+        <div class="pond-wrap">
+          <div class="pond" id="pond"><div class="startline" id="duckStart"></div><div class="finish"></div>
+            <div class="lanes" id="duckLanes"></div><div class="duck-count" id="duckCount"></div></div>
+          <div class="duck-call" id="duckCall" aria-live="polite">🦆 Press DRAW to start the race</div>
+        </div>
       </div>
 
       <div class="draw-wrap">
@@ -313,6 +333,8 @@
             rollTimer=setInterval(function(){ tone(300+i*40,0,.08,'square',.12); i++; if(i>=steps) clearInterval(rollTimer); },70);
           } },
         stopBuildup:function(){ if(rollTimer){ clearInterval(rollTimer); rollTimer=null; } },
+        beep:function(f,d){ if(theme==='off')return; tone(f,0,d||.15,'square',.14); },
+        quack:function(){ if(theme==='off')return; tone(620,0,.07,'sawtooth',.09); tone(430,.07,.12,'sawtooth',.09); },
         tick:function(){ if(theme==='off')return; if(theme==='arcade') tone(880,0,.04,'square',.08); else tone(1200,0,.03,'triangle',.06); },
         win:function(){ if(theme==='off')return; this.stopBuildup();
           if(theme==='suspense'){ noise(0,.6,.4); [523,659,784,1046].forEach(function(f,k){ tone(f,k*.12,.5,'triangle',.22); }); tone(1568,.5,.7,'sine',.18); }
@@ -391,49 +413,113 @@
           drop.textContent=winner.code; drop.classList.add('show');
           setTimeout(res,650); }, MIN_SPIN-600); }); },
 
-      duckrace:function(winner){ var lanesEl=document.getElementById('duckLanes'); lanesEl.innerHTML='';
-        // field = the winner + up to 5 fillers, shuffled so the winner's lane varies
-        var field=[{label:winner.name||winner.code,win:true}];
-        pick(5).forEach(function(f){ field.push({label:f.label,win:false}); });
-        for(var i=field.length-1;i>0;i--){ var k=Math.floor(Math.random()*(i+1)); var t=field[i];field[i]=field[k];field[k]=t; }
-        var DUCKS=['🦆','🐤','🐥','🦢','🐣','🦆'];
-        var lanes=[];
+      // ~20s: countdown, a long race with lead changes and live commentary, a slow-motion
+      // photo finish, then medals. The server already chose the winner; only the route is random.
+      duckrace:function(winner){
+        var pond=document.getElementById('pond'), lanesEl=document.getElementById('duckLanes'),
+            call=document.getElementById('duckCall'), count=document.getElementById('duckCount'),
+            finishEl=pond.querySelector('.finish'), startEl=document.getElementById('duckStart');
+        lanesEl.innerHTML=''; pond.classList.remove('final','slowmo');
+        function say(t){ call.textContent=t; }
+        function mix(a){ for(var i=a.length-1;i>0;i--){ var k=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[k];a[k]=t; } return a; }
+        // field = the winner + up to 7 other entries (no repeats), shuffled so the winner's lane varies
+        var winLabel=winner.name||winner.code, seen={}; seen[winLabel]=1;
+        var field=[{label:winLabel,win:true}], pool=mix(REEL.slice());
+        for(var p=0;p<pool.length&&field.length<8;p++){ var lb=pool[p].label||pool[p].code;
+          if(!lb||seen[lb]) continue; seen[lb]=1; field.push({label:lb,win:false}); }
+        for(var e=1;field.length<4;e++) field.push({label:'Pace duck '+e,win:false});   // tiny pools still get a race
+        mix(field); pond.classList.toggle('big',field.length>6);
+        var DUCKS=['🦆','🐤','🐥','🦢','🐣','🦆','🐤','🐥'];
+        var lanes=[], winLane=null;
         field.forEach(function(c,i){
           var lane=document.createElement('div'); lane.className='lane'+(c.win?' win':'');
-          var wk=document.createElement('div'); wk.className='wake';
           var sw=document.createElement('div'); sw.className='swimmer';
           var nm=document.createElement('span'); nm.className='nm'; nm.textContent=c.label;
           var dk=document.createElement('span'); dk.className='duck'; dk.textContent=DUCKS[i%DUCKS.length];
           dk.style.filter='hue-rotate('+(i*57)+'deg) drop-shadow(0 3px 4px rgba(0,0,0,.5))';
-          sw.appendChild(nm); sw.appendChild(dk); lane.appendChild(wk); lane.appendChild(sw);
-          lanesEl.appendChild(lane);
-          lanes.push({el:lane,sw:sw,win:c.win});
+          var cr=document.createElement('span'); cr.className='crown'; cr.textContent='👑';
+          var fx=document.createElement('span'); fx.className='fx';
+          sw.appendChild(nm); sw.appendChild(dk); sw.appendChild(cr); sw.appendChild(fx);
+          lane.appendChild(sw); lanesEl.appendChild(lane);
+          var L={el:lane,sw:sw,fx:fx,label:c.label,win:c.win,sym:'',wob:0.7+Math.random()*0.8}; lanes.push(L);
+          if(c.win) winLane=L;
         });
-        // measure travel + assign each loser a pace curve so the lead changes mid-race
+        // every duck's beak starts on one line and the race ends when a beak touches the flag
+        var wmax=0; lanes.forEach(function(L){ L.w=L.sw.offsetWidth; if(L.w>wmax) wmax=L.w; });
+        var startF=wmax+6, finishF=finishEl.offsetLeft+4, D=Math.max(60,finishF-startF);
+        startEl.style.left=startF+'px';
+        // pace: random speeds at a few points, blended smoothly and summed, so each duck surges,
+        // fades and stumbles on its own schedule but always moves forward and ends exactly at `fin`
+        var N=240, K=14;
+        function shape(kind,t){ return kind==='sprinter' ? 1.35-0.7*t : kind==='closer' ? 0.75+0.5*t :
+          kind==='surge' ? (t<0.7?0.85:1.55) : kind==='front' ? (t<0.6?1.2:0.95) : 1; }
+        function table(L){ var kn=[], k, j;
+          for(k=0;k<=K;k++){ var t=k/K, v=shape(L.kind,t)*(0.6+Math.random()*0.8);
+            if(k>0 && !(L.win&&t>0.65) && Math.random()<0.12) v=0.1;   // a stumble
+            kn.push(v); }
+          var cum=[0], sum=0;
+          for(j=1;j<=N;j++){ var u=(j-0.5)/N*K, a=Math.floor(u), f=(1-Math.cos((u-a)*Math.PI))/2;
+            sum+=kn[a]*(1-f)+kn[Math.min(K,a+1)]*f; cum.push(sum); }
+          for(j=0;j<=N;j++) cum[j]=cum[j]/sum*L.fin;
+          return cum; }
+        function at(tab,t){ var u=Math.min(1,Math.max(0,t))*N, a=Math.min(N-1,Math.floor(u)); return tab[a]+(tab[a+1]-tab[a])*(u-a); }
+        var losers=lanes.filter(function(L){ return !L.win; }), rival=losers[Math.floor(Math.random()*losers.length)];
+        var STYLES=['sprinter','steady','closer'];
         lanes.forEach(function(L){
-          L.max=Math.max(40, L.el.clientWidth - L.sw.offsetWidth - 12);
-          L.finalR = L.win ? 1 : (0.78 + Math.random()*0.14);  // losers finish 78–92%
-          L.curve = Math.random()<0.5 ? 'out' : 'in';
-          L.jit = 0.6 + Math.random()*0.9;
+          if(L.win){ var r=Math.random(); L.fin=1; L.kind = r<0.5?'surge':(r<0.7?'front':'steady'); }
+          else if(L===rival){ L.fin=1-Math.max(14,D*0.02)/D; L.kind='closer'; }       // loses by a beak
+          else { L.fin=1-Math.max(20,D*(0.05+Math.random()*0.12))/D; L.kind=STYLES[Math.floor(Math.random()*3)]; }
+          L.tab=table(L); L.front=startF; L.sw.style.transform='translateX('+(startF-L.w)+'px)';
         });
-        function ease(t,kind){ return kind==='out' ? 1-Math.pow(1-t,2) : t*t; }
-        var DUR=4400, start=null, ticker=setInterval(function(){ Audio.tick(); },150);
+        // first 92% of the distance at full speed, the last 8% in slow motion
+        var RACE=13500, SLOW=3000, T_SLOW=0.92;
+        var LEADS=['% takes the lead!','% paddles to the front!','Here comes %!','% noses ahead!','Now it\'s % in front!'];
         return new Promise(function(res){
-          function frame(ts){ if(start===null) start=ts; var t=Math.min(1,(ts-start)/DUR);
-            for(var i=0;i<lanes.length;i++){ var L=lanes[i], prog;
-              if(L.win){ // hang mid-pack, then a come-from-behind surge to the line
-                prog = t<0.68 ? (t/0.68)*0.72 : 0.72 + Math.pow((t-0.68)/0.32,1.4)*0.28;
-              } else { prog = ease(t,L.curve)*L.finalR; }
-              var jit = Math.sin((t*8+i)*L.jit)*0.012*(1-t);   // bobbing wobble, settles to exact
-              var x = Math.max(0,(prog+jit))*L.max;
-              L.sw.style.transform='translateX('+x+'px)';
+          var start=null, lead=null, lastCall=0, flags={}, ticker=null;
+          function frame(ts){ if(start===null) start=ts; var ms=ts-start;
+            var t = ms<RACE ? ms/RACE*T_SLOW : Math.min(1, T_SLOW+(ms-RACE)/SLOW*(1-T_SLOW));
+            var best=null, i, L;
+            for(i=0;i<lanes.length;i++){ L=lanes[i];
+              var prog=at(L.tab,t); L.front=startF+prog*D;
+              var wob=Math.sin(ms/260*L.wob+i)*2*(1-t);   // paddling wobble, settles to exact
+              L.sw.style.transform='translateX('+(L.front-L.w+wob)+'px)';
+              var v=(at(L.tab,t+0.012)-prog)/0.012/L.fin, sym = t>=T_SLOW ? '' : (v<0.35?'💦':(v>1.5?'💨':''));
+              if(sym!==L.sym){ L.sym=sym; L.fx.textContent=sym; }
+              if(!best||L.front>best.front) best=L;
             }
+            if(best!==lead && (!lead || best.front-lead.front>=3)){
+              if(lead) lead.el.classList.remove('lead'); best.el.classList.add('lead'); lead=best;
+              if(ms>900 && ms-lastCall>1500 && t<T_SLOW){ say('🎙️ '+LEADS[Math.floor(Math.random()*LEADS.length)].replace('%',lead.label));
+                Audio.quack(); lastCall=ms; }
+            }
+            if(t>=0.5 && !flags.half){ flags.half=1; lastCall=ms; say('🎙️ Halfway there, and '+lead.label+' is in front!'); }
+            if(t>=0.78 && !flags.fin){ flags.fin=1; lastCall=ms; pond.classList.add('final'); say('🔥 Final stretch!');
+              Audio.buildup(RACE*(1-0.78/T_SLOW)+SLOW); }
+            if(ms>=RACE && !flags.slow){ flags.slow=1; pond.classList.remove('final'); pond.classList.add('slowmo'); say('📸 Photo finish…'); }
             if(t<1){ requestAnimationFrame(frame); return; }
-            clearInterval(ticker);
-            for(var j=0;j<lanes.length;j++){ if(lanes[j].win) lanes[j].el.classList.add('crossed'); }
-            setTimeout(res,420);
+            // across the line: winner glides through the flag, then the podium
+            clearInterval(ticker); Audio.stopBuildup(); Audio.beep(1046,.35);
+            pond.classList.remove('slowmo'); if(lead) lead.el.classList.remove('lead');
+            winLane.el.classList.add('crossed'); say('🏆 '+winLabel+' wins the race!');
+            var room=Math.max(0,Math.min(30,pond.clientWidth-finishF-2)), c0=null;
+            (function coast(ts2){ if(c0===null) c0=ts2; var u=Math.min(1,(ts2-c0)/1100), ez=1-Math.pow(1-u,2);
+              lanes.forEach(function(L){ L.sw.style.transform='translateX('+(L.front-L.w+(L.win?room:3)*ez)+'px)'; });
+              if(u<1){ requestAnimationFrame(coast); return; }
+              lanes.slice().sort(function(x,y){ return y.front-x.front; }).slice(0,3)
+                .forEach(function(L,k){ L.fx.textContent=['🥇','🥈','🥉'][k]; });
+              setTimeout(res,600);
+            })(performance.now());
           }
-          requestAnimationFrame(frame);
+          // 3 · 2 · 1 · GO!
+          say('🦆 Ducks to the start line…'); count.classList.add('show');
+          var STEPS=['3','2','1','GO!'];
+          (function down(i){ count.innerHTML=''; var sp=document.createElement('span'); sp.textContent=STEPS[i]; count.appendChild(sp);
+            Audio.beep(i<3?440:880, i<3?.18:.45);
+            if(i<3){ setTimeout(function(){ down(i+1); },750); return; }
+            setTimeout(function(){ count.classList.remove('show'); },600);
+            say('🎙️ And they\'re off!'); ticker=setInterval(function(){ Audio.tick(); },180);
+            requestAnimationFrame(frame);
+          })(0);
         }); }
     };
     // tumble keyframes (injected — small random drift)
@@ -480,8 +566,8 @@
       var prize={{ prize|tojson }};
       var body=new URLSearchParams(); if(prize) body.append('prize',prize);
       if(document.getElementById('allowRepeat').checked) body.append('allow_repeat','1');
-      var started=Date.now();
-      Audio.buildup(MIN_SPIN);
+      var started=Date.now(), kind=animKind, hold=(kind==='duckrace')?0:MIN_SPIN;
+      if(hold) Audio.buildup(hold);
       var req=fetch('/activities/'+EVENT_TOKEN+'/raffle/draw',{method:'POST',credentials:'same-origin',
         headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()})
         .then(function(r){ return r.json(); });
@@ -492,9 +578,9 @@
                                                 : 'No eligible entries yet — need a comment on this activity\'s feedback.';
           drawBtn.disabled=false; drawing=false; return;
         }
-        var wait=Math.max(0, MIN_SPIN - (Date.now()-started));
+        var wait=Math.max(0, hold - (Date.now()-started));
         setTimeout(function(){
-          Anim[animKind](data.winner).then(function(){
+          Anim[kind](data.winner).then(function(){
             reveal(data.winner);
             document.getElementById('remainCount').textContent=data.remaining;
             hintLine.textContent=''; drawBtn.disabled=false; drawing=false;
