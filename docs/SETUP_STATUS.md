@@ -1,15 +1,25 @@
 # Cloud/mobile setup status
 
-## Current work: Documents phase 2 (request execution) — browser checks added
+## Current work: Documents phases 0 to 2 complete; next direction awaiting the owner
 
-The reconciliation work (10.18 to 10.22) and the context extension (10.23) are merged.
-10.24 adds real-browser checks for those screens: phone and desktop, scripts on and off,
-by keyboard (see the [design](REQUEST_RECONCILIATION_DESIGN.md), "Browser verification").
-Still open: the remaining work screens without the request context (consolidation,
-decisions, message actions, blockers, team and manager); a screen-reader pass; phase 3
-staff study needs explicit authorization. Workspace note: this image has Node 22 and no
-Tesseract, so `cloud_setup.sh` exits 1 and OCR tests only run in CI; browser tests run
-locally after the revision workaround in [the workspace guide](CLOUD_WORKSPACE.md).
+Documents phases 0 to 2 are built, deployed and documented (see the
+[handoff status](DOCUMENTS_NEXT_PHASE_HANDOFF.md) for every release, merge commit and
+deployment run through 10.24). Nothing is in progress. Choices for the owner: phase 3
+(staff usability study; needs explicit authorization, staff consent and an approved
+synthetic preview, and the local server is not a public preview), the optional remaining
+work screens and polish listed in the handoff, or the older open PRs.
+
+Older open PRs: `main`'s history appears to have been rewritten or compacted after late
+October (inferred, not confirmed: it now has 260 commits), so the base commits of PRs #1 to
+#523 are no longer on `main` and `git` ahead/behind counts for them are meaningless (they
+show hundreds of commits and files). Compare each by its own commits
+instead, for example `git merge-tree --write-tree --merge-base=<merge-base with its old
+base> origin/main <branch>`, and bring a PR forward by cherry-picking its own commit(s)
+onto current `main`; every such PR also needs a version above the current release.
+
+Workspace note: this image has Node 22 and no Tesseract, so `cloud_setup.sh` exits 1 and
+OCR tests only run in CI; browser tests run locally after the revision workaround in
+[the workspace guide](CLOUD_WORKSPACE.md).
 
 ## Documents next phase — verified post-10.12 handoff
 
