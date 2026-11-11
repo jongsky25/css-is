@@ -109,6 +109,15 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 11, 2026: integration research kept (10.30, docs only).** Older review PR
+#423 (`research/integration-candidates`, 65 commits of progress notes) was reduced to
+its durable content and added as [INTEGRATION_RESEARCH.md](INTEGRATION_RESEARCH.md) with
+the three catalogs in `docs/integration-research/`. The long October 25 handoff
+narrative was replaced by a short status section; the full history stays on the kept
+branch. Checked for credentials and personal data (none). Research snapshots are from
+October 2026 and must be rechecked before any candidate is chosen. Version 10.30 is
+numbered after 10.29 (#622, assistant colleague status); merge #622 first.
+
 **November 11, 2026: Travel saved views ported (10.28).** Older review PR #481
 (`feat/travel-saved-views`, 8.71) was re-applied onto current `main` as
 `port/travel-saved-views`; only release metadata conflicted. Adds up to ten private

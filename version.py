@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.28"
+APP_VERSION = "10.30"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.30",
+        "date": "November 11, 2026",
+        "summary": "Keep the integration research with the project notes.",
+        "changes": [
+            "Add the research into outside tools that could improve Office Connect: three candidate catalogs, the license findings and the decision log of what was chosen and delivered.",
+            "Documentation only; nothing changes in how the application works."
+        ]
+    },
     {
         "version": "10.28",
         "date": "November 11, 2026",
