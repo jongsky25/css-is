@@ -115,8 +115,17 @@ its durable content and added as [INTEGRATION_RESEARCH.md](INTEGRATION_RESEARCH.
 the three catalogs in `docs/integration-research/`. The long October 25 handoff
 narrative was replaced by a short status section; the full history stays on the kept
 branch. Checked for credentials and personal data (none). Research snapshots are from
-October 2026 and must be rechecked before any candidate is chosen. Version 10.30 is
-numbered after 10.29 (#622, assistant colleague status); merge #622 first.
+October 2026 and must be rechecked before any candidate is chosen. Version 10.30
+follows 10.29 (#622, assistant colleague status, merged as `d028ba5`).
+
+**November 11, 2026: assistant "where is <colleague> today?" ported (10.29).** Older
+review PR #229 (`claude/home-search-assistant-phase-1-t49z0y`, 6.11) was re-applied onto
+`main` as `port/person-status`. Conflicts: release metadata and one `app.py` hunk
+where the AI router had been redesigned; `main` already renders known answer slots
+directly, so the old "skip the grounded call" edit was dropped. Owner confirmed the
+assistant is live and approved showing a named colleague's basic status; it follows the
+existing bureau/team switch. Not verified against a live model. Version 10.29 follows
+10.28 (#621, Travel saved views, merged as `78e89d7`).
 
 **November 11, 2026: Travel saved views ported (10.28).** Older review PR #481
 (`feat/travel-saved-views`, 8.71) was re-applied onto current `main` as

@@ -3,6 +3,12 @@
 - Add the research into outside tools that could improve Office Connect: three candidate catalogs (51 GitHub repositories, 26 Hugging Face Spaces and a 23-item feature backlog), the license findings and the decision log of what was chosen and delivered.
 - Documentation only; nothing changes in how the application works.
 
+## 10.29 — November 11, 2026
+
+- Ask the assistant "where is Mimi today?" and it answers whether that colleague is in the office, working from home, in the field, on leave or off, with a link to their card. The model only supplies the name as typed; the server checks every word appears in the question, finds the person in the directory and shows the directory's own name and basic status.
+- If a name could be more than one person, or none, the assistant says it cannot tell who you mean and links the possible matches instead of guessing. The administrator's bureau/team setting for colleague status still applies. Never a note, place or reason.
+- Needs AI in answers mode or higher; with AI off nothing changes. No database change.
+
 ## 10.28 — November 11, 2026
 
 - Add up to ten account-private Travel claims saved views for applied filters and sorting, with native create/open/replace/rename/delete forms and no-JavaScript support.

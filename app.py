@@ -1094,6 +1094,18 @@ AI_ANSWER_SLOTS.update(calendar_answers.SLOTS)
 AI_ANSWER_SLOTS.update(office_answers.SLOTS)
 
 
+def _render_answer_payload(slot, conn, user, person_name=None, query=""):
+    """{"text", "links"?} for an answer slot. Only the person_status slot takes an argument, and
+    that argument is cleaned and checked against the question before the directory ever sees it
+    (office_answers.clean_person_name); what is rendered is the directory's own name."""
+    if slot.get("takes_name"):
+        name = office_answers.clean_person_name(person_name, query)
+        if not name:
+            return {"text": "I couldn't tell who you mean. Try their full name."}
+        return office_answers.person_status(conn, user, _today_local(), name)
+    return {"text": _render_answer(slot, conn, user)}
+
+
 def _render_answer(slot, conn, user):
     """The text for an answer slot: survey statistics for the fixed slots, the asker's own calendar for
     the calendar ones."""
@@ -6384,6 +6396,7 @@ def _ai_router_schema(include_answer, include_help, include_action):
     }
     if include_answer:
         props["answer_slot"] = {"type": "STRING"}
+        props["person_name"] = {"type": "STRING"}
     if include_help:
         props["help_key"] = {"type": "STRING"}
     if include_action:
@@ -6414,7 +6427,9 @@ def _ai_router_system_prompt(include_answer, include_help, include_action, maxim
         parts.append(
             "kind=\"answer\": the request is a factual question this system can "
             "already answer with a number. Reply with the exact key from the "
-            "Answers catalog that best matches. Besides survey figures, the "
+            "Answers catalog that best matches. For the person_status key also "
+            "set `person_name` to the colleague's name or nickname exactly as the "
+            "request wrote it. Besides survey figures, the "
             "catalog covers the asker's own to-dos, approvals, wellness hours, "
             "work arrangement filing, room bookings, calendar, and who is in the "
             "office today.")
@@ -6704,9 +6719,10 @@ async def api_ai_route(request: Request):
                 return JSONResponse({"kind": "fallback"})
             st.update_ai_interaction_outcome(conn, interaction_id, "ok",
                                              confidence=confidence, feature="nl_answer")
+            body = _render_answer_payload(slot, conn, user, parsed.get("person_name"), query)
             return JSONResponse({
-                "kind": "answer", "label": slot["label"], "text": _render_answer(slot, conn, user),
-                "confidence": confidence, "interaction_id": interaction_id,
+                "kind": "answer", "label": slot["label"], "confidence": confidence,
+                "interaction_id": interaction_id, **body,
             })
 
         if kind == "help" and include_help:
