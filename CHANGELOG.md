@@ -1,3 +1,8 @@
+## 10.31 — November 12, 2026
+
+- Add the research into outside tools that could improve Office Connect: three candidate catalogs (51 GitHub repositories, 26 Hugging Face Spaces and a 23-item feature backlog), the license findings and the decision log of what was chosen and delivered.
+- Documentation only; nothing changes in how the application works.
+
 ## 10.30 — November 11, 2026
 
 - Make the comment-raffle duck race about 20 seconds long (was about 8): a 3-2-1-GO countdown, a 13.5-second race with smoothly varying pace, lead changes and stumbles, a 3-second slow-motion photo finish, then medals for the first three.
