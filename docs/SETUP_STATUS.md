@@ -109,14 +109,28 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-**November 11, 2026: integration research kept (10.30, docs only).** Older review PR
+**November 12, 2026: integration research kept (10.31, docs only).** Older review PR
 #423 (`research/integration-candidates`, 65 commits of progress notes) was reduced to
 its durable content and added as [INTEGRATION_RESEARCH.md](INTEGRATION_RESEARCH.md) with
 the three catalogs in `docs/integration-research/`. The long October 25 handoff
 narrative was replaced by a short status section; the full history stays on the kept
 branch. Checked for credentials and personal data (none). Research snapshots are from
-October 2026 and must be rechecked before any candidate is chosen. Version 10.30
-follows 10.29 (#622, assistant colleague status, merged as `d028ba5`).
+October 2026 and must be rechecked before any candidate is chosen. Version 10.31
+follows 10.30 (#624, longer duck race, merged as `9e6dfbb`) and 10.29 (#622).
+
+**November 11, 2026: longer duck race for the comment raffle (10.30).** `templates/raffle.html`
+only: countdown, about 20 seconds in total, lead changes, commentary, slow-motion finish and
+medals; winner selection on the server is unchanged. Verified with `tests/test_raffle.py`
+(18 passed) and a headless-browser run of the rendered draw screen at desktop and phone
+widths against a stubbed draw response (no script errors, no losing duck past the flag).
+Not run: full normal/shuffled suites (left to CI). Known and unchanged: the draw screen
+scrolls sideways slightly at 390px width. Merged as #624 (`9e6dfbb`).
+
+CI note, same day: from about 14:08 UTC the hosted runners could not resolve the default
+Ubuntu package mirrors, so the Tesseract install failed before any test ran (this PR, #623
+and the `main` deployment run for 10.29, which therefore needs its release state checked).
+The OCR install step in `release-checks.yml` now falls back to other mirrors of the same
+signed archive when the default ones are unavailable.
 
 **November 11, 2026: assistant "where is <colleague> today?" ported (10.29).** Older
 review PR #229 (`claude/home-search-assistant-phase-1-t49z0y`, 6.11) was re-applied onto

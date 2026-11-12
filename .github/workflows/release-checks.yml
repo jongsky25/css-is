@@ -114,8 +114,22 @@ jobs:
           node-version: "24"
       - name: Install production OCR dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng
+          # Hosted runners sometimes cannot resolve the default Ubuntu mirrors, which
+          # failed this step before any test ran. Fall back to other mirrors of the same
+          # archive; apt still verifies Ubuntu's signatures on everything it downloads.
+          # The later Playwright system-package install uses the same mirror list.
+          use_fallback_mirrors() {
+            echo "::warning::Default Ubuntu package mirrors unavailable; using fallback mirrors"
+            printf '%s\n' https://mirrors.edge.kernel.org/ubuntu/ https://mirror.math.princeton.edu/pub/ubuntu/ \
+              | sudo tee /etc/apt/apt-mirrors.txt
+          }
+          install_ocr() {
+            sudo apt-get update -o APT::Update::Error-Mode=any \
+              && sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng
+          }
+          if ! getent hosts azure.archive.ubuntu.com > /dev/null; then use_fallback_mirrors; fi
+          install_ocr || { use_fallback_mirrors; install_ocr; }
+          tesseract --version
       - name: Install test dependencies
         run: |
           python -m venv .venv-test

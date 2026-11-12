@@ -18,17 +18,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.30"
+APP_VERSION = "10.31"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "10.30",
-        "date": "November 11, 2026",
+        "version": "10.31",
+        "date": "November 12, 2026",
         "summary": "Keep the integration research with the project notes.",
         "changes": [
             "Add the research into outside tools that could improve Office Connect: three candidate catalogs, the license findings and the decision log of what was chosen and delivered.",
             "Documentation only; nothing changes in how the application works."
+        ]
+    },
+    {
+        "version": "10.30",
+        "date": "November 11, 2026",
+        "summary": "A longer, livelier duck race for the comment raffle.",
+        "changes": [
+            "The duck race now lasts about 20 seconds: a 3-2-1-GO countdown, a longer race where the lead keeps changing, and a slow-motion photo finish.",
+            "A commentary line calls out who takes the lead, a crown marks the current leader, and the first three ducks get medals at the end.",
+            "Up to eight entries race at once, each shown only once, and all ducks start from the same line. How the winner is chosen is unchanged."
         ]
     },
     {
