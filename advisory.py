@@ -227,7 +227,7 @@ def _compose(pen, f, k):
     # header (letterhead)
     pen.rect(0, 0, W, 224, WHITE)
     pen.paste(os.path.join(_ASSETS, "doh_seal.png"), 83, 54, 129, 129)
-    pen.paste(os.path.join(_DIR, "bagong_pilipinas.png"), 212, 50, None, 142)
+    pen.paste(os.path.join(_DIR, "bagong_pilipinas.png"), 222, 46, None, 150)
     pen.rect(375, 36, 383, 205, (0, 0, 0))
     pen.text(410, 122, "Department of Health", "sans", "semibold", 36.5, (0, 0, 0))
     pen.text(410, 160, "Bureau of Local Health Systems Development", "sans", "regular", 33, (0, 0, 0))

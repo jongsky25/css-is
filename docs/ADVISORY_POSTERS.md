@@ -30,8 +30,7 @@ number, deadlines and links, a QR code and a contact person, and can show it on 
 | Tests | `tests/test_advisory.py` |
 
 - The layout is the office's advisory image on a 1272 x 1800 design grid (A4 proportions). Fonts are open-licence
-  look-alikes (Fraunces, Libre Caslon Text, Poppins); replace the files in `assets/advisory/` with the exact fonts, or
-  `bagong_pilipinas.png` with the official logo (the bundled one was cropped from a sample and is low resolution).
+  look-alikes (Fraunces, Libre Caslon Text, Poppins); replace the font files in `assets/advisory/` with the exact fonts. The Bagong Pilipinas logo is the office-supplied two-line version.
 - The poster holds activity details only: no attendee data is read.
 - The site-wide browser policy forces `no-store` outside `/static/`, so browsers re-request the image; the server keeps
   each rendered revision in memory (24 entries) so a render (about 1.3 s) is not repeated per view.
@@ -46,5 +45,5 @@ No new dependency (Pillow, reportlab and qrcode were already locked). Merging to
 ## Not done / ideas
 
 - Posting the advisory to a Telegram group automatically.
-- Exact fonts and the official Bagong Pilipinas logo.
+- Exact fonts (the logo is now the office-supplied file).
 - A "regions covered" or "attention" picker; both are free text today.
