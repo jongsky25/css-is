@@ -3025,6 +3025,37 @@ def respondent_demographics_for_ids(conn, response_ids):
     return out
 
 
+def respondent_registration_answers(conn, response_ids):
+    """Each respondent's answers to their activity's own registration questions
+    (office, designation, etc. -- whatever the organizer asked), for the raw-data
+    export. Returns (questions, by_response): `questions` is the ordered list of
+    distinct question dicts seen (archived ones included), `by_response` maps
+    response_id -> {question_id: stored_value}. Identity fields (name, email,
+    contact) are never read here."""
+    ids = [int(r) for r in response_ids]
+    by_resp, events = {}, {}
+    CHUNK = 900
+    for i in range(0, len(ids), CHUNK):
+        chunk = ids[i:i + CHUNK]
+        ph = ",".join("?" * len(chunk))
+        for rid, aid, ev in conn.execute(
+                f"""SELECT r.id, a.id, a.event_id FROM response r
+                    JOIN attendee a ON a.id = r.attendee_id
+                    WHERE r.id IN ({ph})""", chunk).fetchall():
+            events[rid] = (aid, ev)
+    answers = {}
+    for ev in {e for _, e in events.values()}:
+        answers[ev] = event_answers(conn, ev)
+    questions, seen = [], set()
+    for ev in sorted(answers):
+        for q in list_event_questions(conn, ev, include_archived=True):
+            if q["id"] not in seen:
+                seen.add(q["id"]); questions.append(q)
+    for rid, (aid, ev) in events.items():
+        by_resp[rid] = answers[ev].get(aid, {})
+    return questions, by_resp
+
+
 def get_activity_demographics(conn, event_id):
     """Manual demographic override for one activity, or {} if none set."""
     row = conn.execute(

@@ -1,7 +1,7 @@
 ## 10.32 — November 13, 2026
 
-- Add the respondent's title, sex and DOH / Non-DOH affiliation to each row of the Responses sheet in the Type 2 and Type 3 raw Excel download, so each score can be read alongside who it came from in demographic terms. Anonymous responses leave these cells blank.
-- Names, emails and contact numbers are not exported.
+- Add the respondent's title, sex, DOH / Non-DOH affiliation and answers to the activity's own registration questions (office, designation, etc.) to each row of the Responses sheet in the Type 2 and Type 3 raw Excel download, so each score can be read alongside who it came from in demographic terms. Anonymous responses leave these cells blank.
+- Names, emails and contact numbers are never exported.
 
 ## 10.31 — November 12, 2026
 

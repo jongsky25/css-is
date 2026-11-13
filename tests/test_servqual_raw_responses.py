@@ -203,3 +203,31 @@ def test_respondent_demographics_from_attendee_and_items(manager, app_mod):
     assert got[r_att] == {"sex": "Female", "affiliation": "Non-DOH", "honorific": "Dr."}
     assert r_anon not in got                      # anonymous: no demographics, no crash
     assert "name" not in got[r_att] and "email" not in got[r_att]
+
+
+def test_xlsx_includes_registration_answers_but_never_identity(manager, app_mod):
+    db_path = app_mod.DB
+    ev, f3 = _make_bureau(manager, db_path, "Reg Answers Activity", "2026-06-14", "Hall E")
+    conn = st.connect(db_path)
+    qid = st.add_event_question(conn, ev, {"label": "Office / Designation", "help_text": "",
+                                          "kind": "text", "options": [], "required": False})
+    aid, _ = st.register_attendee(conn, ev, name="Secret Name", email="secret@example.test",
+                                  contact="09170000000", sex="M", affiliation="DOH",
+                                  honorific="Mr.", consent_text="x")
+    st.save_attendee_answers(conn, aid, {qid: "Planning Office"})
+    st.record_response(conn, f3, _F3_A, attendee_id=aid)
+    conn.close()
+    app_mod.invalidate_atoms()
+
+    r = manager.get("/reports/export", params={"type": 3, "fmt": "xlsx"})
+    assert r.status_code == 200
+    ws = load_workbook(io.BytesIO(r.content))["Responses"]
+    headers = [c.value for c in ws[3]]
+    rows = [[c.value for c in row] for row in ws.iter_rows(min_row=4) if row[0].value is not None]
+    hit = [x for x in rows if x[headers.index("Activity")] == "Reg Answers Activity"]
+    assert len(hit) == 1
+    col = next(i for i, h in enumerate(headers) if h and "Office / Designation" in h)
+    assert hit[0][col] == "Planning Office"
+    assert hit[0][headers.index("Sex")] == "Male"
+    flat = " ".join(str(c) for row in ws.iter_rows() for c in [x.value for x in row])
+    assert "Secret Name" not in flat and "secret@example.test" not in flat and "0917" not in flat

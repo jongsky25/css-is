@@ -27,7 +27,7 @@ CHANGELOG = [
         "date": "November 13, 2026",
         "summary": "See who each activity-review response came from in the raw Excel.",
         "changes": [
-            "The Responses sheet in the activity and resource-person Excel download now shows each respondent's title, sex and DOH or Non-DOH affiliation next to their scores.",
+            "The Responses sheet in the activity and resource-person Excel download now shows each respondent's title, sex, DOH or Non-DOH affiliation and their answers to the activity's registration questions next to their scores.",
             "Names, emails and contact numbers are not included."
         ]
     },
