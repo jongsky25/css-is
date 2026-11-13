@@ -13276,6 +13276,15 @@ def _servqual_official(df, dim_map, response_ids, conn):
     # format (DOCX/PDF/PPTX, on-screen report) simply ignores the key.
     rowmap = _servqual_response_rows(df, dim_map)
     ctx = st.response_context_for_ids(conn, response_ids)
+    demo_by = st.respondent_demographics_for_ids(conn, response_ids)
+    reg_qs, reg_by = st.respondent_registration_answers(conn, response_ids)
+    # One column per distinct registration question; same label across activities
+    # shares a column. Header text matches the registration roster export.
+    reg_cols = []
+    for q in reg_qs:
+        lab = rq.column_label(q)
+        if lab not in reg_cols:
+            reg_cols.append(lab)
     responses = []
     for rid in sorted(df["response_id"].unique()) if not df.empty else []:
         r = rowmap.get(int(rid), {})
@@ -13284,6 +13293,11 @@ def _servqual_official(df, dim_map, response_ids, conn):
             "response_id": rid,
             "when": m.get("when", ""),
             "activity": m.get("activity", ""),
+            "title": demo_by.get(rid, {}).get("honorific", ""),
+            "sex": demo_by.get(rid, {}).get("sex", ""),
+            "affiliation": demo_by.get(rid, {}).get("affiliation", ""),
+            "extra": {rq.column_label(q): rq.display_value(q, reg_by.get(rid, {}).get(q["id"]))
+                      for q in reg_qs if reg_by.get(rid, {}).get(q["id"]) not in (None, "")},
             "dims": r.get("dims", {}),
             "overall": r.get("overall"),
             "expectation": r.get("expectation"),
@@ -13292,6 +13306,7 @@ def _servqual_official(df, dim_map, response_ids, conn):
         })
     responses.sort(key=lambda x: (x["when"], x["response_id"]))
     block["responses"] = responses
+    block["response_extra_cols"] = reg_cols
     # De-duplicated free-text comments for the report bottom: one flat list —
     # SERVQUAL comments aren't typed positive/negative — collapsing repeats into a
     # count. The DOCX/XLSX render this; PDF/PPTX ignore the key.

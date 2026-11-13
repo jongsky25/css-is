@@ -21,7 +21,7 @@ Workspace note: this image has Node 22 and no Tesseract, so `cloud_setup.sh` exi
 OCR tests only run in CI; browser tests run locally after the revision workaround in
 [the workspace guide](CLOUD_WORKSPACE.md).
 
-## Public advisory posters (10.32) — built on a review branch
+## Public advisory posters (10.33) — built on a review branch
 
 Branch `claude/quirky-sagan-lkx9wg`: an activity can generate the BLHSD advisory image from its link-tree
 details, with a per-advisory contact, an auto number (`YYYY-MMDD-NNN`), PNG/PDF download and an optional

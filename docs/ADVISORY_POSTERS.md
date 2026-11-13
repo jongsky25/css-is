@@ -1,6 +1,6 @@
 # Public advisory posters
 
-Added in 10.32. An activity (link tree) can produce the BLHSD **ADVISORY** image, a shareable announcement with a
+Added in 10.33. An activity (link tree) can produce the BLHSD **ADVISORY** image, a shareable announcement with a
 number, deadlines and links, a QR code and a contact person, and can show it on its public page.
 
 ## Using it
