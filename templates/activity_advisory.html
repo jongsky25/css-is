@@ -1,0 +1,104 @@
+{% extends "dash_layout.html" %}
+{% block title %}Public advisory — Office Connect{% endblock %}
+{% block content %}
+<style>
+  .adv-wrap { max-width:62rem; margin:0 auto; display:grid; gap:1rem; grid-template-columns:minmax(0,1fr); }
+  @media (min-width:60rem) { .adv-wrap { grid-template-columns:minmax(0,22rem) minmax(0,1fr); align-items:start; } }
+  .adv-card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:1rem 1.1rem; }
+  .adv-card h2 { font-size:1.02rem; margin:0 0 .3rem; }
+  .adv-preview img { display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  .adv-form label { display:block; font-weight:600; margin:.8rem 0 .25rem; }
+  .adv-form .hint { font-weight:400; color:var(--soft); font-size:.82rem; }
+  .adv-form input[type=text], .adv-form textarea { width:100%; box-sizing:border-box; }
+  .adv-rows { display:grid; gap:.4rem; }
+  .adv-row { display:grid; gap:.4rem; grid-template-columns:minmax(0,1fr); }
+  @media (min-width:40rem) { .adv-row { grid-template-columns:minmax(0,1fr) minmax(0,1fr); } }
+  .adv-actions { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-top:1rem; }
+  .adv-status { display:inline-block; padding:.1rem .55rem; border-radius:999px; font-size:.8rem; font-weight:600; }
+  .adv-status.live { background:var(--green-bg, #eef9f1); color:var(--green, #2f855a); }
+  .adv-status.draft { background:var(--amber-bg); color:var(--amber); }
+</style>
+<div style="max-width:62rem; margin:0 auto 1rem;">
+  <p class="muted small" style="margin:0 0 .3rem;"><a href="/activities/{{ ev.event_token }}/manage">← Back to Manage</a></p>
+  <h1 style="margin:0 0 .2rem;">Public advisory</h1>
+  <p class="muted" style="margin:0;">{{ ev.title }}</p>
+  {% if msg %}<div class="flash ok" role="status" style="margin-top:.7rem;">{{ msg }}</div>{% endif %}
+  {% if err %}<div class="flash warn" role="alert" style="margin-top:.7rem;">{{ err }}</div>{% endif %}
+</div>
+
+<div class="adv-wrap">
+  <div class="adv-card adv-preview">
+    <h2>Preview</h2>
+    <p class="muted small" style="margin:0 0 .6rem;">
+      {% if adv %}No. {{ adv.number }} · revision {{ adv.revision }} ·
+        <span class="adv-status {{ 'live' if adv.published else 'draft' }}">{{ 'Published' if adv.published else 'Draft — not public' }}</span>
+      {% else %}Not saved yet. The number is assigned when you save.{% endif %}
+    </p>
+    <img src="/activities/{{ ev.event_token }}/advisory/file.png?{% if not adv %}draft=1&amp;{% endif %}v={{ rev }}"
+         alt="Preview of the advisory{% if adv %} No. {{ adv.number }}{% endif %}">
+    {% if adv %}
+    <p class="small" style="margin:.6rem 0 0;">
+      <a href="/activities/{{ ev.event_token }}/advisory/file.png?download=1&amp;v={{ rev }}">Download image</a> ·
+      <a href="/activities/{{ ev.event_token }}/advisory/file.pdf?download=1&amp;v={{ rev }}">Download PDF</a>
+    </p>
+    <form method="post" action="/activities/{{ ev.event_token }}/advisory/publish" class="adv-actions">
+      {% if adv.published %}
+      <button class="btn ghost" type="submit" name="publish" value="0">Withdraw from link tree</button>
+      <a class="small" href="{{ public_url }}" target="_blank" rel="noopener">Open public page</a>
+      {% else %}
+      <button class="btn" type="submit" name="publish" value="1">Publish on link tree</button>
+      {% endif %}
+    </form>
+    <p class="muted small" style="margin:.5rem 0 0;">
+      {% if adv.published %}Anyone with the activity's link can see this advisory. Saved edits go live immediately.
+      {% else %}Publishing shows this exact image on the activity's public link tree for anyone with the link.{% endif %}
+    </p>
+    {% else %}
+    <p class="muted small" style="margin:.6rem 0 0;">This is a starting draft built from the activity. Save to create the advisory, then you can publish it.</p>
+    {% endif %}
+  </div>
+
+  <form class="adv-card adv-form" method="post" action="/activities/{{ ev.event_token }}/advisory">
+    <h2>Details</h2>
+    <p class="hint" style="margin:0;">
+      {% if fresh %}Showing a fresh draft from the activity — nothing is lost until you press Save.
+      {% else %}Filled from the activity and its link tree. Use <strong>**double asterisks**</strong> around words to make them bold.{% endif %}
+    </p>
+
+    <label for="adv-headline">Headline <span class="hint">(the title on the poster)</span></label>
+    <textarea id="adv-headline" name="headline" rows="2" maxlength="{{ limits.headline }}" required>{{ v.headline }}</textarea>
+
+    <label for="adv-attention">Attention <span class="hint">(who this is for — leave empty to omit the line)</span></label>
+    <textarea id="adv-attention" name="attention" rows="3" maxlength="{{ limits.attention }}"
+              placeholder="e.g. Local Health System Development (LHSD) Division Chiefs, Heads of Health Promotion Units…">{{ v.attention }}</textarea>
+
+    <label for="adv-body">Message</label>
+    <textarea id="adv-body" name="body" rows="5" maxlength="{{ limits.body }}">{{ v.body }}</textarea>
+
+    <label>Important deadlines &amp; links <span class="hint">(a label and its link or note; empty rows are left out)</span></label>
+    <div class="adv-rows">
+      {% for label, value in rows %}
+      <div class="adv-row">
+        <input type="text" name="row_label_{{ loop.index0 }}" value="{{ label }}" maxlength="{{ limits.label }}" placeholder="e.g. Confirmation of Participation (Due Nov 20, 12:00 NN)" aria-label="Row {{ loop.index }} label">
+        <input type="text" name="row_value_{{ loop.index0 }}" value="{{ value }}" maxlength="{{ limits.value }}" placeholder="https://… or a short note" aria-label="Row {{ loop.index }} link or note">
+      </div>
+      {% endfor %}
+    </div>
+    <p class="hint" style="margin:.3rem 0 0;">Up to {{ max_rows }} rows. After saving, empty rows appear again so you can add more.</p>
+
+    <label for="adv-cname">Contact person for queries</label>
+    <input id="adv-cname" type="text" name="contact_name" value="{{ v.contact_name }}" maxlength="{{ limits.contact_name }}" required placeholder="e.g. Ms. Eileen Diane S. Cheng-Fernandez">
+    <div class="adv-row" style="margin-top:.5rem;">
+      <input type="text" name="contact_phone" value="{{ v.contact_phone }}" maxlength="{{ limits.contact_phone }}" placeholder="Phone, e.g. 8651-7800 loc 1755" aria-label="Contact phone">
+      <input type="text" name="contact_email" value="{{ v.contact_email }}" maxlength="{{ limits.contact_email }}" placeholder="Email" aria-label="Contact email">
+    </div>
+    <p class="hint" style="margin:.3rem 0 0;">The QR code and the printed link point to this activity's public page. The contact you save is offered again on your next advisory.</p>
+
+    <div class="adv-actions">
+      <button class="btn" type="submit">Save</button>
+      <a class="btn ghost" href="/activities/{{ ev.event_token }}/advisory?fresh=1"
+         {% if adv %}onclick="return confirm('Show a fresh draft from the activity? Your saved advisory stays as it is until you press Save.');"{% endif %}>Start again from the activity</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -57,6 +57,20 @@
   {% set org = ev.organizer or ev.lead_name %}
   {% if org %}<p class="muted small" style="margin:0;">{{ org }}</p>{% endif %}
 
+  {% if advisory %}
+  <div class="panel" style="margin:1rem 0; padding:.85rem 1rem;">
+    <p style="margin:0 0 .5rem; font-weight:650;">📣 {{ t('lt_advisory_h', lang) }} <span class="muted small" style="font-weight:400;">· No. {{ advisory.number }}</span></p>
+    <a href="/e/{{ ev.event_token }}/advisory.png?v={{ advisory.revision }}" target="_blank" rel="noopener">
+      <img src="/e/{{ ev.event_token }}/advisory.png?v={{ advisory.revision }}" alt="Advisory No. {{ advisory.number }}: {{ advisory.headline }}"
+           style="display:block; width:100%; max-width:520px; margin:0 auto; height:auto; border:1px solid var(--line); border-radius:8px;" loading="lazy" decoding="async">
+    </a>
+    <p style="margin:.6rem 0 0; text-align:center;" class="small">
+      <a href="/e/{{ ev.event_token }}/advisory.png?download=1&amp;v={{ advisory.revision }}">{{ t('lt_advisory_png', lang) }}</a> ·
+      <a href="/e/{{ ev.event_token }}/advisory.pdf?download=1&amp;v={{ advisory.revision }}">{{ t('lt_advisory_pdf', lang) }}</a>
+    </p>
+  </div>
+  {% endif %}
+
   {% if attendee %}
   {% if personal_link %}
   <details class="panel tint-green save-link"{% if just_registered %} open{% endif %}>

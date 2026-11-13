@@ -565,6 +565,9 @@ UI = {
         "fil": "Ipinadala namin ang link na ito ilang minuto na ang nakalipas. Pakitingnan ang inyong inbox (at spam).",
     },
     "lt_update_h": {"en": "Update", "fil": "Update"},
+    "lt_advisory_h": {"en": "Advisory", "fil": "Abiso"},
+    "lt_advisory_png": {"en": "Download image", "fil": "I-download ang larawan"},
+    "lt_advisory_pdf": {"en": "Download PDF", "fil": "I-download ang PDF"},
     "lt_feedback_locked": {
         "en": "Feedback opens when the activity starts —",
         "fil": "Bubukas ang feedback kapag nagsimula ang aktibidad —",

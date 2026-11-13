@@ -222,7 +222,7 @@ RUNTIME_PY = [
     "dashboard_insights.py", "dashboard_export.py", "dashboard_docs.py", "report_docs.py",
     "csm_report.py", "auth.py", "request_security.py", "request_reads.py", "browser_security.py", "mailer.py", "backups.py", "retention.py", "monitoring.py",
     "name_cleanup.py", "apply_speakers.py", "harmonize.py", "activity_admin.py",
-    "activity_messages.py", "reg_questions.py", "certificate.py", "ratelimit.py", "i18n.py",
+    "activity_messages.py", "reg_questions.py", "certificate.py", "advisory.py", "activity_advisory.py", "activity_advisory_routes.py", "ratelimit.py", "i18n.py",
     "realtime.py", "short_links.py",
     "appearance.py", "appearance_storage.py", "appearance_routes.py", "companion_wardrobe.py", "companion_leaderboard.py",
     "tours.py", "ui_telemetry.py", "ux_handoff.py", "ai_core.py", "ai_facts.py", "ai_report_drafts.py", "qa_rules.py",
