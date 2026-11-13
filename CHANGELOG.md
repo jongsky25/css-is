@@ -1,3 +1,8 @@
+## 10.32 — November 13, 2026
+
+- Add the respondent's title, sex and DOH / Non-DOH affiliation to each row of the Responses sheet in the Type 2 and Type 3 raw Excel download, so each score can be read alongside who it came from in demographic terms. Anonymous responses leave these cells blank.
+- Names, emails and contact numbers are not exported.
+
 ## 10.31 — November 12, 2026
 
 - Add the research into outside tools that could improve Office Connect: three candidate catalogs (51 GitHub repositories, 26 Hugging Face Spaces and a 23-item feature backlog), the license findings and the decision log of what was chosen and delivered.
