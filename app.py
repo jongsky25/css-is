@@ -112,6 +112,8 @@ import monitoring as mon
 import name_cleanup as ncl
 import harmonize as hz
 import activity_announcements
+import activity_advisory
+import activity_advisory_routes
 import activity_creation
 import activity_drafts
 import activity_draft_routes
@@ -9390,6 +9392,7 @@ def _event_view(request, conn, ev, attendee=None, errors=None, posted=None,
         "any_open": any(l["state"] == "open" and not l["done"] for l in links),
         "announcement": ev.get("announcement"),
         "announcement_at": _humandt(ev.get("announcement_at")),
+        "advisory": activity_advisory.public_summary(conn, ev["id"]),
         "recognized": recognized, "att_tok": _att_token(attendee["id"]) if attendee else "",
         "personal_link": personal_link,
         "personal_qr": personal_qr, "link_valid_until": link_valid_until,
@@ -18007,6 +18010,8 @@ def _calendar_check_dates(start, end):
 
 
 app.include_router(birthday_cards.make_router(templates, get_conn, _today_local, _audit))
+app.include_router(activity_advisory_routes.make_router(
+    templates, get_conn, _can_manage_event, _share_url, _base_url, _audit))
 app.include_router(calendar_routes.make_router(
     templates, get_conn, _today_local, can_manage_event=_can_manage_event,
     notify_email=_notify_email, base_url=_base_url, on_event_changed=invalidate_atoms,

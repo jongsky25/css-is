@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.32"
+APP_VERSION = "10.33"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.33",
+        "date": "November 13, 2026",
+        "summary": "Make a shareable advisory poster from an activity.",
+        "changes": [
+            "On an activity's Manage page, open Public advisory to get a ready-made BLHSD advisory image: headline, message, deadlines and links, a QR code and a contact person, filled in from the activity.",
+            "Each advisory gets its own number (like 2026-1113-001) when first saved. You can edit it, preview it, and download it as an image or a PDF.",
+            "Press Publish to show the advisory on the activity's public page so anyone with the link can see and download it, or withdraw it again at any time.",
+        ]
+    },
     {
         "version": "10.32",
         "date": "November 13, 2026",

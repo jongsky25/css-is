@@ -1,3 +1,10 @@
+## 10.33 — November 13, 2026
+
+- Add a public advisory poster for each activity. From Manage, open Public advisory to get the BLHSD advisory image (headline, message, deadlines and links table, QR code and contact person) filled in from the activity and its link tree.
+- Each advisory receives a number like 2026-1113-001 when first saved; editing keeps the number and raises a revision. Managers can preview it and download it as a PNG image or a one-page PDF.
+- Publishing shows the image on the activity's public link tree with download links; withdrawing hides it again. A draft is never public, and invited (outside) activities cannot publish one.
+- Adds an `event_advisory` table and bundled open-licence fonts and logos under `assets/advisory/`; no new dependency. The poster contains no attendee data.
+
 ## 10.32 — November 13, 2026
 
 - Add the respondent's title, sex, DOH / Non-DOH affiliation and answers to the activity's own registration questions (office, designation, etc.) to each row of the Responses sheet in the Type 2 and Type 3 raw Excel download, so each score can be read alongside who it came from in demographic terms. Anonymous responses leave these cells blank.

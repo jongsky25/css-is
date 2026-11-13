@@ -1424,6 +1424,33 @@ def _add_missing_columns(conn):
     el_cols = {row[1] for row in conn.execute("PRAGMA table_info(event_link)")}
     if el_cols and "visible_after_done" not in el_cols:
         conn.execute("ALTER TABLE event_link ADD COLUMN visible_after_done INTEGER NOT NULL DEFAULT 0")
+    # Public advisory poster for an activity (advisory.py draws it from these fields and the activity's own
+    # link-tree details). One row per activity. `number` is "YYYY-MMDD-NNN", allocated once when the advisory is
+    # first saved (seq_date + seq are unique, so two people saving at once never share a number); editing keeps the
+    # number and raises `revision`. `published` shows it on the activity's public link tree. No attendee data.
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS event_advisory (
+               event_id      INTEGER PRIMARY KEY REFERENCES event(id),
+               number        TEXT NOT NULL UNIQUE,
+               seq_date      TEXT NOT NULL,
+               seq           INTEGER NOT NULL,
+               headline      TEXT NOT NULL,
+               attention     TEXT NOT NULL DEFAULT '',
+               body          TEXT NOT NULL DEFAULT '',
+               rows_json     TEXT NOT NULL DEFAULT '[]',
+               qr_url        TEXT NOT NULL DEFAULT '',
+               contact_name  TEXT NOT NULL DEFAULT '',
+               contact_phone TEXT NOT NULL DEFAULT '',
+               contact_email TEXT NOT NULL DEFAULT '',
+               revision      INTEGER NOT NULL DEFAULT 1,
+               published     INTEGER NOT NULL DEFAULT 0,
+               published_at  TEXT,
+               created_by    TEXT,
+               created_at    TEXT,
+               updated_by    TEXT,
+               updated_at    TEXT,
+               UNIQUE (seq_date, seq)
+           )""")
     # Custom registration questions — extra questions an organizer adds to ONE
     # activity's public form (food restrictions, arrival details, …), and each
     # registrant's answers. A question that already has answers is archived
@@ -4409,6 +4436,8 @@ _AUDIT_ACTIONS = {
     "event_link_add":      ("Added an activity resource link", "Activities"),
     "event_link_edit":     ("Edited an activity resource link", "Activities"),
     "event_link_delete":   ("Removed an activity resource link", "Activities"),
+    "advisory_save":       ("Saved an activity's public advisory", "Activities"),
+    "advisory_publish":    ("Published or withdrew an activity's public advisory", "Activities"),
     "event_message_set":   ("Set an activity's welcome/ending note", "Activities"),
     "event_certificate_set": ("Set an activity's certificate", "Activities"),
     "event_window_set":    ("Set an activity's response window", "Activities"),

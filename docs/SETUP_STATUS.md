@@ -21,6 +21,15 @@ Workspace note: this image has Node 22 and no Tesseract, so `cloud_setup.sh` exi
 OCR tests only run in CI; browser tests run locally after the revision workaround in
 [the workspace guide](CLOUD_WORKSPACE.md).
 
+## Public advisory posters (10.33) — built on a review branch
+
+Branch `claude/quirky-sagan-lkx9wg`: an activity can generate the BLHSD advisory image from its link-tree
+details, with a per-advisory contact, an auto number (`YYYY-MMDD-NNN`), PNG/PDF download and an optional
+public display on the link tree. See [the advisory guide](ADVISORY_POSTERS.md) for scope, files and limits.
+Status: see the end-of-session note in the pull request; not merged and not deployed unless that note says so.
+Next action: owner review of the poster against the office image, then a decision on merging (a merge to `main`
+deploys). Replace the bundled approximations (fonts, Bagong Pilipinas logo) with the official files when available.
+
 ## Documents next phase — verified post-10.12 handoff
 
 PRs #596–603 are merged and their guarded deployments completed successfully.
