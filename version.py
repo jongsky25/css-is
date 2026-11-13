@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.31"
+APP_VERSION = "10.32"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.32",
+        "date": "November 13, 2026",
+        "summary": "See who each activity-review response came from in the raw Excel.",
+        "changes": [
+            "The Responses sheet in the activity and resource-person Excel download now shows each respondent's title, sex, DOH or Non-DOH affiliation and their answers to the activity's registration questions next to their scores.",
+            "Names, emails and contact numbers are not included."
+        ]
+    },
     {
         "version": "10.31",
         "date": "November 12, 2026",

@@ -334,12 +334,15 @@ def servqual_xlsx(sq, meta):
     resp = sq.get("responses") or []
     if resp:
         dim_names = [d["dim"] for d in sq["dimensions"]]
-        headers = (["#", "Submitted", "Activity"] + dim_names
+        extra_cols = sq.get("response_extra_cols") or []
+        headers = (["#", "Submitted", "Activity", "Title", "Sex", "Affiliation"] + extra_cols + dim_names
                    + ["Overall", "Expectation (A)", "Overall SQ (C)", "Comment"])
         rows = []
         for i, r in enumerate(resp, start=1):
             dims = r.get("dims") or {}
-            rows.append([i, r.get("when", ""), r.get("activity", "")]
+            rows.append([i, r.get("when", ""), r.get("activity", ""),
+                         r.get("title", ""), r.get("sex", ""), r.get("affiliation", "")]
+                        + [(r.get("extra") or {}).get(c, "") for c in extra_cols]
                         + [dims.get(d) for d in dim_names]
                         + [r.get("overall"), r.get("expectation"), r.get("osq"),
                            r.get("comment", "")])
