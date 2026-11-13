@@ -2992,6 +2992,39 @@ def demographics_for_responses(conn, response_ids):
     return out
 
 
+def respondent_demographics_for_ids(conn, response_ids):
+    """Per-response demographics for the raw-data export: {response_id: {"sex",
+    "affiliation", "honorific"}}. Only the NON-PII fields (never name/email/contact).
+    Source is the consented attendee a Type-2 response is linked to; a response
+    with no attendee falls back to its own SEX / AFFIL items (Type 1/3). Values
+    are normalised to Male/Female and DOH/Non-DOH; unknown stays ""."""
+    ids = [int(r) for r in response_ids]
+    out = {}
+    CHUNK = 900
+    for i in range(0, len(ids), CHUNK):
+        chunk = ids[i:i + CHUNK]
+        ph = ",".join("?" * len(chunk))
+        for rid, sex, affil, hon in conn.execute(
+                f"""SELECT r.id, a.sex, a.affiliation, a.honorific FROM response r
+                    JOIN attendee a ON a.id = r.attendee_id
+                    WHERE r.id IN ({ph})""", chunk).fetchall():
+            out[rid] = {"sex": sex, "affiliation": affil, "honorific": hon}
+        for rid, item, text in conn.execute(
+                f"SELECT response_id, item_id, text FROM item_remark "
+                f"WHERE item_id IN ('SEX','AFFIL') AND response_id IN ({ph})", chunk).fetchall():
+            d = out.setdefault(rid, {"sex": None, "affiliation": None, "honorific": None})
+            key = "sex" if item == "SEX" else "affiliation"
+            if not d.get(key):
+                d[key] = text
+    for d in out.values():
+        s = (d.get("sex") or "").strip().upper()
+        d["sex"] = "Male" if s in ("M", "MALE") else "Female" if s in ("F", "FEMALE") else ""
+        a = (d.get("affiliation") or "").strip().upper().replace("-", "").replace(" ", "")
+        d["affiliation"] = "DOH" if a == "DOH" else "Non-DOH" if a == "NONDOH" else ""
+        d["honorific"] = (d.get("honorific") or "").strip()
+    return out
+
+
 def get_activity_demographics(conn, event_id):
     """Manual demographic override for one activity, or {} if none set."""
     row = conn.execute(

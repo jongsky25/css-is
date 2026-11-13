@@ -13273,6 +13273,7 @@ def _servqual_official(df, dim_map, response_ids, conn):
     # format (DOCX/PDF/PPTX, on-screen report) simply ignores the key.
     rowmap = _servqual_response_rows(df, dim_map)
     ctx = st.response_context_for_ids(conn, response_ids)
+    demo_by = st.respondent_demographics_for_ids(conn, response_ids)
     responses = []
     for rid in sorted(df["response_id"].unique()) if not df.empty else []:
         r = rowmap.get(int(rid), {})
@@ -13281,6 +13282,9 @@ def _servqual_official(df, dim_map, response_ids, conn):
             "response_id": rid,
             "when": m.get("when", ""),
             "activity": m.get("activity", ""),
+            "title": demo_by.get(rid, {}).get("honorific", ""),
+            "sex": demo_by.get(rid, {}).get("sex", ""),
+            "affiliation": demo_by.get(rid, {}).get("affiliation", ""),
             "dims": r.get("dims", {}),
             "overall": r.get("overall"),
             "expectation": r.get("expectation"),

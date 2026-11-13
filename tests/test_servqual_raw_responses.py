@@ -164,3 +164,42 @@ def test_rp_xlsx_has_one_row_per_submission_for_activity(manager, app_mod):
     # it must cover ALL submissions, not only those that left free text).
     sub, act = headers.index("Submitted"), headers.index("Activity")
     assert all(v[sub] and v[act] == "Raw Rows Activity" for v in body_rows)
+
+
+def test_xlsx_responses_sheet_carries_respondent_demographics():
+    dims = eng.DIM_MAP_FORM2
+    sq = {
+        "has_data": True, "respondents": 1,
+        "dimensions": [{"dim": d, "members": "", "value": 5.0, "n": 1,
+                        "gap_shown": "—", "verdict": None} for d in dims],
+        "summary": {"total": "25.00", "average": "5.00", "expectation": "5.50",
+                    "servqual": "-0.50", "servqual_label": "met",
+                    "osq": "3.50", "osq_band": "Excellent"},
+        "responses": [{"response_id": 1, "when": "2026-06-10 09:00", "activity": "A",
+                       "title": "Dr.", "sex": "Female", "affiliation": "Non-DOH",
+                       "dims": {}, "overall": 5.0, "expectation": 5.0, "osq": 4.0,
+                       "comment": ""}],
+    }
+    ws = load_workbook(io.BytesIO(report_docs.servqual_xlsx(sq, {"title": "A"})))["Responses"]
+    headers = [c.value for c in ws[3]]
+    row = [c.value for c in ws[4]]
+    assert row[headers.index("Title")] == "Dr."
+    assert row[headers.index("Sex")] == "Female"
+    assert row[headers.index("Affiliation")] == "Non-DOH"
+
+
+
+def test_respondent_demographics_from_attendee_and_items(manager, app_mod):
+    db_path = app_mod.DB
+    ev, f3 = _make_bureau(manager, db_path, "Demo Rows Activity", "2026-06-13", "Hall D")
+    conn = st.connect(db_path)
+    aid, _ = st.register_attendee(conn, ev, name="Test Person", email="t@example.test",
+                                  sex="F", affiliation="NON-DOH", honorific="Dr.",
+                                  consent_text="x")
+    r_att = st.record_response(conn, f3, _F3_A, attendee_id=aid)
+    r_anon = st.record_response(conn, f3, _F3_B)
+    got = st.respondent_demographics_for_ids(conn, [r_att, r_anon])
+    conn.close()
+    assert got[r_att] == {"sex": "Female", "affiliation": "Non-DOH", "honorific": "Dr."}
+    assert r_anon not in got                      # anonymous: no demographics, no crash
+    assert "name" not in got[r_att] and "email" not in got[r_att]
