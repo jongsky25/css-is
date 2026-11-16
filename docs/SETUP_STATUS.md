@@ -2,45 +2,55 @@
 
 ## Current status — November 16, 2026
 
-Verified main: `33e0089ba281b76a2ea775adf0c1a3d8ad3486de`, version **10.33**.
-[PR #626](https://github.com/jongsky25/css-is/pull/626) is merged and its
-[guarded deployment](https://github.com/jongsky25/css-is/actions/runs/43434733111)
-succeeded. Documents phases 0–2 are complete through 10.24; see the November 11
-status in [the Documents handoff](DOCUMENTS_NEXT_PHASE_HANDOFF.md).
-At inspection, the only open PR was Telegram #488; Telegram is excluded from
-this housekeeping request. There is no outstanding non-Telegram merge queue.
+Verified release: **10.34**, merged main commit
+`808676dc6c3c30aa6163f1a73ba1b7d27250b101`.
+[PR #627](https://github.com/jongsky25/css-is/pull/627) is merged and
+[guarded deployment 43834399312](https://github.com/jongsky25/css-is/actions/runs/43834399312)
+succeeded. Both complete test orders, AI/report gates, dependency audits, metadata,
+Required checks, deployment and diagnostics passed. The deployment verified a fresh
+backup, a RUNNING host and live version 10.34. The release follow-up is disabled;
+there is no remaining merge/deployment action for #627.
 
-The owner requested status cleanup followed by operations/recovery follow-up.
-This work is saved on `docs/housekeeping-2026-11-16`, candidate **10.34**, for review;
-it is not merged or deployed. The owner now authorizes merging #627 when its
-required checks pass, followed by normal guarded deployment. Candidate metadata
-follows the existing release gate.
-The [November 16 operations review](operations/housekeeping-2026-11-16.md) records
-current evidence, completed audit work and the remaining recovery decisions.
+## Owner decisions and current next action
 
-Completed findings:
+- [Monitoring test #576](https://github.com/jongsky25/css-is/issues/576) was closed
+  on November 16 at the owner's explicit request. Closure does not establish phone
+  receipt; no receipt confirmation was supplied. Do not reopen it or send another
+  test automatically.
+- The owner reports existing multiple backups and considers backup arrangements
+  complete. Do not propose additional copies or repeat backup setup as unfinished.
+  This is an owner confirmation, not a new verification of storage separation.
+- **Deferred by the owner:** backup-separation review and full isolated recovery
+  testing, including cold-start checks. Recovery targets were discussed but not
+  selected; 15 minutes/4 hours were examples, not approved or measured commitments.
+  Do not resume that decision process or recovery work without a new request.
+- **Telegram feature work stays deferred.** The two test-clock repairs in #627
+  did not change production Telegram code, activation or retention policy.
+- Historical backup-exposure evidence remains an open follow-up, not an active
+  investigation. No new provider contact or remediation is authorized here.
 
-- The audit writer fix and historical acknowledgment shipped in #573/#574.
-  Do not reopen the reviewed incident or rewrite its original records/hashes.
-- Scheduled monitoring is executing: [November 16 run](https://github.com/jongsky25/css-is/actions/runs/43784570062)
-  recorded two healthy observations for all four signals. Phone receipt is separate.
-- Production is RUNNING; health returned 200/ok. The backup bucket is private,
-  anonymous metadata returns 401, and its writable `/data` mount is verified.
-- Advisory posters shipped in 10.33 with the office-supplied logo. Exact fonts and
-  optional region/attention pickers remain ideas, not unfinished release work.
+**Next action:** save/review this documentation closeout, then await the owner's
+next selected task. Do not restart #627 release work, notification tests or deferred
+recovery/Telegram work from older instructions. Optional Documents/accessibility
+and advisory improvements remain backlog, not automatically queued work.
 
-**Next action:** verify the #627 dependency and cleanup-test repairs with fresh complete
-CI before its authorized merge/deployment; then confirm phone receipt for
-[test issue #576](https://github.com/jongsky25/css-is/issues/576), and settle the
-independent backup destination/retention and recovery targets in the operations review.
-Historical provider access evidence and an isolated full recovery drill remain open.
-No production restore, credential rotation, new notification, merge or deployment
-was performed at the initial review checkpoint. The subsequent owner request
-authorizes #627 release only after the normal gates pass.
+This documentation update is on `docs/housekeeping-closeout-2026-11-16`, candidate
+**10.35**, for review only. The current request authorizes documenting these outcomes
+and decisions; it does not request another production merge or deployment. Candidate
+version/cache metadata follows the existing repository release gate.
+Validation: 146 local Markdown links resolved, release metadata 10.35 passed
+against origin/main, and diff/whitespace checks passed. No application suite
+was run locally for this documentation-only closeout; required CI still applies
+before any future release.
 
-Optional feature backlog remains Documents phase 3 (consented staff study), remaining
-request-context screens, review-history pagination and accessibility/device checks.
-The count/filter cold-path performance exception remains documented in the handoff.
+See [the operations closeout](operations/housekeeping-2026-11-16.md) for the evidence
+and retained follow-up conditions. Documents phases 0–2 and the audit writer fix/
+historical acknowledgment are complete; advisory posters shipped with the office logo.
+
+### Historical #627 repair evidence
+
+The next two subsections describe pre-release checkpoints. Their pending-CI/merge
+instructions were fulfilled by the successful release above and must not be resumed.
 
 ### Cleanup-test clock repair — November 16, 2026
 

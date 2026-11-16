@@ -1,11 +1,38 @@
 # Operations housekeeping — November 16, 2026
 
-Scope: reconcile current Office Connect status and investigate outstanding operations
-and recovery evidence. Telegram is excluded. Review branch:
-`docs/housekeeping-2026-11-16`; candidate 10.34. The owner subsequently authorized
-merging #627 when ready and verifying its guarded deployment.
+## Completed release and owner decisions
 
-## Verified evidence
+[PR #627](https://github.com/jongsky25/css-is/pull/627) shipped **10.34** at
+`808676dc6c3c30aa6163f1a73ba1b7d27250b101`.
+[Deployment 43834399312](https://github.com/jongsky25/css-is/actions/runs/43834399312)
+passed all seven jobs, including complete normal/shuffled verification, dependency
+and metadata gates, deployment and sanitized diagnostics. Fresh backup verification,
+RUNNING host and live version 10.34 were confirmed; its release follow-up is disabled.
+
+The owner subsequently requested closing monitoring test #576; it is closed.
+That instruction is not evidence of phone receipt. Do not reopen it or generate
+another test without a new request. The owner also confirmed multiple backups and
+considers existing backup arrangements complete; no additional backup setup is queued.
+Storage separation and retention details were not independently reverified here.
+
+The owner explicitly deferred backup-separation review and full recovery testing.
+Recovery targets remain undecided; discussion examples of 15 minutes lost work and
+4 hours restoration are not accepted targets or guarantees. Leave that discussion
+and all recovery exercises deferred until requested. Telegram feature work remains
+deferred; no activation or production Telegram change is part of the closeout.
+Historical exposure evidence remains open but is not an active investigation.
+
+This closeout is saved for review on `docs/housekeeping-closeout-2026-11-16`, candidate
+10.35. No additional production release is requested. Next: review the notes, then
+wait for the owner's selected task rather than automatically resuming old actions.
+
+## Initial review scope (historical)
+
+The original November 16 review reconciled Office Connect status and operations
+on `docs/housekeeping-2026-11-16`. Its evidence below predates the later release and
+owner decisions above. Old open-issue/next-action wording is superseded by this closeout.
+
+## Evidence from the initial review
 
 | Area | Evidence | Meaning and limit |
 | --- | --- | --- |
@@ -40,20 +67,21 @@ Do not rehash records, delete the incident, or equate acknowledgment with indepe
 proof of business-record authenticity. The appropriate remaining work concerns
 historical exposure and recovery readiness, not repeating these completed fixes.
 
-## Remaining work and acceptance evidence
+## Deferred work and retained acceptance criteria
 
 | Priority | Next action | Required evidence / decision |
 | --- | --- | --- |
 | 1 | Obtain historical bucket access evidence from the hosting account/provider | Available access period, public-visibility history and download/access records; explicitly record if unavailable. Assess affected retained snapshots and any account/key action using that evidence. No outbound provider contact or credential rotation was performed. |
-| 1 | Select an independent recovery destination and retention policy | Owner-selected private storage outside the current bucket failure domain, access owner, encryption/access controls, retention/deletion period and cost. No destination or paid service is assumed. |
-| 1 | Agree recovery targets | Maximum acceptable lost work (RPO) and restoration time (RTO). Proposed discussion baseline: 15 minutes and 4 hours; neither is approved or demonstrated. |
-| 2 | Prepare a full recovery exercise | Approved private isolated destination, restricted temporary files, fresh session secret and revoked credentials, outbound integrations blocked, known source/checksum, startup and read-only application checks, timed recovery, and verified cleanup. Never use production data in a public preview. |
-| 2 | Verify cold-start access and recovery behavior in that isolated destination | Record mount access, restored snapshot age, integrity, startup/version compatibility and absence of outbound effects. Do not restart production merely to prove recovery. |
-| 2 | Confirm monitoring phone delivery | Owner confirms receipt of [test issue #576](https://github.com/jongsky25/css-is/issues/576); close the existing test only after confirmation. Do not generate another test while this one is open. |
+| Owner complete / review deferred | Existing backup arrangements | Owner confirms multiple backups and considers setup complete. Separation review is deferred; do not select another destination or provision storage automatically. |
+| Deferred | Agree recovery targets | Maximum acceptable lost work (RPO) and restoration time (RTO). Proposed discussion baseline: 15 minutes and 4 hours; neither is approved or demonstrated. |
+| Deferred | Prepare a full recovery exercise | Approved private isolated destination, restricted temporary files, fresh session secret and revoked credentials, outbound integrations blocked, known source/checksum, startup and read-only application checks, timed recovery, and verified cleanup. Never use production data in a public preview. |
+| Deferred | Verify cold-start access and recovery behavior in that isolated destination | Record mount access, restored snapshot age, integrity, startup/version compatibility and absence of outbound effects. Do not restart production merely to prove recovery. |
+| Closed by owner request | Monitoring test #576 | Issue is closed. Phone receipt was not independently confirmed; no repeat test or reopening is queued. |
 
 A live incident or new failing monitor signal takes priority over this planned work.
-The independent destination/retention and recovery targets are missing decisions;
-existing tools/evidence do not establish historical bucket download activity.
+Backup setup is owner-confirmed complete; separation review, targets and recovery
+testing remain deferred. Existing evidence does not establish historical bucket
+download activity.
 No full recovery completion can be claimed until the exercise is actually run.
 
 ## Other backlog retained
@@ -65,7 +93,7 @@ screen-reader/real-touch/other-browser checks and the documented count cold-path
 performance exception. Advisory exact fonts and optional region/attention pickers
 remain ideas; the office logo is already present.
 
-## Verification and handoff
+## Historical pre-release verification
 
 The initial documentation-only review passed 154 local links, whitespace and
 synchronized release metadata checks. Its CI then found CVE-2026-126360 in
@@ -76,5 +104,5 @@ Local cloud setup/doctor and 69 focused tests passed without failures/skips.
 Strict runtime-lock and installed-test scans found no known vulnerabilities;
 installed-test inventory coverage, lock fingerprints, metadata and diff checks passed.
 The owner's later request authorizes #627 merge/deployment after full CI gates.
-Continue with owner recovery decisions and remaining evidence above; do not resume
-obsolete feature or audit queues from old status snapshots.
+The successful release and subsequent owner decisions at the top supersede these
+pre-release next actions. Do not resume deferred recovery or feature work.

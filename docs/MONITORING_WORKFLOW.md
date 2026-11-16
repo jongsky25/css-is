@@ -10,9 +10,10 @@ completed successfully. This is observed execution, not a five-minute delivery S
 A successful run alone does not establish all signals healthy; this finding uses
 the actual signal summary. The earlier schedule-registration uncertainty is closed.
 
-[Test issue #576](https://github.com/jongsky25/css-is/issues/576) remains open.
-Phone receipt is not confirmed; do not send another test or close it merely because
-scheduled checks pass. The owner has been asked to confirm receipt.
+[Test issue #576](https://github.com/jongsky25/css-is/issues/576) was closed on
+November 16 at the owner's explicit request. Phone receipt was not confirmed by
+that instruction. Do not reopen it, repeat the test or resume phone setup
+automatically; any further delivery test needs a new request.
 The historical audit incident was acknowledged in deployed 9.57; raw chain failure
 for that unchanged history is expected. New failures remain actionable.
 See [the operations review](operations/housekeeping-2026-11-16.md).
@@ -27,7 +28,7 @@ inside the authenticated application.
 
 The owner requested automatic outage, backup and new-audit-failure alerts, including a
 phone delivery test. The checker shipped in #575. Current execution evidence is above;
-phone delivery still needs owner confirmation.
+phone receipt remains unverified, with the existing test closed by owner request.
 
 ### Independent checker
 
