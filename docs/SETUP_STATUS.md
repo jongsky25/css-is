@@ -29,7 +29,7 @@ Completed findings:
 - Advisory posters shipped in 10.33 with the office-supplied logo. Exact fonts and
   optional region/attention pickers remain ideas, not unfinished release work.
 
-**Next action:** finish the #627 dependency-gate repair and require fresh complete
+**Next action:** verify the #627 dependency and cleanup-test repairs with fresh complete
 CI before its authorized merge/deployment; then confirm phone receipt for
 [test issue #576](https://github.com/jongsky25/css-is/issues/576), and settle the
 independent backup destination/retention and recovery targets in the operations review.
@@ -41,6 +41,29 @@ authorizes #627 release only after the normal gates pass.
 Optional feature backlog remains Documents phase 3 (consented staff study), remaining
 request-context screens, review-history pagination and accessibility/device checks.
 The count/filter cold-path performance exception remains documented in the handoff.
+
+### Cleanup-test clock repair — November 16, 2026
+
+The owner authorized fixing only the release blocker while keeping Telegram feature
+work deferred. CI 43813250752 on `abf6bfc` passed dependency audit and metadata;
+both complete orders finished with the same two cleanup-test failures and 11,085
+passes each. Both failures reproduced locally in isolation.
+
+Root cause: event triggers timestamp rows with SQLite's real UTC clock, whereas
+these tests advanced a fixed October 25 reference by 200 days. The resulting
+180-day deletion cutoff was November 14; newly recorded events on November 16
+correctly remained. This was a calendar-dependent test assumption, not evidence
+that production retention was broken.
+
+Only the two test clocks are repaired: derive the 180-day boundary from actual
+stored event timestamps, assert retention at that exact boundary, then assert
+deletion one second later. Existing restore/no-backfill, head/calendar preservation
+and disabled-provider assertions remain. No production Telegram code, flag, feature,
+notification or retention policy changes. Local verification: all 27 tests in the
+module passed in both normal and shuffled order (seed 311), with JUnit gates
+confirming no failures or skips; metadata and diff checks passed. Require fresh
+full CI on the repaired
+head before the already authorized #627 merge and guarded deployment.
 
 ### Release-gate repair — November 16, 2026
 
