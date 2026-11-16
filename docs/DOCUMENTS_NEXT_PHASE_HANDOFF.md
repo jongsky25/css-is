@@ -6,6 +6,15 @@ Review branch: **docs/documents-next-phase-handoff**, PR #604. Candidate **10.13
 promotes this documentation under the repository release policy; it does not
 implement the next phase.
 
+## Current reading guide — November 16, 2026
+
+Phases 0–2 have shipped; phase 3 has not started. Use the **Status update —
+November 11, 2026** below and [current setup status](SETUP_STATUS.md).
+The original 10.12 baseline, phase-0 starter, open decisions and release authority
+below are historical planning evidence, not a request to rebuild completed phases.
+Production at the review checkpoint is 10.33; the owner subsequently authorized
+the November 16 housekeeping/security candidate #627 after its required checks.
+
 ## Goal and authority
 
 Make Documents intuitive on a phone: show what needs the current person's action,

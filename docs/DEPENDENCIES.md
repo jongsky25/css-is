@@ -198,3 +198,13 @@ locks using uv 0.13.4 without upgrading unrelated packages. No advisory exclusio
 is added. Tooling/deployment locks are unchanged. The device-code token endpoint
 is not an Office Connect feature, but the dependency must still pass the complete
 audit gate.
+
+## OpenTelemetry API release-gate repair (10.34)
+
+CI 43807788405 reported CVE-2026-126360 / GHSA-mf5v-w3w3-f6cg in
+opentelemetry-api 1.45.1, brought in by FastAPI 0.150.0. The advisory describes
+quadratic regex processing of crafted trace-context values, including possible
+JSON metadata carriers. Pin the advisory's fixed 1.45.2 and regenerate the
+runtime/test locks using locked uv 0.13.4 without upgrading unrelated packages.
+No advisory exclusion or weakened check is added. Fresh complete CI is required
+before release; the prior documentation-only checks do not certify this repair.

@@ -1,3 +1,13 @@
+## 10.34 — November 16, 2026
+
+- Correct two cleanup tests to measure the 180-day retention boundary from SQLite event timestamps instead of a fixed calendar date; production retention and Telegram features are unchanged.
+
+- Patch opentelemetry-api to 1.45.2 for CVE-2026-126360, found by the required dependency audit; regenerate runtime/test locks without advisory exclusions.
+
+- Reconcile project status with deployed 10.33, completed Documents phases and the already deployed audit fix and historical acknowledgment.
+- Record observed scheduled monitoring, private backup access and the verified storage mount; distinguish phone receipt and full recovery readiness from these checks.
+- Prioritize remaining historical exposure evidence, independent recovery retention and owner recovery targets. Application workflows remain unchanged.
+
 ## 10.33 — November 13, 2026
 
 - Add a public advisory poster for each activity. From Manage, open Public advisory to get the BLHSD advisory image (headline, message, deadlines and links table, QR code and contact person) filled in from the activity and its link tree.

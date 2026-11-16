@@ -299,8 +299,14 @@ def test_expiry_retention_restore_epoch_and_no_backfill(workspace):
     assert st.get_setting(c,changes.EPOCH_KEY)!=epoch
     assert not changes.current(c,event,NOW)
     st.cal_update(c,eid,venue='Synthetic after restore')
-    assert last(c,'calendar',eid)['epoch']!=epoch
-    with transaction(c):changes.cleanup_in_transaction(c,NOW+timedelta(days=200))
+    newest=last(c,'calendar',eid)
+    assert newest['epoch']!=epoch
+    # SQL triggers use SQLite's UTC clock, not the frozen Python NOW fixture.
+    # Exercise the strict 180-day cutoff relative to the stored timestamp.
+    boundary=datetime.fromisoformat(newest['recorded_at'])+timedelta(days=180)
+    with transaction(c):changes.cleanup_in_transaction(c,boundary)
+    assert any(e['event_key']==newest['event_key'] for e in events(c))
+    with transaction(c):changes.cleanup_in_transaction(c,boundary+timedelta(seconds=1))
     assert not events(c) and rows(c,'SELECT * FROM telegram_change_head')
 
 
@@ -345,10 +351,14 @@ def test_feature_off_scheduler_still_cleans_metadata_without_network(app_mod,mon
     try:
         st.cal_create(c,'Synthetic cleanup source','2026-10-26',audience='bureau')
         assert events(c)
+        boundary=max(datetime.fromisoformat(e['recorded_at']) for e in events(c))+timedelta(days=180)
         for capability in bot.storage.SWITCHES:monkeypatch.setenv('CSS_TELEGRAM_'+capability.upper()+'_ENABLED','0')
-        monkeypatch.setattr(bot,'now_utc',lambda:NOW+timedelta(days=200))
+        monkeypatch.setattr(bot,'now_utc',lambda:boundary)
         monkeypatch.setattr(bot.transport,'send',lambda *a:pytest.fail('Disabled provider send'))
         monkeypatch.setattr(bot.transport,'member_status',lambda *a:pytest.fail('Disabled provider read'))
+        assert app_mod._telegram_tick()==(0,0)
+        assert events(c)
+        monkeypatch.setattr(bot,'now_utc',lambda:boundary+timedelta(seconds=1))
         assert app_mod._telegram_tick()==(0,0)
         assert not events(c)
         assert rows(c,'SELECT * FROM calendar_entry')
