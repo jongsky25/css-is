@@ -12,8 +12,9 @@ Phases 0–2 have shipped; phase 3 has not started. Use the **Status update —
 November 11, 2026** below and [current setup status](SETUP_STATUS.md).
 The original 10.12 baseline, phase-0 starter, open decisions and release authority
 below are historical planning evidence, not a request to rebuild completed phases.
-Production at the review checkpoint is 10.33; the owner subsequently authorized
-the November 16 housekeeping/security candidate #627 after its required checks.
+Housekeeping/security release 10.34 (#627) is merged and deployed. The latest
+[setup status](SETUP_STATUS.md) records completed work and owner deferrals; do not
+resume the old phase-0 or release instructions below.
 
 ## Goal and authority
 

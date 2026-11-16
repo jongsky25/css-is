@@ -1,3 +1,9 @@
+## 10.35 — November 16, 2026
+
+- Record successful 10.34 deployment, closure of monitoring test #576 at the owner's request, and owner-confirmed multiple backups.
+- Mark backup-separation review and full recovery testing deferred, with recovery targets undecided and Telegram feature work still deferred.
+- Direct future sessions to await the owner's selected task instead of reopening completed release work or deferred investigations. Documentation and synchronized release metadata only.
+
 ## 10.34 — November 16, 2026
 
 - Correct two cleanup tests to measure the 180-day retention boundary from SQLite event timestamps instead of a fixed calendar date; production retention and Telegram features are unchanged.

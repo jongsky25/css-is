@@ -13,9 +13,11 @@ Fresh checks confirm production RUNNING, health 200/ok, the private backup bucke
 scheduled monitor recorded all four signals healthy twice. Mount configuration
 was also recorded as verified on November 4; it is no longer a missing check.
 
-Open: historical provider access evidence/exposure decisions, independently retained
-recovery copies, agreed recovery targets and an isolated full application/cold-start
-recovery exercise. See [the current evidence and follow-up plan](operations/housekeeping-2026-11-16.md).
+The owner confirms multiple backups and considers backup arrangements complete.
+Backup-separation review and full application/cold-start recovery testing are
+explicitly deferred; recovery targets remain undecided, not an active setup task.
+Historical provider access evidence/exposure decisions remain open but are not
+an active investigation. See [the current closeout and decisions](operations/housekeeping-2026-11-16.md).
 The earlier database-level recovery drill remains valid evidence within its stated limits.
 
 ## Historical evidence — October 31, 2026
