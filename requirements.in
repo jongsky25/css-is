@@ -20,6 +20,8 @@ python-docx==1.2.0
 reportlab==5.0.1
 httpx==0.28.1
 mcp==1.30.0
+# Fix trace-context ReDoS in FastAPI's transitive dependency (CVE-2026-126360).
+opentelemetry-api==1.45.2
 apprise==2.0.1
 # Security floor for Apprise/requests-oauthlib (CVE-2026-49272).
 oauthlib==4.0.1

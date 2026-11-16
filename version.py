@@ -25,10 +25,10 @@ CHANGELOG = [
     {
         "version": "10.34",
         "date": "November 16, 2026",
-        "summary": "Bring project status and recovery notes up to date.",
+        "summary": "Update a security dependency and project recovery notes.",
         "changes": [
             "Project notes now distinguish completed releases and audit fixes from remaining recovery and notification checks.",
-            "This update changes documentation only; application workflows stay the same."
+            "Update a supporting library to protect against malformed trace information slowing requests."
         ]
     },
     {

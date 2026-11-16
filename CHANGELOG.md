@@ -1,8 +1,10 @@
 ## 10.34 — November 16, 2026
 
+- Patch opentelemetry-api to 1.45.2 for CVE-2026-126360, found by the required dependency audit; regenerate runtime/test locks without advisory exclusions.
+
 - Reconcile project status with deployed 10.33, completed Documents phases and the already deployed audit fix and historical acknowledgment.
 - Record observed scheduled monitoring, private backup access and the verified storage mount; distinguish phone receipt and full recovery readiness from these checks.
-- Prioritize remaining historical exposure evidence, independent recovery retention and owner recovery targets. Documentation and synchronized release metadata only.
+- Prioritize remaining historical exposure evidence, independent recovery retention and owner recovery targets. Application workflows remain unchanged.
 
 ## 10.33 — November 13, 2026
 

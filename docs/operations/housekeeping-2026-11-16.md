@@ -2,7 +2,8 @@
 
 Scope: reconcile current Office Connect status and investigate outstanding operations
 and recovery evidence. Telegram is excluded. Review branch:
-`docs/housekeeping-2026-11-16`; candidate 10.34. No production release requested.
+`docs/housekeeping-2026-11-16`; candidate 10.34. The owner subsequently authorized
+merging #627 when ready and verifying its guarded deployment.
 
 ## Verified evidence
 
@@ -66,9 +67,14 @@ remain ideas; the office logo is already present.
 
 ## Verification and handoff
 
-Documentation links, whitespace and synchronized candidate release metadata are
-checked locally. No application behavior was changed and no application suite was
-run locally for this documentation review. Required CI remains authoritative for
-any future release. Candidate metadata does not authorize merging or deployment.
+The initial documentation-only review passed 154 local links, whitespace and
+synchronized release metadata checks. Its CI then found CVE-2026-126360 in
+opentelemetry-api 1.45.1. The release repair pins fixed 1.45.2 and regenerates
+runtime/test locks; see [dependency maintenance](../DEPENDENCIES.md). Fresh tests
+and the complete dependency gate are required for this expanded candidate.
+Local cloud setup/doctor and 69 focused tests passed without failures/skips.
+Strict runtime-lock and installed-test scans found no known vulnerabilities;
+installed-test inventory coverage, lock fingerprints, metadata and diff checks passed.
+The owner's later request authorizes #627 merge/deployment after full CI gates.
 Continue with owner recovery decisions and remaining evidence above; do not resume
 obsolete feature or audit queues from old status snapshots.

@@ -12,7 +12,9 @@ this housekeeping request. There is no outstanding non-Telegram merge queue.
 
 The owner requested status cleanup followed by operations/recovery follow-up.
 This work is saved on `docs/housekeeping-2026-11-16`, candidate **10.34**, for review;
-it is not merged or deployed. Candidate metadata follows the existing release gate.
+it is not merged or deployed. The owner now authorizes merging #627 when its
+required checks pass, followed by normal guarded deployment. Candidate metadata
+follows the existing release gate.
 The [November 16 operations review](operations/housekeeping-2026-11-16.md) records
 current evidence, completed audit work and the remaining recovery decisions.
 
@@ -27,16 +29,36 @@ Completed findings:
 - Advisory posters shipped in 10.33 with the office-supplied logo. Exact fonts and
   optional region/attention pickers remain ideas, not unfinished release work.
 
-**Next action:** review this documentation candidate, confirm phone receipt for
+**Next action:** finish the #627 dependency-gate repair and require fresh complete
+CI before its authorized merge/deployment; then confirm phone receipt for
 [test issue #576](https://github.com/jongsky25/css-is/issues/576), and settle the
 independent backup destination/retention and recovery targets in the operations review.
 Historical provider access evidence and an isolated full recovery drill remain open.
 No production restore, credential rotation, new notification, merge or deployment
-was performed. The user has not requested a production release of this candidate.
+was performed at the initial review checkpoint. The subsequent owner request
+authorizes #627 release only after the normal gates pass.
 
 Optional feature backlog remains Documents phase 3 (consented staff study), remaining
 request-context screens, review-history pagination and accessibility/device checks.
 The count/filter cold-path performance exception remains documented in the handoff.
+
+### Release-gate repair — November 16, 2026
+
+Initial CI 43807788405 found CVE-2026-126360 / GHSA-mf5v-w3w3-f6cg in
+opentelemetry-api 1.45.1, a transitive FastAPI runtime dependency. Pin the advisory's
+fixed 1.45.2 and regenerate runtime/test locks with locked uv 0.13.4, retaining
+unrelated versions. No advisory suppression or release-gate change. Require fresh
+normal/shuffled suites and dependency audit on the repaired head. See
+[dependency maintenance](DEPENDENCIES.md). Remaining decisions proceed one at a time,
+starting with receipt of the existing phone notification test.
+
+Local repair checks: cloud setup/doctor passed on Python 3.11; 69 MCP read,
+integration read and release-gate tests passed with no failures/skips. Strict
+runtime-lock and installed-test dependency scans found no known vulnerabilities;
+the installed-test report passed exact inventory coverage. Lock fingerprints,
+release metadata and diff checks passed. Full normal/shuffled suites and the
+container/tooling/deployment audit remain required in fresh CI.
+
 
 ## Historical setup and release evidence
 
