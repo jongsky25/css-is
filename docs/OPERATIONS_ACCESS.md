@@ -1,14 +1,28 @@
 # Operations access and recovery — setup step 5
 
-Inspected on 2026-10-31; the owner subsequently authorized a bucket privacy
-change. The bucket is now private and anonymous metadata/listing returns 401.
-Core hosting/log/storage access and the database-level isolated recovery check
-are verified. Owner Operations evidence confirms saving and daily backups.
-Open operational follow-ups remain documented below: audit mismatch, historical
-exposure, mount/cold-start verification, independent retention and recovery
-objectives. The user deferred the audit investigation while finishing the
-collaboration workflow. These limits do not establish that all production
-operations or security issues are resolved.
+## Current outcome — November 16, 2026
+
+The October 31 evidence below is historical. The audit writer fix and reviewed
+incident acknowledgment shipped on November 1 in #573/#574; the original history
+remains preserved and the strict verifier still reports its historical failure.
+See [the completed investigation](operations/audit-2026-11-01.md). No further data
+repair is needed for that reviewed incident; changed history/new failures remain actionable.
+
+Fresh checks confirm production RUNNING, health 200/ok, the private backup bucket
+(anonymous metadata 401), and the writable bucket mount at `/data`. The latest
+scheduled monitor recorded all four signals healthy twice. Mount configuration
+was also recorded as verified on November 4; it is no longer a missing check.
+
+Open: historical provider access evidence/exposure decisions, independently retained
+recovery copies, agreed recovery targets and an isolated full application/cold-start
+recovery exercise. See [the current evidence and follow-up plan](operations/housekeeping-2026-11-16.md).
+The earlier database-level recovery drill remains valid evidence within its stated limits.
+
+## Historical evidence — October 31, 2026
+
+All remaining sections record what was known at that checkpoint. Later evidence
+above and in the linked November 1 investigation supersedes old unresolved-audit
+and missing-mount statements; it does not erase the original observations.
 
 ## Verified hosting and code
 

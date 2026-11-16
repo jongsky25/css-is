@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.33"
+APP_VERSION = "10.34"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.34",
+        "date": "November 16, 2026",
+        "summary": "Bring project status and recovery notes up to date.",
+        "changes": [
+            "Project notes now distinguish completed releases and audit fixes from remaining recovery and notification checks.",
+            "This update changes documentation only; application workflows stay the same."
+        ]
+    },
     {
         "version": "10.33",
         "date": "November 13, 2026",

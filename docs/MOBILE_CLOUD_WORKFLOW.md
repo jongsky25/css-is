@@ -87,4 +87,6 @@ If access blocks saving, say clearly that the work has not been saved remotely.
 Use [the monitoring guide](MONITORING_WORKFLOW.md) for the checks already available,
 known gaps and symptom-driven investigation. The audit warning and historical
 bucket exposure remain tracked in [operations findings](OPERATIONS_ACCESS.md).
-They are deferred application/operations tasks, not automatic next development work.
+The historical audit incident is acknowledged. The November 16 request resumes
+operations/recovery follow-up; use the current status and operations review rather
+than the older deferral notes.

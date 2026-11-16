@@ -1,27 +1,21 @@
 # Operational monitoring
 
-## Deployment and verification status — November 1, 2026
+## Verified status — November 16, 2026
 
-Release 9.58 is merged/deployed through PR #575 and production run 41273309243.
-The live private probes returned all four signals healthy in two observations.
-Marked test issue #576 was created by GitHub Actions and assigned to the owner;
-a retry reused that issue without sending an additional notification.
+The main schedule is executing. [Run 43784570062](https://github.com/jongsky25/css-is/actions/runs/43784570062)
+was triggered by `schedule` at 01:09:27 UTC and completed successfully. Its check
+log records `true` for uptime, backup, audit and monitor in both observations,
+with no incident transitions. Four preceding scheduled runs on November 15 also
+completed successfully. This is observed execution, not a five-minute delivery SLA.
+A successful run alone does not establish all signals healthy; this finding uses
+the actual signal summary. The earlier schedule-registration uncertainty is closed.
 
-The automatic cron is configured on main but has not yet produced an observed
-scheduled execution. Do not equate the successful manual test with verified
-automatic coverage. The owner's screenshot and the API now confirm the workflow
-is enabled. Command access has recovered; scheduling registration was refreshed
-at 06:15:58 UTC on November 1 by disabling and immediately re-enabling it.
-Normal manual run 41280398437 passed all four signals twice with no alert changes.
-Actual scheduled execution and phone receipt confirmation remain unverified.
-
-The November 1 investigation found no scheduled events despite the enabled state,
-valid cron on main and successful manual checks. GitHub Status reported no active
-incident; the cause remains unconfirmed. Candidate `fix/monitor-schedule-registration`
-(9.59) spells out the same minutes to prompt source-based registration. It requires
-the normal release gates and promotion; only an actual schedule-triggered run can
-establish success. Do not ask the owner to find another Enable button.
-
+[Test issue #576](https://github.com/jongsky25/css-is/issues/576) remains open.
+Phone receipt is not confirmed; do not send another test or close it merely because
+scheduled checks pass. The owner has been asked to confirm receipt.
+The historical audit incident was acknowledged in deployed 9.57; raw chain failure
+for that unchanged history is expected. New failures remain actionable.
+See [the operations review](operations/housekeeping-2026-11-16.md).
 
 See [current handoff](SETUP_STATUS.md) for exact evidence and next actions.
 Automated sign-in/out events appear under the deployment account in audit/usage
@@ -29,12 +23,11 @@ views. Public issue metadata remains generic; private operational records stay
 inside the authenticated application.
 
 
-## Candidate 9.58 — November 1, 2026
+## Deployed checker design — introduced in 9.58
 
-Owner requested automatic outage, backup and new-audit-failure alerts, including a
-phone delivery test. Implementation is on `feat/operational-monitoring`; deployment
-and delivery evidence belong in [setup status](SETUP_STATUS.md). Do not claim the
-schedule or phone delivery is verified from source/tests alone.
+The owner requested automatic outage, backup and new-audit-failure alerts, including a
+phone delivery test. The checker shipped in #575. Current execution evidence is above;
+phone delivery still needs owner confirmation.
 
 ### Independent checker
 
@@ -147,7 +140,7 @@ recipient. Existing behavior remains in place.
 | Traffic, latency, errors, saturation | monitoring.py and admin `/ops` | Rolling in-memory metrics, up to 2,000 recent requests; resets on process restart. |
 | Request diagnostics | requests.log and rotated requests.log.1 | Best-effort local JSON logs, about 5 MiB rotation threshold checked periodically. These are not verified durable/offsite logs. |
 | Durability | `/ops` save status and snapshot metadata | Save/stall/failure state; owner confirmed current saving. Backup existence alone does not establish integrity or recovery. |
-| Audit consistency | storage.verify_audit_chain and `/ops` | Detects stored hash/link inconsistencies; current #8949 warning remains unresolved. It does not identify an actor or cause. |
+| Audit consistency | storage.verify_audit_chain and `/ops` | Detects stored hash/link inconsistencies; the reviewed historical incident is acknowledged (see the November 1 investigation). It does not identify an actor or cause. |
 | Build/runtime diagnostics | Hugging Face build/run logs | Hosting logs were readable in bounded samples; no independent retention was verified. |
 | Change verification | GitHub Actions CI/release/deploy workflows | Metadata, dependencies, full normal/shuffled tests and aggregate gate; deployment checks run for main. No new pipeline was added. |
 | Recovery evidence | Existing snapshot and backups.restore_backup | Isolated database restore passed. Full app recovery, cold-start mount access and agreed RPO/RTO remain separate checks. |
@@ -190,8 +183,8 @@ facts needed to explain the outcome.
 
 ## Remaining monitoring choices
 
-External outage detection/phone alerts, durable centralized diagnostics and provider
-access-audit retention are gaps. They require a real destination, account access,
+GitHub provides external scheduled detection; phone receipt, durable centralized
+diagnostics and provider access-audit retention remain gaps. They require a real destination, account access,
 retention/privacy choices and a delivery test. No duplicate monitoring SDK or paid
 service was added simply to complete the checklist. If requested later, prepare the
 concrete configuration, confirm any cost/data-sharing decision, and verify delivery
@@ -199,5 +192,5 @@ before claiming automatic coverage. Existing GitHub failure notifications depend
 on the owner's account settings and were not tested by generating a failure.
 
 The [operations record](OPERATIONS_ACCESS.md) separately tracks the earlier public
-backup exposure, mount identity, independent backup retention, recovery objectives
-and audit mismatch. They remain visible while collaboration work proceeds.
+backup exposure, independent backup retention, recovery objectives and full recovery
+validation. The mount is now verified and the historical audit incident acknowledged. They remain visible while collaboration work proceeds.

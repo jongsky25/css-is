@@ -1,34 +1,48 @@
 # Cloud/mobile setup status
 
-## Current work: Documents phases 0 to 2 complete; next direction awaiting the owner
+## Current status — November 16, 2026
 
-Documents phases 0 to 2 are built, deployed and documented (see the
-[handoff status](DOCUMENTS_NEXT_PHASE_HANDOFF.md) for every release, merge commit and
-deployment run through 10.24). Nothing is in progress. Choices for the owner: phase 3
-(staff usability study; needs explicit authorization, staff consent and an approved
-synthetic preview, and the local server is not a public preview), the optional remaining
-work screens and polish listed in the handoff, or the older open PRs.
+Verified main: `33e0089ba281b76a2ea775adf0c1a3d8ad3486de`, version **10.33**.
+[PR #626](https://github.com/jongsky25/css-is/pull/626) is merged and its
+[guarded deployment](https://github.com/jongsky25/css-is/actions/runs/43434733111)
+succeeded. Documents phases 0–2 are complete through 10.24; see the November 11
+status in [the Documents handoff](DOCUMENTS_NEXT_PHASE_HANDOFF.md).
+At inspection, the only open PR was Telegram #488; Telegram is excluded from
+this housekeeping request. There is no outstanding non-Telegram merge queue.
 
-Older open PRs: `main`'s history appears to have been rewritten or compacted after late
-October (inferred, not confirmed: it now has 260 commits), so the base commits of PRs #1 to
-#523 are no longer on `main` and `git` ahead/behind counts for them are meaningless (they
-show hundreds of commits and files). Compare each by its own commits
-instead, for example `git merge-tree --write-tree --merge-base=<merge-base with its old
-base> origin/main <branch>`, and bring a PR forward by cherry-picking its own commit(s)
-onto current `main`; every such PR also needs a version above the current release.
+The owner requested status cleanup followed by operations/recovery follow-up.
+This work is saved on `docs/housekeeping-2026-11-16`, candidate **10.34**, for review;
+it is not merged or deployed. Candidate metadata follows the existing release gate.
+The [November 16 operations review](operations/housekeeping-2026-11-16.md) records
+current evidence, completed audit work and the remaining recovery decisions.
 
-Workspace note: this image has Node 22 and no Tesseract, so `cloud_setup.sh` exits 1 and
-OCR tests only run in CI; browser tests run locally after the revision workaround in
-[the workspace guide](CLOUD_WORKSPACE.md).
+Completed findings:
 
-## Public advisory posters (10.33) — built on a review branch
+- The audit writer fix and historical acknowledgment shipped in #573/#574.
+  Do not reopen the reviewed incident or rewrite its original records/hashes.
+- Scheduled monitoring is executing: [November 16 run](https://github.com/jongsky25/css-is/actions/runs/43784570062)
+  recorded two healthy observations for all four signals. Phone receipt is separate.
+- Production is RUNNING; health returned 200/ok. The backup bucket is private,
+  anonymous metadata returns 401, and its writable `/data` mount is verified.
+- Advisory posters shipped in 10.33 with the office-supplied logo. Exact fonts and
+  optional region/attention pickers remain ideas, not unfinished release work.
 
-Branch `claude/quirky-sagan-lkx9wg`: an activity can generate the BLHSD advisory image from its link-tree
-details, with a per-advisory contact, an auto number (`YYYY-MMDD-NNN`), PNG/PDF download and an optional
-public display on the link tree. See [the advisory guide](ADVISORY_POSTERS.md) for scope, files and limits.
-Status: see the end-of-session note in the pull request; not merged and not deployed unless that note says so.
-Next action: owner review of the poster against the office image, then a decision on merging (a merge to `main`
-deploys). Replace the bundled approximations (fonts, Bagong Pilipinas logo) with the official files when available.
+**Next action:** review this documentation candidate, confirm phone receipt for
+[test issue #576](https://github.com/jongsky25/css-is/issues/576), and settle the
+independent backup destination/retention and recovery targets in the operations review.
+Historical provider access evidence and an isolated full recovery drill remain open.
+No production restore, credential rotation, new notification, merge or deployment
+was performed. The user has not requested a production release of this candidate.
+
+Optional feature backlog remains Documents phase 3 (consented staff study), remaining
+request-context screens, review-history pagination and accessibility/device checks.
+The count/filter cold-path performance exception remains documented in the handoff.
+
+## Historical setup and release evidence
+
+Everything below is a dated historical checkpoint. Old “next action,” candidate,
+access, workspace and pending-merge statements do not override the current status
+above. Recheck live state before resuming any old queue or operational action.
 
 ## Documents next phase — verified post-10.12 handoff
 
