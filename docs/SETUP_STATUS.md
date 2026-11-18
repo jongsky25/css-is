@@ -6,6 +6,7 @@ The owner's later “merge” authorizes #630 as well as #629, superseding the
 historical draft-only cutoff below. “Okay queue one by one” then queues the
 Safari/WebKit and accessibility increment first, followed by Division follow-up
 counts/filters. Candidate **10.38** is on `test/documents-webkit-accessibility`,
+saved as [draft #631](https://github.com/jongsky25/css-is/pull/631),
 stacked behind #630. See [scope, fixes and verification](DOCUMENT_BROWSER_ACCESSIBILITY.md).
 It adds a required WebKit acceptance job and repairs enlarged-text overflow found
 in work grids/controls and the Documents new-correspondence link.
@@ -16,7 +17,9 @@ tests (21 WebKit, 60 Chromium/context/reconciliation/release-gate checks), with 
 failures/errors/skips; hosted full CI remains required. Reconcile each successor to main
 after predecessor merge, require fresh complete CI and successful predecessor
 guarded deployment, and merge only the currently verified head. Keep the existing
-conditional release follow-up; do not create another. Division filters are the
+conditional release follow-up; do not create another. It now also reconciles
+#631 after #630 deployment, assesses its fresh CI, then prepares Division filters
+as a separate draft PR and stops. Neither new draft is authorized for release. Division filters are the
 next separate implementation, not part of 10.38. Do not contact staff or claim
 real Safari/VoiceOver validation from Linux browser tests.
 

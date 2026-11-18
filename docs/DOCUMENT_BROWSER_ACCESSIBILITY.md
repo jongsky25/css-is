@@ -66,5 +66,6 @@ filters to Division follow-up using current chief/OIC scope and the existing sha
 classifier. Define mixed-state document semantics consistently with My next steps;
 filter before pagination and prove no restricted-document or private-work count
 leaks. Benchmark synthetic scopes and preserve current sort/queue return behavior.
-Build this as a separate PR after this increment is saved; do not combine it here.
+The existing conditional follow-up will build this as a separate draft PR after
+#630 deployment and #631 reconciliation/fresh CI assessment; do not combine it here.
 The accepted 10k count-performance exception remains accepted, not a new blocker.
