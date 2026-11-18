@@ -6,14 +6,15 @@
 and WebKit verification, JUnit/AI gates, audit/metadata, fresh verified backup,
 live-version check and diagnostics. Main is `7fbb8d1`.
 
-The next implementation is on `feat/documents-division-filters`: full permitted
+Saved as [draft #632](https://github.com/jongsky25/css-is/pull/632), implementation
+`ce88741`, on `feat/documents-division-filters`:  full permitted
 Division exception counts, native state/overdue filters before pagination, and
 preserved queue context. See [semantics and verification](DOCUMENT_DIVISION_FILTERS.md).
 Local acceptance passed 49 tests with no failures/errors/skips, including phone
 journeys, current OIC scope and private-work checks. JUnit, 10.39 metadata and
 diff checks passed; full hosted CI remains pending.
 This candidate is draft-only; no merge/deployment is authorized. The existing
-follow-up task stops after saving and reporting this draft. Staff/device testing
+follow-up task is now complete and disabled after saving this draft. Staff/device testing
 and the accepted performance exception remain outside this increment.
 
 
