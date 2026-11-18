@@ -17,6 +17,12 @@ context and current access checks. See the [pagination design and checks](REQUES
 Local verification: 74 request/reconciliation checks and 14 final pagination
 checks passed (overlapping groups), with no failures/errors/skips. Metadata and
 diff checks passed; full PR CI remains required.
+Saved as [draft #630](https://github.com/jongsky25/css-is/pull/630), implementation
+`7b949e7`. Conditional hourly follow-up
+`Automation_682f07db77048191ae8279bba93cb8fc` was created successfully to complete
+#629's checked merge/deployment and then reconcile #630 to main, assess its fresh
+CI and report. Do not create a duplicate task. The task must stop after that bounded
+follow-up; it must not merge #630.
 This next increment is draft-only, not authorized for merge/deployment. After #629
 merges and its guarded deployment succeeds, reconcile/retarget this branch to
 main and require fresh complete CI. Preserve both increments; do not rebuild them.
