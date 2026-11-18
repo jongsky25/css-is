@@ -1,3 +1,11 @@
+## 10.38 — November 18, 2026
+
+- Fix enlarged-text overflow in shared-work grids, controls and the Documents new-correspondence link.
+
+- Add a required WebKit Documents acceptance job with locked dependencies and a no-failure/no-skip report gate.
+- Exercise request navigation, source review, target-date edits and history pagination on phone/desktop with scripts enabled/disabled, plus emulated touch and 320-pixel reflow with 200% text.
+- Isolate passive telemetry in the synthetic browser harness while retaining business-write and persistence assertions.
+
 ## 10.37 — November 18, 2026
 
 - Add bounded, newest-first source-review history pages with Older reviews and Latest reviews links, keeping the Documents queue and opening older history automatically.

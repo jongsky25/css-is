@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.37"
+APP_VERSION = "10.38"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.38",
+        "date": "November 18, 2026",
+        "summary": "Keep document screens usable with enlarged text.",
+        "changes": [
+            "Work screens and the new-correspondence link now wrap within narrow screens when text is enlarged.",
+            "Checks cover keyboard use, touch emulation and narrow layouts with enlarged text."
+        ]
+    },
     {
         "version": "10.37",
         "date": "November 18, 2026",

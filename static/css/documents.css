@@ -121,3 +121,6 @@ body:has(.doc-detail) .sf-float{position:static;margin:1rem auto;display:flex;wi
  html:has(.doc-intake-review){scroll-padding-bottom:140px}
  .doc-intake-review input,.doc-intake-review textarea,.doc-intake-review select{scroll-margin-bottom:140px}
 }
+
+/* Allow the registration link to wrap when text is enlarged. */
+.doc-heading .btn{box-sizing:border-box;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}

@@ -1,5 +1,25 @@
 # Cloud/mobile setup status
 
+## Sequential Documents queue — November 18, 2026
+
+The owner's later “merge” authorizes #630 as well as #629, superseding the
+historical draft-only cutoff below. “Okay queue one by one” then queues the
+Safari/WebKit and accessibility increment first, followed by Division follow-up
+counts/filters. Candidate **10.38** is on `test/documents-webkit-accessibility`,
+stacked behind #630. See [scope, fixes and verification](DOCUMENT_BROWSER_ACCESSIBILITY.md).
+It adds a required WebKit acceptance job and repairs enlarged-text overflow found
+in work grids/controls and the Documents new-correspondence link.
+
+Authorized release order is #629 then #630. This candidate is queued for review;
+its merge/deployment is not yet authorized. Local verification passed 81 focused
+tests (21 WebKit, 60 Chromium/context/reconciliation/release-gate checks), with no
+failures/errors/skips; hosted full CI remains required. Reconcile each successor to main
+after predecessor merge, require fresh complete CI and successful predecessor
+guarded deployment, and merge only the currently verified head. Keep the existing
+conditional release follow-up; do not create another. Division filters are the
+next separate implementation, not part of 10.38. Do not contact staff or claim
+real Safari/VoiceOver validation from Linux browser tests.
+
 ## Authorized #629 release and next history increment — November 18, 2026
 
 The owner instructed “merge when ready then do the next.” #629 (10.36) is now

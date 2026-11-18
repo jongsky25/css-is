@@ -19,7 +19,7 @@ SIZES = [pytest.param(390, id='phone'), pytest.param(1280, id='desktop')]
 SCRIPTS = [pytest.param(False, id='no-script'), pytest.param(True, id='script')]
 
 
-def open_page(browser, viewer, width, scripts, writes):
+def open_page(browser, viewer, width, scripts, writes, *, large_text=False):
     context = browser.new_context(viewport={'width': width, 'height': 844}, java_script_enabled=scripts)
     page = context.new_page()
 
@@ -29,6 +29,9 @@ def open_page(browser, viewer, width, scripts, writes):
         if parsed.hostname != 'office.test':
             route.abort(); return
         target = parsed.path + ('?' + parsed.query if parsed.query else '')
+        # Passive UX telemetry is outside this synthetic business-write assertion.
+        if parsed.path == '/telemetry':
+            route.fulfill(status=204); return
         if request.method == 'POST':
             writes.append(target)
             response = viewer.post(target, content=request.post_data, headers={'content-type': request.headers['content-type']},
@@ -43,7 +46,10 @@ def open_page(browser, viewer, width, scripts, writes):
             route.fulfill(status=200, content_type='text/html',
                           body=f'<!doctype html><meta http-equiv="refresh" content="0;url={location}">')
             return
-        route.fulfill(status=response.status_code, body=response.content,
+        body = response.content
+        if large_text and 'text/html' in response.headers.get('content-type', ''):
+            body = body.replace(b'<html', b'<html style="font-size:200%"', 1)
+        route.fulfill(status=response.status_code, body=body,
                       headers={k: v for k, v in response.headers.items() if k.lower() not in ('content-length', 'content-encoding', 'set-cookie')})
     page.route('**/*', serve)
     return context, page
