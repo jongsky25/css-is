@@ -66,3 +66,37 @@ def test_emulated_touch_opens_context_link(browser, proposal_record, viewer):
         assert page.locator('#request-comparison').is_visible() and fits(page)
     finally:
         context.close()
+
+
+@pytest.mark.parametrize('scripts', [False, True])
+@pytest.mark.parametrize('font_family', [None, 'DejaVu Sans'])
+def test_request_navigation_reflows_with_large_text(browser, proposal_record, viewer, scripts, font_family):
+    c, u, doc, saved, receipt, target, message = prepare(proposal_record, viewer)
+    writes = []
+    context, page = open_page(browser, viewer, 320, scripts, writes, large_text=True, font_family=font_family)
+    page.route('**/telemetry', lambda route: route.fulfill(status=204))
+    try:
+        for path in (target, f"/work/{saved['case_id']}/consolidation?{context_query(saved)}", receipt):
+            page.goto('http://office.test' + path)
+            # Apply enlarged text in the initial HTML, including without scripts.
+            assert page.evaluate("getComputedStyle(document.documentElement).fontSize") == '32px'
+            assert fits(page), page.evaluate("""() => ({
+                viewport: innerWidth, scroll: document.documentElement.scrollWidth,
+                overflow: [...document.querySelectorAll('body *')].map(e => {
+                    const r = e.getBoundingClientRect();
+                    return {tag: e.tagName, cls: e.className, id: e.id,
+                            left: r.left, right: r.right, width: r.width};
+                }).filter(r => r.width && (r.right > innerWidth || r.left < 0)).slice(0, 30)
+            })""")
+            if path == target:
+                choice = page.get_by_label('Document', exact=True)
+                choice.select_option(str(doc['id']))
+                assert choice.input_value() == str(doc['id']) and fits(page)
+            if path != receipt:
+                link = page.get_by_role('link', name='Back to reviewed request and comparison', exact=True)
+                assert link.is_visible()
+                link.focus()
+                assert link.evaluate('(e) => e === document.activeElement')
+        assert not writes
+    finally:
+        context.close()

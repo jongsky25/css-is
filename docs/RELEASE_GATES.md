@@ -16,13 +16,15 @@ The shared workflow checks:
 - Python 3.11, with complete test dependencies, Node.js 24, Chromium, and
   the production Tesseract OCR packages.
 - The complete suite in normal order and shuffled order (seed 311).
+- Explicit Documents WebKit accessibility journeys, including keyboard, emulated
+  touch and enlarged-text reflow, with standard WebKit/system installation.
 - A nonempty JUnit report with no failures, errors, or skipped tests.
 - A version greater than the base commit's version.
 - Agreement between `APP_VERSION`, the first in-app changelog entry, the first
   Markdown changelog release, and the service-worker cache version.
 
 The final **Required checks** job runs even when prerequisites fail or are skipped
-and succeeds only when metadata validation, the dependency audit and the entire
+and succeeds only when metadata validation, the dependency audit, Documents WebKit accessibility and the entire
 test matrix succeed. Cancelled workflows cannot produce a successful gate.
 JUnit results and resolved dependencies are retained as workflow artifacts
 for 14 days, including after test failure.

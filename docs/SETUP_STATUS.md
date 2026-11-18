@@ -1,5 +1,90 @@
 # Cloud/mobile setup status
 
+## Verified 10.37 and current draft — November 18, 2026
+
+Guarded deployment 44259658367 attempt 2 succeeded for main `f448d8c`: normal
+and shuffled suites, JUnit/AI evidence gates, metadata, audit, Required checks,
+fresh verified backup, code-only deploy, live version 10.37 and diagnostics.
+Both authorized releases (#629/#630) are now deployed. Draft #631 is reconciled
+with main and retargeted to main. Hosted overflow was a 321px Documents heading
+with DejaVu Sans at a 320px viewport; reproduced locally and fixed by wrapping
+the heading. Default-font and DejaVu Sans regressions now pass: 62 Chromium/
+context/reconciliation/release-gate checks plus 23 WebKit journeys, no failures
+or skips. Fresh full hosted CI remains required before readiness is reported.
+Historical pending/retry checkpoints below are superseded.
+
+
+## 10.37 deployment retry — November 18, 2026
+
+Guarded deployment 44259658367 attempt 1 did not deploy: normal tests stalled
+after calendar workspace browser cases and hit the unchanged 75-minute job
+limit (job 134649637712). Shuffled tests, metadata and dependency audit passed;
+Required checks failed and deploy/diagnostics were skipped. Main remains
+`f448d8c`; live 10.37 is not verified. Retried failed jobs through the existing
+push workflow, preserving all verification, backup and version gates. Assess
+attempt 2 before proceeding; if the browser stall repeats, investigate the
+harness rather than extending timeouts or bypassing checks. #631 remains draft
+and awaits successful 10.37 guarded deployment before reconciliation.
+
+
+## Latest release checkpoint — November 18, 2026, 07:32 UTC
+
+#629 deployed 10.36 successfully in run 44233646882, including fresh verified
+backup, live-version check and diagnostics. #630 was reconciled to main and
+passed fresh CI 44242469772: both complete test orders, JUnit no-failure/no-skip
+and AI evidence gates, metadata, dependency audit and Required checks. Live
+reviews/threads were empty, and main ruleset 26274179 was strict, active and
+without bypass actors. Normal merge was bound to verified head `fa9b204`,
+producing main `f448d8c8d0cff029204baabe1b1b1f46f2e3f4aa`.
+
+Guarded deployment [44259658367](https://github.com/jongsky25/css-is/actions/runs/44259658367)
+is queued; 10.37 is not yet verified live. After all deployment and diagnostics
+jobs succeed, reconcile this draft #631 with current main, retarget it, fix
+the known hosted enlarged-text reflow failures and require fresh complete CI.
+Preserve the strict assertions. Then prepare Division counts/filters separately
+as queued below. No merge/deployment beyond #630 is authorized.
+
+
+## Release checkpoint — November 18, 2026, 03:55 UTC
+
+#629 merged normally at verified head `526d926`, producing main `6aefb7c`.
+CI 44221827641 passed both complete orders, no-failure/no-skip JUnit and AI
+evidence gates, metadata, dependency audit and aggregate Required checks.
+Reviews/threads were empty; live main ruleset 26274179 was active, strict and
+without bypass actors. Guarded deployment [44233646882](https://github.com/jongsky25/css-is/actions/runs/44233646882)
+is running; success is not yet established. Wait for all deployment/diagnostics
+before reconciling #630 to main and requiring fresh full CI.
+
+Draft #631 hosted CI 44226570965 failed normal/shuffled suites and WebKit.
+WebKit passed 19 journeys but both 320px/200% reflow cases overflowed on the
+request work page in Ubuntu CI, despite the earlier local Debian pass. Keep the
+strict assertion and gate; investigate/fix on the review branch during its queued
+reconciliation after #630 deployment. This is not a user-only blocker.
+
+
+## Sequential Documents queue — November 18, 2026
+
+The owner's later “merge” authorizes #630 as well as #629, superseding the
+historical draft-only cutoff below. “Okay queue one by one” then queues the
+Safari/WebKit and accessibility increment first, followed by Division follow-up
+counts/filters. Candidate **10.38** is on `test/documents-webkit-accessibility`,
+saved as [draft #631](https://github.com/jongsky25/css-is/pull/631),
+stacked behind #630. See [scope, fixes and verification](DOCUMENT_BROWSER_ACCESSIBILITY.md).
+It adds a required WebKit acceptance job and repairs enlarged-text overflow found
+in work grids/controls and the Documents new-correspondence link.
+
+Authorized release order is #629 then #630. This candidate is queued for review;
+its merge/deployment is not yet authorized. Local verification passed 81 focused
+tests (21 WebKit, 60 Chromium/context/reconciliation/release-gate checks), with no
+failures/errors/skips; hosted full CI remains required. Reconcile each successor to main
+after predecessor merge, require fresh complete CI and successful predecessor
+guarded deployment, and merge only the currently verified head. Keep the existing
+conditional release follow-up; do not create another. It now also reconciles
+#631 after #630 deployment, assesses its fresh CI, then prepares Division filters
+as a separate draft PR and stops. Neither new draft is authorized for release. Division filters are the
+next separate implementation, not part of 10.38. Do not contact staff or claim
+real Safari/VoiceOver validation from Linux browser tests.
+
 ## Current release checkpoint — November 18, 2026
 
 #629 is merged as main `6aefb7c719852e46e8e598be5fcc63a8b8678325`.

@@ -168,10 +168,42 @@ jobs:
           path: test-results/
           retention-days: 14
 
+  documents_webkit:
+    name: Documents WebKit accessibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-test.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install locked test environment and WebKit
+        run: |
+          python -m venv .venv-webkit
+          .venv-webkit/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
+          .venv-webkit/bin/python -m pip check
+          .venv-webkit/bin/python -m playwright install --with-deps webkit
+      - name: Verify Documents journeys in WebKit
+        run: |
+          mkdir -p test-results
+          .venv-webkit/bin/python scripts/cloud_workspace.py test tests/browser_documents_webkit.py --junitxml=test-results/webkit.xml
+          .venv-webkit/bin/python scripts/check_release.py junit test-results/webkit.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: documents-webkit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results/
+          retention-days: 14
+
   required:
     name: Required checks
     if: always()
-    needs: [metadata, dependencies, tests]
+    needs: [metadata, dependencies, tests, documents_webkit]
     runs-on: ubuntu-latest
     steps:
       - name: Require every prerequisite to succeed
@@ -179,7 +211,9 @@ jobs:
           METADATA_RESULT: ${{ needs.metadata.result }}
           DEPENDENCY_RESULT: ${{ needs.dependencies.result }}
           TEST_RESULT: ${{ needs.tests.result }}
+          WEBKIT_RESULT: ${{ needs.documents_webkit.result }}
         run: |
           test "$METADATA_RESULT" = success
           test "$DEPENDENCY_RESULT" = success
           test "$TEST_RESULT" = success
+          test "$WEBKIT_RESULT" = success
