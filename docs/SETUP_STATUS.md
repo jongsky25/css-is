@@ -1,5 +1,18 @@
 # Cloud/mobile setup status
 
+## 10.37 deployment retry — November 18, 2026
+
+Guarded deployment 44259658367 attempt 1 did not deploy: normal tests stalled
+after calendar workspace browser cases and hit the unchanged 75-minute job
+limit (job 134649637712). Shuffled tests, metadata and dependency audit passed;
+Required checks failed and deploy/diagnostics were skipped. Main remains
+`f448d8c`; live 10.37 is not verified. Retried failed jobs through the existing
+push workflow, preserving all verification, backup and version gates. Assess
+attempt 2 before proceeding; if the browser stall repeats, investigate the
+harness rather than extending timeouts or bypassing checks. #631 remains draft
+and awaits successful 10.37 guarded deployment before reconciliation.
+
+
 ## Latest release checkpoint — November 18, 2026, 07:32 UTC
 
 #629 deployed 10.36 successfully in run 44233646882, including fresh verified
