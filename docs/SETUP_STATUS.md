@@ -1,5 +1,22 @@
 # Cloud/mobile setup status
 
+## Release checkpoint — November 18, 2026, 03:55 UTC
+
+#629 merged normally at verified head `526d926`, producing main `6aefb7c`.
+CI 44221827641 passed both complete orders, no-failure/no-skip JUnit and AI
+evidence gates, metadata, dependency audit and aggregate Required checks.
+Reviews/threads were empty; live main ruleset 26274179 was active, strict and
+without bypass actors. Guarded deployment [44233646882](https://github.com/jongsky25/css-is/actions/runs/44233646882)
+is running; success is not yet established. Wait for all deployment/diagnostics
+before reconciling #630 to main and requiring fresh full CI.
+
+Draft #631 hosted CI 44226570965 failed normal/shuffled suites and WebKit.
+WebKit passed 19 journeys but both 320px/200% reflow cases overflowed on the
+request work page in Ubuntu CI, despite the earlier local Debian pass. Keep the
+strict assertion and gate; investigate/fix on the review branch during its queued
+reconciliation after #630 deployment. This is not a user-only blocker.
+
+
 ## Sequential Documents queue — November 18, 2026
 
 The owner's later “merge” authorizes #630 as well as #629, superseding the
