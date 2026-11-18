@@ -79,7 +79,14 @@ def test_request_navigation_reflows_with_large_text(browser, proposal_record, vi
             page.goto('http://office.test' + path)
             # Apply enlarged text in the initial HTML, including without scripts.
             assert page.evaluate("getComputedStyle(document.documentElement).fontSize") == '32px'
-            assert fits(page)
+            assert fits(page), page.evaluate("""() => ({
+                viewport: innerWidth, scroll: document.documentElement.scrollWidth,
+                overflow: [...document.querySelectorAll('body *')].map(e => {
+                    const r = e.getBoundingClientRect();
+                    return {tag: e.tagName, cls: e.className, id: e.id,
+                            left: r.left, right: r.right, width: r.width};
+                }).filter(r => r.width && (r.right > innerWidth || r.left < 0)).slice(0, 30)
+            })""")
             if path == target:
                 choice = page.get_by_label('Document', exact=True)
                 choice.select_option(str(doc['id']))
