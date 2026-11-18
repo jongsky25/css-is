@@ -1,3 +1,8 @@
+## 10.39 — November 18, 2026
+
+- Count all permitted Division follow-up exceptions by current workflow state.
+- Apply state and overdue filters before pagination and preserve queue return context.
+
 ## 10.38 — November 18, 2026
 
 - Fix enlarged-text overflow in shared-work grids, controls and the Documents new-correspondence link.

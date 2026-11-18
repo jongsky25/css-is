@@ -117,7 +117,7 @@ def test_counts_recheck_access_and_exclude_inactive_records(registry):
     with pytest.raises(permissions.Denied):actions.page(c,u[0],today=TODAY)
 
 
-@pytest.mark.parametrize('query',['step_state=bad','overdue=yes','view=division&step_state=all'])
+@pytest.mark.parametrize('query',['step_state=bad','overdue=yes','view=division&step_state=bad'])
 def test_invalid_filters_offer_native_recovery(detail_record,viewer,query):
     response=viewer.get('/documents/actions?'+query)
     assert response.status_code==400

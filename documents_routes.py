@@ -281,10 +281,8 @@ def make_router(templates,get_conn):
             view=request.query_params.get('view','mine')
             if view not in ('mine','division'):
                 return HTMLResponse('Unknown action view.',status_code=400)
-            if view=='division' and any(key in request.query_params for key in ('step_state','overdue')):
-                raise ValueError('Step filters are available on My next steps only.')
             filters=({'step_state':request.query_params.get('step_state','all'),
-                      'overdue':request.query_params.get('overdue','0')} if view=='mine' else {})
+                      'overdue':request.query_params.get('overdue','0')})
             page=actions.page(conn,user,view,before=request.query_params.get('before','0'),
                               before_due=request.query_params.get('due',''),**filters)
             page['first_url']='/documents/actions?'+urlencode({'view':view,**filters})

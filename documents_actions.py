@@ -378,7 +378,7 @@ def _mark_uncacheable(key):
 def _personal_page(conn,scope,today,before,before_due,limit,state,overdue):
     indexes=_personal_index(conn,scope,today)
     if indexes is None:
-        return _uncached_personal_page(conn,scope,today,before,before_due,limit,state,overdue)
+        return _uncached_page(conn,scope,today,before,before_due,limit,state,overdue)
     counts={name:len(indexes[name,overdue]) for name in STATES}
     matches=indexes[state,overdue]
     start=bisect_right(matches,(before_due,-before)) if before else 0
@@ -392,14 +392,16 @@ def _personal_page(conn,scope,today,before,before_due,limit,state,overdue):
     return documents,cards,more,counts
 
 
-def _uncached_personal_page(conn,scope,today,before,before_due,limit,state,overdue):
+def _uncached_page(conn,scope,today,before,before_due,limit,state,overdue,view='mine'):
+    # Stream the whole permitted scope; count matching documents before limiting.
+    # Division uses this bounded-memory path rather than the personal-only cache.
     counts=dict.fromkeys(STATES,0);selected=[]
-    cursor=_page_records(conn,scope,'mine',today,0,'',limit,scan=True)
+    cursor=_page_records(conn,scope,view,today,0,'',limit,scan=True)
     columns=[c[0] for c in cursor.description]
     try:
         while batch:=cursor.fetchmany(SCAN_BATCH):
             documents=[dict(zip(columns,row)) for row in batch]
-            classified=_group(_cards(conn,scope,documents,today,'mine',summary=True))
+            classified=_group(_cards(conn,scope,documents,today,view,summary=True))
             for doc in documents:
                 states={c['state'] for c in classified.get(doc['id'],[]) if not overdue or c['overdue']}
                 if not states:continue
@@ -415,7 +417,7 @@ def _uncached_personal_page(conn,scope,today,before,before_due,limit,state,overd
         labels={r['id']:r for r in rows(conn,'SELECT id,number,subject FROM document WHERE id IN (SELECT value FROM json_each(?))',
                                       (json.dumps([d['id'] for d in documents]),))}
         for doc in documents:doc.update(labels[doc['id']])
-    cards=_display(conn,_cards(conn,scope,documents,today,'mine',overdue=overdue),state,overdue) if documents else []
+    cards=_display(conn,_cards(conn,scope,documents,today,view,overdue=overdue),state,overdue) if documents else []
     return documents,cards,more,counts
 
 
@@ -423,8 +425,6 @@ def page(conn,user,view='mine',*,today=None,before=0,before_due='',limit=PAGE_SI
     if view not in ('mine','division'):raise ValueError('Unknown action view.')
     if step_state not in STATES or overdue not in ('0','1'):
         raise ValueError('Invalid step filter. Reset My next steps and try again.')
-    if view=='division' and (step_state!='all' or overdue!='0'):
-        raise ValueError('Step filters are available on My next steps only.')
     before=registry.cursor(before)
     if before:
         try:before_due=date.fromisoformat(before_due).isoformat()
@@ -442,9 +442,8 @@ def page(conn,user,view='mine',*,today=None,before=0,before_due='',limit=PAGE_SI
         if view=='mine':
             documents,cards,more,counts=_personal_page(conn,scope,today,before,before_due,limit,step_state,overdue=='1')
         else:
-            found=_page_records(conn,scope,view,today,before,before_due,limit)
-            more=len(found)>limit;documents=found[:limit]
-            cards=_display(conn,_cards(conn,scope,documents,today,view),'all',False) if documents else []
+            documents,cards,more,counts=_uncached_page(
+                conn,scope,today,before,before_due,limit,step_state,overdue=='1',view=view)
         return {'cards':cards,'document_count':len(documents),'more':more,'has_before':bool(before),
                 'next_before':documents[-1]['id'] if more else None,
                 'next_due':documents[-1]['sort_due'] if more else None,
