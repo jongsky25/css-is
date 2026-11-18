@@ -1,5 +1,58 @@
 # Cloud/mobile setup status
 
+## Current release checkpoint — November 18, 2026
+
+#629 is merged as main `6aefb7c719852e46e8e598be5fcc63a8b8678325`.
+Guarded deployment [44233646882](https://github.com/jongsky25/css-is/actions/runs/44233646882)
+succeeded: both complete test orders, JUnit/AI gates, metadata, audit, Required
+checks, fresh verified backup, code-only deployment, live version 10.36 and
+post-deploy diagnostics all passed.
+
+The owner subsequently instructed “merge”, authorizing #630 too; historical
+draft-only restrictions below are superseded. #630 (10.37) is now reconciled with
+that main commit by a normal merge. Retarget to main and require fresh complete
+CI on this head before a normal SHA-bound merge. Recheck current main/head,
+reviews/threads and active strict no-bypass protection immediately before merging.
+Then verify the full normal guarded deployment; never manually deploy.
+
+The later “queue one by one” instruction preserves draft #631 on
+`test/documents-webkit-accessibility` (10.38). After #630 deployment, reconcile
+#631 to main, fix its hosted enlarged-text overflow failures without weakening
+assertions, and assess fresh full CI. Then prepare Division follow-up counts and
+filters as a separate draft using its saved acceptance criteria. Neither new
+draft is authorized for merge/deployment. Existing follow-up automation
+`Automation_682f07db77048191ae8279bba93cb8fc` tracks this sequence; do not duplicate.
+Do not contact staff or resume deferred operations/performance work.
+
+
+## Authorized #629 release and next history increment — November 18, 2026
+
+The owner instructed “merge when ready then do the next.” #629 (10.36) is now
+ready for review and authorized for checked merge and normal guarded deployment.
+At this checkpoint head `526d926` has metadata/audit passed; full normal/shuffled
+CI 44221827641 is running. No unresolved review threads; main ruleset 26274179
+is active, strict and has no bypass actors. Recheck all of these immediately
+before a regular merge bound to the checked head; never merge on this snapshot.
+Main `39d346e` (10.35) deployed successfully in run 43918668426.
+
+The next candidate, **10.37**, is prepared on
+`feat/request-review-history-pagination`, initially stacked on #629. It adds
+Older/Latest review navigation beyond the 20-entry truncation, preserving queue
+context and current access checks. See the [pagination design and checks](REQUEST_RECONCILIATION_DESIGN.md#source-review-history-pagination--candidate-1037).
+Local verification: 74 request/reconciliation checks and 14 final pagination
+checks passed (overlapping groups), with no failures/errors/skips. Metadata and
+diff checks passed; full PR CI remains required.
+Saved as [draft #630](https://github.com/jongsky25/css-is/pull/630), implementation
+`7b949e7`. Conditional hourly follow-up
+`Automation_682f07db77048191ae8279bba93cb8fc` was created successfully to complete
+#629's checked merge/deployment and then reconcile #630 to main, assess its fresh
+CI and report. Do not create a duplicate task. The task must stop after that bounded
+follow-up; it must not merge #630.
+This next increment is draft-only, not authorized for merge/deployment. After #629
+merges and its guarded deployment succeeds, reconcile/retarget this branch to
+main and require fresh complete CI. Preserve both increments; do not rebuild them.
+The older draft-only boundary for #629 below is superseded by this instruction.
+
 ## Documents navigation and accessibility — November 18, 2026
 
 The owner requested the next streamlining work. Candidate **10.36** on
