@@ -1,3 +1,9 @@
+## 10.36 — November 18, 2026
+
+- Preserve validated reviewed-request and Documents queue context across consolidation, decisions, message actions, blocker forms and team/manager views, including save redirects and validation errors.
+- Retain context through aggregate filters and pagination without attaching it to unrelated cases or external links.
+- Enlarge request return links for touch and verify keyboard, phone reflow and synthetic browser journeys.
+
 ## 10.35 — November 16, 2026
 
 - Record successful 10.34 deployment, closure of monitoring test #576 at the owner's request, and owner-confirmed multiple backups.

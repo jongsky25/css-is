@@ -7,8 +7,8 @@
 <p class="work-outcome">{{ task.expected_output }}</p>{% if task.attention %}<p class="work-note">{{ task.attention }}</p>{% endif %}<p class="work-next"><strong>Next step:</strong> {{ task.next_label }}</p>{% if task.return_note %}<p class="work-note"><strong>Changes requested:</strong> {{ task.return_note }}</p>{% endif %}
 <p class="work-small">{% if task.owner_id %}Owner: {{ names.get(task.owner_id, 'Inactive account') }}{% else %}Owner awaiting confirmation{% if task.proposed_owner_id %} · Suggested: {{ names.get(task.proposed_owner_id, 'Inactive account') }}{% endif %}{% endif %}<br>Contributing unit: {% for unit in units if unit.id==task.unit_id %}{{ unit.name }}{% endfor %}<br>Internal target: {{ task.due_date|humandate if task.due_date else 'Not set' }}</p>
 {% if task.request_source %}<p><a href="{{ task.request_source_url }}">Reviewed request and preserved source</a>{% if task.request_source.changed %} · The saved request changed; reconcile this work with the source.{% endif %}</p>{% endif %}
-{% if task.source_message %}<details><summary>Proposed from a discussion message</summary><p class="work-outcome">{{ task.source_message.body }}</p><a href="{{ task.source_message.url }}">Source message and history</a> · Recorded revision {{ task.source_message.source_revision }}</details>{% endif %}
-{% for decision in task.pending_decisions %}<p class="work-note"><strong>Changed direction needs review:</strong> <a href="/work/{{ case.id }}/decisions/{{ decision.id }}">{{ decision.body|truncate(160) }}</a></p>{% endfor %}
+{% if task.source_message %}<details><summary>Proposed from a discussion message</summary><p class="work-outcome">{{ task.source_message.body }}</p><a href="{{ request_link((task.source_message.url)) }}">Source message and history</a> · Recorded revision {{ task.source_message.source_revision }}</details>{% endif %}
+{% for decision in task.pending_decisions %}<p class="work-note"><strong>Changed direction needs review:</strong> <a href="{{ request_link('/work/' ~ (case.id) ~ '/decisions/' ~ (decision.id)) }}">{{ decision.body|truncate(160) }}</a></p>{% endfor %}
 {% include "work/blockers.html" %}
 {% if task.submission %}<details open><summary>Latest submitted output</summary><p class="work-outcome">{{ task.submission }}</p></details>{% endif %}
 {% if enabled %}
@@ -25,7 +25,7 @@
 </article>
 {% else %}<p>No contributions proposed yet.</p>{% endfor %}
 {% if enabled and not blocked %}<details class="work-task-action" {% if submitted.get("title") %}open{% endif %}><summary>Propose a contribution</summary>
-<form method="post" class="work-form" action="/work/{{ case.id }}/tasks">
+<form method="post" class="work-form" action="{{ request_link('/work/' ~ (case.id) ~ '/tasks') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ case.revision }}">
 <label for="task-title">Contribution title</label><input id="task-title" name="title" maxlength="250" required value="{{ submitted.get('title','') }}">
 <label for="task-output">Expected output</label><textarea id="task-output" name="expected_output" maxlength="4000" required>{{ submitted.get("expected_output", "") }}</textarea>

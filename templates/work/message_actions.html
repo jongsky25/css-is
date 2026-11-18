@@ -1,8 +1,8 @@
 {% extends 'work/base.html' %}{% block work_content %}
-<p><a href="{{ source_url }}">Back to discussion and edit history</a> · <a href="/work/{{ case.id }}">{{ case.title }}</a></p>
+<p><a href="{{ request_link((source_url)) }}">Back to discussion and edit history</a> · <a href="{{ request_link('/work/' ~ (case.id)) }}">{{ case.title }}</a></p>
 <h1>Act on this message</h1><section class="work-card"><h2>Source message</h2><p>{{ message.author }} · Revision {{ message.revision }}</p><p class="work-outcome">{{ message.body }}</p><p>The saved action retains this exact revision, even if the message is edited later.</p></section>
 {% if blocked %}<p class="work-note">{{ blocked }}</p>{% endif %}
-{% if linked_task %}<p class="work-note">This message already has a <a href="/work/{{ case.id }}#task-{{ linked_task }}">linked contribution</a>.</p>{% elif enabled and not blocked %}
+{% if linked_task %}<p class="work-note">This message already has a <a href="{{ request_link('/work/' ~ (case.id) ~ '#task-' ~ (linked_task)) }}">linked contribution</a>.</p>{% elif enabled and not blocked %}
 <section class="work-card"><h2>Create a proposed task</h2><p>An officer must confirm the assignment. The source message is not an instruction to change permissions.</p>
 <form method="post" class="work-form"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="task"><input type="hidden" name="source_revision" value="{{ message.revision }}">
 <label for="task-title">Contribution title</label><input id="task-title" name="title" maxlength="250" required value="{{ values.get('title','') }}">
@@ -20,4 +20,4 @@
 <label for="previous-decision">Replaces a previous decision (optional)</label><select id="previous-decision" name="supersedes_id"><option value="">New decision</option>{% for decision in previous %}<option value="{{ decision.id }}" {% if decision.id==(values.get('supersedes_id',0)|int) %}selected{% endif %}>{{ decision.body|truncate(100) }}</option>{% endfor %}</select><p class="work-small">Replacing a decision requires “Change in work direction” and inclusion of all previously affected contributions.</p>
 <label for="reference-document">Supporting correspondence (optional)</label><select id="reference-document" name="document_id"><option value="">No document reference</option>{% for document in documents %}<option value="{{ document.id }}" {% if document.id==(values.get('document_id',0)|int) %}selected{% endif %}>{{ document.number }} · {{ document.subject }}</option>{% endfor %}</select><p class="work-small">Records the current document revision and file version as context. This does not record formal approval or change the document.</p>
 <button class="work-btn primary">Record work decision</button></form></section>{% elif not can_decide %}<p>The accountable lead or concerned officer can record work decisions from this message.</p>{% endif %}
-<p><a href="/work/{{ case.id }}/decisions">View work decisions</a></p>{% endblock %}
+<p><a href="{{ request_link('/work/' ~ (case.id) ~ '/decisions') }}">View work decisions</a></p>{% endblock %}

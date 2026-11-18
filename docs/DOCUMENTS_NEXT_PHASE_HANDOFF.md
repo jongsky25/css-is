@@ -136,6 +136,15 @@ DOCUMENT_RETURN_CONTEXT.md, DOCUMENT_REGISTRATION_ENTRY.md, DOCUMENT_INBOX_FOCUS
 DOCUMENT_INBOX_SEARCH.md and DOCUMENT_REVIEW_NEXT_SCOPE.md. Do not rebuild their
 shipped increments.
 
+## Review candidate — November 18, 2026
+
+Candidate 10.36 on `feat/documents-context-accessibility` extends request context
+across the remaining shared-work screens and adds keyboard/reflow/touch-target
+checks, including an opt-in Firefox runner. See the [candidate scope](REQUEST_WORK_NAVIGATION.md#remaining-work-screens-and-accessibility--candidate-1036).
+It is not yet merged or deployed. The November 11 shipped status below remains the
+production baseline for these features. Staff sessions, actual screen-reader and
+physical touch checks, review-history pagination and count performance remain open.
+
 ## Status update — November 11, 2026
 
 Phases 0 to 2 are built and deployed; phase 3 has not started. Everything below this

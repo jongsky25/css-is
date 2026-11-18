@@ -17,7 +17,7 @@ ORIGIN = '/documents/actions?view=mine&step_state=waiting'
 NAV = 'aria-label="Request context"'
 BACK = 'Back to reviewed request and comparison'
 DRAFT_URL = 'https://docs.google.com/document/d/synthetic_draft_123/edit'
-SCREENS = ('discussion', 'draft', 'completion')
+SCREENS = ('discussion', 'draft', 'completion', 'consolidation', 'decisions')
 
 
 def context_query(saved):

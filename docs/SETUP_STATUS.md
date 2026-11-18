@@ -1,5 +1,20 @@
 # Cloud/mobile setup status
 
+## Documents navigation and accessibility — November 18, 2026
+
+The owner requested the next streamlining work. Candidate **10.36** on
+`feat/documents-context-accessibility` extends validated request return context to
+consolidation, decisions, message actions, blockers and team/manager views, and
+enlarges the return links. See [scope and reproducible checks](REQUEST_WORK_NAVIGATION.md#remaining-work-screens-and-accessibility--candidate-1036).
+Local verification: 206 broader regressions and 24 final targeted checks passed
+(overlapping groups), including Firefox; no failures/errors/skips. Metadata, locked
+inputs, vendor integrity and diff checks passed. Full PR CI remains pending.
+This is review work, not a production merge/deployment. Next action: review the
+candidate and its required CI. Staff sessions, physical-device/screen-reader checks,
+review-history pagination and count performance remain outstanding. The older
+November 16 housekeeping next-action text below is historical; its owner deferrals
+for recovery, Telegram and notifications remain in force.
+
 ## Current status — November 16, 2026
 
 Verified release: **10.34**, merged main commit
