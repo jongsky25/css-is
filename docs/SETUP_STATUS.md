@@ -1,5 +1,15 @@
 # Cloud/mobile setup status
 
+## Verified 10.37 and current draft — November 18, 2026
+
+Guarded deployment 44259658367 attempt 2 succeeded for main `f448d8c`: normal
+and shuffled suites, JUnit/AI evidence gates, metadata, audit, Required checks,
+fresh verified backup, code-only deploy, live version 10.37 and diagnostics.
+Both authorized releases (#629/#630) are now deployed. Draft #631 is reconciled
+with main; investigate hosted reflow failures and require fresh full CI.
+Historical pending/retry checkpoints below are superseded.
+
+
 ## 10.37 deployment retry — November 18, 2026
 
 Guarded deployment 44259658367 attempt 1 did not deploy: normal tests stalled
@@ -70,6 +80,31 @@ conditional release follow-up; do not create another. It now also reconciles
 as a separate draft PR and stops. Neither new draft is authorized for release. Division filters are the
 next separate implementation, not part of 10.38. Do not contact staff or claim
 real Safari/VoiceOver validation from Linux browser tests.
+
+## Current release checkpoint — November 18, 2026
+
+#629 is merged as main `6aefb7c719852e46e8e598be5fcc63a8b8678325`.
+Guarded deployment [44233646882](https://github.com/jongsky25/css-is/actions/runs/44233646882)
+succeeded: both complete test orders, JUnit/AI gates, metadata, audit, Required
+checks, fresh verified backup, code-only deployment, live version 10.36 and
+post-deploy diagnostics all passed.
+
+The owner subsequently instructed “merge”, authorizing #630 too; historical
+draft-only restrictions below are superseded. #630 (10.37) is now reconciled with
+that main commit by a normal merge. Retarget to main and require fresh complete
+CI on this head before a normal SHA-bound merge. Recheck current main/head,
+reviews/threads and active strict no-bypass protection immediately before merging.
+Then verify the full normal guarded deployment; never manually deploy.
+
+The later “queue one by one” instruction preserves draft #631 on
+`test/documents-webkit-accessibility` (10.38). After #630 deployment, reconcile
+#631 to main, fix its hosted enlarged-text overflow failures without weakening
+assertions, and assess fresh full CI. Then prepare Division follow-up counts and
+filters as a separate draft using its saved acceptance criteria. Neither new
+draft is authorized for merge/deployment. Existing follow-up automation
+`Automation_682f07db77048191ae8279bba93cb8fc` tracks this sequence; do not duplicate.
+Do not contact staff or resume deferred operations/performance work.
+
 
 ## Authorized #629 release and next history increment — November 18, 2026
 
