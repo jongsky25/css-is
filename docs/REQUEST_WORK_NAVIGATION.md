@@ -56,3 +56,50 @@ forged value shows nothing, and a hostile queue address is dropped).
 Still not extended: consolidation, decisions and decision detail, message edit history
 and actions, blocker subforms, the team and manager screens. Measured effect (synthetic):
 [before and after](request-work-journey-2026-11-10-context-screens.json).
+
+
+## Remaining work screens and accessibility — candidate 10.36
+
+Review branch: `feat/documents-context-accessibility`, based on main `39d346e`.
+The November 18 instruction resumes navigation and accessibility improvements.
+This candidate is for review; it is not merged or deployed.
+
+The reviewed-request return links and source-change note now follow consolidation,
+decision lists/details, message actions/history, blocker and prerequisite forms,
+and Team contributions and Manager support. Case-level actions and older draft/file
+links also retain context. Successful saves and validation errors keep the return path.
+Aggregate GET filters use hidden validated context fields; list/board and pagination
+links preserve their filters. Links to another case or an external provider do not
+inherit the originating request. Current document/work access is checked again on
+every page, including aggregate views. Ordinary entry without a request remains ordinary.
+
+The two return links have named navigation semantics, visible keyboard focus and
+at least 44-pixel target heights; they wrap within phone widths. No client script is
+needed for the return path. Automated checks exercise Chromium and an opt-in Firefox
+runner at 390px and 1280px, with scripts enabled and disabled, including native GET
+filter submission, Tab/Shift+Tab and Enter. Chromium also exercises emulated touch.
+The browser harness isolates passive telemetry while capturing business POSTs.
+
+Local verification: the broader work/request regression run passed **206 tests**;
+the final expanded context/accessibility run passed **24 tests**, including four
+Firefox journeys. These groups overlap and must not be added as a distinct total.
+Both reports have zero failures/errors/skips. Release metadata 10.36, dependency
+lock inputs, vendor integrity and diff checks passed. Full required normal/shuffled
+CI and dependency advisory auditing still need to complete on the PR.
+
+Verification commands:
+
+```bash
+.venv/bin/python scripts/cloud_workspace.py test tests/test_request_context_screens.py tests/test_request_context_extended.py tests/test_request_context_accessibility.py tests/test_request_work_navigation.py tests/test_request_work_target_link.py tests/test_work.py --junitxml=/tmp/context.xml
+.venv/bin/python -m playwright install firefox
+.venv/bin/python scripts/cloud_workspace.py test tests/browser_request_context_firefox.py --junitxml=/tmp/context-firefox.xml
+```
+
+The Firefox runner is opt-in because the normal required CI environment installs
+Chromium only. An explicitly requested Firefox run fails if its browser is missing;
+it does not report a skipped check as success. Required release CI remains unchanged.
+
+Limits: these checks are not a screen-reader session, a real touch-device test or
+staff usability evidence. Staff timing/error measurements, review-history pagination
+and the large-volume count performance exception remain separate backlog items.
+Actual formal review, signing, dispatch and closure retain their existing services.

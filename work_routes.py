@@ -2,7 +2,7 @@
 import hashlib
 import hmac
 import json
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -49,21 +49,36 @@ def make_router(templates, get_conn):
 
     # Screens reached from a work item that keep the reviewed-request context (10.15 detail
     # page, extended to these). The hook only runs when the URL names a source task.
-    context_screens = ('discussion', 'draft', 'completion')
+    context_screens = ('detail', 'discussion', 'draft', 'completion', 'consolidation',
+                       'decisions', 'decision', 'message_actions', 'team', 'support')
 
     def render(request, conn, template, status_code=200, **values):
-        if (template in context_screens and 'request_back' not in values and values.get('case')
-                and request.query_params.get('source_task')):
-            values.update(source_navigation(request, conn, values['case']['id']))
+        source_nav = values if 'request_back' in values else (
+            source_navigation(request, conn, values.get('case', {}).get('id'))
+            if template in context_screens else {})
+        if 'request_back' not in values:
+            values.update(source_nav)
+        values['request_link'] = lambda url: context_link(url, source_nav)
         return templates.TemplateResponse(request, 'work/' + template + '.html',
                                           context(request, conn, **values), status_code=status_code)
 
+    def context_link(url, source_nav):
+        """Carry validated context only within its case or the two aggregate views."""
+        parts = urlsplit(str(url))
+        case_id = source_nav.get('request_case')
+        allowed = (parts.path in ('/work/team', '/work/support') or
+                   (case_id and (parts.path == f'/work/{case_id}' or
+                    parts.path.startswith(f'/work/{case_id}/') or
+                    parts.path.startswith(f'/work/team/{case_id}/'))))
+        if not source_nav.get('request_params') or parts.scheme or parts.netloc or not allowed:
+            return url
+        query = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True)
+                 if k not in ('source_task', 'return_to')]
+        query.extend(parse_qsl(source_nav['request_params']))
+        return urlunsplit(('', '', parts.path, urlencode(query), parts.fragment))
+
     def with_context(url, request, conn, case_id, fragment=''):
-        """Keep the validated request context on a redirect; never trusts a task not shown to this person."""
-        params = source_navigation(request, conn, case_id)['request_params']
-        if params:
-            url += ('&' if '?' in url else '?') + params
-        return url + fragment
+        return context_link(url + fragment, source_navigation(request, conn, case_id))
 
     async def posted(request):
         form = await request.form()
@@ -82,7 +97,7 @@ def make_router(templates, get_conn):
         saved = None
         if value.isascii() and value.isdecimal() and len(value) <= 18:
             saved = documents_request_work.task_source(conn, request.state.user, int(value))
-        if not saved or saved['case_id'] != case_id:
+        if not saved or (case_id is not None and saved['case_id'] != case_id):
             return {'request_back': '', 'request_query': '', 'request_params': '', 'request_queue': '',
                     'request_changed': False, 'suggested_due': '', 'suggested_task': 0}
         origin = navigation.safe_return(request.query_params.get('return_to', ''))
@@ -91,7 +106,8 @@ def make_router(templates, get_conn):
         suggestion = (documents_request_work.suggested_target(conn, request.state.user, saved)
                       if request.query_params.get('suggest_target') == '1' else None)
         params = urlsplit(navigation.request_work_url(saved, origin)).query
-        return {'request_back': navigation.record_url(target, origin),
+        return {'request_case': saved['case_id'], 'request_task': saved['task_id'],
+                'request_back': navigation.record_url(target, origin),
                 'request_query': '?' + params, 'request_params': params,
                 'request_queue': origin, 'request_changed': saved['changed'],
                 'suggested_due': suggestion['date'] if suggestion else '',
@@ -394,7 +410,7 @@ def make_router(templates, get_conn):
                 url=f'/work/{case_id}/decisions/{did}'
             else:
                 raise ValueError('Choose a message action.')
-            return RedirectResponse(url,status_code=303)
+            return RedirectResponse(with_context(url,request,conn,case_id),status_code=303)
         except permissions.Denied:
             return HTMLResponse('Message or action unavailable.',status_code=403)
         except (ValueError,TypeError) as e:
@@ -439,7 +455,7 @@ def make_router(templates, get_conn):
             fields=await posted(request)
             work_decisions.resolve(conn,request.state.user,case_id,decision_id,int(fields.get('task_id','')),
                 int(fields.get('revision','')),fields.get('outcome'),fields.get('reason'))
-            return RedirectResponse(f'/work/{case_id}/decisions/{decision_id}',status_code=303)
+            return RedirectResponse(with_context(f'/work/{case_id}/decisions/{decision_id}',request,conn,case_id),status_code=303)
         except permissions.Denied:return HTMLResponse('Decision or action unavailable.',status_code=403)
         except (ValueError,TypeError) as e:
             try:return decision_page(request,conn,case_id,decision_id,409 if isinstance(e,docs.Conflict) else 400,str(e),fields)
@@ -520,7 +536,7 @@ def make_router(templates, get_conn):
                 raise ValueError('Choose a review action.')
             docs.mutate(conn,request.state.user,document_id,int(fields.get('revision','')),
                         fields['action'],{**fields,'work_case_id':case_id})
-            return RedirectResponse(f'/work/{case_id}/consolidation',status_code=303)
+            return RedirectResponse(with_context(f'/work/{case_id}/consolidation',request,conn,case_id),status_code=303)
         except permissions.Denied:return HTMLResponse('Review or correspondence unavailable to you.',status_code=403)
         except (ValueError,TypeError) as e:
             try:return consolidation_page(request,conn,case_id,409 if isinstance(e,docs.Conflict) else 400,str(e),{**fields,'document_id':document_id})
@@ -644,7 +660,7 @@ def make_router(templates, get_conn):
             selection = work_team.filters(request.query_params)
             fields = await posted(request)
             work_tasks.mutate(conn,request.state.user,case_id,task_id,int(fields.get('revision','')),action,fields)
-            return RedirectResponse(work_team.url(selection)+'&saved=1',status_code=303)
+            return RedirectResponse(with_context(work_team.url(selection)+'&saved=1',request,conn,None),status_code=303)
         except permissions.Denied:
             return HTMLResponse('Contribution or action unavailable. Reload the team view.',status_code=403)
         except (ValueError,TypeError) as e:
@@ -698,7 +714,7 @@ def make_router(templates, get_conn):
                 work_tasks.create(conn, user, case_id, fields)
             else:
                 return HTMLResponse('Action not found.', status_code=404)
-            return RedirectResponse('/work/' + str(case_id), status_code=303)
+            return RedirectResponse(with_context('/work/' + str(case_id),request,conn,case_id), status_code=303)
         except permissions.Denied:
             return HTMLResponse('Work item or action not available to you. Reload the page.', status_code=403)
         except (ValueError, TypeError) as e:
