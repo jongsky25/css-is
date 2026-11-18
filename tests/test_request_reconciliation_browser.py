@@ -19,7 +19,7 @@ SIZES = [pytest.param(390, id='phone'), pytest.param(1280, id='desktop')]
 SCRIPTS = [pytest.param(False, id='no-script'), pytest.param(True, id='script')]
 
 
-def open_page(browser, viewer, width, scripts, writes, *, large_text=False):
+def open_page(browser, viewer, width, scripts, writes, *, large_text=False, font_family=None):
     context = browser.new_context(viewport={'width': width, 'height': 844}, java_script_enabled=scripts)
     page = context.new_page()
 
@@ -49,6 +49,8 @@ def open_page(browser, viewer, width, scripts, writes, *, large_text=False):
         body = response.content
         if large_text and 'text/html' in response.headers.get('content-type', ''):
             body = body.replace(b'<html', b'<html style="font-size:200%"', 1)
+        if font_family and 'text/html' in response.headers.get('content-type', ''):
+            body = body.replace(b'<body', f'<body style="font-family:{font_family}"'.encode(), 1)
         route.fulfill(status=response.status_code, body=body,
                       headers={k: v for k, v in response.headers.items() if k.lower() not in ('content-length', 'content-encoding', 'set-cookie')})
     page.route('**/*', serve)

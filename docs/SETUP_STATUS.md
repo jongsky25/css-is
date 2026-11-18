@@ -6,7 +6,11 @@ Guarded deployment 44259658367 attempt 2 succeeded for main `f448d8c`: normal
 and shuffled suites, JUnit/AI evidence gates, metadata, audit, Required checks,
 fresh verified backup, code-only deploy, live version 10.37 and diagnostics.
 Both authorized releases (#629/#630) are now deployed. Draft #631 is reconciled
-with main; investigate hosted reflow failures and require fresh full CI.
+with main and retargeted to main. Hosted overflow was a 321px Documents heading
+with DejaVu Sans at a 320px viewport; reproduced locally and fixed by wrapping
+the heading. Default-font and DejaVu Sans regressions now pass: 62 Chromium/
+context/reconciliation/release-gate checks plus 23 WebKit journeys, no failures
+or skips. Fresh full hosted CI remains required before readiness is reported.
 Historical pending/retry checkpoints below are superseded.
 
 

@@ -124,3 +124,6 @@ body:has(.doc-detail) .sf-float{position:static;margin:1rem auto;display:flex;wi
 
 /* Allow the registration link to wrap when text is enlarged. */
 .doc-heading .btn{box-sizing:border-box;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+
+/* System fonts can make an enlarged heading wider than the phone viewport. */
+.doc-heading h1{min-width:0;max-width:100%;overflow-wrap:anywhere}

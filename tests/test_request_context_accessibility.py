@@ -69,10 +69,11 @@ def test_emulated_touch_opens_context_link(browser, proposal_record, viewer):
 
 
 @pytest.mark.parametrize('scripts', [False, True])
-def test_request_navigation_reflows_with_large_text(browser, proposal_record, viewer, scripts):
+@pytest.mark.parametrize('font_family', [None, 'DejaVu Sans'])
+def test_request_navigation_reflows_with_large_text(browser, proposal_record, viewer, scripts, font_family):
     c, u, doc, saved, receipt, target, message = prepare(proposal_record, viewer)
     writes = []
-    context, page = open_page(browser, viewer, 320, scripts, writes, large_text=True)
+    context, page = open_page(browser, viewer, 320, scripts, writes, large_text=True, font_family=font_family)
     page.route('**/telemetry', lambda route: route.fulfill(status=204))
     try:
         for path in (target, f"/work/{saved['case_id']}/consolidation?{context_query(saved)}", receipt):

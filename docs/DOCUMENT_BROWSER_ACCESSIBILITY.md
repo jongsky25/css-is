@@ -29,10 +29,18 @@ not part of this automated increment.
 
 ## Verification
 
-The final focused run passed **81 tests**, with no failures, errors or skips:
+The initial focused run passed **81 tests**, with no failures, errors or skips:
 21 WebKit journeys and 60 Chromium/context/reconciliation/release-gate checks.
 The JUnit gate, candidate 10.38 metadata, locked inputs and diff checks passed.
 Full hosted normal/shuffled CI and standard WebKit CI remain required.
+
+Hosted Ubuntu CI later exposed a 321px document width at a 320px viewport.
+The DejaVu Sans Documents heading was the overflowing element, reproduced locally
+with that font. The heading now wraps, without loosening the viewport assertion.
+The reflow test covers both default fonts and DejaVu Sans. After the fix, **62
+Chromium/context/reconciliation/release-gate checks and 23 WebKit journeys passed**
+(85 total; no failures/errors/skips), using the same documented local WebKit
+installation. Fresh hosted CI is required on the reconciled main-based draft.
 
 ## Reproduce
 
