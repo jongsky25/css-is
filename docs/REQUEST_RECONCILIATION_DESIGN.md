@@ -229,3 +229,45 @@ test-harness detail, and the 303 itself is asserted at the HTTP level in the oth
 
 Not covered: a screen reader pass, real touch input, other browsers, and any measurement
 of time or errors (that needs the phase 3 study).
+
+
+## Source-review history pagination — candidate 10.37
+
+Branch `feat/request-review-history-pagination`, initially stacked on #629.
+The November 18 instruction “merge when ready then do the next” authorizes #629's
+checked merge/deployment and this next implementation for review. This increment
+is not authorized for production merge/deployment.
+
+The comparison screen now offers **Older reviews** beyond its latest 20 entries
+and **Latest reviews** on older pages. Links retain validated Documents queue
+context and anchor to the history; older history opens without JavaScript. The
+single-entry last page is visible. An exhausted cursor shows an empty-history
+message and a return to latest. Only the actual newest review is labeled latest.
+
+`review_before` is a positive ASCII decimal SQLite integer bound, validated before
+querying. It narrows the already authorized document/request pair by review ID;
+it does not choose a record or confer access. New arrivals do not shift earlier
+pages. Every GET rechecks current document and work access and remains `no-store`.
+Queries fetch at most 21 entry rows for a 20-row page; count queries do not load
+all note bodies. The helper's internal page-size override is capped at 20. Error
+responses from writes return the latest history, independent of GET-only cursors.
+No schema, acknowledgement, assignment, formal review or release semantics change.
+
+Synthetic checks cover a 45-entry three-page traversal, new arrivals between pages,
+empty pages, escaped notes, invalid/oversized/non-ASCII cursors, a foreign-request
+cursor, denied/revoked access, queue continuity and unchanged records/audit state.
+Phone Chromium journeys cover keyboard pagination with scripts enabled/disabled.
+
+```bash
+.venv/bin/python scripts/cloud_workspace.py test tests/test_request_review_pagination.py tests/test_request_work_acknowledgement_history.py tests/test_request_reconciliation_browser.py tests/test_request_work_acknowledgement.py tests/test_request_work_acknowledge_ui.py tests/test_document_request_comparison_routes.py --junitxml=/tmp/review-pagination.xml
+```
+
+Full exact-head normal/shuffled CI, advisory auditing and the existing release
+gates remain required before any later release. Staff sessions, physical device
+and screen-reader checks, and the My desk large-volume count-performance exception
+remain outstanding. These automated checks do not establish staff time savings.
+
+Local results: **74** request/reconciliation regressions passed, followed by **14**
+final pagination checks after the GET-only cursor guard and foreign-request case
+were added. Groups overlap; zero failures/errors/skips in both reports. Candidate
+10.37 metadata and diff checks passed. Full PR CI is still required.

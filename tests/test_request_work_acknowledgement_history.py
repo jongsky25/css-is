@@ -61,16 +61,17 @@ def test_service_limit_reports_how_many_earlier_entries_are_not_listed(proposal_
     assert [e['note'] for e in short['entries']] == ['Note 2', 'Note 1'] and short['older'] == 1 and short['total'] == 3
 
 
-def test_older_entries_notice_wording_for_one_and_many(proposal_record, viewer, monkeypatch):
+def test_older_entries_link_replaces_truncation_notice(proposal_record, viewer, monkeypatch):
     c, u, doc, unit, url = proposal_record
     saved = propose(proposal_record, viewer)
     revise_record(c, u, doc, need_0_output='Changed once')
     for number in range(3):
         acknowledge_after_change(c, u, doc, saved, viewer, url, f'Change {number}', f'Note {number}')
     original = proposals.acknowledgement_history
-    monkeypatch.setattr(proposals, 'acknowledgement_history', lambda conn, saved, limit=2: original(conn, saved, limit))
+    monkeypatch.setattr(proposals, 'acknowledgement_history', lambda conn, saved, limit=2, before=None: original(conn, saved, limit, before))
     page = viewer.get(url).text
-    assert '1 earlier review is not shown. The full record is kept.' in page and 'Note 0' not in page
+    assert 'Older reviews' in page and 'review_before=' in page and 'Note 0' not in page
+    assert 'not shown. The full record is kept.' not in page
 
 
 def test_history_does_not_change_the_warning_or_write_anything(proposal_record, viewer):

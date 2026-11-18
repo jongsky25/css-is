@@ -99,17 +99,35 @@ def latest_acknowledgement(conn, user, doc_id, index):
 HISTORY_LIMIT = 20
 
 
-def acknowledgement_history(conn, saved, limit=HISTORY_LIMIT):
-    """Newest-first reviews of source changes for a request's work; never writes.
+def acknowledgement_history(conn, saved, limit=HISTORY_LIMIT, before=None):
+    """Read a bounded newest-first page after existing() checked current access.
 
-    `saved` comes from existing(), which already checked current document and work access,
-    so this helper takes no user and cannot be used to read another request's history.
+    The cursor only narrows this document/request pair; it never supplies identity
+    or authority. IDs keep traversal stable when new reviews arrive between pages.
     """
+    if before is not None:
+        value = str(before)
+        if not value.isascii() or not value.isdecimal() or len(value) > 19:
+            raise ValueError('Invalid source-review history cursor.')
+        before = int(value)
+        if not 0 < before <= 9223372036854775807:
+            raise ValueError('Invalid source-review history cursor.')
+    limit = max(1, min(HISTORY_LIMIT, int(limit)))
     key = (saved['document_id'], saved['request_index'])
-    entries = rows(conn, 'SELECT * FROM document_request_work_review WHERE document_id=? AND request_index=? ORDER BY id DESC LIMIT ?',
-                   (*key, int(limit)))
-    total = conn.execute('SELECT COUNT(*) FROM document_request_work_review WHERE document_id=? AND request_index=?', key).fetchone()[0]
-    return {'entries': entries, 'total': total, 'older': max(0, total - len(entries))}
+    condition = 'document_id=? AND request_index=?'
+    args = key
+    if before is not None:
+        condition += ' AND id<?'
+        args += (before,)
+    entries = rows(conn, 'SELECT * FROM document_request_work_review WHERE ' + condition + ' ORDER BY id DESC LIMIT ?',
+                   (*args, limit + 1))
+    more = len(entries) > limit
+    entries = entries[:limit]
+    total, latest_id = conn.execute('SELECT COUNT(*),MAX(id) FROM document_request_work_review WHERE document_id=? AND request_index=?', key).fetchone()
+    remaining = conn.execute('SELECT COUNT(*) FROM document_request_work_review WHERE ' + condition, args).fetchone()[0]
+    return {'entries': entries, 'total': total, 'older': max(0, remaining - len(entries)),
+            'before': before, 'latest_id': latest_id,
+            'next_before': entries[-1]['id'] if more else None}
 
 
 def acknowledgement_state(conn, user, saved):

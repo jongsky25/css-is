@@ -1,3 +1,8 @@
+## 10.37 — November 18, 2026
+
+- Add bounded, newest-first source-review history pages with Older reviews and Latest reviews links, keeping the Documents queue and opening older history automatically.
+- Preserve current access checks, distinguish the actual latest review on every page, and reject malformed cursors without changing any records.
+
 ## 10.36 — November 18, 2026
 
 - Preserve validated reviewed-request and Documents queue context across consolidation, decisions, message actions, blocker forms and team/manager views, including save redirects and validation errors.
