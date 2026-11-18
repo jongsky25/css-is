@@ -1,5 +1,23 @@
 # Cloud/mobile setup status
 
+## Latest release checkpoint — November 18, 2026, 07:32 UTC
+
+#629 deployed 10.36 successfully in run 44233646882, including fresh verified
+backup, live-version check and diagnostics. #630 was reconciled to main and
+passed fresh CI 44242469772: both complete test orders, JUnit no-failure/no-skip
+and AI evidence gates, metadata, dependency audit and Required checks. Live
+reviews/threads were empty, and main ruleset 26274179 was strict, active and
+without bypass actors. Normal merge was bound to verified head `fa9b204`,
+producing main `f448d8c8d0cff029204baabe1b1b1f46f2e3f4aa`.
+
+Guarded deployment [44259658367](https://github.com/jongsky25/css-is/actions/runs/44259658367)
+is queued; 10.37 is not yet verified live. After all deployment and diagnostics
+jobs succeed, reconcile this draft #631 with current main, retarget it, fix
+the known hosted enlarged-text reflow failures and require fresh complete CI.
+Preserve the strict assertions. Then prepare Division counts/filters separately
+as queued below. No merge/deployment beyond #630 is authorized.
+
+
 ## Release checkpoint — November 18, 2026, 03:55 UTC
 
 #629 merged normally at verified head `526d926`, producing main `6aefb7c`.
