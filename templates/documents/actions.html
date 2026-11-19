@@ -13,9 +13,8 @@
 {% else %}
 <p>Division documents with unresolved ownership, overdue dates, changed instructions or contributions needing follow-up. Your current document access still applies.</p>
 {% endif %}
-{% if view=='mine' %}
-<form method="get" action="/documents/actions" class="doc-card" aria-label="Filter My next steps">
-<input type="hidden" name="view" value="mine">
+<form method="get" action="/documents/actions" class="doc-card" aria-label="Filter {{ 'Division follow-up' if view=='division' else 'My next steps' }}">
+<input type="hidden" name="view" value="{{ view }}">
 <label for="step-state">Documents with…</label>
 <select id="step-state" name="step_state">
 {% for value,label in [('all','All'),('ready','Ready for you'),('waiting','Waiting'),('attention','Needs attention')] %}
@@ -24,14 +23,11 @@
 </select>
 <label class="doc-check"><input type="checkbox" name="overdue" value="1" {% if overdue=='1' %}checked{% endif %}> Overdue only</label>
 <button type="submit">Apply filters</button>
-<a href="/documents/actions">Reset filters</a>
+<a href="/documents/actions?view={{ view }}">Reset filters</a>
 </form>
-<p>A document can appear in more than one group. Overdue applies to the matching step. Unknown deadlines are not overdue.</p>
+<p>{% if view=='mine' %}A document can appear in more than one group.{% else %}Counts cover all permitted division exceptions. Each document has one current workflow state; personal contributions and instructions are listed in My next steps.{% endif %} Overdue applies to the matching step. Unknown deadlines are not overdue.</p>
 <p role="status">{{ counts[step_state] }} matching documents · {{ document_count }} documents on this page · {{ cards|length }} steps shown.</p>
 <p>As of {{ snapshot_at|replace('T',' ') }}. Priorities and access can change. <a href="{{ first_url }}">Refresh from first page</a>.</p>
-{% else %}
-<p>{{ document_count }} documents on this page · {{ cards|length }} steps shown. An unknown deadline is never counted as overdue.</p>
-{% endif %}
 {% if has_before or more %}<nav class="doc-tabs" aria-label="Action pages">
 {% if has_before %}<a href="{{ first_url }}">First page</a>{% endif %}
 {% if more %}<a href="{{ older_url }}" rel="next">Next page</a>{% endif %}

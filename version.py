@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.38"
+APP_VERSION = "10.39"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.39",
+        "date": "November 18, 2026",
+        "summary": "Filter division document follow-up.",
+        "changes": [
+            "Division follow-up shows full counts for Ready for you, Waiting and Needs attention.",
+            "Filter overdue steps and keep your chosen queue when returning from a document."
+        ]
+    },
     {
         "version": "10.38",
         "date": "November 18, 2026",

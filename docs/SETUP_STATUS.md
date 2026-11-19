@@ -1,5 +1,48 @@
 # Cloud/mobile setup status
 
+## Division filter candidate 10.39 — November 18, 2026
+
+10.38 deployed successfully in guarded run 44305608431, including normal/shuffled
+and WebKit verification, JUnit/AI gates, audit/metadata, fresh verified backup,
+live-version check and diagnostics. Main is `7fbb8d1`.
+
+Saved as [draft #632](https://github.com/jongsky25/css-is/pull/632), implementation
+`ce88741`, on `feat/documents-division-filters`:  full permitted
+Division exception counts, native state/overdue filters before pagination, and
+preserved queue context. See [semantics and verification](DOCUMENT_DIVISION_FILTERS.md).
+Local acceptance passed 49 tests with no failures/errors/skips, including phone
+journeys, current OIC scope and private-work checks. JUnit, 10.39 metadata and
+diff checks passed; full hosted CI remains pending.
+This candidate is draft-only; no merge/deployment is authorized. The existing
+follow-up task is now complete and disabled after saving this draft. Staff/device testing
+and the accepted performance exception remain outside this increment.
+
+
+## Authorized 10.38 release and Division follow-up — November 18, 2026
+
+The owner said “do it” after the report that #631 passed all CI and needed merge
+authorization. This authorizes #631, superseding its historical draft-only
+restriction. Marked ready and merged normally at verified head `fc1d533`, after
+fresh normal/shuffled, WebKit, JUnit/AI, metadata, audit and Required checks
+passed in 44293624529; reviews/threads were empty and main ruleset 26274179
+was active, strict and without bypass actors. Main is now
+`7fbb8d1806ecfff1c86c11bdad6ef2399ec07a70`. Guarded deployment
+[44305608431](https://github.com/jongsky25/css-is/actions/runs/44305608431)
+is running; do not claim 10.38 live before its backup/deploy/version/diagnostic
+gates complete. 10.37 deployment was already verified successful.
+
+Next: verify this deployment, then implement Division follow-up full-scope
+counts and Ready/Waiting/Needs attention filters on `feat/documents-division-filters`,
+currently holding this handoff only. Follow the acceptance criteria in
+[Documents accessibility follow-up](DOCUMENT_BROWSER_ACCESSIBILITY.md#next-queued-increment).
+Preserve chief/OIC scope, private-work boundaries, mixed-state classification,
+filter-before-pagination and return context; benchmark synthetic scopes. Save
+a separate draft PR with meaningful regressions. That future PR is not yet
+authorized for merge/deployment. Existing automation
+`Automation_682f07db77048191ae8279bba93cb8fc` owns the follow-up; do not duplicate.
+No staff contact or deferred recovery/Telegram/performance work.
+
+
 ## Verified 10.37 and current draft — November 18, 2026
 
 Guarded deployment 44259658367 attempt 2 succeeded for main `f448d8c`: normal
