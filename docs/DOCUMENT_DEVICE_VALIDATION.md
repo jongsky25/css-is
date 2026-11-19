@@ -1,5 +1,10 @@
 # Documents: real-device validation and usability session
 
+**Closed by owner decision — November 19, 2026.** VoiceOver and usability
+validation are waived as not a priority. The associated device/session follow-up
+is removed from the active queue. No session was performed and no testing pass
+is claimed. The checklist below is retained only for optional future use.
+
 Prepared after the Division follow-up candidate 10.39. No physical-device,
 VoiceOver or staff usability session has been performed. Automated Linux WebKit
 success is supporting evidence, not a substitute for these sessions.

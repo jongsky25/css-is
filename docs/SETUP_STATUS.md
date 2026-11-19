@@ -1,5 +1,19 @@
 # Cloud/mobile setup status
 
+## Owner closure and release checkpoint — November 19, 2026
+
+VoiceOver/usability validation is closed as waived by owner decision, not as
+tests performed. Remove device/session validation from the active queue and do
+not ask for participation or contact staff. No further Documents implementation
+is queued. Accepted large-volume performance limitations remain deferred.
+
+#632 passed all gates in CI 44325732634 attempt 2 and was merged normally bound
+to verified head `ac11f97`. Reviews/threads were empty; main protection was active,
+strict and without bypass actors. Next action is to verify the normal guarded
+10.39 deployment, then close the release follow-up. Earlier device/session
+next-action instructions below are superseded.
+
+
 ## Authorized 10.39 release and device validation — November 19, 2026
 
 The owner instructed “merge when ready then do the next”, authorizing #632
