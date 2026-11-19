@@ -1,5 +1,21 @@
 # Cloud/mobile setup status
 
+## Documents release complete — November 19, 2026
+
+10.39 is verified deployed from main `3eea2277e1ac71fb21d342128ed0064bcc08244f`
+in normal push workflow [44449640671](https://github.com/jongsky25/css-is/actions/runs/44449640671).
+Normal/shuffled suites, no-failure/no-skip JUnit and AI evidence, WebKit, metadata,
+dependency audit and Required checks all passed. A fresh backup was verified,
+code-only deployment succeeded, the live version check confirmed 10.39, and
+post-deploy diagnostics passed. No manual deployment or gate bypass was used.
+
+The bounded release follow-up is complete and its automation is disabled.
+No further Documents implementation is queued. VoiceOver/usability and associated
+device-session follow-up remain closed as owner-waived, not tests performed.
+The accepted large-volume performance exception and deferred unrelated work
+remain unchanged. Earlier pending-release and next-device-task notes are historical.
+
+
 ## Owner closure and release checkpoint — November 19, 2026
 
 VoiceOver/usability validation is closed as waived by owner decision, not as
