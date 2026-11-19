@@ -1,5 +1,17 @@
 # Cloud/mobile setup status
 
+## Advisory integration scoping — November 19, 2026
+
+Planning discussion requested; current main `3eea227` inspected. The existing
+activity advisory editor already drafts, numbers, renders and publishes posters.
+The proposed memo/Sheet add lifecycle tracking and review requirements. See
+[scope and decisions](ADVISORY_TRACKER_INTEGRATION_PLAN.md), saved on
+`plan/advisory-tracker-integration`. Next: agree register ownership, authority,
+number/date rules, issuance meaning and advisory coverage. No implementation,
+Google file edit, notification, merge or deployment is authorized by this session.
+Source inspection only; no live workflow tested. Earlier release checkpoints
+below remain historical and are not resumed by this planning request.
+
 ## Division filter candidate 10.39 — November 18, 2026
 
 10.38 deployed successfully in guarded run 44305608431, including normal/shuffled
