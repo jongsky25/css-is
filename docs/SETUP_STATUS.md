@@ -1,5 +1,24 @@
 # Cloud/mobile setup status
 
+## Authorized 10.39 release and device validation — November 19, 2026
+
+The owner instructed “merge when ready then do the next”, authorizing #632
+merge and normal guarded deployment, superseding the historical draft-only
+boundary. Head `ac11f97` targets current main `7fbb8d1`. CI 44325732634 passed
+normal/shuffled, metadata and audit, but WebKit dependency installation timed
+out before tests started. Failed jobs were retried with unchanged gates; #632
+is marked ready. Recheck fresh CI, report/AI gates, reviews/threads and strict
+no-bypass protection before a normal SHA-bound merge, then verify guarded
+deployment through backup, live-version check and diagnostics.
+
+Next work is prepared in [real-device validation](DOCUMENT_DEVICE_VALIDATION.md)
+on `docs/documents-device-validation`: concrete iPhone/VoiceOver journeys and
+a synthetic usability-session results sheet. No physical-device testing, staff
+contact or new preview publication has occurred. No additional implementation
+is queued absent findings. Existing follow-up automation is resumed for #632
+release verification; stop after reporting deployment and this prepared handoff.
+
+
 ## Division filter candidate 10.39 — November 18, 2026
 
 10.38 deployed successfully in guarded run 44305608431, including normal/shuffled
