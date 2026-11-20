@@ -1,5 +1,21 @@
 # Cloud/mobile setup status
 
+## Advisory review release preparation — November 20, 2026
+
+All three original advisory candidates passed their complete hosted gates, including
+normal/shuffled suites, WebKit, dependency audit, metadata and Required checks.
+PR #633 (10.40) merged into main at `6a3ac9f168d7b2d8c2f2a4171aa832a24c6d5863`
+after exact-head verification and active no-bypass ruleset checks. Its automatic
+deployment must still be verified before merging this review slice.
+
+Merged that current main into `feat/advisory-review-cycle` and prepare PR #634
+against main. This changes ancestry/checkpoint only; the reviewed application code
+is unchanged. Fresh full CI is required on the updated head. Do not merge #634
+until both its new Required checks and the 10.40 guarded deployment succeed.
+Then repeat the current-main update and release gates for #635. Completion alert
+is due only after all three PRs merge; final deployment is reported separately.
+No real test notifications, production-data tests, external memo edits or Sheet work.
+
 ## Advisory restart repair propagated — November 20, 2026
 
 #633's first shuffled gate failed two restart-idempotency assertions (11,139 passed).
