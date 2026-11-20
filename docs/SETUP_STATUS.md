@@ -2,8 +2,9 @@
 
 ## Advisory workflow plan finalized — November 20, 2026
 
-Owner authorized finalizing, committing, pushing and opening a planning PR on
-`plan/advisory-tracker-integration`. See [plan and new-chat starter](ADVISORY_TRACKER_INTEGRATION_PLAN.md).
+Saved as [draft PR #633](https://github.com/jongsky25/css-is/pull/633), plan
+commit `14f3227`, on `plan/advisory-tracker-integration`. Owner authorized
+finalizing, committing, pushing and opening this planning PR. See [plan and new-chat starter](ADVISORY_TRACKER_INTEGRATION_PLAN.md).
 Office Connect owns the entire workflow: no Sheet import, transition,
 reconciliation or synchronization. Division Chief reviews; Director approves.
 Plan covers internal/external issuance, email notifications, return/revise/resubmit,
