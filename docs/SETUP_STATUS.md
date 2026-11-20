@@ -1,5 +1,68 @@
 # Cloud/mobile setup status
 
+## Advisory release continuation — November 20, 2026, 08:03 UTC
+
+The owner instructed: **“merge then do the next. do this cycle until you finish
+everything that needs to be developed on this plan.”** All three planned code
+slices are implemented, pushed and ready for gated release. No PR has merged yet.
+Main was verified at `3eea2277e1ac71fb21d342128ed0064bcc08244f` (10.39).
+
+| Order | PR / branch | Exact candidate head | Current CI run |
+|---|---|---|---|
+| 1 / 10.40 drafts | [#633](https://github.com/jongsky25/css-is/pull/633), `plan/advisory-tracker-integration` | `8aeb354d3252083fb317fc883129ae245d32af03` | [44698285233](https://github.com/jongsky25/css-is/actions/runs/44698285233) |
+| 2 / 10.41 review | [#634](https://github.com/jongsky25/css-is/pull/634), `feat/advisory-review-cycle` | `9d2f33cc512c826a4c5cd11d6e99b4274cdc74b4` | [44698529497](https://github.com/jongsky25/css-is/actions/runs/44698529497) |
+| 3 / 10.42 issuance/dashboard | [#635](https://github.com/jongsky25/css-is/pull/635), `feat/advisory-issuance` | `f1f5f02998f7fb1440743ebc469924084f302cf6` | [44698563370](https://github.com/jongsky25/css-is/actions/runs/44698563370) |
+
+At this checkpoint all three current runs passed WebKit accessibility, dependency
+audit and release metadata. Normal/shuffled full suites are running. The original
+633 shuffled run exposed two installer-order/cache regressions (11,139 passed,
+two failed); fixed without weakening tests and propagated to both later branches.
+Targeted repaired checks: 75 passed on drafts, 70 on review, 72 on issuance, no
+failures/skips. Old cancelled/failed runs do not satisfy the current gate.
+
+**Continue autonomously in this order:**
+
+1. Recheck current PR heads, main, rules and CI; do not assume this snapshot remains
+   current. Diagnose completed failing jobs and fix/retest/push if needed. Never
+   bypass `verification / Required checks`, strict up-to-date rules, backup or version gates.
+2. Merge 633 only after the exact current head passes every required check, using an
+   expected-head merge. Capture the merge SHA. Observe automatic `deploy-hf.yml`
+   on that exact main SHA through full verification, fresh backup, deployment and
+   live-version confirmation; no manual deploy or backup bypass.
+3. After 633 merges, merge current main into 634's branch, retarget 634 from its
+   stacked base to `main`, update its checkpoint and push. Wait for its new full
+   required checks **and verified 633 deployment** before merging 634.
+4. Repeat for 635 after 634 merges; verify 634 deployment before merging 635.
+   Verify the final 10.42 deployment (or appropriately updated version if main
+   changes), save final evidence and report completion. Do not claim pending gates
+   or releases have succeeded. Disable the continuation when complete.
+
+The later PR bases are currently their preceding feature branches. Do not merge
+them into those feature bases accidentally. Fetch main normally; this workspace's
+remote fetch refspec tracks only main, so fetch another branch with an explicit
+refspec or use a verified full SHA/FETCH_HEAD, not a stale `origin/<feature>`.
+Use merge commits rather than force pushes; preserve other work. Documentation
+checkpoint conflicts from our own stacked merges can be resolved by retaining the
+newest evidence plus relevant older outcomes. Update this checkpoint branch without
+another release PR for final status if necessary; don't trigger redundant CI merely
+to record a wait. This branch is a continuation record, not a fourth feature release.
+
+Local worktrees: `/workspace/css-is` (633), `/workspace/css-is-advisory-review` (634),
+`/workspace/css-is-advisory-issuance` (635). Their `.venv` symlinks are untracked and
+must not be committed. Use the isolated `scripts/cloud_workspace.py` runner and
+locked Python 3.11 dependencies. Recreate checkouts/setup if the workspace changes.
+
+All agreed first-increment features are represented; avoid unrelated expansion.
+Working P1–P5 defaults are documented in ADVISORY_REVIEW.md, not represented as
+individually answered owner decisions. Scope remains wholly Office Connect, Chief
+review then Director approval, comments/returns/resubmissions/history and internal/
+external distribution. No Sheet work, production-data tests, real test notifications
+or external memo edits. The matching memo text is prepared in the repository only.
+
+Automatic continuation is being arranged for the long-running hosted gates; its
+creation/result must be confirmed separately. This checkpoint does not itself prove
+that a scheduled task exists or that a future run will have working access.
+
 ## Advisory restart repair propagated — November 20, 2026
 
 #633's first shuffled gate failed two restart-idempotency assertions (11,139 passed).
