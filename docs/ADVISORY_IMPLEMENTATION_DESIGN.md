@@ -3,14 +3,18 @@
 Planning checkpoint: November 20, 2026. Continues draft [PR #633](https://github.com/jongsky25/css-is/pull/633)
 at `de8bda2`; inspected main is `3eea227` (also the plan's application baseline).
 The [scope and workflow plan](ADVISORY_TRACKER_INTEGRATION_PLAN.md) remains authoritative.
-This is a design, not implemented behavior or authorization to implement.
+This document records the original planning design. The owner subsequently said **“start
+building”**, authorizing slice 1. See [implemented boundaries](ADVISORY_DRAFTS.md).
+P2/P3 recommendations are used as first-slice implementation defaults; no broader policy
+acceptance, merge, deployment or notification authorization is inferred.
 Everything stays in Office Connect. No Sheet import, transition, reconciliation,
 synchronization, external file editing, or operational cutover work is proposed.
 
 ## Policy decision record
 
-The following package was presented to the owner in this continuation. **Pending owner response**;
-recommendations must not be reported as accepted decisions. Accepting policy does not authorize implementation.
+The following package was presented during planning. P2/P3 are the working defaults for the
+authorized first slice. P1/P4/P5 remain pending for dependent implementation; no blanket
+acceptance of the five-policy package is recorded.
 
 | ID | Recommended choice | Dependency |
 |---|---|---|
@@ -23,7 +27,7 @@ recommendations must not be reported as accepted decisions. Accepting policy doe
 P5 defines no new delegation mechanism. Existing seats must be checked for the owning division
 and selected role, and their evidence recorded. No blanket Director substitute for the Chief stage.
 The five original choices are the only owner questions; settled scope and roles are not reopened.
-Until answered, the first-slice specification below is conditional on P2/P3. P1/P4/P5 do not prevent
+The authorized first slice uses the recommended P2/P3 defaults. P1/P4/P5 do not prevent
 preparing the foundation design, but prevent implementing their dependent behavior.
 
 ## Service map and reuse boundaries
@@ -213,8 +217,8 @@ resubmissions, exact-version history and narrowly routed notices; (3) issuance a
 frozen internal/external audience, local-PDF dispatch and independent delivery status/publication;
 (4) dashboard queues/counts and final memo alignment when separately authorized.
 
-Before implementing slice 1, record the owner's P2/P3 answers and obtain explicit implementation
-authorization. Before dependent review/issuance, record P1/P4/P5. Inspect current branch/main again
+Slice 1 is now authorized and implemented using P2/P3 working defaults; see the linked implementation
+checkpoint. Before dependent review/issuance, record P1/P4/P5. Inspect current branch/main again
 and preserve newer work. No merge/deploy authorization is implied by any policy answer.
 Documentation validation: all 162 local Markdown targets across the three planning/status
 files resolved; `git diff --check` passed.

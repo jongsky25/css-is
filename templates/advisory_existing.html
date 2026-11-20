@@ -1,0 +1,10 @@
+{% extends "dash_layout.html" %}
+{% block title %}Existing advisories — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:58rem;margin:auto;overflow-wrap:anywhere">
+<p><a href="/advisories">Private advisory register</a></p><h1>Existing activity advisories</h1>
+<p>Approval history is unavailable for these existing records. Their numbers and public copies are preserved.</p>
+{% for item in items %}<article style="padding:1rem 0;border-bottom:1px solid var(--line)"><strong>{{ item.number }}</strong> — {{ item.headline }}<p>{{ 'Existing publication' if item.published else 'Existing unpublished poster' }} · <a href="/activities/{{ item.event_token }}/advisory/draft">Prepare private draft</a></p></article>{% else %}<p>No existing advisories are available to you in this view.</p>{% endfor %}
+<p>{% if older %}<a href="?before={{ older }}">Older advisories</a> · {% endif %}<a href="/advisories/existing">Latest advisories</a></p>
+</div>
+{% endblock %}

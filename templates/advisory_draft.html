@@ -1,0 +1,50 @@
+{% extends "dash_layout.html" %}
+{% block title %}Advisory draft — Office Connect{% endblock %}
+{% block content %}
+<style>
+.adraft {max-width:58rem;margin:auto;overflow-wrap:anywhere}
+.adraft input:not([type=checkbox]),.adraft textarea,.adraft select {width:100%;box-sizing:border-box;max-width:100%}
+.adraft label {display:block;margin:.8rem 0 .3rem;font-weight:600}
+.adraft fieldset {min-width:0;border:1px solid var(--line);border-radius:12px;padding:1rem;margin:1rem 0}
+.adraft .pair {display:grid;gap:.5rem;grid-template-columns:minmax(0,1fr)}
+@media(min-width:45rem){.adraft .pair{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.adraft img {max-width:100%;height:auto}.adraft summary{cursor:pointer}
+</style>
+<div class="adraft">
+<p><a href="/advisories">Advisory register</a> · <a href="/activities/{{ ev.event_token }}/manage">Activity</a></p>
+<h1>Advisory draft</h1><p>{{ ev.title }}</p>
+{% if record %}<p><strong>No. {{ record.number }}</strong> · Revision {{ record.ordinal }} · Private draft</p>
+<p class="muted">Number reserved {{ record.reservation_date }}. Not issued.</p>
+<p><a href="/advisories/{{ record.id }}/history">Version and action history</a> · <a href="/advisories/{{ record.id }}/revisions/{{ record.current_revision }}/file.pdf">Saved PDF</a></p>
+<details><summary>Saved image preview</summary><img src="/advisories/{{ record.id }}/revisions/{{ record.current_revision }}/file.png" alt="Saved advisory revision {{ record.ordinal }}"></details>
+{% elif legacy %}<p>No. {{ legacy.number }} will be retained. Existing approval history is unavailable.</p>
+{% else %}<p>The number is reserved on first save. This draft stays private.</p>{% endif %}
+{% if legacy and legacy.published %}<p>Its existing public copy stays unchanged while you prepare this private draft.</p>{% endif %}
+{% if not available %}<p role="status">Private advisory saving requires Documents and Shared work to be enabled by an authorized administrator. Existing permitted drafts remain readable.</p>{% endif %}
+{% if error %}<div class="flash warn" role="alert">{{ error }} <a href="/activities/{{ ev.event_token }}/advisory/draft" target="_blank" rel="noopener">Open latest draft in another tab</a></div>{% endif %}
+{% if source_changed %}<p role="status">Activity details have changed since this draft's source snapshot. Your saved advisory has not changed.</p>{% endif %}
+<details><summary>Compare current activity details</summary><p>{{ source_defaults.headline }}</p><p>{{ source_defaults.body }}</p>{% for label,value in source_defaults.rows %}<p>{{ label }}: {{ value }}</p>{% endfor %}</details>
+<form method="post" action="/activities/{{ ev.event_token }}/advisory/draft">
+<input type="hidden" name="expected_revision" value="{{ expected_revision }}">
+<input type="hidden" name="expected_source" value="{{ expected_source }}">
+<input type="hidden" name="expected_legacy_revision" value="{{ legacy_revision }}">
+<input type="hidden" name="operation_key" value="{{ operation_key }}">
+<fieldset {% if not available or not can_edit %}disabled{% endif %}><legend>Preparation and audience</legend>
+<label for="adv-unit">Owning division</label><select id="adv-unit" name="unit_id" required><option value="">Choose a division</option>{% for unit in divisions %}<option value="{{ unit.id }}" {% if unit_id == unit.id|string %}selected{% endif %}>{{ unit.name }}</option>{% endfor %}</select>
+<label for="adv-audience">Intended distribution</label><select id="adv-audience" name="audience"><option value="internal" {% if audience=='internal' %}selected{% endif %}>Internal users</option><option value="external" {% if audience=='external' %}selected{% endif %}>External recipients</option><option value="both" {% if audience=='both' %}selected{% endif %}>Internal and external</option></select>
+<label for="adv-external">External email addresses</label><textarea id="adv-external" name="external" rows="3" maxlength="64000">{{ external }}</textarea><p class="muted">Separate addresses with commas or new lines. Audience selection does not grant access to this draft or send email.</p>
+<label for="adv-headline">Headline</label><textarea id="adv-headline" name="headline" rows="2" maxlength="{{ limits.headline }}" required>{{ v.headline }}</textarea>
+<label for="adv-attention">Attention</label><textarea id="adv-attention" name="attention" rows="3" maxlength="{{ limits.attention }}">{{ v.attention }}</textarea>
+<label for="adv-body">Message</label><textarea id="adv-body" name="body" rows="6" maxlength="{{ limits.body }}">{{ v.body }}</textarea><p class="muted">Use **double asterisks** for bold text.</p>
+{% for label,value in rows %}<div class="pair"><div><label for="adv-label-{{ loop.index0 }}">Row {{ loop.index }} label</label><input id="adv-label-{{ loop.index0 }}" name="row_label_{{ loop.index0 }}" value="{{ label }}" maxlength="{{ limits.label }}"></div><div><label for="adv-value-{{ loop.index0 }}">Row {{ loop.index }} link or note</label><input id="adv-value-{{ loop.index0 }}" name="row_value_{{ loop.index0 }}" value="{{ value }}" maxlength="{{ limits.value }}"></div></div>{% endfor %}
+<label for="adv-contact">Contact person</label><input id="adv-contact" name="contact_name" value="{{ v.contact_name }}" maxlength="{{ limits.contact_name }}" required>
+<label for="adv-phone">Contact phone</label><input id="adv-phone" name="contact_phone" value="{{ v.contact_phone }}" maxlength="{{ limits.contact_phone }}">
+<label for="adv-email">Contact email</label><input id="adv-email" name="contact_email" value="{{ v.contact_email }}" maxlength="{{ limits.contact_email }}">
+<label for="adv-summary">Change summary{% if record %} (required for changes){% endif %}</label><textarea id="adv-summary" name="summary" rows="2" maxlength="2000">{{ summary }}</textarea>
+<label><input type="checkbox" name="adopt_source" value="1" {% if adopt_source %}checked{% endif %}> I compared the current activity details and updated this draft as needed.</label>
+<p class="muted">This records the current activity snapshot; it does not replace the text you entered.</p>
+<button class="btn" type="submit">Save private draft</button>
+</fieldset></form>
+<p>Division Chief review, Director approval and issuance will be available in a later increment.</p>
+</div>
+{% endblock %}

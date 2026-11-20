@@ -114,6 +114,7 @@ import harmonize as hz
 import activity_announcements
 import activity_advisory
 import activity_advisory_routes
+import advisory_routes
 import activity_creation
 import activity_drafts
 import activity_draft_routes
@@ -18010,6 +18011,7 @@ def _calendar_check_dates(start, end):
 
 
 app.include_router(birthday_cards.make_router(templates, get_conn, _today_local, _audit))
+app.include_router(advisory_routes.make_router(templates, get_conn, _base_url))
 app.include_router(activity_advisory_routes.make_router(
     templates, get_conn, _can_manage_event, _share_url, _base_url, _audit))
 app.include_router(calendar_routes.make_router(

@@ -2,7 +2,10 @@
 
 Updated November 20, 2026. Planning-only PR; baseline main `3eea227`.
 This document supersedes the November 19 exploratory scope and conflicting earlier chat proposals.
-The user authorized finalizing the plan, committing, pushing and creating a PR. Feature implementation, merge, deployment, real email and Google file changes are not authorized in this session.
+The initial planning authorization covered finalizing the plan, committing, pushing and creating a PR.
+The owner subsequently said **“start building”**, authorizing the first implementation slice;
+see [private drafts and implementation boundaries](ADVISORY_DRAFTS.md). Merge, deployment,
+real email and external file changes remain unauthorized.
 
 ## Confirmed scope
 
@@ -100,8 +103,8 @@ These are the remaining choices only. Register ownership, no Sheet work, Divisio
 The [service map and first-slice specification](ADVISORY_IMPLEMENTATION_DESIGN.md) now records
 inspected reuse points, required shared-service extensions, additive schema, compatibility,
 transaction/idempotency boundaries and synthetic acceptance criteria. The five-policy package
-was presented to the owner; no answer is recorded yet. Recommendations remain pending,
-and implementation remains unauthorized. Use that design for the next continuation.
+was presented to the owner. The subsequent build instruction authorizes slice 1 using the
+recommended P2/P3 defaults; P1/P4/P5 remain pending for dependent implementation.
 
 ## Delivery plan and acceptance gates
 
@@ -129,10 +132,23 @@ Verification uses synthetic data with outbound notifications disabled. Cover pho
 
 ## Saved handoff and new-chat starter
 
-Branch: `plan/advisory-tracker-integration`. This PR contains documentation only. No live workflow was tested, feature implemented, external file edited, message sent, merge performed or deployment requested. Documentation checks: relative links and `git diff --check`.
+Branch: `plan/advisory-tracker-integration`, draft PR #633. The owner authorized building slice 1
+with “start building.” Candidate 10.40 now implements private drafts/register/revisions; see
+[the implementation checkpoint](ADVISORY_DRAFTS.md) and SETUP_STATUS.md for validation.
+No live workflow, external file edit, real notification, merge or deployment is authorized.
 
-Next action: record the five pending policy answers against the completed implementation design; obtain separate implementation authorization before building slice 1. Preserve all confirmed decisions and do not resume unrelated historical setup queues. Implementation requires a subsequent user instruction; merge/deployment always needs explicit release authorization.
+Next: review slice 1, then resolve issuing authority, internal roster timing and formalities
+(P1/P4/P5) before their dependent review/issuance implementation. Chief review followed by
+Director approval and the no-Sheet scope remain settled. Preserve comments, returns,
+resubmissions and internal/external distribution in later slices.
 
-Copy into a new chat with `jongsky25/css-is` selected:
+New-chat starter:
 
-> Office Connect: continue from branch `plan/advisory-tracker-integration` and its advisory workflow planning PR. Read AGENTS.md, docs/CLOUD_COLLABORATION.md, docs/SETUP_STATUS.md and docs/ADVISORY_TRACKER_INTEGRATION_PLAN.md. Verify current main and the saved branch. Read docs/ADVISORY_IMPLEMENTATION_DESIGN.md for the completed service map and first-slice specification. Record only the remaining policy answers and refine their affected design contracts. Everything stays in Office Connect; no Sheet import, transition, reconciliation or synchronization. Division Chief reviews, Director approves; preserve comments, returns, revisions and action history, plus internal/external distribution. Resolve only the remaining policy choices. Stay in planning until I authorize implementation; do not merge, deploy or send real notifications. Save progress to the review branch.
+> Office Connect: continue draft PR #633 on plan/advisory-tracker-integration. Read AGENTS.md,
+> docs/SETUP_STATUS.md, docs/ADVISORY_TRACKER_INTEGRATION_PLAN.md, docs/ADVISORY_IMPLEMENTATION_DESIGN.md
+> and docs/ADVISORY_DRAFTS.md. The first private-draft/register/revision slice was authorized by
+> “start building” and uses P2/P3 recommended defaults. Check its saved implementation and tests.
+> Resolve only the remaining P1/P4/P5 policy choices for later review/issuance work. Everything
+> stays in Office Connect with Division Chief review and Director approval, comments, returns,
+> resubmissions/history and internal/external distribution. No Sheet work, merge, deployment or
+> real notifications. Save progress to the same review branch.

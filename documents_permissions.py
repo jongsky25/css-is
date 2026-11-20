@@ -94,10 +94,16 @@ def assigned(conn, user, doc):
 
 
 def can_work(conn, user, doc):
+    import advisory_workflow
+    if advisory_workflow.for_document(conn, doc['id']):
+        return False  # Managed drafts are edited through their versioned advisory service.
     return doc['creator_id'] == user['id'] or doc['lead_id'] == user['id'] or officer(conn, user, doc) or assigned(conn, user, doc)
 
 
 def can_release(conn, user, doc):
+    import advisory_workflow
+    if advisory_workflow.for_document(conn, doc['id']):
+        return False
     return officer(conn, user, doc) or assigned(conn, user, doc)
 
 
@@ -231,8 +237,10 @@ class RegistryScope:
                           WHERE assignment.document_id={alias}.id)'''
 
     def work_sql(self, alias):
-        return f'''({alias}.creator_id=:registry_actor OR {alias}.lead_id=:registry_actor
-                    OR {self.officer_sql(alias)} OR {self.assigned_sql(alias)})'''
+        return f'''(NOT EXISTS (SELECT 1 FROM advisory_record managed WHERE managed.document_id={alias}.id)
+                    AND ({alias}.creator_id=:registry_actor OR {alias}.lead_id=:registry_actor
+                    OR {self.officer_sql(alias)} OR {self.assigned_sql(alias)}))'''
 
     def release_sql(self, alias):
-        return f'({self.officer_sql(alias)} OR {self.assigned_sql(alias)})'
+        return f'''(NOT EXISTS (SELECT 1 FROM advisory_record managed WHERE managed.document_id={alias}.id)
+                    AND ({self.officer_sql(alias)} OR {self.assigned_sql(alias)}))'''

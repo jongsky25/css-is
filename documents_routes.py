@@ -627,6 +627,11 @@ def make_router(templates,get_conn):
     def detail(request:Request,doc_id:int):
         conn=get_conn()
         try:
+            import advisory_workflow
+            managed=advisory_workflow.for_document(conn,doc_id)
+            if managed:
+                advisory_workflow.get_visible(conn,request.state.user,managed['id'])
+                return RedirectResponse('/advisories/'+str(managed['id']),status_code=303)
             values=detail_context(conn,request.state.user,doc_id)
             if 'redirect' in values:
                 return RedirectResponse(navigation.return_to_record(request,'/documents/'+str(values['redirect'])),status_code=303)

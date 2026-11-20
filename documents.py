@@ -83,6 +83,8 @@ def check(conn, user, doc_id, revision, *, allow_archived=False):
     writable(conn)
     user = p.actor(conn,user)
     doc = get(conn,user,doc_id)
+    import advisory_workflow
+    advisory_workflow.require_unmanaged(conn, doc_id)
     if doc['canonical_id']:
         raise Conflict('This receipt was merged. Open the canonical record.')
     if doc['archived_at'] and not allow_archived:
@@ -211,6 +213,9 @@ def set_module_enabled(conn, user, turn_on, expected_revision, authorization):
 
 
 def notify(conn, doc, eid, kind, extra=()):
+    import advisory_workflow
+    if advisory_workflow.for_document(conn, doc['id']):
+        return  # Draft foundation is deliberately quiet.
     recipients = {doc['creator_id'], doc['lead_id']} | set(extra)
     recipients |= {r[0] for r in conn.execute("SELECT user_id FROM document_assignment_effective WHERE document_id=? AND status<>'superseded'",(doc['id'],))}
     recipients |= {r[0] for r in conn.execute('SELECT user_id FROM document_access WHERE document_id=?',(doc['id'],))}
@@ -255,7 +260,7 @@ def register(conn, user, fields, now=None):
         return register_in_transaction(conn, user, fields, now)
 
 
-def register_in_transaction(conn, user, fields, now=None, suppress_assignments=False, defer_rules=False):
+def register_in_transaction(conn, user, fields, now=None, suppress_assignments=False, defer_rules=False, *, quiet=False):
     if not conn.in_transaction:
         raise RuntimeError('An active transaction is required')
     writable(conn)
@@ -318,7 +323,8 @@ def register_in_transaction(conn, user, fields, now=None, suppress_assignments=F
         url, file_id = validate_drive_url(fields['drive_url'])
         conn.execute('INSERT INTO document_file_version(document_id,url,file_id,fingerprint,role,actor_id,created_at) VALUES (?,?,?,?,?,?,?)',
                      (doc_id,url,file_id,'','reference',user['id'],timestamp))
-    notify(conn,doc,eid,'registered')
+    if not quiet:
+        notify(conn,doc,eid,'registered')
     return doc
 
 

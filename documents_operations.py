@@ -70,6 +70,8 @@ def get_adapter():
 
 
 def version(conn,doc):
+    import advisory_workflow
+    advisory_workflow.require_unmanaged(conn, doc['id'])
     found=rows(conn,'SELECT * FROM document_file_version WHERE id=? AND document_id=?',(doc['current_version'],doc['id']))
     if not found or not found[0]['fingerprint']:
         raise ValueError('A confirmed exact Drive version is required.')

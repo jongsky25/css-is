@@ -1,3 +1,10 @@
+## 10.40 — November 20, 2026
+
+- Add private activity advisory drafts, owning division and internal/external audience intent.
+- Keep immutable saved PDF/image revisions and a permission-filtered advisory register/history.
+- Preserve existing public copies and block managed drafts from generic approval, publishing and dispatch paths.
+- Review, approval, issuance and notifications remain for later increments; no automatic sending is enabled.
+
 ## 10.39 — November 18, 2026
 
 - Count all permitted Division follow-up exceptions by current workflow state.

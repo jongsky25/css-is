@@ -1,5 +1,38 @@
 # Cloud/mobile setup status
 
+## Advisory private-draft slice built — November 20, 2026
+
+Owner authorized implementation with **“start building”** after the planning checkpoint
+`4eb7643`. Candidate **10.40** is saved on `plan/advisory-tracker-integration` in
+[draft PR #633](https://github.com/jongsky25/css-is/pull/633). Main was rechecked at
+`3eea227`; no merge/deployment is authorized. This supersedes the planning-only
+next action immediately below.
+
+Built the [private draft/register/revision slice](ADVISORY_DRAFTS.md): shared Documents
+identity and restricted access, owning division, internal/external audience intent,
+immutable PDF/PNG revisions and differences/history, activity/register entry points,
+concurrent-save/idempotency guards and frozen existing public copies. Generic review,
+release and publish bypasses are blocked for managed drafts; saving creates no notices
+or dispatch jobs. Fixed the legacy render cache to use content identity rather than
+reusable activity IDs. Private contacts do not update shared last-used defaults.
+
+Uses recommended P2/P3 defaults (first-save reservation and one advisory per activity).
+P1 issuing authority, P4 internal-roster timing and P5 formalities remain pending for
+dependent slices. Chief review then Director approval is settled. Comments, returns,
+resubmissions and internal/external issuance remain in the later implementation scope.
+No Sheet import, transition, reconciliation or synchronization work.
+
+Verification: locked Python 3.11 cloud setup/doctor passed; **164 regression/service/route
+checks passed** plus **2 phone browser journeys passed** with scripts enabled/disabled,
+all without failures or skips in the final JUnit reports. JUnit gates, 10.40 release
+metadata, changed-document local links and `git diff --check` passed. Full normal/shuffled,
+WebKit and dependency release CI remain separate hosted gates; no full-suite success
+is claimed. Tests used synthetic data and disabled/mocked outbound integrations.
+
+Next: review the saved first slice and resolve only P1/P4/P5 before their dependent
+review/issuance work. Do not resume unrelated setup queues. No preview, production data
+access, real notifications, external-file edits, merge or deployment occurred.
+
 ## Advisory implementation design prepared — November 20, 2026
 
 Continued [draft PR #633](https://github.com/jongsky25/css-is/pull/633) from
