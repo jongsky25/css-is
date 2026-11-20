@@ -1,5 +1,18 @@
 # Cloud/mobile setup status
 
+## Advisory restart repair propagated — November 20, 2026
+
+#633's first shuffled gate failed two restart-idempotency assertions (11,139 passed).
+The advisory schema now installs before cache triggers capture dependency columns;
+advisory tables are also tracked dependencies. Applied the same repair to this review
+candidate. Cache/restart/Telegram-change/advisory-review validation: **70 passed**, no
+failures or skips. The initial candidate's equivalent regression run passed 75.
+
+No merge or deployment has occurred. #633 is rerunning full CI on `8aeb354`; this
+branch reruns its gates after saving. Continue the authorized #633 → #634 → #635
+sequence with exact-head checks and guarded deployment verification, preserving all
+gates and the no-real-test-notification/no-Sheet boundaries. Issuance is saved in #635.
+
 ## Advisory review cycle candidate 10.41 — November 20, 2026
 
 Owner instructed **“merge then do the next ... until you finish everything ... on this plan.”**
