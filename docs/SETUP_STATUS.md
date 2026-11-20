@@ -1,5 +1,20 @@
 # Cloud/mobile setup status
 
+## Advisory gate observation — November 20, 2026, 08:49 UTC
+
+Rechecked GitHub and the saved workspace. All three PR heads and stacked bases
+remain as listed below; none is merged. In the current runs, 633's full **normal**
+job and 635's full **shuffled** job have now succeeded. The other full-suite jobs
+are still running; all three candidates retain successful WebKit, dependency and
+metadata jobs. No failure or owner-action blocker was observed. Required aggregate
+gates are not yet complete, so no merge/deploy action is eligible this run.
+
+Continue at the next scheduled check without changing candidate heads or restarting
+CI. Owner requests an alert when **all three merges** are done; suppress routine
+pending/intermediate-merge alerts. Report final deployment separately if pending
+at merge completion. The completion alert has **not** been sent. This checkpoint
+changes documentation only; `git diff --check` applies, not application tests.
+
 ## Advisory release continuation — November 20, 2026, 08:03 UTC
 
 The owner instructed: **“merge then do the next. do this cycle until you finish
