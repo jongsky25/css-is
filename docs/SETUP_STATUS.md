@@ -1,5 +1,26 @@
 # Cloud/mobile setup status
 
+## All advisory PRs merged; final deployment pending — November 20, 2026
+
+Verified 10.41 deployment run 44727446139 on `1d46d15`: all gates succeeded,
+fresh 55.2 MB live backup secured and verified, code-only upload reached RUNNING,
+live /login confirmed 10.41 and diagnostics passed (deploy job 136291777411).
+#635's fresh CI 44727492254 also passed every required job. Exact candidate head
+`65045328ec181193c02778b737a42a6b828e140b` merged into main at
+`40d15e9d18b7f92c777937a86efc79f6ddf76c21`.
+
+**All three PRs (#633, #634, #635) are now verified merged into main.** The
+merge-completion alert is issued with this checkpoint's final response; do not
+send another merge-completion alert on the next run. Final 10.42 automatic
+deployment is pending and must not be described as verified yet.
+
+Next: find the automatic Deploy to Hugging Face run for exact main SHA `40d15e9`,
+verify full checks, fresh backup, code upload and live 10.42 confirmation plus
+diagnostics. Save final evidence, report the deployment outcome separately, then
+disable the release-cycle automation. If any gate fails, diagnose and resolve
+without bypassing existing safeguards. No further planned feature slice remains.
+No real test notifications, production-data tests, external memo edit or Sheet work.
+
 ## Two slices merged; final release gates pending — November 20, 2026
 
 10.40 deployment **verified**: run 44716416861 on `6a3ac9f` passed full normal/
