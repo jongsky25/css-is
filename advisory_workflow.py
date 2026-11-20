@@ -37,7 +37,7 @@ def for_document(conn, document_id):
 
 def require_unmanaged(conn, document_id):
     if for_document(conn, document_id):
-        raise ValueError('Open the advisory draft. Review, approval and issuance are not available yet.')
+        raise ValueError('Open the advisory screen to use its review, approval and issuance controls.')
 
 
 def available(conn):
@@ -75,17 +75,43 @@ def get_visible(conn, user, advisory_id):
                 ordinal=revision['ordinal'])
 
 
-def list_visible(conn, user, *, before=0, unit_id=0, limit=30):
+QUEUE_LABELS={'all':'All statuses','draft':'Draft','chief':'Awaiting Division Chief','director':'Awaiting Director',
+              'changes_requested':'Changes requested','approved':'Approved awaiting issuance','issued':'Issued',
+              'cancelled':'Cancelled','delivery_failures':'Distribution needs attention'}
+
+
+def list_visible(conn, user, *, before=0, unit_id=0, limit=30, status='all', month='', audience='all'):
     user = permissions.actor(conn,user)
+    if status not in QUEUE_LABELS or audience not in ('all','internal','external','both'):
+        raise ValueError('Choose a valid status and audience filter.')
+    if month and not re.fullmatch(r'[0-9]{4}-(0[1-9]|1[0-2])',month):raise ValueError('Choose a month in YYYY-MM format.')
     scope = permissions.RegistryScope(conn,user)
-    params = {**scope.params,'before':before,'unit':unit_id,'limit':limit+1}
-    where = f'''FROM advisory_record a JOIN document d ON d.id=a.document_id
+    params = {**scope.params,'before':max(0,before),'unit':unit_id,'limit':min(max(1,limit),100)+1,
+              'status':status,'month':month,'audience':audience}
+    limit=params['limit']-1
+    stage="CASE WHEN d.status='in_review' THEN d.review_class ELSE d.status END"
+    failure="""EXISTS(SELECT 1 FROM advisory_delivery delivery JOIN document_job job ON job.id=delivery.job_id
+        JOIN advisory_issue issued ON issued.id=delivery.issue_id WHERE issued.advisory_id=a.id
+        AND NOT EXISTS(SELECT 1 FROM advisory_issue_action stop WHERE stop.issue_id=issued.id AND stop.action IN ('cancelled','superseded'))
+        AND (job.state IN ('failed','unknown') OR (job.state IN ('pending','running') AND job.recovery_blocked=1))
+        AND NOT EXISTS(SELECT 1 FROM advisory_delivery newer JOIN document_job next ON next.id=newer.job_id
+            WHERE newer.issue_id=delivery.issue_id AND newer.recipient=delivery.recipient AND next.rowid>job.rowid))"""
+    where = f"""FROM advisory_record a JOIN document d ON d.id=a.document_id
+        JOIN advisory_revision revision ON revision.id=a.current_revision
         JOIN event e ON e.id=a.event_id JOIN org_unit u ON u.id=a.unit_id
-        WHERE {scope.view_sql('d')} AND (:before=0 OR a.id<:before) AND (:unit=0 OR a.unit_id=:unit)'''
-    found = rows(conn, '''SELECT a.id,a.number,a.unit_id,d.subject,d.status,e.event_token,u.name AS division
-        ''' + where + ' ORDER BY a.id DESC LIMIT :limit', params)
-    total = conn.execute('SELECT COUNT(*) ' + where, {**params,'before':0}).fetchone()[0]
-    return {'items':found[:limit], 'total':total, 'older':found[limit-1]['id'] if len(found)>limit else None}
+        WHERE {scope.view_sql('d')} AND (:unit=0 OR a.unit_id=:unit)
+        AND (:audience='all' OR json_extract(revision.payload_json,'$.audience')=:audience)
+        AND (:month='' OR substr(COALESCE((SELECT issued_at FROM advisory_issue WHERE advisory_id=a.id ORDER BY id DESC LIMIT 1),a.reservation_date),1,7)=:month)"""
+    selected=f" AND (:status='all' OR (:status='delivery_failures' AND {failure}) OR {stage}=:status)"
+    found = rows(conn, f"""SELECT a.id,a.number,a.unit_id,d.subject,d.status,e.event_token,u.name AS division,
+        {stage} AS stage,json_extract(revision.payload_json,'$.audience') AS audience,{failure} AS delivery_attention
+        """ + where + selected + ' AND (:before=0 OR a.id<:before) ORDER BY a.id DESC LIMIT :limit', params)
+    total = conn.execute('SELECT COUNT(*) ' + where + selected, params).fetchone()[0]
+    counts={item['stage']:item['n'] for item in rows(conn,f'SELECT {stage} AS stage,COUNT(*) AS n '+where+' GROUP BY stage',params)}
+    counts['all']=sum(counts.values())
+    counts['delivery_failures']=conn.execute('SELECT COUNT(*) '+where+' AND '+failure,params).fetchone()[0]
+    return {'items':found[:limit], 'total':total, 'older':found[limit-1]['id'] if len(found)>limit else None,
+            'counts':counts,'queue_labels':QUEUE_LABELS}
 
 
 def list_existing(conn,user,before=0):
@@ -254,7 +280,7 @@ def save_draft(conn, user, event_token, fields, *, unit_id, audience, external, 
             if record.get('case_id'):
                 conn.execute('UPDATE work_case SET unit_id=?,revision=revision+1,updated_at=? WHERE id=?',(unit_id,now,record['case_id']))
             if prior and record['unit_id']!=unit_id:
-                conn.execute("DELETE FROM document_access WHERE document_id=? AND source='advisory_routing'",(doc['id'],))
+                conn.execute("DELETE FROM document_access WHERE document_id=? AND source IN ('advisory_routing','advisory_release')",(doc['id'],))
             event(conn,doc['id'],user,'advisory_draft_saved',{'advisory_id':aid,'revision_id':rid,'ordinal':ordinal,'summary':summary.strip()})
         conn.execute('INSERT INTO advisory_save_request VALUES (?,?,?,?,?,?)',(user['id'],operation_key,ev['id'],request_hash,aid,rid))
         return get_visible(conn,user,aid)

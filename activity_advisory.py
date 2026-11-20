@@ -50,6 +50,16 @@ def get(conn, event_id):
 
 def public_summary(conn, event_id):
     """What the public link tree needs, only when the advisory is published: number, headline and revision."""
+    import advisory_workflow, advisory_distribution
+    managed=advisory_workflow.for_event(conn,event_id)
+    if managed:
+        public=conn.execute('SELECT issue_id FROM advisory_publication WHERE advisory_id=?',(managed['id'],)).fetchone()
+        if public is not None:
+            if not public[0]:return None
+            issue=advisory_distribution.rows(conn,'SELECT * FROM advisory_issue WHERE id=?',(public[0],))[0]
+            if not advisory_distribution.live(conn,issue) or issue['audience']=='internal':return None
+            payload=conn.execute('SELECT payload_json FROM advisory_revision WHERE id=?',(issue['revision_id'],)).fetchone()[0]
+            return {'number':managed['number'],'headline':json.loads(payload)['content']['headline'],'revision':issue['revision_id']}
     a = _row(conn, event_id)
     if not a or not a["published"]:
         return None

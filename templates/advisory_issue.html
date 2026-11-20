@@ -1,0 +1,13 @@
+{% extends 'dash_layout.html' %}
+{% block title %}Confirm advisory issuance{% endblock %}
+{% block content %}<div style="max-width:50rem;margin:auto;overflow-wrap:anywhere">
+<h1>Confirm issuance</h1><p>Advisory {{ record.number }} · Revision {{ record.ordinal }}</p>
+<p><a href="/advisories/{{ record.id }}/revisions/{{ record.current_revision }}/file.pdf">Review the approved PDF</a> · <a href="/advisories/{{ record.id }}">Back to advisory</a></p>
+<p>Issuing freezes this approved PDF and the audience below, records the issue date and queues individual PDF emails. Each recipient receives one separate message. Public publication is a separate action.</p>
+<h2>{{ recipients|length }} unique email recipients</h2><ul>{% for address in recipients %}<li>{{ address }}</li>{% endfor %}</ul>
+{% if missing %}<h2>Accounts without deliverable email</h2><ul>{% for person in missing %}<li>{{ person.name }}</li>{% endfor %}</ul><p>These accounts remain in the recorded internal audience. No email will be attempted for them.</p>{% endif %}
+<form method="post" action="/advisories/{{ record.id }}/actions"><fieldset {% if not available %}disabled{% endif %}>
+<input type="hidden" name="action" value="issue"><input type="hidden" name="operation_key" value="{{ action_key }}"><input type="hidden" name="expected_revision" value="{{ record.revision }}"><input type="hidden" name="confirmation" value="{{ confirmation }}">
+{% if missing %}<p><label><input type="checkbox" name="ack_missing" value="1" required> I acknowledge the listed accounts cannot receive email.</label></p>{% endif %}
+<p><label>Issuance note <textarea name="reason" required maxlength="4000" style="width:100%;box-sizing:border-box"></textarea></label></p>
+<button class="btn" type="submit">Issue and queue PDF emails</button></fieldset></form></div>{% endblock %}

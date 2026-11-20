@@ -93,7 +93,7 @@ def test_generic_bypasses_and_old_mutations_are_refused(drafts):
     c,users,unit,_,ev,_=drafts
     first=create(drafts); doc=docs.raw(c,first['document_id'])
     assert not permissions.can_release(c,users[0],doc)
-    with pytest.raises(ValueError,match='not available yet'):docs.mutate(c,users[0],doc['id'],doc['revision'],'review',{'decision':'approved'})
+    with pytest.raises(ValueError,match='Open the advisory screen'):docs.mutate(c,users[0],doc['id'],doc['revision'],'review',{'decision':'approved'})
     with pytest.raises(ValueError):ops.queue(c,users[0],doc['id'],doc['revision'],'dispatch',{})
     with pytest.raises(ValueError):ops.attach(c,users[0],doc['id'],doc['revision'],'https://drive.google.com/file/d/x/view','minor','change')
     with pytest.raises(ValueError):ops.version(c,doc)

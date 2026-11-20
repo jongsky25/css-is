@@ -76,7 +76,8 @@ def make_router(templates, get_conn, can_manage_event, share_url, base_url, audi
             a = aa.get(conn, ev["id"]) if ev else None
             if ev and workflow.for_event(conn, ev['id']):
                 try:
-                    data = workflow.existing_public(conn, ev['id'], fmt)
+                    import advisory_distribution
+                    data = advisory_distribution.public_artifact(conn, ev['id'], fmt)
                 except ValueError:
                     return Response("This advisory is not available.",status_code=404)
                 headers = {"Cache-Control":"no-store"}

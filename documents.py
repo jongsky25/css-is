@@ -90,7 +90,7 @@ def check(conn, user, doc_id, revision, *, allow_archived=False, allow_advisory=
         raise Conflict('This receipt was merged. Open the canonical record.')
     if doc['archived_at'] and not allow_archived:
         raise ValueError('Restore this document before changing it.')
-    if conn.execute("SELECT 1 FROM document_job WHERE document_id=? AND kind IN ('sign','dispatch') AND state IN ('running','unknown')", (doc_id,)).fetchone():
+    if conn.execute("SELECT 1 FROM document_job j WHERE document_id=? AND kind IN ('sign','dispatch') AND state IN ('running','unknown') AND (?=0 OR NOT EXISTS (SELECT 1 FROM advisory_delivery a WHERE a.job_id=j.id))", (doc_id,int(allow_advisory))).fetchone():
         raise Conflict('An external operation is running or uncertain. Reconcile its outcome before editing.')
     if doc['revision'] != int(revision):
         raise Conflict(f"This record changed at {doc['updated_at']}; reload revision {doc['revision']} before resubmitting.")

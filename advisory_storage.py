@@ -76,3 +76,26 @@ def install(conn):
         for operation in ('UPDATE','DELETE'):
             conn.execute(f'''CREATE TRIGGER IF NOT EXISTS {table}_no_{operation.lower()}
                 BEFORE {operation} ON {table} BEGIN SELECT RAISE(ABORT,'Advisory history is immutable'); END''')
+    conn.executescript('''
+    CREATE TABLE IF NOT EXISTS advisory_issue (
+      id INTEGER PRIMARY KEY, advisory_id INTEGER NOT NULL REFERENCES advisory_record(id),
+      revision_id INTEGER NOT NULL REFERENCES advisory_revision(id), packet_id INTEGER NOT NULL REFERENCES advisory_review_packet(id),
+      version_id INTEGER NOT NULL REFERENCES document_file_version(id), actor_id INTEGER NOT NULL REFERENCES admin_user(id),
+      issued_at TEXT NOT NULL, audience TEXT NOT NULL, recipients_json TEXT NOT NULL, missing_json TEXT NOT NULL,
+      roster_json TEXT NOT NULL, pdf_hash TEXT NOT NULL, supersedes_id INTEGER REFERENCES advisory_issue(id),
+      UNIQUE(advisory_id,revision_id));
+    CREATE TABLE IF NOT EXISTS advisory_delivery (
+      job_id TEXT PRIMARY KEY REFERENCES document_job(id), issue_id INTEGER NOT NULL REFERENCES advisory_issue(id),
+      recipient TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS advisory_delivery_issue ON advisory_delivery(issue_id,recipient);
+    CREATE TABLE IF NOT EXISTS advisory_publication (
+      advisory_id INTEGER PRIMARY KEY REFERENCES advisory_record(id), issue_id INTEGER REFERENCES advisory_issue(id),
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS advisory_issue_action (
+      id INTEGER PRIMARY KEY, issue_id INTEGER NOT NULL REFERENCES advisory_issue(id),
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), action TEXT NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL);
+    ''')
+    for table in ('advisory_issue','advisory_delivery','advisory_issue_action'):
+        for operation in ('UPDATE','DELETE'):
+            conn.execute(f'''CREATE TRIGGER IF NOT EXISTS {table}_no_{operation.lower()}
+                BEFORE {operation} ON {table} BEGIN SELECT RAISE(ABORT,'Advisory history is immutable'); END''')

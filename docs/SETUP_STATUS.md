@@ -1,5 +1,34 @@
 # Cloud/mobile setup status
 
+## Advisory issuance and dashboard candidate 10.42 — November 20, 2026
+
+The complete-development instruction remains active. Candidate 10.42 is prepared on
+`feat/advisory-issuance`, stacked on [review PR #634](https://github.com/jongsky25/css-is/pull/634)
+(`e332454`). [PR #633](https://github.com/jongsky25/css-is/pull/633) still awaits its
+full normal/shuffled release gates; WebKit, dependency audit and metadata passed.
+#634 has also passed those three hosted jobs; its full suites are running.
+No merge or deployment has occurred in this cycle yet.
+
+Built [controlled issuance and dashboard](ADVISORY_ISSUANCE.md): immutable issue/recipient
+snapshots, exact PDF confirmation, existing Documents worker/dispatch and mailer reuse,
+independent recipient attempts, guarded retries and evidenced unknown outcomes, explicit
+scoped release access, internal issued-only access, frozen public publication,
+replacement/supersession/cancellation, activity/nav integration, and shared-filter
+status/month/division/audience counts. Prepared [matching memo text](ADVISORY_MEMO_TEXT.md)
+in the repository; no external memo edit. No Sheet work or real notifications.
+
+Verification: 37 advisory service/browser checks passed, followed by 116 issuance,
+Documents job/lifecycle/guidance and advisory-rendering regressions. Phone issuance,
+publication, failure/retry and filtered register pass with scripts on/off. JUnit gates,
+10.42 metadata and diff checks passed. The final advisory run passed 24 checks, and deployment-bundle/navigation/draft
+regression checks passed 28. Full hosted gates remain mandatory; synthetic checks are not
+claimed as live transport proof.
+
+Next: save/open 10.42 PR; finish sequential gated merges and verify each guarded automatic
+deployment before the next merge. All required first-increment plan development is now
+represented in the three candidates; standalone/multiple advisories, Slides and ordinary
+comment email are explicitly deferred options. Do not resume unrelated audit/setup queues.
+
 ## Advisory review cycle candidate 10.41 — November 20, 2026
 
 Owner instructed **“merge then do the next ... until you finish everything ... on this plan.”**

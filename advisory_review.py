@@ -80,7 +80,8 @@ def _finish(conn,user,doc,action,reason,changes,record,**detail):
 
 
 def mutate(conn,user,advisory_id,revision,action,data):
-    if action not in ACTIONS:raise ValueError('Choose an advisory action.')
+    import advisory_distribution
+    if action not in ACTIONS | advisory_distribution.ACTIONS:raise ValueError('Choose an advisory action.')
     user=p.actor(conn,user)
     try: key=str(uuid.UUID(str(data.get('operation_key','')))); revision=int(revision)
     except (ValueError,TypeError):raise ValueError('Reload the advisory action form.') from None
@@ -97,7 +98,9 @@ def mutate(conn,user,advisory_id,revision,action,data):
             return record
         user,doc=d.check(conn,user,record['document_id'],revision,allow_advisory=True)
         is_author=user['id']==record['initiator_id']
-        if action in ('submit','reroute'):
+        if action in advisory_distribution.ACTIONS:
+            eid=advisory_distribution.mutate_in_transaction(conn,user,record,doc,action,data,reason)
+        elif action in ('submit','reroute'):
             d.require(is_author)
             if doc['status'] not in (('in_review',) if action=='reroute' else ('draft','changes_requested')):
                 raise ValueError('Return or withdraw the current submission before submitting again.')
@@ -137,6 +140,8 @@ def mutate(conn,user,advisory_id,revision,action,data):
             _,eid=_finish(conn,user,doc,{'endorse':'endorsed','approve':'approved','return':'returned'}[action],reason,changes,record,review_id=rid,stage=stage)
         elif action in ('withdraw','cancel'):
             d.require(is_author)
+            if action=='cancel' and advisory_distribution.latest(conn,record['id']):
+                raise ValueError('Use Cancel issued advisory to preserve its delivery and publication history.')
             allowed=('in_review','approved','changes_requested') if action=='withdraw' else ('draft','in_review','approved','changes_requested')
             if doc['status'] not in allowed:raise ValueError('This action is unavailable in the current state.')
             _,eid=_finish(conn,user,doc,'withdrawn' if action=='withdraw' else 'cancelled',reason,
@@ -176,7 +181,10 @@ def mutate(conn,user,advisory_id,revision,action,data):
 def notify(conn,doc,eid,kind):
     record=aw.for_document(conn,doc['id'])
     if kind in ('advisory_submitted','advisory_rerouted','advisory_endorsed'):targets=[doc['reviewer_id']]
-    elif kind in ('advisory_returned','advisory_approved'):targets=[record['initiator_id']]
+    elif kind in ('advisory_returned','advisory_approved'):
+        targets=[record['initiator_id']]
+        if kind=='advisory_approved':
+            targets += [r[0] for r in conn.execute("SELECT user_id FROM document_access WHERE document_id=? AND source='advisory_release'",(doc['id'],)) if p.has_role(conn,{'id':r[0]},'records',record['unit_id'])]
     else:return
     for uid in set(targets)-{None}:
         if p.can_view(conn,{'id':uid},doc):
@@ -190,6 +198,10 @@ def notice_current(conn,doc,notice):
     if not record or not detail or json.loads(detail[0]).get('packet_id')!=record['active_packet']:return False
     kind=notice['kind']
     if kind in ('advisory_submitted','advisory_rerouted','advisory_endorsed'):
+        try:
+            current=packet(conn,record)
+            if routing(conn,record)!=(current['chief_id'],current['director_id']):return False
+        except ValueError:return False
         return doc['status']=='in_review' and doc['reviewer_id']==notice['user_id']
     return doc['status']==('approved' if kind=='advisory_approved' else 'changes_requested')
 
@@ -237,9 +249,16 @@ def guidance(conn,user,doc):
     title={'draft':'Prepare the advisory','changes_requested':'Address review feedback',
            'approved':'Prepare issuance','cancelled':'Advisory cancelled'}.get(doc['status'],'Review the advisory')
     role=('Division Chief' if doc['review_class']=='chief' else 'Director') if doc['status']=='in_review' else 'Initiator'
+    import advisory_distribution
+    if doc['status']=='approved' and advisory_distribution.can_issue(conn,user,record):owner=user['id'];role='Authorized issuer'
+    stage='review' if doc['status']=='in_review' else doc['status']
+    if doc['status']=='issued':
+        attention=conn.execute("SELECT 1 FROM advisory_delivery a JOIN document_job j ON j.id=a.job_id WHERE j.document_id=? AND j.state IN ('failed','unknown') AND NOT EXISTS (SELECT 1 FROM advisory_delivery newer JOIN document_job n ON n.id=newer.job_id WHERE newer.issue_id=a.issue_id AND newer.recipient=a.recipient AND n.rowid>j.rowid)",(doc['id'],)).fetchone()
+        stage='delivery_partial' if attention else 'complete'
+        title='Check advisory delivery' if attention else 'Advisory issued'
     enabled=aw.available(conn)
-    allowed=enabled and owner==user['id'] and doc['status'] not in ('cancelled','superseded')
-    return {'stage':'review' if doc['status']=='in_review' else doc['status'], 'title':title,
+    allowed=enabled and owner==user['id'] and doc['status'] not in ('cancelled','superseded') and stage!='complete'
+    return {'stage':stage, 'title':title,
             'message':'Open the advisory to see its exact revision, feedback and available actions.',
             'owner_id':owner,'owner_role':role,'action':({'label':'Open advisory','href':'/advisories/'+str(record['id'])} if allowed else None),
             'blocker':None,'contributions':[]}

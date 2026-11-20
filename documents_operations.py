@@ -258,6 +258,9 @@ def execute(conn,operation,adapter=None,*,reconcile=False,recovery=False):
     with exclusive_operation(operation):
         token=jobs.claim(conn,operation,reconcile=reconcile,recovery=recovery)
         try:
+            if conn.execute('SELECT 1 FROM advisory_delivery WHERE job_id=?',(operation,)).fetchone():
+                import advisory_distribution
+                return advisory_distribution.execute(conn,operation,token=token,reconcile=reconcile)
             return _execute(conn, operation, adapter, reconcile=reconcile,token=token)
         except BaseException:
             jobs.validation_failed(conn,operation,token,recovery=recovery)
@@ -379,6 +382,8 @@ def _reconcile(conn,user,operation,outcome,evidence):
         if not job or job[0]['state'] not in ('running','unknown','failed','pending'):
             raise ValueError('This operation does not need reconciliation.')
         job=job[0]; doc=d.get(conn,user,job['document_id'])
+        import advisory_workflow
+        advisory_workflow.require_unmanaged(conn,doc['id'])
         if jobs.active(job):
             raise d.Conflict('This operation is still in progress. Wait and check its status again.')
         d.require(p.officer(conn,user,doc) or (job['actor_id']==user['id'] and job['kind']!='dispatch'))

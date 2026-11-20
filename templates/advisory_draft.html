@@ -14,17 +14,18 @@
 <p><a href="/advisories">Advisory register</a> · <a href="/activities/{{ ev.event_token }}/manage">Activity</a></p>
 <h1>Advisory draft</h1><p>{{ ev.title }}</p>
 {% if record %}<p><strong>No. {{ record.number }}</strong> · Revision {{ record.ordinal }} · {{ 'Private draft' if record.status=='draft' else record.status|replace('_',' ') }}</p>
-<p class="muted">Number reserved {{ record.reservation_date }}. Not issued.</p>
+<p class="muted">Number reserved {{ record.reservation_date }}. See issuance history below for actual issue dates.</p>
 <p><a href="/advisories/{{ record.id }}/history">Version and action history</a> · <a href="/advisories/{{ record.id }}/revisions/{{ record.current_revision }}/file.pdf">Saved PDF</a></p>
 <details><summary>Saved image preview</summary><img src="/advisories/{{ record.id }}/revisions/{{ record.current_revision }}/file.png" alt="Saved advisory revision {{ record.ordinal }}"></details>
 {% elif legacy %}<p>No. {{ legacy.number }} will be retained. Existing approval history is unavailable.</p>
 {% else %}<p>The number is reserved on first save. This draft stays private.</p>{% endif %}
-{% if legacy and legacy.published %}<p>Its existing public copy stays unchanged while you prepare this private draft.</p>{% endif %}
+{% if legacy and legacy.published and (not distribution or not distribution.issues) %}<p>Its existing public copy stays unchanged while you prepare this private draft.</p>{% endif %}
 {% if not available %}<p role="status">Private advisory saving requires Documents and Shared work to be enabled by an authorized administrator. Existing permitted drafts remain readable.</p>{% endif %}
 {% if error %}<div class="flash warn" role="alert">{{ error }} <a href="/activities/{{ ev.event_token }}/advisory/draft" target="_blank" rel="noopener">Open latest draft in another tab</a></div>{% endif %}
 {% if source_changed %}<p role="status">Activity details have changed since this draft's source snapshot. Your saved advisory has not changed.</p>{% endif %}
 <details><summary>Compare current activity details</summary><p>{{ source_defaults.headline }}</p><p>{{ source_defaults.body }}</p>{% for label,value in source_defaults.rows %}<p>{{ label }}: {{ value }}</p>{% endfor %}</details>
 {% if review %}{% include 'advisory_review.html' %}{% endif %}
+{% if distribution %}{% include 'advisory_distribution.html' %}{% endif %}
 <form method="post" action="/activities/{{ ev.event_token }}/advisory/draft">
 <input type="hidden" name="expected_revision" value="{{ expected_revision }}">
 <input type="hidden" name="expected_source" value="{{ expected_source }}">
