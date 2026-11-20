@@ -1,7 +1,7 @@
 """Authenticated advisory drafts/register. All writes stay inside Office Connect."""
 import json
 import uuid
-from urllib.parse import parse_qsl
+from urllib.parse import parse_qsl, urlencode
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -12,6 +12,7 @@ import activity_permissions
 import advisory
 import advisory_workflow as workflow
 import advisory_review
+import advisory_distribution
 import documents
 import documents_permissions as permissions
 import storage as st
@@ -64,19 +65,22 @@ def make_router(templates, get_conn, base_url):
             'expected_revision':expected_revision,'expected_source':expected_source,'legacy_revision':legacy_revision,
             'divisions':workflow.divisions(conn),'limits':advisory.LIMITS,'error':error,
             'available':workflow.available(conn),'can_edit':not record or (record['initiator_id']==user['id'] and record['status'] in ('draft','changes_requested')),
+            'distribution':advisory_distribution.screen(conn,user,record) if record else None,
             'review':advisory_review.screen(conn,user,record,int(request.query_params.get('comments_before',0)),int(request.query_params.get('actions_before',0))) if record else None,'action_key':str(uuid.uuid4()),
             'source_changed':bool(record and workflow.digest(workflow.encoded(record['snapshot']))!=current_source),
             'adopt_source':adopt,'source_defaults':aa.defaults(conn,ev,qr),
             'history':workflow.history(conn,user,record['id'])[:10] if record else []},status_code=status)
 
     @router.get('/advisories',response_class=HTMLResponse)
-    def register(request:Request,before:int=0,division:int=0):
+    def register(request:Request,before:int=0,division:int=0,status:str="all",month:str="",audience:str="all"):
         conn=get_conn()
         try:
             user=actor(request,conn)
-            listing=workflow.list_visible(conn,user,before=max(0,before),unit_id=max(0,division))
+            listing=workflow.list_visible(conn,user,before=max(0,before),unit_id=max(0,division),status=status,month=month,audience=audience)
+            filters={'division':division,'status':status,'month':month,'audience':audience}
+            links={key:'/advisories?'+urlencode({**filters,'status':key}) for key in workflow.QUEUE_LABELS}
             return templates.TemplateResponse(request,'advisory_register.html',{
-                **listing,'divisions':workflow.divisions(conn),'division':division,'available':workflow.available(conn)})
+                **listing,'divisions':workflow.divisions(conn),**filters,'filter_query':urlencode(filters),'queue_links':links,'available':workflow.available(conn)})
         except ValueError as error:
             return failure(error)
         finally: conn.close()
@@ -129,6 +133,26 @@ def make_router(templates, get_conn, base_url):
         except ValueError as error: return failure(error)
         finally: conn.close()
 
+    @router.get('/advisories/issued',response_class=HTMLResponse)
+    def issued_list(request:Request,before:int=0):
+        conn=get_conn()
+        try:
+            user=actor(request,conn)
+            found=advisory_distribution.issued_for_user(conn,user,before)
+            return templates.TemplateResponse(request,'advisory_issued.html',{'items':found[:30],'older':found[29]['id'] if len(found)>30 else None})
+        except ValueError as error:return failure(error)
+        finally:conn.close()
+
+    @router.get('/advisories/issued/{issue_id}/file.{fmt}')
+    def issued_file(request:Request,issue_id:int,fmt:str):
+        conn=get_conn()
+        try:
+            user=actor(request,conn)
+            return Response(advisory_distribution.issued_artifact(conn,user,issue_id,fmt),
+                media_type='application/pdf' if fmt=='pdf' else 'image/png',headers={'Cache-Control':'private, no-store'})
+        except ValueError as error:return failure(error)
+        finally:conn.close()
+
     @router.get('/advisories/{advisory_id}',response_class=HTMLResponse)
     def detail(request:Request,advisory_id:int):
         conn=get_conn()
@@ -138,6 +162,17 @@ def make_router(templates, get_conn, base_url):
             return show(request,conn,user,ev)
         except ValueError as error: return failure(error)
         finally: conn.close()
+
+    @router.get('/advisories/{advisory_id}/issue',response_class=HTMLResponse)
+    def issue_preview(request:Request,advisory_id:int):
+        conn=get_conn()
+        try:
+            user=actor(request,conn)
+            return templates.TemplateResponse(request,'advisory_issue.html',{
+                **advisory_distribution.preview(conn,user,advisory_id),'action_key':str(uuid.uuid4()),
+                'available':workflow.available(conn)})
+        except ValueError as error:return failure(error)
+        finally:conn.close()
 
     @router.post('/advisories/{advisory_id}/actions')
     async def action(request:Request,advisory_id:int):

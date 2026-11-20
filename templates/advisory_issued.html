@@ -1,0 +1,3 @@
+{% extends 'dash_layout.html' %}{% block title %}Issued advisories{% endblock %}{% block content %}
+<h1>Issued advisories for you</h1><p><a href="/advisories">Advisory register</a></p><p>Current issued copies in your recorded internal audience, plus issued records you manage. Drafts and discussions remain restricted.</p>
+<ul>{% for item in items %}<li>{{ item.number }} · Issued {{ item.issued_at }} · <a href="/advisories/issued/{{ item.id }}/file.pdf">Issued PDF</a> · <a href="/advisories/issued/{{ item.id }}/file.png">Issued image</a></li>{% else %}<li>No issued advisories available.</li>{% endfor %}</ul>{% if older %}<p><a href="/advisories/issued?before={{ older }}">Older issued advisories</a></p>{% endif %}{% endblock %}

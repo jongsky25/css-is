@@ -1,5 +1,20 @@
 # Cloud/mobile setup status
 
+## Final advisory slice ready for fresh gates — November 20, 2026
+
+10.40 is verified deployed by run 44716416861 on `6a3ac9f`: complete required
+checks, fresh verified live backup, code-only upload and live /login 10.40 check
+all succeeded, followed by Telegram diagnostics. #634's refreshed full CI
+44716480309 also passed; exact head `8cc8741` merged into main at
+`1d46d158af26500cd8056de5e90e8b5b31918f6d`. Its automatic 10.41 deployment is pending.
+
+Merged current main into `feat/advisory-issuance` without application code changes
+and prepare #635 against main. Require new full CI on the pushed head and verified
+10.41 guarded deployment before merging #635. Final version remains 10.42.
+After that merge, alert the owner that all three merges are complete and state the
+final deployment status honestly; continue until its backup/live-version checks
+succeed. No real test notifications, production-data tests or external memo edits.
+
 ## Advisory review release preparation — November 20, 2026
 
 All three original advisory candidates passed their complete hosted gates, including
@@ -20,14 +35,46 @@ No real test notifications, production-data tests, external memo edits or Sheet 
 
 #633's first shuffled gate failed two restart-idempotency assertions (11,139 passed).
 The advisory schema now installs before cache triggers capture dependency columns;
-advisory tables are also tracked dependencies. Applied the same repair to this review
-candidate. Cache/restart/Telegram-change/advisory-review validation: **70 passed**, no
-failures or skips. The initial candidate's equivalent regression run passed 75.
+advisory tables are also tracked dependencies. Applied the same repair to this final
+issuance candidate. Cache/restart/Telegram-change/issuance validation: **72 passed**, no
+failures or skips. The draft and review candidates passed their 75/70 focused checks.
 
-No merge or deployment has occurred. #633 is rerunning full CI on `8aeb354`; this
-branch reruns its gates after saving. Continue the authorized #633 → #634 → #635
-sequence with exact-head checks and guarded deployment verification, preserving all
-gates and the no-real-test-notification/no-Sheet boundaries. Issuance is saved in #635.
+All agreed first-increment development remains saved across #633/#634/#635. No merge
+or deployment has occurred. #633 reruns full CI on `8aeb354`; all later candidates
+also require fresh full gates. Continue sequential guarded merges/deployment checks.
+No real test notifications, production-data tests, external memo edits or Sheet work.
+The memo wording is prepared in ADVISORY_MEMO_TEXT.md; no separate external edit.
+
+## Advisory issuance and dashboard candidate 10.42 — November 20, 2026
+
+The complete-development instruction remains active. Candidate 10.42 is prepared on
+`feat/advisory-issuance`, stacked on [review PR #634](https://github.com/jongsky25/css-is/pull/634)
+(`e332454`). [PR #633](https://github.com/jongsky25/css-is/pull/633) still awaits its
+full normal/shuffled release gates; WebKit, dependency audit and metadata passed.
+#634 has also passed those three hosted jobs; its full suites are running.
+No merge or deployment has occurred in this cycle yet.
+
+Built [controlled issuance and dashboard](ADVISORY_ISSUANCE.md): immutable issue/recipient
+snapshots, exact PDF confirmation, existing Documents worker/dispatch and mailer reuse,
+independent recipient attempts, guarded retries and evidenced unknown outcomes, explicit
+scoped release access, internal issued-only access, frozen public publication,
+replacement/supersession/cancellation, activity/nav integration, and shared-filter
+status/month/division/audience counts. Prepared [matching memo text](ADVISORY_MEMO_TEXT.md)
+in the repository; no external memo edit. No Sheet work or real notifications.
+
+Verification: 37 advisory service/browser checks passed, followed by 116 issuance,
+Documents job/lifecycle/guidance and advisory-rendering regressions. Phone issuance,
+publication, failure/retry and filtered register pass with scripts on/off. JUnit gates,
+10.42 metadata and diff checks passed. The final advisory run passed 24 checks, and deployment-bundle/navigation/draft
+regression checks passed 28. Full hosted gates remain mandatory; synthetic checks are not
+claimed as live transport proof.
+
+Saved as [PR #635](https://github.com/jongsky25/css-is/pull/635). Follow-up checks
+passed for evidenced notice retry (13 checks) and superseded-delivery guidance (10 checks).
+Next: finish sequential gated merges and verify each guarded automatic
+deployment before the next merge. All required first-increment plan development is now
+represented in the three candidates; standalone/multiple advisories, Slides and ordinary
+comment email are explicitly deferred options. Do not resume unrelated audit/setup queues.
 
 ## Advisory review cycle candidate 10.41 — November 20, 2026
 

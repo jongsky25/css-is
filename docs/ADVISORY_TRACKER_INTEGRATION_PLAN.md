@@ -1,11 +1,12 @@
 # Office Connect advisory workflow — implementation scope and handoff
 
-Updated November 20, 2026. Planning-only PR; baseline main `3eea227`.
-This document supersedes the November 19 exploratory scope and conflicting earlier chat proposals.
-The initial planning authorization covered finalizing the plan, committing, pushing and creating a PR.
-The owner subsequently said **“start building”**, authorizing the first implementation slice;
-see [private drafts and implementation boundaries](ADVISORY_DRAFTS.md). Merge, deployment,
-real email and external file changes remain unauthorized.
+Updated November 20, 2026. The owner authorized implementation with **“start building”**
+and then instructed repeated merge/development cycles through completion. The earlier
+planning-only and build-only handoffs below are historical. Current candidates and
+release evidence are tracked in [setup status](SETUP_STATUS.md). The implemented
+[review policy](ADVISORY_REVIEW.md), [issuance/dashboard](ADVISORY_ISSUANCE.md) and
+[prepared memo instructions](ADVISORY_MEMO_TEXT.md) follow this scope. No real test email,
+production-data testing, Sheet work or external memo edit is included.
 
 ## Confirmed scope
 

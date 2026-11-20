@@ -1,3 +1,10 @@
+## 10.42 — November 20, 2026
+
+- Confirm and freeze approved advisory PDFs, internal rosters, external recipients and actual issue dates.
+- Reuse Documents jobs/dispatch records and configured email for independent recipient delivery; guard retries and uncertain outcomes.
+- Add scoped releasing-staff access, internal issued-copy access, explicit publication, replacement and cancellation history.
+- Add advisory navigation, status/month/division/audience filters and permission-consistent counts/queues.
+
 ## 10.41 — November 20, 2026
 
 - Route exact advisory revisions through Division Chief endorsement and Director approval.
