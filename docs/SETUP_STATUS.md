@@ -1,5 +1,31 @@
 # Cloud/mobile setup status
 
+## Advisory implementation and release complete — November 20, 2026
+
+All planned first-increment code is merged through #633, #634 and #635. Final
+10.42 deployment **verified** on main `40d15e9d18b7f92c777937a86efc79f6ddf76c21`
+in [run 44738007251](https://github.com/jongsky25/css-is/actions/runs/44738007251).
+Full normal/shuffled suites, WebKit, dependency audit, release metadata and Required
+checks all passed. Deployment job 136329023716 secured and verified a fresh 55.3 MB
+backup, uploaded code only, reached RUNNING and confirmed live /login version 10.42
+at 13:53 UTC. Telegram diagnostics also succeeded. No bypass or manual deploy.
+
+The merge-completion alert was already sent. This completion response provides the
+requested simple walkthrough using checked UI labels: Open advisory → Save private
+draft → Submit to Division Chief → Endorse to Director → Approve this revision →
+Review issuance and recipients. Return for changes, replies, resubmission, Version
+and action history and Recipient delivery attempts are included. Private drafting
+does not notify; review actions can notify staff, and Issue and queue PDF emails
+queues real distribution to the confirmed audience. Public publication is separate.
+Three distinct preparer/Chief/Director accounts are required; ordinary internal
+circulation is not a test mode. No real notification or production-data trial was
+performed by this task. External memo wording is prepared in the repository only.
+
+No further planned implementation remains in this release cycle. Disable the
+completed hourly continuation and await owner feedback; do not resume unrelated
+audit/setup queues or add Sheet work. This final evidence is saved on the
+continuation branch without creating another feature release.
+
 ## All advisory PRs merged; final deployment pending — November 20, 2026
 
 Verified 10.41 deployment run 44727446139 on `1d46d15`: all gates succeeded,
