@@ -1,5 +1,20 @@
 # Cloud/mobile setup status
 
+## Final advisory slice ready for fresh gates — November 20, 2026
+
+10.40 is verified deployed by run 44716416861 on `6a3ac9f`: complete required
+checks, fresh verified live backup, code-only upload and live /login 10.40 check
+all succeeded, followed by Telegram diagnostics. #634's refreshed full CI
+44716480309 also passed; exact head `8cc8741` merged into main at
+`1d46d158af26500cd8056de5e90e8b5b31918f6d`. Its automatic 10.41 deployment is pending.
+
+Merged current main into `feat/advisory-issuance` without application code changes
+and prepare #635 against main. Require new full CI on the pushed head and verified
+10.41 guarded deployment before merging #635. Final version remains 10.42.
+After that merge, alert the owner that all three merges are complete and state the
+final deployment status honestly; continue until its backup/live-version checks
+succeed. No real test notifications, production-data tests or external memo edits.
+
 ## Advisory review release preparation — November 20, 2026
 
 All three original advisory candidates passed their complete hosted gates, including
