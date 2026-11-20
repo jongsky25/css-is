@@ -297,7 +297,7 @@ def install_step_generation(conn):
     conn.execute("INSERT OR IGNORE INTO document_step_generation VALUES (1,lower(hex(randomblob(24))))")
     names=[r[1] for r in conn.execute("PRAGMA table_list")
            if r[0]=='main' and r[2]=='table'
-           and (r[1]=='document' or r[1].startswith(('document_', 'work_'))
+           and (r[1]=='document' or r[1].startswith(('document_', 'work_', 'advisory_'))
                or r[1] in ('admin_user','resource_person','org_unit','section_oic','app_setting'))
            and r[1]!='document_step_generation']
     installed=dict(conn.execute("SELECT name,sql FROM sqlite_master WHERE type='trigger'"))
