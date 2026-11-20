@@ -1,5 +1,29 @@
 # Cloud/mobile setup status
 
+## Foundation merged; review rebased onto main — November 20, 2026, 10:07 UTC
+
+All three original candidate runs listed below completed successfully, including
+both full suites and the aggregate Required checks. Rechecked active ruleset
+26274179: strict current-main gate, PR/thread rules and no bypass actors. PR #633
+merged by exact-head merge at `6a3ac9f168d7b2d8c2f2a4171aa832a24c6d5863`.
+[Automatic deployment 44716416861](https://github.com/jongsky25/css-is/actions/runs/44716416861)
+is in progress on that exact main SHA; deployment is **not yet verified**.
+
+Merged current main into the review branch (ordinary merge, no history rewrite),
+updated its status and retargeted #634 to **main**. New pushed head:
+`8cc87415987bccb6894bbf085166a6d3830787e0`. Application code is identical to the
+previous green review candidate; 10.41 metadata and diff checks passed. Fresh
+full CI must pass on this updated head before merging. #635 remains open on
+`f1f5f02998f7fb1440743ebc469924084f302cf6`, based on the review branch; its original
+full CI passed but it will need a main update/fresh gate after #634 merges.
+
+Next: inspect 10.40 deployment through backup/live-version confirmation and #634's
+new CI. Merge #634 only when both succeed, then prepare #635 against new main.
+Do not merge #635 into its current feature base. No all-merges completion alert has
+been sent; only 633 is merged. Suppress intermediate alerts per owner preference.
+No manual deployment, real test notification, production-data test or external edit.
+
+
 ## Advisory gate observation — November 20, 2026, 08:49 UTC
 
 Rechecked GitHub and the saved workspace. All three PR heads and stacked bases
