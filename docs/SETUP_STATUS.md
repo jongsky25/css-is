@@ -1,5 +1,19 @@
 # Cloud/mobile setup status
 
+## Advisory restart repair propagated — November 20, 2026
+
+#633's first shuffled gate failed two restart-idempotency assertions (11,139 passed).
+The advisory schema now installs before cache triggers capture dependency columns;
+advisory tables are also tracked dependencies. Applied the same repair to this final
+issuance candidate. Cache/restart/Telegram-change/issuance validation: **72 passed**, no
+failures or skips. The draft and review candidates passed their 75/70 focused checks.
+
+All agreed first-increment development remains saved across #633/#634/#635. No merge
+or deployment has occurred. #633 reruns full CI on `8aeb354`; all later candidates
+also require fresh full gates. Continue sequential guarded merges/deployment checks.
+No real test notifications, production-data tests, external memo edits or Sheet work.
+The memo wording is prepared in ADVISORY_MEMO_TEXT.md; no separate external edit.
+
 ## Advisory issuance and dashboard candidate 10.42 — November 20, 2026
 
 The complete-development instruction remains active. Candidate 10.42 is prepared on
