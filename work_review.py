@@ -150,6 +150,10 @@ def current(conn,packet,*,_inputs=None,_digests=None,_invalidation_checked=False
 
 
 def require_current(conn,doc,user=None):
+    import advisory_workflow, advisory_review
+    if advisory_workflow.for_document(conn,doc['id']):
+        advisory_review.require_current(conn,doc)
+        return None  # Advisory packets are not consolidation packets.
     packet=latest(conn,doc['id'])
     if packet:
         if user is not None:work.get(conn,user,packet['case_id'])

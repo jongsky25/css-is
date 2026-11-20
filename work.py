@@ -71,7 +71,8 @@ def _can_view(conn, user, case):
     tasks = rows(conn, 'SELECT owner_id,unit_id,status FROM work_task WHERE case_id=?', (case['id'],))
     participant = any((t['owner_id'] == user['id'] and t['status'] != 'cancelled') or officer(conn, user, t) for t in tasks)
     if not (user['id'] in (case['creator_id'], case['lead_id']) or officer(conn, user, case) or participant):
-        return False
+        if not conn.execute('SELECT 1 FROM advisory_record a JOIN document_access access ON access.document_id=a.document_id WHERE a.case_id=? AND access.user_id=?',(case['id'],user['id'])).fetchone():
+            return False
     for (doc_id,) in conn.execute('SELECT document_id FROM work_document WHERE case_id=?', (case['id'],)):
         if not permissions.can_view(conn, user, resolved_document(conn, doc_id)):
             return False

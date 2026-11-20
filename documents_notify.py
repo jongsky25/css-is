@@ -81,7 +81,9 @@ def deliver(conn,base,dry_run=False):
     for notice in rows(conn,"SELECT * FROM document_notice WHERE state='pending' AND due_at<=? ORDER BY id",(tz.now_iso(),)):
         user=st.get_admin_user_by_id(conn,notice['user_id'])
         doc=d.raw(conn,notice['document_id'])
+        import advisory_review, advisory_workflow
         if (not user or not p.can_view(conn,user,doc) or
+                (notice['kind'].startswith('advisory_') and not advisory_review.notice_current(conn,doc,notice)) or
                 (notice['kind'].startswith('milestone:') and not work_compat.can_view_assignments(conn,user,doc['id']))):
             if not dry_run:
                 conn.execute("UPDATE document_notice SET state='revoked' WHERE id=?",(notice['id'],)); conn.commit()
@@ -93,7 +95,12 @@ def deliver(conn,base,dry_run=False):
         if not changed:
             continue
         # Minimal email details: no titles, sender, deadlines or attachment links.
-        subject,body,html=mailer.document_notice_message(base+'/documents/'+str(doc['id']))
+        managed=advisory_workflow.for_document(conn,doc['id'])
+        target='/advisories/'+str(managed['id']) if managed else '/documents/'+str(doc['id'])
+        subject,body,html=mailer.document_notice_message(base+target)
+        if managed and not mailer.email_configured():
+            conn.execute("UPDATE document_notice SET state='failed',error='Email transport is not configured.' WHERE id=?",(notice['id'],));conn.commit()
+            continue
         try:
             from send_reminders import _send
             rp=st.get_rp(conn,user['rp_id']) if user.get('rp_id') else None
@@ -145,14 +152,26 @@ def home_task(conn,user):
     return items[0] if items else None
 
 
+def retry_in_transaction(conn,user,doc,notice_id,note):
+    d.writable(conn); user=p.actor(conn,user)
+    notice=rows(conn,'SELECT * FROM document_notice WHERE id=? AND document_id=?',(notice_id,doc['id']))
+    import advisory_workflow
+    managed=advisory_workflow.for_document(conn,doc['id'])
+    d.require(notice and (notice[0]['user_id']==user['id'] or p.officer(conn,user,doc)
+                         or managed and managed['initiator_id']==user['id']))
+    allowed=('failed',) if managed else ('failed','unknown','sending')
+    if notice[0]['state'] not in allowed:
+        raise ValueError('Only confirmed failed delivery attempts can be retried.' if managed else 'Only unresolved delivery attempts can be retried.')
+    if managed:
+        import advisory_review
+        if not advisory_review.notice_current(conn,doc,notice[0]):raise ValueError('This notice no longer matches the current review stage.')
+    d.reason(note)
+    conn.execute("UPDATE document_notice SET state='pending',error='' WHERE id=?",(notice_id,))
+    from documents_storage import event
+    return event(conn,doc['id'],user,'notice_retry',{'notice_id':notice_id,'reason':note})
+
+
 def retry(conn,user,doc_id,notice_id,note):
     with transaction(conn):
-        d.writable(conn); user=p.actor(conn,user); doc=d.get(conn,user,doc_id)
-        notice=rows(conn,'SELECT * FROM document_notice WHERE id=? AND document_id=?',(notice_id,doc_id))
-        d.require(notice and (notice[0]['user_id']==user['id'] or p.officer(conn,user,doc)))
-        if notice[0]['state'] not in ('failed','unknown','sending'):
-            raise ValueError('Only unresolved delivery attempts can be retried.')
-        d.reason(note)
-        conn.execute("UPDATE document_notice SET state='pending',error='' WHERE id=?",(notice_id,))
-        from documents_storage import event
-        event(conn,doc_id,user,'notice_retry',{'notice_id':notice_id,'reason':note})
+        user=p.actor(conn,user); doc=d.get(conn,user,doc_id)
+        retry_in_transaction(conn,user,doc,notice_id,note)

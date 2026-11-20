@@ -191,7 +191,7 @@ class RegistryScope:
 
     def work_view_sql(self, alias):
         """SQL counterpart of work._can_view; source records limit case access."""
-        member = f'''({alias}.creator_id=:registry_actor OR {alias}.lead_id=:registry_actor
+        member = f'''(EXISTS (SELECT 1 FROM advisory_record a JOIN document_access access ON access.document_id=a.document_id WHERE a.case_id={alias}.id AND access.user_id=:registry_actor) OR {alias}.creator_id=:registry_actor OR {alias}.lead_id=:registry_actor
             OR {self.officer_sql(alias, concerned=False)} OR EXISTS (
                 SELECT 1 FROM work_task participant WHERE participant.case_id={alias}.id
                   AND ((participant.owner_id=:registry_actor AND participant.status<>'cancelled')

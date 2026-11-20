@@ -1,24 +1,58 @@
 # Cloud/mobile setup status
 
-## Advisory release gate repair — November 20, 2026
+## Advisory review release preparation — November 20, 2026
 
-The owner authorized repeated guarded merge/development cycles through completion.
-The advisory plan is implemented across [#633](https://github.com/jongsky25/css-is/pull/633)
-(10.40 drafts), [#634](https://github.com/jongsky25/css-is/pull/634) (10.41 review), and
-[#635](https://github.com/jongsky25/css-is/pull/635) (10.42 issuance/dashboard).
-This supersedes the earlier build-only restriction below. No merge/deployment has occurred.
+All three original advisory candidates passed their complete hosted gates, including
+normal/shuffled suites, WebKit, dependency audit, metadata and Required checks.
+PR #633 (10.40) merged into main at `6a3ac9f168d7b2d8c2f2a4171aa832a24c6d5863`
+after exact-head verification and active no-bypass ruleset checks. Its automatic
+deployment must still be verified before merging this review slice.
 
-#633's full shuffled suite completed with 11,139 passed and two failures. Both were
-restart-idempotency regressions: advisory installation added the file backend column
-**after** cache triggers captured the table shape. Fixed in `e27f8cb` by installing
-advisory schema first and including advisory tables among cache dependencies. The
-existing failing tests plus cache, Telegram-change and advisory regressions now pass:
-**75 passed**, no failures/skips; JUnit and diff gates pass. No test was weakened or skipped.
+Merged that current main into `feat/advisory-review-cycle` and prepare PR #634
+against main. This changes ancestry/checkpoint only; the reviewed application code
+is unchanged. Fresh full CI is required on the updated head. Do not merge #634
+until both its new Required checks and the 10.40 guarded deployment succeed.
+Then repeat the current-main update and release gates for #635. Completion alert
+is due only after all three PRs merge; final deployment is reported separately.
+No real test notifications, production-data tests, external memo edits or Sheet work.
 
-Next: propagate the fix to both later candidates, rerun full hosted gates, merge #633
-only when required checks pass, and verify its guarded automatic deployment. Continue
-#634 then #635 with current-main updates and the same gates. No real test notifications,
-production-data testing, external memo edits or Sheet work. Preserve all existing release gates.
+## Advisory restart repair propagated — November 20, 2026
+
+#633's first shuffled gate failed two restart-idempotency assertions (11,139 passed).
+The advisory schema now installs before cache triggers capture dependency columns;
+advisory tables are also tracked dependencies. Applied the same repair to this review
+candidate. Cache/restart/Telegram-change/advisory-review validation: **70 passed**, no
+failures or skips. The initial candidate's equivalent regression run passed 75.
+
+No merge or deployment has occurred. #633 is rerunning full CI on `8aeb354`; this
+branch reruns its gates after saving. Continue the authorized #633 → #634 → #635
+sequence with exact-head checks and guarded deployment verification, preserving all
+gates and the no-real-test-notification/no-Sheet boundaries. Issuance is saved in #635.
+
+## Advisory review cycle candidate 10.41 — November 20, 2026
+
+Owner instructed **“merge then do the next ... until you finish everything ... on this plan.”**
+This supersedes earlier planning/build-only restrictions for implementation and guarded
+merge/automatic-deployment cycles. No manual real notifications, production-data tests,
+external-file edits or gate bypasses are authorized or performed.
+
+PR #633 (10.40, `f30dc50`) is ready; hosted normal/shuffled suites are still running.
+WebKit, dependency audit and release metadata passed at the latest inspection.
+Do not merge it until its required gate passes; verify its guarded automatic deployment
+before merging the next release.
+
+Prepared candidate 10.41 on `feat/advisory-review-cycle`, based on #633. See
+[review implementation and policy defaults](ADVISORY_REVIEW.md). Chief → Director
+review, returns/resubmission, revision-linked Work discussion, concern resolution,
+append-only routing/decisions, current OIC checks, My desk and queued stage notices
+are implemented. Policy recommendations P1–P5 are working defaults under the owner's
+complete-development instruction, not separately answered policy questions.
+
+Local review service tests: 8 passed. Final advisory service/browser run: 12 passed
+(including both phone review and draft journeys, scripts on/off). Broader regression:
+265 passed. Release metadata and diff checks passed; hosted checks remain required. Next: finish checks, save/open the review PR, then build controlled issuance,
+delivery/publication and dashboard/memo guidance. Release each slice sequentially.
+No Sheet import, transition, reconciliation or synchronization.
 
 ## Advisory private-draft slice built — November 20, 2026
 
