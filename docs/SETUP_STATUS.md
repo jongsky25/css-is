@@ -59,9 +59,13 @@ review then Director approval, comments/returns/resubmissions/history and intern
 external distribution. No Sheet work, production-data tests, real test notifications
 or external memo edits. The matching memo text is prepared in the repository only.
 
-Automatic continuation is being arranged for the long-running hosted gates; its
-creation/result must be confirmed separately. This checkpoint does not itself prove
-that a scheduled task exists or that a future run will have working access.
+Automatic continuation was successfully created at 08:03 UTC: **Office Connect
+release cycles**, enabled hourly condition watch, task
+`Automation_98d648e601b081919fca0e83911576c9`. The task carries the authorized action
+sequence above and must disable itself on verified completion. Environment selection
+is inherited; the create response did not confirm specific attached environment
+details. Future runs must verify access and recreate checkouts if necessary. Task
+creation is confirmed; no future merge/deployment outcome is presumed.
 
 ## Advisory restart repair propagated — November 20, 2026
 
