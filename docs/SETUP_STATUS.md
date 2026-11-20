@@ -1,5 +1,30 @@
 # Cloud/mobile setup status
 
+## Two slices merged; final release gates pending — November 20, 2026
+
+10.40 deployment **verified**: run 44716416861 on `6a3ac9f` passed full normal/
+shuffled, WebKit, audit, metadata and Required checks, secured a fresh verified
+55.2 MB backup, uploaded code only, reached RUNNING and passed live /login version
+10.40 confirmation. Telegram diagnostics succeeded. Evidence is deployment job
+136253060225. No application tests used that live backup.
+
+#634's refreshed CI 44716480309 passed all gates. Exact head `8cc8741` merged into
+main at `1d46d158af26500cd8056de5e90e8b5b31918f6d`. Automatic 10.41 deployment
+[44727446139](https://github.com/jongsky25/css-is/actions/runs/44727446139) is running;
+its backup/upload/live-version outcome is not yet verified.
+
+#635 was updated by merging current main (no application code changes), retargeted
+to main, and pushed at `65045328ec181193c02778b737a42a6b828e140b`. Metadata 10.42,
+unchanged application-tree comparison and diff checks passed. Fresh full CI
+[44727492254](https://github.com/jongsky25/css-is/actions/runs/44727492254) is queued.
+
+Next: verify both the 10.41 deployment and #635's exact-head required checks, then
+merge #635 into main. Alert the owner immediately once all three merges are done,
+stating whether final deployment is pending. Continue final deployment verification
+and disable the continuation only on verified completion. All-merges alert has
+**not** been sent. User's status question was answered with two of three merged.
+No manual deployment, real test notifications, external edits or Sheet work.
+
 ## Foundation merged; review updated with main — November 20, 2026, 10:07 UTC
 
 All three original candidate runs listed below completed successfully, including
