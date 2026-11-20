@@ -1,7 +1,27 @@
-# Advisory tracker integration — scope for discussion
+# Office Connect advisory workflow — implementation scope and handoff
 
-Planning only, November 19, 2026. Baseline inspected: main `3eea227`.
-No application change, release, notification, or Google file edit is proposed for this session.
+Updated November 20, 2026. Planning-only PR; baseline main `3eea227`.
+This document supersedes the November 19 exploratory scope and conflicting earlier chat proposals.
+The user authorized finalizing the plan, committing, pushing and creating a PR. Feature implementation, merge, deployment, real email and Google file changes are not authorized in this session.
+
+## Confirmed scope
+
+- Office Connect fully owns advisory preparation, register, review, approval, issuance, notifications, dashboard and history.
+- No Sheet dependency, reporting mirror, synchronization, import, transition or reconciliation project. The draft memo and Sheet are requirements references only. This does not authorize deleting the external Sheet or existing application records.
+- Initiator prepares; the owning Division Chief reviews and endorses; the Director approves. ManCom-wide notification is not collective approval.
+- Internal issuance distributes to Office Connect users; external issuance uses explicitly entered recipients.
+- Reviewer and approver can comment and return for changes. The initiator revises, responds and resubmits with previous comments, versions and actions visible.
+- Reuse the existing activity advisory editor, rendering and activity association, plus existing email and Documents/Work capabilities where suitable.
+
+## Detailed planning defaults
+
+These defaults make the plan reviewable; they are recommendations rather than additional explicit owner decisions. Resolve the bounded policy questions below before dependent implementation.
+
+- Internal audience means all active users with a deliverable email address; inactive accounts are excluded and missing addresses are reported. Both internal and external may be selected together.
+- The initiator selects audience/recipients before review. Approval covers the content and distribution intent. External addresses are validated/deduplicated and never exposed to other recipients.
+- After a Director return, revised content goes back through the Division Chief and then the Director. An answer without content/audience changes can remain in the current review stage.
+- Issuance is a separate authorized action after approval, with final copy and recipient count confirmation. Approval does not auto-send to the audience.
+- Final approved PDF is attached to distribution email; external users need no Office Connect login. Public-page visibility is a separate choice, never implied by internal circulation.
 
 ## Evidence and existing behavior
 
@@ -14,59 +34,97 @@ No application change, release, notification, or Google file edit is proposed fo
 
 Code evidence establishes current-main behavior, not current production configuration or real Google script execution.
 
-## Recommended experience
+## Staff journey and states
 
-Office Connect should own the advisory record and process, with the Sheet optionally serving as an export/reporting view. This is a recommendation awaiting the owner's decision.
+1. From a managed activity, open Advisory. Reuse title, dates, venue, registration and resource links; retain editable draft fields. Saving an activity alone does not request approval or issue an advisory.
+2. Save a draft with owning division, initiator, audience and recipients. Display it in the central register and activity view as one record.
+3. Submit a specific revision. Resolve the responsible Division Chief from existing organizational roles and create the review task and notification.
+4. The Division Chief comments, returns with required feedback, or endorses the revision. Endorsement routes to the Director and sends an approval-request notification.
+5. The Director comments, returns with required feedback, or approves that exact revision. Approval notifies the initiator and configured releasing staff.
+6. Authorized staff issue the approved PDF to the confirmed recipients. Associate the issued artifact with the activity automatically. Show distribution progress and failures separately from the issuance record.
+7. Subsequent edits create a new draft; they cannot alter the issued artifact. Supersession links the replacement and prior advisory and retains both histories.
 
-1. Schedule/manage activity. Open its existing Advisory section; no second entry of title, dates, venue or resource links.
-2. Create an advisory draft or attach an existing working copy. Retain the built-in poster as the default; allow Slides for layouts needing external editing.
-3. Save once into the shared register. Show advisory number, preparer, owner, intended recipients, status and related activity.
-4. Submit a specific revision for review. Reviewers see the same record in their existing work queue; email links to that review. Merely saving a draft sends no review email.
-5. Return with feedback or approve the exact revision. Record who decided and when. Request changes can be a review outcome returning to Draft, preserving the memo's six top-level states.
-6. Issue the approved copy through an explicit authorized action. Record issue date and distribution evidence; publish the released version on the activity page when appropriate.
-7. Edit a new draft without changing the released copy. A correction/new advisory can supersede a prior issuance, with both retained and cross-linked.
+Lifecycle labels: Draft → For Review → Approved → Issued, with Superseded and Cancelled terminal outcomes. For Review must expose its current stage: Division Chief review or Director approval. A return shows Draft / Changes requested and the responsible initiator. Delivery has independent pending/sent/failed/unknown/partial results; Issued must not imply every email was delivered.
 
-The activity page, central register and reviewer queue are views of the same advisory, not separate records requiring synchronization by staff. Linking the final copy to the activity should be automatic after issuance.
+Persist release authorization and its frozen recipient/artifact snapshot before queued dispatch. An all-failed attempt remains visibly undelivered; retries target only eligible failed recipients. Provider acceptance is not proof that recipients read or even received the email. Unknown outcomes require checking provider evidence before retry, not blind resending.
 
-## Scope boundaries and decisions
+## Review, comments and resubmission
 
-| Topic | Proposed rule | Decision still needed |
+- Comment is a discussion action; Return for changes is a decision requiring an explanation and transferring the next action to the initiator.
+- Each comment records author, time, target revision and thread. Decision history is append-only; corrections are additional entries, not silent replacements.
+- The initiator responds to feedback and supplies a change summary on resubmission. Reviewers can mark concerns resolved or reopen them; initiator replies alone do not establish reviewer acceptance.
+- Show earlier versions, content/audience differences, feedback, responses, endorsements, approvals and issuance/delivery events in a readable timeline. Retain links from each decision to the exact version examined.
+- Revision or audience changes invalidate outstanding endorsement/approval for the changed draft. A stale browser cannot endorse, approve or issue an obsolete revision.
+- While review is pending, changes require withdrawing/returning that submission into revision; do not silently change a packet a reviewer is considering.
+- Director returns with content changes restart Division Chief review. Unchanged clarifications remain with the current reviewer/approver.
+- Email links open the appropriate authorized advisory screen. Decisions occur in Office Connect, not by interpreting an email reply.
+
+## Authority and notifications
+
+Routing uses the advisory's owning division, not whichever division the editor currently belongs to. Store the selected chief, Director and policy version at submission; validate current authority when acting. If a role is vacant or ambiguous, show a routing problem. Use existing formally designated OIC/delegation rules where applicable; reassignment is explicit and audited. A user cannot acquire approval authority merely by managing the activity. Shared preparer/reviewer/approver identities require an explicit separation-of-duties policy; do not silently auto-endorse.
+
+| Trigger | Email recipient | Work item/result |
 |---|---|---|
-| Official register | Office Connect; Sheet is export/reporting | Confirm system of record and transition timing |
-| Coverage | Activity-linked and standalone advisories in one register | Must standalone be included in first increment? |
-| Activity relationship | One activity may have several advisories: invitation, reminder, change, cancellation | Confirm initial need; current one-per-activity storage must change if included |
-| Review authority | Separate preparation, review, approval and issuance permissions | Does any designated ManCom reviewer suffice, are all required, and who formally approves/releases? |
-| Numbering | One allocator for all entry paths; preserve old numbers, never silently renumber | Reserve on first save or allocate on issue? If reserved early, date in number means reservation date, distinct from issue date |
-| Working copy | Built-in editor or linked Slides; same workflow | Is Google editing required for first release? |
-| Final copy | Immutable snapshot associated with approved revision | Accepted format and whether signature is required |
-| Issuance | Separate release record from email delivery and public visibility | Does public posting constitute official issuance, or must dispatch be recorded? |
-| Changed activity | Flag potentially outdated draft/issued details; offer refresh with review | Which changes require a replacement advisory? |
+| Submit/resubmit | Assigned Division Chief | Review current revision |
+| Chief endorsement | Director | Approve current revision |
+| Either role returns | Initiator | Feedback and revision task |
+| Director approval | Initiator and designated releasing staff | Ready for issuance |
+| Issue | Confirmed internal/external audience | Approved PDF and advisory identity |
 
-For external Slides, approval cannot attach only to an editable URL: preserve the reviewed snapshot and its source revision/content identity. If source changes before issue, require reconciliation and renewed approval where applicable. Frozen PDF/PNG artifacts must remain stable even if source files or rendering code change later.
-
-Do not map existing `published=true` directly to formal approval or historical issuance. Inventory and reconcile legacy records, preserving original publication evidence and marking unknown approval evidence honestly. An archived activity should not erase its advisory history. Withdrawing public visibility, cancelling an advisory and cancelling an activity are distinct actions.
+Reuse existing mail transport/configuration and delivery recording where suitable. Queue notifications with stable action/revision/recipient keys. Repeated saves, refreshes and retries must not duplicate messages. A notification failure must not undo a valid review decision; make failures visible and retryable. Optional ordinary-comment emails can be deferred to prevent excess messages.
 
 ## Data and integration outline
 
-An advisory needs stable identity, optional activity link, unique number, owner/preparer, subject, structured recipients, six-state lifecycle, working-source type, draft revisions, approved revision, issued artifact, issue/publication timestamps, supersession reference, and audit history. Store review decisions and delivery attempts against the relevant revision.
+Use one canonical advisory identity across activity, register, My desk/review queue and history. Model draft revisions separately from immutable endorsed/approved/issued snapshots. Persist owning division, initiator, number, audience intent, explicit external recipients, routing/decisions, comment threads, change summaries, artifact identity, issued recipient snapshot, distribution attempts, publication state and supersession links.
 
-Assess linking advisories to existing Documents/Work services for review, approval, release and My desk before introducing a parallel approval engine. Preserve the advisory number as a separate identifier if Documents has its own registration number. Do not assume every advisory requires a signature merely because Documents supports signing.
+Inspect the existing Documents/Work version-approval, routing, release and mail services before selecting an adapter. Record a concrete service/schema map and avoid a second independent approval engine. Documents registration identifiers, if needed, are distinct from advisory numbers. Do not assume a digital signature is required just because Documents supports one.
 
-Notification attempts must be tied to a submission/revision and recipient, with clear pending/failed/unknown results. Refreshes, retries and repeated saves must not generate duplicate review messages. Record publication and dispatch separately; a failed email must not look successfully delivered.
+Current renderer draws from mutable fields and serves the latest published revision. Replace that coupling with a frozen issued artifact, retained even when fields, source links, fonts or renderer code change. Drafts and comments remain permission-controlled; internal documents must not leak through public activity URLs.
 
-## Delivery increments and acceptance
+The scope does not include an external Slides integration by default. If later required, approval must bind to a captured reviewed artifact, not just a mutable Slides URL. Reuse the built-in editor for the first increment unless the owner chooses otherwise.
 
-1. **Agree process:** settle register ownership, approval chain, numbering/date meaning, issuance meaning, standalone/multiple coverage, and Slides requirement. Walk through one normal advisory and one correction together.
-2. **Register and activity integration:** extend the existing editor/links, build central listing and filters, inventory legacy Office Connect/Sheet records, and reconcile number collisions before enabling the shared allocator. Preserve existing URLs. Acceptance: one saved record visible from activity and register; retries do not duplicate records/numbers; source history preserved.
-3. **Review and controlled issuance:** reuse assessed services, add revision-specific decisions, frozen outputs, reviewer queue and notification receipts. Acceptance: drafts stay private; unauthorized decisions fail; editing invalidates stale approval; issued output remains unchanged; concurrent edits/decisions are detected; repeat issue/notification attempts do not duplicate effects.
-4. **Reporting and transition:** reproduce status/month/office dashboard, outstanding review, approved-awaiting-issue and missing-evidence views. Sheet export includes stable IDs and clearly states reporting direction. Acceptance: totals match the same permission-filtered register; existing records retain number and provenance; no two systems independently allocate new numbers.
+No legacy import, reconciliation or operational cutover tasks belong in the implementation backlog. Ordinary schema compatibility must preserve existing app data/URLs without fabricating historical approvals or silently renumbering records; define this technical behavior during design without introducing a migration project.
 
-Keep the Sheet operating under a clear interim authority until cutover. Inventory actual app records and Sheet records with appropriate access during implementation; the one observed Sheet entry does not establish the app's record count. Avoid bidirectional editing in the first release.
+## Bounded policy questions before dependent implementation
 
-## Memo changes after scope agreement
+1. **Issuing authority:** may the initiator issue after Director approval, or only designated releasing staff? Recommended: initiator plus explicitly authorized releasing staff.
+2. **Number/date semantics:** retain first-save reservation and label its date correctly, or allocate at issuance? Recommended first increment: retain existing stable reservation; store actual issue date separately. No renumbering existing records.
+3. **Coverage:** standalone advisories and several advisories per activity were suggested but not explicitly decided. Recommended first increment: existing activity entry, model ready for later multiple/standalone support; do not create artificial calendar events.
+4. **Internal roster:** recommend snapshotting active eligible users at issuance because the approved intent is “all active users,” rather than requiring reapproval for ordinary roster changes. Audience mode and explicit external recipient changes require renewed review. Confirm this policy.
+5. **Formalities:** confirm whether final Director approval is sufficient or a separate signature is required, plus the permitted delegation/self-review exception rules. No invented approval exceptions.
 
-Replace separate Sheet entry/manual template-copy/manual reattachment steps with the activity's Advisory action and shared register. Describe standalone entry where supported. Define reviewer/approver/releasing roles, returned drafts, version-specific approval, number/date rules, how final copies are retained, and how issuance differs from publication/delivery. Replace per-user script authorization instructions if Office Connect handles the integration centrally. Revise the memo only after these choices are settled.
+These are the remaining choices only. Register ownership, no Sheet work, Division Chief review and Director approval are settled and must not be reopened as unknowns.
 
-## Session handoff
+## Delivery plan and acceptance gates
 
-Saved on `plan/advisory-tracker-integration`. Next: discuss the decisions above, then turn the agreed scope into implementation acceptance criteria. No feature implementation or merge/deployment authorization is implied. Verification in this session is source/document inspection and documentation diff/link checks, not runtime or automation testing.
+### 1. Bounded implementation design
+
+Inspect current main and relevant authorization, document/work, mail, queue and artifact-storage code. Map reusable services and identify necessary schema changes, existing-record compatibility and unresolved policies above. Produce a small implementation breakdown with synthetic test fixtures. This is the next action for a continued planning session, not permission to start shipping features.
+
+### 2. Register, revisions and activity integration
+
+Add shared advisory record, ownership, audience draft, immutable revisions and central listing. Preserve existing editor convenience and show the same record from the activity. Acceptance: no duplicate record/number on repeated save; correct division visibility; drafts private; current data preserved; changing activity details flags differences instead of silently rewriting a reviewed copy.
+
+### 3. Review and approval loop
+
+Add Chief → Director routing, comments, returns, initiator responses, resubmission, history and queued notifications. Acceptance: end-to-end normal approval; return at either stage; revised Director-return routes through Chief again; unchanged clarification stays at stage; permissions/OIC handling; stale decisions rejected; historical comments and artifacts remain available; mail failure/retry does not duplicate decisions or notifications.
+
+### 4. Controlled issuance and distribution
+
+Add final snapshot, issue confirmation, internal/external recipient resolution, PDF email, delivery results and optional public publication. Acceptance: cannot issue unapproved or stale version; internal audience excludes inactive accounts and reports missing emails; duplicate external/internal addresses receive one copy; external users can read attachment without login; no recipient disclosure; retries avoid successful deliveries; unknown outcomes do not auto-resend; issued content remains immutable while revisions proceed.
+
+### 5. Dashboard and memo alignment
+
+Add counts by status/month/division/audience and actionable queues: awaiting Chief, awaiting Director, changes requested, approved awaiting issuance, distribution failures. Counts and links must share permission/filter semantics. Amend the memo instructions in a separately authorized edit to match the final Office Connect workflow. No Sheet-related work.
+
+Verification uses synthetic data with outbound notifications disabled. Cover phone-width and no-JavaScript journeys where supported, normal approval and both return loops, frozen public output, recipient/privacy rules, concurrent actions, retry behavior and count/filter consistency. Full repository release gates apply to later implementation releases; targeted tests do not replace them.
+
+## Saved handoff and new-chat starter
+
+Branch: `plan/advisory-tracker-integration`. This PR contains documentation only. No live workflow was tested, feature implemented, external file edited, message sent, merge performed or deployment requested. Documentation checks: relative links and `git diff --check`.
+
+Next action: bounded implementation design (increment 1), then resolve only policy choices needed for the first build. Preserve all confirmed decisions and do not resume unrelated historical setup queues. Implementation requires a subsequent user instruction; merge/deployment always needs explicit release authorization.
+
+Copy into a new chat with `jongsky25/css-is` selected:
+
+> Office Connect: continue from branch `plan/advisory-tracker-integration` and its advisory workflow planning PR. Read AGENTS.md, docs/CLOUD_COLLABORATION.md, docs/SETUP_STATUS.md and docs/ADVISORY_TRACKER_INTEGRATION_PLAN.md. Verify current main and the saved branch. Continue the bounded implementation design: map existing approval, review, email and issuance services and prepare the first implementation slice. Everything stays in Office Connect; no Sheet import, transition, reconciliation or synchronization. Division Chief reviews, Director approves; preserve comments, returns, revisions and action history, plus internal/external distribution. Resolve only the remaining policy choices. Stay in planning until I authorize implementation; do not merge, deploy or send real notifications. Save progress to the review branch.

@@ -1,16 +1,18 @@
 # Cloud/mobile setup status
 
-## Advisory integration scoping — November 19, 2026
+## Advisory workflow plan finalized — November 20, 2026
 
-Planning discussion requested; current main `3eea227` inspected. The existing
-activity advisory editor already drafts, numbers, renders and publishes posters.
-The proposed memo/Sheet add lifecycle tracking and review requirements. See
-[scope and decisions](ADVISORY_TRACKER_INTEGRATION_PLAN.md), saved on
-`plan/advisory-tracker-integration`. Next: agree register ownership, authority,
-number/date rules, issuance meaning and advisory coverage. No implementation,
-Google file edit, notification, merge or deployment is authorized by this session.
-Source inspection only; no live workflow tested. Earlier release checkpoints
-below remain historical and are not resumed by this planning request.
+Owner authorized finalizing, committing, pushing and opening a planning PR on
+`plan/advisory-tracker-integration`. See [plan and new-chat starter](ADVISORY_TRACKER_INTEGRATION_PLAN.md).
+Office Connect owns the entire workflow: no Sheet import, transition,
+reconciliation or synchronization. Division Chief reviews; Director approves.
+Plan covers internal/external issuance, email notifications, return/revise/resubmit,
+comment/action history and immutable approved/issued versions. Remaining bounded
+policy choices are explicitly distinguished from confirmed scope.
+Next: map existing services and prepare the first implementation slice, remaining
+in planning until implementation is authorized. No merge, deployment, live email
+or Google file changes. Source baseline `3eea227`; documentation-only validation.
+Earlier release checkpoints below are historical, not the task for this session.
 
 ## Division filter candidate 10.39 — November 18, 2026
 
