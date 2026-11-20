@@ -11,6 +11,7 @@ import activity_advisory_routes as legacy_routes
 import activity_permissions
 import advisory
 import advisory_workflow as workflow
+import advisory_review
 import documents
 import documents_permissions as permissions
 import storage as st
@@ -62,7 +63,8 @@ def make_router(templates, get_conn, base_url):
             'audience':audience,'external':external,'summary':summary,'operation_key':operation,
             'expected_revision':expected_revision,'expected_source':expected_source,'legacy_revision':legacy_revision,
             'divisions':workflow.divisions(conn),'limits':advisory.LIMITS,'error':error,
-            'available':workflow.available(conn),'can_edit':not record or record['initiator_id']==user['id'],
+            'available':workflow.available(conn),'can_edit':not record or (record['initiator_id']==user['id'] and record['status'] in ('draft','changes_requested')),
+            'review':advisory_review.screen(conn,user,record,int(request.query_params.get('comments_before',0)),int(request.query_params.get('actions_before',0))) if record else None,'action_key':str(uuid.uuid4()),
             'source_changed':bool(record and workflow.digest(workflow.encoded(record['snapshot']))!=current_source),
             'adopt_source':adopt,'source_defaults':aa.defaults(conn,ev,qr),
             'history':workflow.history(conn,user,record['id'])[:10] if record else []},status_code=status)
@@ -136,6 +138,26 @@ def make_router(templates, get_conn, base_url):
             return show(request,conn,user,ev)
         except ValueError as error: return failure(error)
         finally: conn.close()
+
+    @router.post('/advisories/{advisory_id}/actions')
+    async def action(request:Request,advisory_id:int):
+        raw=await request.body()
+        if len(raw)>16000:return Response('This action is too large.',status_code=413)
+        data=dict(parse_qsl(raw.decode('utf-8',errors='replace'),keep_blank_values=True))
+        conn=get_conn()
+        try:
+            user=actor(request,conn); record=workflow.get_visible(conn,user,advisory_id)
+            try:
+                documents.mutate(conn,user,record['document_id'],data.get('expected_revision'),
+                                 'advisory_'+data.get('action',''),data)
+            except permissions.Denied:raise
+            except ValueError as error:
+                return templates.TemplateResponse(request,'advisory_action_error.html',{
+                    'record':record,'error':str(error),'reason':data.get('reason','')},
+                    status_code=409 if isinstance(error,documents.Conflict) else 422)
+            return RedirectResponse(f'/advisories/{advisory_id}',status_code=303)
+        except ValueError as error:return failure(error)
+        finally:conn.close()
 
     @router.get('/advisories/{advisory_id}/history',response_class=HTMLResponse)
     def history(request:Request,advisory_id:int,before:int=0):

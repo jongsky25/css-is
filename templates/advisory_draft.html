@@ -13,7 +13,7 @@
 <div class="adraft">
 <p><a href="/advisories">Advisory register</a> · <a href="/activities/{{ ev.event_token }}/manage">Activity</a></p>
 <h1>Advisory draft</h1><p>{{ ev.title }}</p>
-{% if record %}<p><strong>No. {{ record.number }}</strong> · Revision {{ record.ordinal }} · Private draft</p>
+{% if record %}<p><strong>No. {{ record.number }}</strong> · Revision {{ record.ordinal }} · {{ 'Private draft' if record.status=='draft' else record.status|replace('_',' ') }}</p>
 <p class="muted">Number reserved {{ record.reservation_date }}. Not issued.</p>
 <p><a href="/advisories/{{ record.id }}/history">Version and action history</a> · <a href="/advisories/{{ record.id }}/revisions/{{ record.current_revision }}/file.pdf">Saved PDF</a></p>
 <details><summary>Saved image preview</summary><img src="/advisories/{{ record.id }}/revisions/{{ record.current_revision }}/file.png" alt="Saved advisory revision {{ record.ordinal }}"></details>
@@ -24,6 +24,7 @@
 {% if error %}<div class="flash warn" role="alert">{{ error }} <a href="/activities/{{ ev.event_token }}/advisory/draft" target="_blank" rel="noopener">Open latest draft in another tab</a></div>{% endif %}
 {% if source_changed %}<p role="status">Activity details have changed since this draft's source snapshot. Your saved advisory has not changed.</p>{% endif %}
 <details><summary>Compare current activity details</summary><p>{{ source_defaults.headline }}</p><p>{{ source_defaults.body }}</p>{% for label,value in source_defaults.rows %}<p>{{ label }}: {{ value }}</p>{% endfor %}</details>
+{% if review %}{% include 'advisory_review.html' %}{% endif %}
 <form method="post" action="/activities/{{ ev.event_token }}/advisory/draft">
 <input type="hidden" name="expected_revision" value="{{ expected_revision }}">
 <input type="hidden" name="expected_source" value="{{ expected_source }}">
@@ -45,6 +46,6 @@
 <p class="muted">This records the current activity snapshot; it does not replace the text you entered.</p>
 <button class="btn" type="submit">Save private draft</button>
 </fieldset></form>
-<p>Division Chief review, Director approval and issuance will be available in a later increment.</p>
+<p>Division Chief endorsement is followed by Director approval. Issuance remains a separate action.</p>
 </div>
 {% endblock %}

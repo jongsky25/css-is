@@ -45,3 +45,34 @@ def install(conn):
     conn.execute('''CREATE TRIGGER IF NOT EXISTS advisory_identity_no_update
         BEFORE UPDATE OF document_id,event_id,number,reservation_date,initiator_id ON advisory_record
         BEGIN SELECT RAISE(ABORT,'Advisory identity is immutable'); END''')
+    columns = {r[1] for r in conn.execute('PRAGMA table_info(advisory_record)')}
+    for name, definition in [('case_id','INTEGER REFERENCES work_case(id)'),('active_packet','INTEGER REFERENCES advisory_review_packet(id)')]:
+        if name not in columns:
+            conn.execute(f'ALTER TABLE advisory_record ADD COLUMN {name} {definition}')
+    conn.executescript('''
+    CREATE UNIQUE INDEX IF NOT EXISTS advisory_case_idx ON advisory_record(case_id) WHERE case_id IS NOT NULL;
+    CREATE TABLE IF NOT EXISTS advisory_review_packet (
+      id INTEGER PRIMARY KEY, advisory_id INTEGER NOT NULL REFERENCES advisory_record(id),
+      revision_id INTEGER NOT NULL REFERENCES advisory_revision(id), version_id INTEGER NOT NULL REFERENCES document_file_version(id),
+      chief_id INTEGER NOT NULL REFERENCES admin_user(id), director_id INTEGER NOT NULL REFERENCES admin_user(id),
+      unit_id INTEGER NOT NULL REFERENCES org_unit(id), digest TEXT NOT NULL, policy_json TEXT NOT NULL,
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS advisory_decision (
+      review_id INTEGER PRIMARY KEY REFERENCES document_review(id), packet_id INTEGER NOT NULL REFERENCES advisory_review_packet(id),
+      stage TEXT NOT NULL CHECK(stage IN ('chief','director')));
+    CREATE TABLE IF NOT EXISTS advisory_action_request (
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), operation_key TEXT NOT NULL,
+      advisory_id INTEGER NOT NULL REFERENCES advisory_record(id), payload_hash TEXT NOT NULL,
+      event_id INTEGER NOT NULL REFERENCES document_event(id), PRIMARY KEY(actor_id,operation_key));
+    CREATE TABLE IF NOT EXISTS advisory_comment (
+      comment_id INTEGER PRIMARY KEY REFERENCES work_comment(id), advisory_id INTEGER NOT NULL REFERENCES advisory_record(id),
+      revision_id INTEGER NOT NULL REFERENCES advisory_revision(id));
+    CREATE TABLE IF NOT EXISTS advisory_concern_event (
+      id INTEGER PRIMARY KEY, comment_id INTEGER NOT NULL REFERENCES advisory_comment(comment_id),
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), disposition TEXT NOT NULL CHECK(disposition IN ('resolved','open')),
+      reason TEXT NOT NULL, created_at TEXT NOT NULL);
+    ''')
+    for table in ('advisory_review_packet','advisory_decision','advisory_action_request','advisory_comment','advisory_concern_event'):
+        for operation in ('UPDATE','DELETE'):
+            conn.execute(f'''CREATE TRIGGER IF NOT EXISTS {table}_no_{operation.lower()}
+                BEFORE {operation} ON {table} BEGIN SELECT RAISE(ABORT,'Advisory history is immutable'); END''')

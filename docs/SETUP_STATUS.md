@@ -1,5 +1,30 @@
 # Cloud/mobile setup status
 
+## Advisory review cycle candidate 10.41 — November 20, 2026
+
+Owner instructed **“merge then do the next ... until you finish everything ... on this plan.”**
+This supersedes earlier planning/build-only restrictions for implementation and guarded
+merge/automatic-deployment cycles. No manual real notifications, production-data tests,
+external-file edits or gate bypasses are authorized or performed.
+
+PR #633 (10.40, `f30dc50`) is ready; hosted normal/shuffled suites are still running.
+WebKit, dependency audit and release metadata passed at the latest inspection.
+Do not merge it until its required gate passes; verify its guarded automatic deployment
+before merging the next release.
+
+Prepared candidate 10.41 on `feat/advisory-review-cycle`, based on #633. See
+[review implementation and policy defaults](ADVISORY_REVIEW.md). Chief → Director
+review, returns/resubmission, revision-linked Work discussion, concern resolution,
+append-only routing/decisions, current OIC checks, My desk and queued stage notices
+are implemented. Policy recommendations P1–P5 are working defaults under the owner's
+complete-development instruction, not separately answered policy questions.
+
+Local review service tests: 8 passed. Final advisory service/browser run: 12 passed
+(including both phone review and draft journeys, scripts on/off). Broader regression:
+265 passed. Release metadata and diff checks passed; hosted checks remain required. Next: finish checks, save/open the review PR, then build controlled issuance,
+delivery/publication and dashboard/memo guidance. Release each slice sequentially.
+No Sheet import, transition, reconciliation or synchronization.
+
 ## Advisory private-draft slice built — November 20, 2026
 
 Owner authorized implementation with **“start building”** after the planning checkpoint

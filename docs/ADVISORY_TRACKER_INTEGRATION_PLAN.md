@@ -152,3 +152,12 @@ New-chat starter:
 > stays in Office Connect with Division Chief review and Director approval, comments, returns,
 > resubmissions/history and internal/external distribution. No Sheet work, merge, deployment or
 > real notifications. Save progress to the same review branch.
+
+## Complete-development authorization — November 20, 2026
+
+The owner's subsequent instruction to merge and repeat development through completion
+supersedes the earlier build-only handoff above. Implement and release through existing
+gates, using the five recommended policy defaults documented in
+[Advisory review](ADVISORY_REVIEW.md). Preserve the settled Office Connect-only scope.
+Do not send test notifications to real recipients or amend an external memo without
+its separately authorized edit; prepare matching repository guidance instead.

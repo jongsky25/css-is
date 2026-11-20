@@ -1,3 +1,10 @@
+## 10.41 — November 20, 2026
+
+- Route exact advisory revisions through Division Chief endorsement and Director approval.
+- Preserve return/resubmission decisions, revision-linked comments, replies and concern resolution.
+- Recheck current OIC authority, prevent self-review and retain explicit rerouting history.
+- Queue deduplicated stage notices through existing document delivery and link My desk to the advisory.
+
 ## 10.40 — November 20, 2026
 
 - Add private activity advisory drafts, owning division and internal/external audience intent.

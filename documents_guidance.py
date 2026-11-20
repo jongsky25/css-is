@@ -26,6 +26,9 @@ def build(conn, user, values):
     prepared=values.get('prepared',{})
     doc=values['doc']
     policy=values['policy']
+    if policy.get('workflow')=='advisory_draft':
+        import advisory_review
+        return advisory_review.guidance(conn,user,doc)
     officer=values['officer']
     can_work=values['can_work']
     coordinator=officer or doc['lead_id']==user['id']

@@ -1,0 +1,3 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review advisory action — Office Connect{% endblock %}
+{% block content %}<div style="max-width:52rem;margin:auto;overflow-wrap:anywhere"><h1>Review the advisory action</h1><p role="alert">{{ error }}</p><label for="saved-reason">Your unsaved feedback</label><textarea id="saved-reason" rows="6" style="width:100%" readonly>{{ reason }}</textarea><p><a href="/advisories/{{ record.id }}">Open the current advisory and try again</a></p></div>{% endblock %}

@@ -196,7 +196,7 @@ def save_draft(conn, user, event_token, fields, *, unit_id, audience, external, 
             return get_visible(conn,user,replay[0]['advisory_id'])
         if st.event_is_archived(conn,ev['id']):
             raise ValueError('Restore the activity before editing its advisory.')
-        if record and (current['revision']!=expected_revision or current['status']!='draft' or current['archived_at']):
+        if record and (current['revision']!=expected_revision or current['status'] not in ('draft','changes_requested') or current['archived_at']):
             raise docs.Conflict('The advisory changed. Open the latest draft before saving again; your entered values are shown below.')
         if not record and expected_revision!=0:
             raise docs.Conflict('The advisory changed. Reload before saving.')
@@ -249,8 +249,12 @@ def save_draft(conn, user, event_token, fields, *, unit_id, audience, external, 
             for fmt,data in rendered.items():
                 conn.execute('INSERT INTO advisory_artifact VALUES (?,?,?,?)',(rid,fmt,digest(data),data))
             conn.execute('UPDATE advisory_record SET current_revision=?,unit_id=? WHERE id=?',(rid,unit_id,aid))
-            conn.execute('''UPDATE document SET current_version=?,revision=?,subject=?,unit_id=?,updated_at=? WHERE id=?''',
-                         (vid,ordinal,payload['content']['headline'],unit_id,now,doc['id']))
+            conn.execute('''UPDATE document SET current_version=?,revision=?,subject=?,unit_id=?,updated_at=?,status='draft',approved_version=NULL,signed_version=NULL WHERE id=?''',
+                         (vid,doc['revision']+1 if prior else 1,payload['content']['headline'],unit_id,now,doc['id']))
+            if record.get('case_id'):
+                conn.execute('UPDATE work_case SET unit_id=?,revision=revision+1,updated_at=? WHERE id=?',(unit_id,now,record['case_id']))
+            if prior and record['unit_id']!=unit_id:
+                conn.execute("DELETE FROM document_access WHERE document_id=? AND source='advisory_routing'",(doc['id'],))
             event(conn,doc['id'],user,'advisory_draft_saved',{'advisory_id':aid,'revision_id':rid,'ordinal':ordinal,'summary':summary.strip()})
         conn.execute('INSERT INTO advisory_save_request VALUES (?,?,?,?,?,?)',(user['id'],operation_key,ev['id'],request_hash,aid,rid))
         return get_visible(conn,user,aid)

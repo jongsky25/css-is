@@ -61,10 +61,12 @@ def post(conn, user, case_id, body, task_id=None, parent_id=None, mentions=None)
         return post_in_transaction(conn,user,case_id,body,task_id,parent_id,mentions)
 
 
-def post_in_transaction(conn,user,case_id,body,task_id=None,parent_id=None,mentions=None):
+def post_in_transaction(conn,user,case_id,body,task_id=None,parent_id=None,mentions=None,*,advisory_revision_id=None,notify=True):
     if not conn.in_transaction:
         raise RuntimeError('Discussion posting requires its caller transaction')
     user, _, _ = scope(conn, user, case_id, task_id)
+    if conn.execute('SELECT 1 FROM advisory_record WHERE case_id=?',(case_id,)).fetchone() and advisory_revision_id is None:
+        raise ValueError('Use the advisory discussion so the exact revision is recorded.')
     work.writable(conn)
     body = work._text(body, 'Message', 4000)
     if parent_id is not None:
@@ -75,7 +77,8 @@ def post_in_transaction(conn,user,case_id,body,task_id=None,parent_id=None,menti
     cid = conn.execute('''INSERT INTO work_comment(case_id,task_id,parent_id,author_id,created_at)
                           VALUES (?,?,?,?,?)''', (case_id, task_id, parent_id, user['id'], now)).lastrowid
     conn.execute('INSERT INTO work_comment_revision VALUES (?,1,?,?)', (cid, body, now))
-    work_updates.record(conn, cid, 1, mentioned, new=True)
+    if notify:
+        work_updates.record(conn, cid, 1, mentioned, new=True)
     return cid
 
 
@@ -85,6 +88,8 @@ def edit(conn, user, case_id, task_id, comment_id, revision, body, mentions=None
 
 
 def edit_in_transaction(conn,user,case_id,task_id,comment_id,revision,body,mentions=None):
+    if conn.execute('SELECT 1 FROM advisory_record WHERE case_id=?',(case_id,)).fetchone():
+        raise ValueError('Add a correction as an advisory reply; the original comment is retained.')
     if not conn.in_transaction:
         raise RuntimeError('Discussion editing requires its caller transaction')
     user, _, _ = scope(conn, user, case_id, task_id)

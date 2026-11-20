@@ -1,0 +1,26 @@
+{% macro action_fields(action) -%}
+<input type="hidden" name="action" value="{{ action }}"><input type="hidden" name="expected_revision" value="{{ record.revision }}"><input type="hidden" name="operation_key" value="{{ action_key }}">
+{%- endmacro %}
+<section aria-label="Review and approval">
+<h2>Review and approval</h2>
+<p>{{ {'draft':'Private draft','in_review':'For review','changes_requested':'Changes requested','approved':'Approved — awaiting issuance','cancelled':'Cancelled'}.get(review.status,review.status) }}{% if review.stage %} · {{ 'Division Chief review' if review.stage=='chief' else 'Director approval' }}{% endif %}</p>
+{% if review.routing_problem %}<p role="alert">{{ review.routing_problem }}</p>{% endif %}
+{% if available and review.actions %}<form method="post" action="/advisories/{{ record.id }}/actions">
+<input type="hidden" name="expected_revision" value="{{ record.revision }}"><input type="hidden" name="operation_key" value="{{ action_key }}">
+<label for="action-reason">Reason, feedback or resubmission summary</label><textarea id="action-reason" name="reason" rows="3" maxlength="4000" required></textarea>
+<p>{% for action,label in review.actions %}<button class="btn ghost" type="submit" name="action" value="{{ action }}">{{ label }}</button> {% endfor %}</p>
+</form>{% endif %}
+{% if review.status=='approved' %}<p>Approval applies to this exact revision. It does not send or publish the advisory.</p>{% endif %}
+{% if review.can_comment and available %}<form method="post" action="/advisories/{{ record.id }}/actions">{{ action_fields('comment') }}<input type="hidden" name="revision_id" value="{{ record.current_revision }}">
+<label for="new-comment">Comment on this revision</label><textarea id="new-comment" name="reason" rows="3" maxlength="4000" required></textarea><button class="btn ghost" type="submit">Add comment</button></form>{% endif %}
+{% for comment in review.discussion %}<article style="border-top:1px solid var(--line);margin-top:1rem;padding-top:.5rem" id="comment-{{ comment.id }}"><p><strong>{{ comment.author }}</strong> · {{ comment.created_at }} · <a href="/advisories/{{ record.id }}/revisions/{{ comment.revision_id }}/file.pdf">Reviewed version</a>{% if comment.parent_id %} · Reply to #{{ comment.parent_id }}{% else %} · {{ comment.concern }}{% endif %}</p><p style="white-space:pre-wrap">{{ comment.body }}</p>
+{% if review.can_comment and available %}<details><summary>Reply</summary><form method="post" action="/advisories/{{ record.id }}/actions">{{ action_fields('comment') }}<input type="hidden" name="revision_id" value="{{ comment.revision_id }}"><input type="hidden" name="parent_id" value="{{ comment.id }}"><label for="reply-{{ comment.id }}">Response</label><textarea id="reply-{{ comment.id }}" name="reason" maxlength="4000" required></textarea><button class="btn ghost">Save reply</button></form></details>{% endif %}
+{% if review.can_resolve and not comment.parent_id and available %}<details><summary>Resolve or reopen concern</summary><form method="post" action="/advisories/{{ record.id }}/actions"><input type="hidden" name="expected_revision" value="{{ record.revision }}"><input type="hidden" name="operation_key" value="{{ action_key }}"><input type="hidden" name="comment_id" value="{{ comment.id }}"><label for="concern-{{ comment.id }}">Reason</label><input id="concern-{{ comment.id }}" name="reason" maxlength="4000" required><button class="btn ghost" name="action" value="resolve">Resolve concern</button><button class="btn ghost" name="action" value="reopen_concern">Reopen concern</button></form></details>{% endif %}</article>{% endfor %}
+{% if review.older_comments %}<p><a href="?comments_before={{ review.older_comments }}">Older comments</a> · <a href="/advisories/{{ record.id }}">Latest comments</a></p>{% endif %}
+<details><summary>Action history</summary>{% for item in review.timeline %}<p><strong>{{ item.action|replace('advisory_', '')|replace('_',' ') }}</strong> · {{ item.author or 'System' }} · {{ item.occurred_at }}</p><p>{{ item.detail.reason or item.detail.summary or '' }}{% if item.detail.revision_id %} · <a href="/advisories/{{ record.id }}/revisions/{{ item.detail.revision_id }}/file.pdf">Exact revision</a>{% endif %}</p>{% endfor %}</details>
+{% if review.older_actions %}<p><a href="?actions_before={{ review.older_actions }}">Older actions</a> · <a href="/advisories/{{ record.id }}">Latest actions</a></p>{% endif %}
+<details><summary>Review notifications</summary>
+<p>Delivery does not change a review decision. Uncertain attempts are retained for checking and are not automatically resent.</p>
+{% for notice in review.notices %}<p>{{ notice.kind|replace('advisory_','') }} · {{ notice.recipient }} · {{ notice.state }}</p>
+{% if notice.state=='failed' and available %}<form method="post" action="/advisories/{{ record.id }}/actions">{{ action_fields('notice_retry') }}<input type="hidden" name="notice_id" value="{{ notice.id }}"><label for="notice-{{ notice.id }}">Retry reason</label><input id="notice-{{ notice.id }}" name="reason" required maxlength="4000"><button class="btn ghost">Retry failed notice</button></form>{% endif %}{% endfor %}</details>
+</section>

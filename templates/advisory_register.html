@@ -5,8 +5,8 @@
 <h1>Advisory register</h1><p><a href="/advisories/existing">Existing activity advisories</a></p><p>Private drafts you may access. Prepare an advisory from its activity.</p>
 {% if not available %}<p>Draft saving is unavailable while Documents or Shared work is disabled.</p>{% endif %}
 <form method="get"><label for="division">Owning division</label><select name="division" id="division" style="max-width:100%"><option value="0">All permitted divisions</option>{% for unit in divisions %}<option value="{{ unit.id }}" {% if division==unit.id %}selected{% endif %}>{{ unit.name }}</option>{% endfor %}</select> <button class="btn" type="submit">Filter</button></form>
-<p>{{ total }} permitted draft{{ '' if total==1 else 's' }}</p>
-{% for item in items %}<article style="border-bottom:1px solid var(--line);padding:1rem 0"><a href="/advisories/{{ item.id }}"><strong>{{ item.number }}</strong> — {{ item.subject }}</a><p>{{ item.division }} · Private draft</p></article>{% else %}<p>No drafts match this view.</p>{% endfor %}
+<p>{{ total }} permitted advisory record{{ '' if total==1 else 's' }}</p>
+{% for item in items %}<article style="border-bottom:1px solid var(--line);padding:1rem 0"><a href="/advisories/{{ item.id }}"><strong>{{ item.number }}</strong> — {{ item.subject }}</a><p>{{ item.division }} · {{ 'Private draft' if item.status=='draft' else item.status|replace('_',' ') }}</p></article>{% else %}<p>No drafts match this view.</p>{% endfor %}
 <p>{% if older %}<a href="/advisories?before={{ older }}&amp;division={{ division }}">Older drafts</a> · {% endif %}<a href="/advisories?division={{ division }}">Latest drafts</a></p>
 </div>
 {% endblock %}

@@ -79,12 +79,13 @@ def instruction_page(conn,user,before=0):
         ORDER BY d.id DESC LIMIT 31""",(before,before,user['id']))
 
 
-def check(conn, user, doc_id, revision, *, allow_archived=False):
+def check(conn, user, doc_id, revision, *, allow_archived=False, allow_advisory=False):
     writable(conn)
     user = p.actor(conn,user)
     doc = get(conn,user,doc_id)
     import advisory_workflow
-    advisory_workflow.require_unmanaged(conn, doc_id)
+    if not allow_advisory:
+        advisory_workflow.require_unmanaged(conn, doc_id)
     if doc['canonical_id']:
         raise Conflict('This receipt was merged. Open the canonical record.')
     if doc['archived_at'] and not allow_archived:
@@ -215,7 +216,8 @@ def set_module_enabled(conn, user, turn_on, expected_revision, authorization):
 def notify(conn, doc, eid, kind, extra=()):
     import advisory_workflow
     if advisory_workflow.for_document(conn, doc['id']):
-        return  # Draft foundation is deliberately quiet.
+        import advisory_review
+        return advisory_review.notify(conn,doc,eid,kind)
     recipients = {doc['creator_id'], doc['lead_id']} | set(extra)
     recipients |= {r[0] for r in conn.execute("SELECT user_id FROM document_assignment_effective WHERE document_id=? AND status<>'superseded'",(doc['id'],))}
     recipients |= {r[0] for r in conn.execute('SELECT user_id FROM document_access WHERE document_id=?',(doc['id'],))}
@@ -410,7 +412,19 @@ def closure_blockers(conn, doc, policy=None, *, facts=None):
 
 
 
+def record_review_in_transaction(conn,user,doc,decision,note,*,delegation,work_packet_id=None):
+    """Shared exact-version decision ledger for Documents policy adapters."""
+    if not conn.in_transaction:raise RuntimeError('Review recording requires a transaction')
+    return conn.execute('INSERT INTO document_review(document_id,version_id,actor_id,decision,reason,delegation_json,created_at,work_packet_id) VALUES (?,?,?,?,?,?,?,?)',
+        (doc['id'],doc['current_version'],user['id'],decision,reason(note),json.dumps(delegation),tz.now_iso(),work_packet_id)).lastrowid
+
+
 def mutate(conn,user,doc_id,revision,action,data):
+    if action.startswith('advisory_'):
+        import advisory_workflow, advisory_review
+        managed=advisory_workflow.for_document(conn,doc_id)
+        if not managed:raise ValueError('This action needs a managed advisory.')
+        return advisory_review.mutate(conn,user,managed['id'],revision,action.removeprefix('advisory_'),data)
     with transaction(conn):
         user,doc=check(conn,user,doc_id,revision)
         officer=p.officer(conn,user,doc)
@@ -605,8 +619,7 @@ def mutate(conn,user,doc_id,revision,action,data):
             decision=data.get('decision')
             if decision not in ('approved','changes_requested'):
                 raise ValueError('Choose approval or return for revision.')
-            conn.execute('INSERT INTO document_review(document_id,version_id,actor_id,decision,reason,delegation_json,created_at,work_packet_id) VALUES (?,?,?,?,?,?,?,?)',
-                         (doc_id,doc['current_version'],user['id'],decision,reason(data.get('reason')),json.dumps(p.seats(conn,user)),tz.now_iso(),packet['id'] if packet else None))
+            record_review_in_transaction(conn,user,doc,decision,data.get('reason'),delegation=p.seats(conn,user),work_packet_id=packet['id'] if packet else None)
             changes={'status':decision,'approved_version':doc['current_version'] if decision=='approved' else None,'signed_version':None}
         elif action=='receipt':
             require(officer)
