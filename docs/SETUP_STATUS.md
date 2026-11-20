@@ -1,6 +1,6 @@
 # Cloud/mobile setup status
 
-## Foundation merged; review rebased onto main — November 20, 2026, 10:07 UTC
+## Foundation merged; review updated with main — November 20, 2026, 10:07 UTC
 
 All three original candidate runs listed below completed successfully, including
 both full suites and the aggregate Required checks. Rechecked active ruleset
@@ -13,7 +13,8 @@ Merged current main into the review branch (ordinary merge, no history rewrite),
 updated its status and retargeted #634 to **main**. New pushed head:
 `8cc87415987bccb6894bbf085166a6d3830787e0`. Application code is identical to the
 previous green review candidate; 10.41 metadata and diff checks passed. Fresh
-full CI must pass on this updated head before merging. #635 remains open on
+full [CI 44716480309](https://github.com/jongsky25/css-is/actions/runs/44716480309)
+is running and must pass on this updated head before merging. #635 remains open on
 `f1f5f02998f7fb1440743ebc469924084f302cf6`, based on the review branch; its original
 full CI passed but it will need a main update/fresh gate after #634 merges.
 
