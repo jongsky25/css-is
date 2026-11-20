@@ -1,5 +1,95 @@
 # Cloud/mobile setup status
 
+## Advisory release gate repair — November 20, 2026
+
+The owner authorized repeated guarded merge/development cycles through completion.
+The advisory plan is implemented across [#633](https://github.com/jongsky25/css-is/pull/633)
+(10.40 drafts), [#634](https://github.com/jongsky25/css-is/pull/634) (10.41 review), and
+[#635](https://github.com/jongsky25/css-is/pull/635) (10.42 issuance/dashboard).
+This supersedes the earlier build-only restriction below. No merge/deployment has occurred.
+
+#633's full shuffled suite completed with 11,139 passed and two failures. Both were
+restart-idempotency regressions: advisory installation added the file backend column
+**after** cache triggers captured the table shape. Fixed in `e27f8cb` by installing
+advisory schema first and including advisory tables among cache dependencies. The
+existing failing tests plus cache, Telegram-change and advisory regressions now pass:
+**75 passed**, no failures/skips; JUnit and diff gates pass. No test was weakened or skipped.
+
+Next: propagate the fix to both later candidates, rerun full hosted gates, merge #633
+only when required checks pass, and verify its guarded automatic deployment. Continue
+#634 then #635 with current-main updates and the same gates. No real test notifications,
+production-data testing, external memo edits or Sheet work. Preserve all existing release gates.
+
+## Advisory private-draft slice built — November 20, 2026
+
+Owner authorized implementation with **“start building”** after the planning checkpoint
+`4eb7643`. Candidate **10.40** is saved on `plan/advisory-tracker-integration` in
+[draft PR #633](https://github.com/jongsky25/css-is/pull/633). Main was rechecked at
+`3eea227`; no merge/deployment is authorized. This supersedes the planning-only
+next action immediately below.
+
+Built the [private draft/register/revision slice](ADVISORY_DRAFTS.md): shared Documents
+identity and restricted access, owning division, internal/external audience intent,
+immutable PDF/PNG revisions and differences/history, activity/register entry points,
+concurrent-save/idempotency guards and frozen existing public copies. Generic review,
+release and publish bypasses are blocked for managed drafts; saving creates no notices
+or dispatch jobs. Fixed the legacy render cache to use content identity rather than
+reusable activity IDs. Private contacts do not update shared last-used defaults.
+
+Uses recommended P2/P3 defaults (first-save reservation and one advisory per activity).
+P1 issuing authority, P4 internal-roster timing and P5 formalities remain pending for
+dependent slices. Chief review then Director approval is settled. Comments, returns,
+resubmissions and internal/external issuance remain in the later implementation scope.
+No Sheet import, transition, reconciliation or synchronization work.
+
+Verification: locked Python 3.11 cloud setup/doctor passed; **164 regression/service/route
+checks passed** plus **2 phone browser journeys passed** with scripts enabled/disabled,
+all without failures or skips in the final JUnit reports. JUnit gates, 10.40 release
+metadata, changed-document local links and `git diff --check` passed. Full normal/shuffled,
+WebKit and dependency release CI remain separate hosted gates; no full-suite success
+is claimed. Tests used synthetic data and disabled/mocked outbound integrations.
+
+Next: review the saved first slice and resolve only P1/P4/P5 before their dependent
+review/issuance work. Do not resume unrelated setup queues. No preview, production data
+access, real notifications, external-file edits, merge or deployment occurred.
+
+## Advisory implementation design prepared — November 20, 2026
+
+Continued [draft PR #633](https://github.com/jongsky25/css-is/pull/633) from
+`de8bda2` on `plan/advisory-tracker-integration`; inspected main remains `3eea227`.
+Read repository guidance and the saved plan; inspected review/approval, permissions,
+Work discussion, notification, dispatch/job, mail and advisory rendering/storage code.
+The [implementation design](ADVISORY_IMPLEMENTATION_DESIGN.md) maps concrete reuse
+and gaps, defines additive schema and existing-record compatibility, and prepares a
+private draft/register/revision slice with synthetic acceptance criteria.
+
+Five bounded policy recommendations were presented to the owner; answers remain
+pending. No policy acceptance or implementation authorization is inferred. Next:
+record the answers (P2/P3 affect slice 1), then wait for explicit implementation
+authorization. All confirmed scope remains intact: Office Connect only, no Sheet
+work; Chief review then Director approval; comments, returns/resubmissions, history
+and internal/external issuance. Prior checkpoint's service-mapping next step is complete.
+
+Documentation only. All 162 local Markdown targets across the three planning/status
+files resolved; `git diff --check` passed. These are the checks for this checkpoint;
+no application tests, live data access, external file changes, preview, merge,
+deployment or real notifications. Save this checkpoint to the same branch/PR.
+
+## Advisory workflow plan finalized — November 20, 2026
+
+Saved as [draft PR #633](https://github.com/jongsky25/css-is/pull/633), plan
+commit `14f3227`, on `plan/advisory-tracker-integration`. Owner authorized
+finalizing, committing, pushing and opening this planning PR. See [plan and new-chat starter](ADVISORY_TRACKER_INTEGRATION_PLAN.md).
+Office Connect owns the entire workflow: no Sheet import, transition,
+reconciliation or synchronization. Division Chief reviews; Director approves.
+Plan covers internal/external issuance, email notifications, return/revise/resubmit,
+comment/action history and immutable approved/issued versions. Remaining bounded
+policy choices are explicitly distinguished from confirmed scope.
+Next: map existing services and prepare the first implementation slice, remaining
+in planning until implementation is authorized. No merge, deployment, live email
+or Google file changes. Source baseline `3eea227`; documentation-only validation.
+Earlier release checkpoints below are historical, not the task for this session.
+
 ## Division filter candidate 10.39 — November 18, 2026
 
 10.38 deployed successfully in guarded run 44305608431, including normal/shuffled

@@ -886,6 +886,8 @@ def init_db(conn):
     supplies_storage.install(conn)
     import telegram_storage
     telegram_storage.install(conn)
+    import advisory_storage
+    advisory_storage.install(conn)
     documents_storage.install_step_generation(conn)
     conn.commit()
 

@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.39"
+APP_VERSION = "10.40"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.40",
+        "date": "November 20, 2026",
+        "summary": "Prepare private advisory drafts with a saved version history.",
+        "changes": [
+            "Save an activity advisory with its owning division and intended internal or external audience.",
+            "Find permitted drafts in the advisory register and reopen the exact image or PDF of each saved revision.",
+            "Existing public advisories stay unchanged while a private replacement is prepared; approval and sending come later."
+        ],
+    },
     {
         "version": "10.39",
         "date": "November 18, 2026",

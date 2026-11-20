@@ -1,0 +1,12 @@
+{% extends "dash_layout.html" %}
+{% block title %}Advisory history — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:58rem;margin:auto;overflow-wrap:anywhere">
+<p><a href="/advisories/{{ record.id }}">Back to advisory {{ record.number }}</a></p><h1>Version and action history</h1>
+{% for entry in entries %}<article style="border-bottom:1px solid var(--line);padding:1rem 0"><h2>Revision {{ entry.ordinal }}</h2><p>Saved by {{ entry.author }} · {{ entry.created_at }}</p><p>{{ entry.summary }}</p>
+<p><a href="/advisories/{{ record.id }}/revisions/{{ entry.id }}/file.pdf">Exact saved PDF</a> · <a href="/advisories/{{ record.id }}/revisions/{{ entry.id }}/file.png">Exact saved image</a></p>
+{% if entry.changes %}<details><summary>Changes from previous revision</summary>{% for change in entry.changes %}<p><strong>{{ change.field }}</strong></p><p>Before: {{ change.before }}</p><p>After: {{ change.after }}</p>{% endfor %}</details>{% endif %}
+<details><summary>Content and intended audience</summary><p>{{ entry.payload.content.headline }}</p><p style="white-space:pre-wrap">{{ entry.payload.content.body }}</p><p>{{ entry.payload.content.attention }}</p>{% for label,value in entry.payload.content.rows %}<p>{{ label }}: {{ value }}</p>{% endfor %}<p>Contact: {{ entry.payload.content.contact_name }} · {{ entry.payload.content.contact_phone }} · {{ entry.payload.content.contact_email }}</p><p>Audience: {{ entry.payload.audience }}</p>{% for address in entry.payload.external %}<p>{{ address }}</p>{% endfor %}</details></article>{% endfor %}
+<p>{% if older %}<a href="?before={{ older }}">Older revisions</a> · {% endif %}<a href="/advisories/{{ record.id }}/history">Latest revisions</a></p>
+</div>
+{% endblock %}

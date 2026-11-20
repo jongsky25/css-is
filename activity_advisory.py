@@ -4,7 +4,7 @@ An advisory belongs to one activity (link tree). It starts from the activity's o
 ready draft instead of typing a poster: the headline and body come from the title, dates and venue; the table comes
 from the link tree's resource links and the registration window; the QR code points at the link tree.
 
-The advisory number is `YYYY-MMDD-NNN` (issue date, then the day's running count). It is allocated once, when the
+The advisory number is `YYYY-MMDD-NNN` (reservation date, then the day's running count). It is allocated once, when the
 advisory is first saved, and never changes; editing raises the revision. A database unique key on (date, count)
 means two managers saving at the same moment cannot receive the same number.
 
@@ -12,7 +12,6 @@ Nothing here reads attendees or any personal data. Who may manage an activity is
 from __future__ import annotations
 
 import json
-import sqlite3
 from datetime import datetime
 
 import advisory
@@ -121,8 +120,18 @@ def validate(fields: dict, number: str = "2026-0101-001") -> str:
 
 
 def save(conn, ev, fields: dict, user: dict, *, today=None) -> dict:
-    """Create the advisory (allocating its number) or update it; returns the saved advisory. The caller has
-    already checked permission and `validate`."""
+    """Compatibility wrapper; managed drafts use the transactional workflow service."""
+    from documents_storage import transaction
+    with transaction(conn):
+        return save_in_transaction(conn, ev, fields, user, today=today)
+
+
+def save_in_transaction(conn, ev, fields: dict, user: dict, *, today=None, remember_contact=True) -> dict:
+    if not conn.in_transaction:
+        raise RuntimeError("Advisory saving requires a caller transaction")
+    import advisory_workflow
+    if advisory_workflow.for_event(conn, ev['id']):
+        raise ValueError("Open the private advisory draft to edit this advisory.")
     clean = advisory.normalise(poster_fields(fields, "-"))
     now, who = tz.now_iso(), (user or {}).get("username")
     values = {"headline": clean["headline"], "attention": clean["attention"], "body": clean["body"],
@@ -138,29 +147,24 @@ def save(conn, ev, fields: dict, user: dict, *, today=None) -> dict:
                          (*values.values(), who, now, ev["id"]))
     else:
         day = today or tz.today_local()
-        for _ in range(6):
-            seq = conn.execute("SELECT COALESCE(MAX(seq),0)+1 FROM event_advisory WHERE seq_date=?",
-                               (day.isoformat(),)).fetchone()[0]
-            try:
-                conn.execute("INSERT INTO event_advisory(event_id, number, seq_date, seq, " + ", ".join(values) +
-                             ", created_by, created_at, updated_by, updated_at) VALUES (?,?,?,?," +
-                             ",".join("?" * len(values)) + ",?,?,?,?)",
-                             (ev["id"], format_number(day, seq), day.isoformat(), seq, *values.values(), who, now, who, now))
-                break
-            except sqlite3.IntegrityError:                 # another manager took this count a moment ago: take the next
-                conn.rollback()
-        else:
-            raise RuntimeError("Could not allocate an advisory number.")
-    for key in CONTACT:                                    # offer the same contact next time
-        if clean[key]:
+        seq = conn.execute("SELECT COALESCE(MAX(seq),0)+1 FROM event_advisory WHERE seq_date=?",
+                           (day.isoformat(),)).fetchone()[0]
+        conn.execute("INSERT INTO event_advisory(event_id, number, seq_date, seq, " + ", ".join(values) +
+                     ", created_by, created_at, updated_by, updated_at) VALUES (?,?,?,?," +
+                     ",".join("?" * len(values)) + ",?,?,?,?)",
+                     (ev["id"], format_number(day, seq), day.isoformat(), seq, *values.values(), who, now, who, now))
+    for key in CONTACT:
+        if remember_contact and clean[key]:
             conn.execute("INSERT INTO app_setting(key, value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
                          (_SETTING.format(key), clean[key]))
-    conn.commit()
     return _row(conn, ev["id"])
 
 
 def set_published(conn, event_id, published: bool) -> bool:
     """Show or withdraw the advisory on the public link tree. False when there is no saved advisory yet."""
+    import advisory_workflow
+    if advisory_workflow.for_event(conn, event_id):
+        raise ValueError("Managed advisory publication is not available yet.")
     cur = conn.execute("UPDATE event_advisory SET published=?, published_at=CASE WHEN ? THEN ? ELSE published_at END "
                        "WHERE event_id=?", (1 if published else 0, 1 if published else 0, tz.now_iso(), event_id))
     conn.commit()

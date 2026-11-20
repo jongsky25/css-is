@@ -6,6 +6,8 @@ activity's public link tree shows it. A draft is never served publicly."""
 from __future__ import annotations
 
 from collections import OrderedDict
+import hashlib
+import json
 from urllib.parse import parse_qsl, quote
 
 from fastapi import APIRouter, Request
@@ -14,8 +16,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 import activity_advisory as aa
 import advisory
 import storage as st
+import advisory_workflow as workflow
 
-_CACHE: "OrderedDict[tuple, bytes]" = OrderedDict()      # rendered files by (event, revision, kind); revisions never repeat
+_CACHE: "OrderedDict[tuple, bytes]" = OrderedDict()      # rendered files keyed by immutable content, scale and kind
 _CACHE_MAX = 24
 ROW_SLOTS = advisory.MAX_ROWS
 
@@ -56,9 +59,11 @@ def make_router(templates, get_conn, can_manage_event, share_url, base_url, audi
 
     def _file(a, fmt, scale=2.0):
         fields = aa.poster_fields(a, a["number"])
+        # IDs/revisions can repeat across restored or isolated databases. Content is the cache identity.
+        fingerprint = hashlib.sha256(json.dumps(fields,sort_keys=True).encode()).hexdigest()
         if fmt == "pdf":
-            return _cached((a["event_id"], a["revision"], "pdf"), lambda: advisory.render_pdf(fields)), "application/pdf"
-        return _cached((a["event_id"], a["revision"], "png"), lambda: advisory.render_png(fields, scale)), "image/png"
+            return _cached((fingerprint, "pdf"), lambda: advisory.render_pdf(fields)), "application/pdf"
+        return _cached((fingerprint, scale, "png"), lambda: advisory.render_png(fields, scale)), "image/png"
 
     # ----- public ----------------------------------------------------------------------------------------------
     @router.get("/e/{event_token}/advisory.{fmt}")
@@ -69,6 +74,15 @@ def make_router(templates, get_conn, can_manage_event, share_url, base_url, audi
         try:
             ev = _public_event(conn, event_token)
             a = aa.get(conn, ev["id"]) if ev else None
+            if ev and workflow.for_event(conn, ev['id']):
+                try:
+                    data = workflow.existing_public(conn, ev['id'], fmt)
+                except ValueError:
+                    return Response("This advisory is not available.",status_code=404)
+                headers = {"Cache-Control":"no-store"}
+                if download:
+                    headers['Content-Disposition'] = f'attachment; filename="{advisory.filename(a["number"],fmt)}"'
+                return Response(data,media_type="application/pdf" if fmt=="pdf" else "image/png",headers=headers)
         finally:
             conn.close()
         if not a or not a["published"]:
@@ -104,6 +118,8 @@ def make_router(templates, get_conn, can_manage_event, share_url, base_url, audi
             ev = _guard(request, conn, event_token)
             if not ev:
                 return RedirectResponse("/", status_code=303)
+            if workflow.for_event(conn,ev['id']) or workflow.available(conn):
+                return RedirectResponse(f"/activities/{event_token}/advisory/draft",status_code=303)
             stored, values = _draft_values(conn, ev, request, bool(fresh))
             rows = list(values.get("rows") or [])
             rows += [("", "")] * max(0, min(ROW_SLOTS, len(rows) + 2) - len(rows))
@@ -125,6 +141,13 @@ def make_router(templates, get_conn, can_manage_event, share_url, base_url, audi
             ev = _guard(request, conn, event_token)
             if not ev:
                 return Response("Not available to you.", status_code=403, media_type="text/plain")
+            managed = workflow.for_event(conn,ev['id'])
+            if managed:
+                try:
+                    record = workflow.get_visible(conn,request.state.user,managed['id'])
+                except ValueError:
+                    return Response("Not available to you.",status_code=403)
+                return RedirectResponse(f"/advisories/{record['id']}/revisions/{record['current_revision']}/file.{fmt}",status_code=303)
             stored = aa.get(conn, ev["id"])
             if stored and not draft:
                 a = stored
@@ -158,6 +181,8 @@ def make_router(templates, get_conn, can_manage_event, share_url, base_url, audi
             ev = _guard(request, conn, event_token)
             if not ev:
                 return RedirectResponse("/", status_code=303)
+            if workflow.for_event(conn,ev['id']) or workflow.available(conn):
+                return Response("Open the private advisory form before saving.",status_code=409)
             fields = _form_fields(posted)
             stored = aa.get(conn, ev["id"])
             fields["qr_url"] = (stored or {}).get("qr_url") or share_url(f"{base_url(request)}/e/{ev['event_token']}")
@@ -181,6 +206,8 @@ def make_router(templates, get_conn, can_manage_event, share_url, base_url, audi
             ev = _guard(request, conn, event_token)
             if not ev:
                 return RedirectResponse("/", status_code=303)
+            if workflow.for_event(conn,ev['id']):
+                return Response("Managed advisory publication is not available yet.",status_code=409)
             if show and (ev.get("event_kind") == "outside" or st.event_is_archived(conn, ev["id"])):
                 return RedirectResponse(f"/activities/{event_token}/advisory?err=" + quote(
                     "This activity has no public link tree, so its advisory cannot be published."), status_code=303)
