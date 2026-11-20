@@ -143,3 +143,16 @@ def test_unconfigured_notice_retry_and_unknown_protection(cycle,monkeypatch):
     with pytest.raises(ValueError):act(c,u[0],r,'notice_retry',notice_id=nid)
     c.execute("UPDATE document_notice SET state='unknown' WHERE id=?",(nid,));c.commit()
     with pytest.raises(ValueError):documents_notify.retry(c,u[2],r['document_id'],nid,'Uncertain')
+
+
+def test_uncertain_notice_requires_recorded_evidence_before_retry(cycle):
+    import documents_notify
+    data,r=cycle;c,u,*_=data;r=act(c,u[0],r,'submit')
+    nid=c.execute('SELECT id FROM document_notice').fetchone()[0]
+    c.execute("UPDATE document_notice SET state='unknown' WHERE id=?",(nid,));c.commit()
+    with pytest.raises(ValueError):act(c,u[0],r,'notice_retry',notice_id=nid)
+    r=act(c,u[0],r,'notice_no_effect',notice_id=nid,reason='Synthetic provider confirms the request was rejected before sending')
+    r=act(c,u[0],r,'notice_retry',notice_id=nid)
+    assert c.execute('SELECT state FROM document_notice WHERE id=?',(nid,)).fetchone()[0]=='pending'
+    assert c.execute('SELECT COUNT(*) FROM document_notice').fetchone()[0]==1
+    assert c.execute('SELECT COUNT(*) FROM advisory_review_packet').fetchone()[0]==1

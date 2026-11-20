@@ -22,5 +22,6 @@
 <details><summary>Review notifications</summary>
 <p>Delivery does not change a review decision. Uncertain attempts are retained for checking and are not automatically resent.</p>
 {% for notice in review.notices %}<p>{{ notice.kind|replace('advisory_','') }} · {{ notice.recipient }} · {{ notice.state }}</p>
+{% if notice.state=='unknown' and available %}<form method="post" action="/advisories/{{ record.id }}/actions">{{ action_fields('notice_no_effect') }}<input type="hidden" name="notice_id" value="{{ notice.id }}"><label for="notice-proof-{{ notice.id }}">Mail-service evidence that no message was sent</label><input id="notice-proof-{{ notice.id }}" name="reason" required maxlength="4000"><button class="btn ghost">Record confirmed no effect</button></form>{% endif %}
 {% if notice.state=='failed' and available %}<form method="post" action="/advisories/{{ record.id }}/actions">{{ action_fields('notice_retry') }}<input type="hidden" name="notice_id" value="{{ notice.id }}"><label for="notice-{{ notice.id }}">Retry reason</label><input id="notice-{{ notice.id }}" name="reason" required maxlength="4000"><button class="btn ghost">Retry failed notice</button></form>{% endif %}{% endfor %}</details>
 </section>

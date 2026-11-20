@@ -12,7 +12,7 @@ import work
 import work_discussion
 
 POLICY={'version':1,'stages':['chief','director'],'signature_required':False,'self_review':False}
-ACTIONS={'submit','endorse','approve','return','withdraw','reroute','comment','resolve','reopen_concern','cancel','notice_retry'}
+ACTIONS={'submit','endorse','approve','return','withdraw','reroute','comment','resolve','reopen_concern','cancel','notice_retry','notice_no_effect'}
 
 
 def effective_chief(conn, unit_id):
@@ -146,6 +146,13 @@ def mutate(conn,user,advisory_id,revision,action,data):
             if doc['status'] not in allowed:raise ValueError('This action is unavailable in the current state.')
             _,eid=_finish(conn,user,doc,'withdrawn' if action=='withdraw' else 'cancelled',reason,
                 {'status':'draft' if action=='withdraw' else 'cancelled','approved_version':None,'signed_version':None,'reviewer_id':None},record)
+        elif action=='notice_no_effect':
+            nid=int(data.get('notice_id') or 0)
+            notice=rows(conn,'SELECT * FROM document_notice WHERE id=? AND document_id=?',(nid,doc['id']))
+            d.require(notice and (is_author or notice[0]['user_id']==user['id'] or p.officer(conn,user,doc)))
+            if notice[0]['state']!='unknown':raise ValueError('Only an uncertain, finished notice attempt needs a confirmed no-effect outcome.')
+            conn.execute("UPDATE document_notice SET state='failed',error='Confirmed no message was sent; see action history.' WHERE id=?",(nid,))
+            eid=event(conn,doc['id'],user,'advisory_notice_no_effect',{'notice_id':nid,'reason':reason})
         elif action=='notice_retry':
             import documents_notify
             eid=documents_notify.retry_in_transaction(conn,user,doc,int(data.get('notice_id') or 0),reason)

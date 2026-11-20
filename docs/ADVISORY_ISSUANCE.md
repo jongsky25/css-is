@@ -36,6 +36,8 @@ The existing Documents background worker, operation lock, durable lease, recover
 ownership and delivery ledgers are reused. The local-artifact adapter reads the frozen
 PDF and uses the configured mailer through `send_reminders._send`, with one recipient
 and one PDF attachment per message. No new email provider, mailbox or scheduler exists.
+Uncertain review notices also require recorded no-effect evidence before a manual retry;
+this does not repeat a review decision or create a second notice.
 Documents sending and the `document_dispatch` email feature must be enabled for sends;
 this code does not enable them. The existing mail relay source supports attachments.
 
