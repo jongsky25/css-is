@@ -93,6 +93,7 @@ def test_public_issue_stays_frozen_during_revision_and_cancellation(approved):
     with pytest.raises(ValueError):dist.public_artifact(c,ev['id'],'pdf')
     r=act(c,u[0],r,'publish',issue_id=str(issued['id']))
     assert dist.public_artifact(c,ev['id'],'pdf')==pdf
+    c.execute("UPDATE document_job SET state='failed' WHERE id=?",(deliveries(c)[0],));c.commit()
     r=act(c,u[0],r,'revise_issued')
     opts=options(c,ev,unit);opts.update(expected_revision=r['revision'],summary='Replacement content')
     r=aw.save_draft(c,u[0],ev['event_token'],{**FIELDS,'headline':'Replacement'},**opts)
@@ -101,6 +102,7 @@ def test_public_issue_stays_frozen_during_revision_and_cancellation(approved):
     # Internal audience needs a deliverable account after the replacement removes externals.
     r=issue(c,u[0],r)
     newer=dist.latest(c,r['id']);assert newer['supersedes_id']==issued['id']
+    assert review.guidance(c,u[0],d.raw(c,r['document_id']))['stage']=='complete'
     with pytest.raises(ValueError):dist.public_artifact(c,ev['id'],'pdf')
     with pytest.raises(ValueError):act(c,u[0],r,'publish',issue_id=str(newer['id']))
     r=act(c,u[0],r,'cancel_issued')

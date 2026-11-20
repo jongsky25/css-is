@@ -1,5 +1,5 @@
 {% extends "dash_layout.html" %}
-{% block title %}Advisory draft — Office Connect{% endblock %}
+{% block title %}Advisory — Office Connect{% endblock %}
 {% block content %}
 <style>
 .adraft {max-width:58rem;margin:auto;overflow-wrap:anywhere}
@@ -12,7 +12,7 @@
 </style>
 <div class="adraft">
 <p><a href="/advisories">Advisory register</a> · <a href="/activities/{{ ev.event_token }}/manage">Activity</a></p>
-<h1>Advisory draft</h1><p>{{ ev.title }}</p>
+<h1>Advisory</h1><p>{{ ev.title }}</p>
 {% if record %}<p><strong>No. {{ record.number }}</strong> · Revision {{ record.ordinal }} · {{ 'Private draft' if record.status=='draft' else record.status|replace('_',' ') }}</p>
 <p class="muted">Number reserved {{ record.reservation_date }}. See issuance history below for actual issue dates.</p>
 <p><a href="/advisories/{{ record.id }}/history">Version and action history</a> · <a href="/advisories/{{ record.id }}/revisions/{{ record.current_revision }}/file.pdf">Saved PDF</a></p>

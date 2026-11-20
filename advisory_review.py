@@ -260,7 +260,7 @@ def guidance(conn,user,doc):
     if doc['status']=='approved' and advisory_distribution.can_issue(conn,user,record):owner=user['id'];role='Authorized issuer'
     stage='review' if doc['status']=='in_review' else doc['status']
     if doc['status']=='issued':
-        attention=conn.execute("SELECT 1 FROM advisory_delivery a JOIN document_job j ON j.id=a.job_id WHERE j.document_id=? AND j.state IN ('failed','unknown') AND NOT EXISTS (SELECT 1 FROM advisory_delivery newer JOIN document_job n ON n.id=newer.job_id WHERE newer.issue_id=a.issue_id AND newer.recipient=a.recipient AND n.rowid>j.rowid)",(doc['id'],)).fetchone()
+        attention=conn.execute("SELECT 1 FROM advisory_delivery a JOIN document_job j ON j.id=a.job_id WHERE j.document_id=? AND j.state IN ('failed','unknown') AND NOT EXISTS (SELECT 1 FROM advisory_issue_action stop WHERE stop.issue_id=a.issue_id AND stop.action IN ('cancelled','superseded')) AND NOT EXISTS (SELECT 1 FROM advisory_delivery newer JOIN document_job n ON n.id=newer.job_id WHERE newer.issue_id=a.issue_id AND newer.recipient=a.recipient AND n.rowid>j.rowid)",(doc['id'],)).fetchone()
         stage='delivery_partial' if attention else 'complete'
         title='Check advisory delivery' if attention else 'Advisory issued'
     enabled=aw.available(conn)

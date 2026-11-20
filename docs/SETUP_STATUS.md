@@ -24,7 +24,9 @@ publication, failure/retry and filtered register pass with scripts on/off. JUnit
 regression checks passed 28. Full hosted gates remain mandatory; synthetic checks are not
 claimed as live transport proof.
 
-Next: save/open 10.42 PR; finish sequential gated merges and verify each guarded automatic
+Saved as [PR #635](https://github.com/jongsky25/css-is/pull/635). Follow-up checks
+passed for evidenced notice retry (13 checks) and superseded-delivery guidance (10 checks).
+Next: finish sequential gated merges and verify each guarded automatic
 deployment before the next merge. All required first-increment plan development is now
 represented in the three candidates; standalone/multiple advisories, Slides and ordinary
 comment email are explicitly deferred options. Do not resume unrelated audit/setup queues.
