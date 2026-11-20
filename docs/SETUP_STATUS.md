@@ -1,5 +1,25 @@
 # Cloud/mobile setup status
 
+## Advisory release gate repair — November 20, 2026
+
+The owner authorized repeated guarded merge/development cycles through completion.
+The advisory plan is implemented across [#633](https://github.com/jongsky25/css-is/pull/633)
+(10.40 drafts), [#634](https://github.com/jongsky25/css-is/pull/634) (10.41 review), and
+[#635](https://github.com/jongsky25/css-is/pull/635) (10.42 issuance/dashboard).
+This supersedes the earlier build-only restriction below. No merge/deployment has occurred.
+
+#633's full shuffled suite completed with 11,139 passed and two failures. Both were
+restart-idempotency regressions: advisory installation added the file backend column
+**after** cache triggers captured the table shape. Fixed in `e27f8cb` by installing
+advisory schema first and including advisory tables among cache dependencies. The
+existing failing tests plus cache, Telegram-change and advisory regressions now pass:
+**75 passed**, no failures/skips; JUnit and diff gates pass. No test was weakened or skipped.
+
+Next: propagate the fix to both later candidates, rerun full hosted gates, merge #633
+only when required checks pass, and verify its guarded automatic deployment. Continue
+#634 then #635 with current-main updates and the same gates. No real test notifications,
+production-data testing, external memo edits or Sheet work. Preserve all existing release gates.
+
 ## Advisory private-draft slice built — November 20, 2026
 
 Owner authorized implementation with **“start building”** after the planning checkpoint
