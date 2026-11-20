@@ -1,5 +1,27 @@
 # Cloud/mobile setup status
 
+## Advisory implementation design prepared — November 20, 2026
+
+Continued [draft PR #633](https://github.com/jongsky25/css-is/pull/633) from
+`de8bda2` on `plan/advisory-tracker-integration`; inspected main remains `3eea227`.
+Read repository guidance and the saved plan; inspected review/approval, permissions,
+Work discussion, notification, dispatch/job, mail and advisory rendering/storage code.
+The [implementation design](ADVISORY_IMPLEMENTATION_DESIGN.md) maps concrete reuse
+and gaps, defines additive schema and existing-record compatibility, and prepares a
+private draft/register/revision slice with synthetic acceptance criteria.
+
+Five bounded policy recommendations were presented to the owner; answers remain
+pending. No policy acceptance or implementation authorization is inferred. Next:
+record the answers (P2/P3 affect slice 1), then wait for explicit implementation
+authorization. All confirmed scope remains intact: Office Connect only, no Sheet
+work; Chief review then Director approval; comments, returns/resubmissions, history
+and internal/external issuance. Prior checkpoint's service-mapping next step is complete.
+
+Documentation only. All 162 local Markdown targets across the three planning/status
+files resolved; `git diff --check` passed. These are the checks for this checkpoint;
+no application tests, live data access, external file changes, preview, merge,
+deployment or real notifications. Save this checkpoint to the same branch/PR.
+
 ## Advisory workflow plan finalized — November 20, 2026
 
 Saved as [draft PR #633](https://github.com/jongsky25/css-is/pull/633), plan

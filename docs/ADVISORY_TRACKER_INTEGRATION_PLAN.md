@@ -95,6 +95,14 @@ No legacy import, reconciliation or operational cutover tasks belong in the impl
 
 These are the remaining choices only. Register ownership, no Sheet work, Division Chief review and Director approval are settled and must not be reopened as unknowns.
 
+## Implementation design continuation — November 20, 2026
+
+The [service map and first-slice specification](ADVISORY_IMPLEMENTATION_DESIGN.md) now records
+inspected reuse points, required shared-service extensions, additive schema, compatibility,
+transaction/idempotency boundaries and synthetic acceptance criteria. The five-policy package
+was presented to the owner; no answer is recorded yet. Recommendations remain pending,
+and implementation remains unauthorized. Use that design for the next continuation.
+
 ## Delivery plan and acceptance gates
 
 ### 1. Bounded implementation design
@@ -123,8 +131,8 @@ Verification uses synthetic data with outbound notifications disabled. Cover pho
 
 Branch: `plan/advisory-tracker-integration`. This PR contains documentation only. No live workflow was tested, feature implemented, external file edited, message sent, merge performed or deployment requested. Documentation checks: relative links and `git diff --check`.
 
-Next action: bounded implementation design (increment 1), then resolve only policy choices needed for the first build. Preserve all confirmed decisions and do not resume unrelated historical setup queues. Implementation requires a subsequent user instruction; merge/deployment always needs explicit release authorization.
+Next action: record the five pending policy answers against the completed implementation design; obtain separate implementation authorization before building slice 1. Preserve all confirmed decisions and do not resume unrelated historical setup queues. Implementation requires a subsequent user instruction; merge/deployment always needs explicit release authorization.
 
 Copy into a new chat with `jongsky25/css-is` selected:
 
-> Office Connect: continue from branch `plan/advisory-tracker-integration` and its advisory workflow planning PR. Read AGENTS.md, docs/CLOUD_COLLABORATION.md, docs/SETUP_STATUS.md and docs/ADVISORY_TRACKER_INTEGRATION_PLAN.md. Verify current main and the saved branch. Continue the bounded implementation design: map existing approval, review, email and issuance services and prepare the first implementation slice. Everything stays in Office Connect; no Sheet import, transition, reconciliation or synchronization. Division Chief reviews, Director approves; preserve comments, returns, revisions and action history, plus internal/external distribution. Resolve only the remaining policy choices. Stay in planning until I authorize implementation; do not merge, deploy or send real notifications. Save progress to the review branch.
+> Office Connect: continue from branch `plan/advisory-tracker-integration` and its advisory workflow planning PR. Read AGENTS.md, docs/CLOUD_COLLABORATION.md, docs/SETUP_STATUS.md and docs/ADVISORY_TRACKER_INTEGRATION_PLAN.md. Verify current main and the saved branch. Read docs/ADVISORY_IMPLEMENTATION_DESIGN.md for the completed service map and first-slice specification. Record only the remaining policy answers and refine their affected design contracts. Everything stays in Office Connect; no Sheet import, transition, reconciliation or synchronization. Division Chief reviews, Director approves; preserve comments, returns, revisions and action history, plus internal/external distribution. Resolve only the remaining policy choices. Stay in planning until I authorize implementation; do not merge, deploy or send real notifications. Save progress to the review branch.
