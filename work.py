@@ -154,7 +154,7 @@ def create_in_transaction(conn, user, fields):
     title = _text(fields.get('title'), 'Title', 250)
     outcome = _text(fields.get('outcome'), 'Expected outcome', 4000)
     unit_id = int(fields.get('unit_id') or 0)
-    if not conn.execute('SELECT 1 FROM org_unit WHERE id=?', (unit_id,)).fetchone():
+    if not st.unit_is_active(conn, unit_id):
         raise ValueError('Choose the concerned unit.')
     proposed = _account(conn, fields['proposed_lead_id'])['id'] if fields.get('proposed_lead_id') else None
     due = date.fromisoformat(fields['due_date']).isoformat() if fields.get('due_date') else None

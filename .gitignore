@@ -64,3 +64,9 @@ docs/archive/data-cleanup/
 CSS Reports_reference/
 CSS Spreadsheets.xlsx
 qa_slides/
+
+# Private restructure mappings hold staff names/ids (scripts/restructure_directory.py);
+# only the anonymised example is committed.
+*restructure-mapping*.json
+!docs/org/restructure-mapping.example.json
+*.pre-restructure-*.db
