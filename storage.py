@@ -1116,6 +1116,11 @@ def _add_missing_columns(conn):
     ou_cols = {row[1] for row in conn.execute("PRAGMA table_info(org_unit)")}
     if "short_name" not in ou_cols:
         conn.execute("ALTER TABLE org_unit ADD COLUMN short_name TEXT")
+    if "retired_at" not in ou_cols:
+        # A restructured-away unit is RETIRED, never deleted: past events,
+        # documents, Work and supplies keep pointing at it (and its name), while
+        # pickers and new assignments skip it. docs/ORG_RESTRUCTURE_ASSESSMENT.md.
+        conn.execute("ALTER TABLE org_unit ADD COLUMN retired_at TEXT")
     resp_cols = {row[1] for row in conn.execute("PRAGMA table_info(response)")}
     if "remarks" not in resp_cols:
         conn.execute("ALTER TABLE response ADD COLUMN remarks TEXT")
@@ -3577,17 +3582,33 @@ def get_or_create_walkin_form(conn):
     return {"id": fid, "qr_token": token, "form_id": f"F1-WALKIN-{fid:04d}"}
 
 
-def list_org_units(conn, level=None):
+def list_org_units(conn, level=None, include_retired=True):
     """Org units for the section pickers (e.g. the ARTA 'who served' section).
-    Pass level='section' to list only sections."""
-    sql = "SELECT id, name, short_name, level, path FROM org_unit"
-    args = ()
+    Pass level='section' to list only sections. Retired units are included by
+    default (history and rollups still need them); each row carries `retired`."""
+    sql = "SELECT id, name, short_name, level, path, retired_at FROM org_unit"
+    where, args = [], []
     if level is not None:
-        sql += " WHERE level=?"
-        args = (level,)
+        where.append("level=?")
+        args.append(level)
+    if not include_retired:
+        where.append("retired_at IS NULL")
+    if where:
+        sql += " WHERE " + " AND ".join(where)
     sql += " ORDER BY path"
-    return [{"id": r[0], "name": r[1], "short_name": r[2], "level": r[3], "path": r[4]}
+    return [{"id": r[0], "name": r[1], "short_name": r[2], "level": r[3], "path": r[4],
+             "retired": r[5] is not None}
             for r in conn.execute(sql, args).fetchall()]
+
+
+def unit_is_active(conn, unit_id, level=None):
+    """Does `unit_id` exist, unretired (and at `level`, a string or tuple, when
+    given)? The check for anything NEW being assigned to a unit."""
+    row = conn.execute("SELECT level, retired_at FROM org_unit WHERE id=?",
+                       (unit_id,)).fetchone() if unit_id else None
+    if not row or row[1] is not None:
+        return False
+    return level is None or row[0] in ((level,) if isinstance(level, str) else tuple(level))
 
 
 def update_org_unit(conn, unit_id, name=None, short_name=None):
@@ -3652,7 +3673,92 @@ def org_unit_deletable(conn, unit_id):
                        WHERE serving_staff_org_id=? OR lead_org_id=? LIMIT 1""",
                     (unit_id, unit_id)).fetchone():
         return False, "used by a survey"
+    refs = org_unit_references(conn, unit_id)
+    if refs:
+        # Documents, Work, supplies, advisories, events... still point at it:
+        # deleting would orphan history. Retire it instead.
+        return False, "used by " + ", ".join(sorted(refs)) + " (retire it instead)"
     return True, ""
+
+
+def org_unit_references(conn, unit_id):
+    """{table: rows} of every row anywhere that points at `unit_id` through a
+    foreign key to org_unit -- found by introspection, so a new table is covered
+    without anyone remembering to list it here."""
+    out = {}
+    tables = [r[0] for r in conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
+    for table in tables:
+        quoted = '"' + table.replace('"', '""') + '"'
+        for fk in conn.execute(f"PRAGMA foreign_key_list({quoted})").fetchall():
+            if fk[2] != "org_unit":
+                continue
+            col = '"' + fk[3].replace('"', '""') + '"'
+            n = conn.execute(f"SELECT COUNT(*) FROM {quoted} WHERE {col}=?", (unit_id,)).fetchone()[0]
+            if n:
+                out[table] = out.get(table, 0) + n
+    return out
+
+
+def move_org_unit(conn, unit_id, new_parent_id, segment=None, *, commit=True):
+    """Re-parent a unit (and everything under it) beneath `new_parent_id`,
+    optionally renaming its own path segment (e.g. OD -> OD4). Ids never change,
+    so staff, history and references follow the unit. Returns the new path."""
+    row = conn.execute("SELECT path FROM org_unit WHERE id=?", (unit_id,)).fetchone()
+    parent = conn.execute("SELECT path, retired_at FROM org_unit WHERE id=?", (new_parent_id,)).fetchone()
+    if not row or not parent:
+        raise ValueError("Unknown unit.")
+    old, ppath = row[0], parent[0]
+    if parent[1] is not None:
+        raise ValueError("A unit cannot be moved under a retired unit.")
+    if ppath == old or ppath.startswith(old + "/"):
+        raise ValueError("A unit cannot be moved under itself.")
+    seg = (segment or old.rsplit("/", 1)[-1]).strip()
+    if not seg or "/" in seg:
+        raise ValueError("Path segment must be non-empty and contain no '/'.")
+    new = f"{ppath}/{seg}"
+    if new == old:
+        return new
+    if conn.execute("SELECT 1 FROM org_unit WHERE path=? OR path LIKE ? LIMIT 1",
+                    (new, new + "/%")).fetchone():
+        raise ValueError(f"Path {new} is already in use.")
+    descendants = conn.execute("SELECT id, path FROM org_unit WHERE path=? OR path LIKE ?",
+                               (old, old + "/%")).fetchall()
+    for uid, path in descendants:
+        conn.execute("UPDATE org_unit SET path=? WHERE id=?", (new + path[len(old):], uid))
+    if commit:
+        conn.commit()
+    return new
+
+
+def retire_org_unit(conn, unit_id, *, commit=True):
+    """Retire a unit: kept for history, hidden from new assignments. Refused
+    while current staff, an acting OIC or an unretired child unit remain."""
+    row = conn.execute("SELECT path, retired_at FROM org_unit WHERE id=?", (unit_id,)).fetchone()
+    if not row:
+        raise ValueError("Unknown unit.")
+    if row[1] is not None:
+        return row[1]
+    path = row[0]
+    if conn.execute("SELECT 1 FROM org_unit WHERE path LIKE ? AND retired_at IS NULL LIMIT 1",
+                    (path + "/%",)).fetchone():
+        raise ValueError("Retire or move its child units first.")
+    if conn.execute("SELECT 1 FROM resource_person WHERE org_unit_id=? AND is_internal=1 "
+                    "AND archived_at IS NULL LIMIT 1", (unit_id,)).fetchone():
+        raise ValueError("Move its current staff to their new units first.")
+    if conn.execute("SELECT 1 FROM section_oic WHERE org_unit_id=?", (unit_id,)).fetchone():
+        raise ValueError("Clear its acting OIC first.")
+    when = tz.now_iso()
+    conn.execute("UPDATE org_unit SET retired_at=? WHERE id=?", (when, unit_id))
+    if commit:
+        conn.commit()
+    return when
+
+
+def restore_org_unit(conn, unit_id, *, commit=True):
+    conn.execute("UPDATE org_unit SET retired_at=NULL WHERE id=?", (unit_id,))
+    if commit:
+        conn.commit()
 
 
 def delete_org_unit(conn, unit_id):

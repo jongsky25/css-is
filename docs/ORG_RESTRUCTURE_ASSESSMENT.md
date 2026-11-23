@@ -182,3 +182,20 @@ path ending in `/ADMIN`. Re-parenting existing units needs Phase 2 tooling.
 directorate card; travel certifier for MSU/AU staff falls back to settings;
 the Documents Director inbox (`director()`) remains open to any Director;
 hardcoded names (Phase 3) are untouched.
+
+## Phase 2 implementation (safe restructure tooling)
+
+- `org_unit.retired_at` (additive column). Retired units stay readable for history
+  and rollups, are marked in the directory/staff picker, and are refused for new
+  staff, documents, routing rules, Work cases, newly chosen contribution units and
+  new advisories. Existing items keep working under their old unit.
+- `move_org_unit` re-parents a unit and its subtree (ids unchanged), refusing
+  cycles, taken paths and retired parents. `retire_org_unit` refuses while current
+  staff, an acting OIC or unretired children remain.
+- Deletion is refused for any unit referenced through any foreign key
+  (introspected), not only staff and surveys.
+- `scripts/restructure_directory.py`: plan (committed JSON) + private mapping;
+  dry run by default, `--apply` backs up then applies in one transaction; reports
+  routing rules to re-map; never reassigns open work. Runbook:
+  [ORG_RESTRUCTURE_RUNBOOK.md](ORG_RESTRUCTURE_RUNBOOK.md).
+- MSU and AU are stored at section level (units outside divisions).

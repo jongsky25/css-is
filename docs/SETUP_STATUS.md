@@ -1,5 +1,21 @@
 # Cloud/mobile setup status
 
+## Phase 1 merged; Phase 2 tooling candidate 10.44 — November 23, 2026
+
+Owner instructed "merge pr 636 if ready". All required checks passed on `43423f8`;
+[PR #636](https://github.com/jongsky25/css-is/pull/636) merged at `c20355f` (10.43).
+Its automatic guarded deployment run 45151910184 started; verify backup and live 10.43.
+
+Phase 2 (owner: "work on the next thing") is on `claude/funny-bohr-qif52k`, rebuilt from
+that main, candidate 10.44: retired units, move/retire helpers, FK-wide deletion guard,
+and `scripts/restructure_directory.py` with the [runbook](ORG_RESTRUCTURE_RUNBOOK.md).
+Local: 5 new restructure tests and the related suites pass; the failures are 9 OCR tests
+(no tesseract here, same on main) and 1 browser launch, all environmental. No live
+directory change; the private mapping is git-ignored and must not be committed.
+
+Next: CI and merge on owner instruction; then prepare the private mapping with the
+office and dry-run it on a copy of the live database.
+
 ## Two-Director Phase 1 built — November 23, 2026
 
 Owner said "do the next step once ready". Phase 1 (multi-office model) is built on

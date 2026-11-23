@@ -82,20 +82,20 @@
       <option value="">— assign to —</option>
       {% if org.offices %}
       <optgroup label="{{ 'Offices of the Directors' if org.offices|length > 1 else 'Office of the Director' }}">
-        {% for od in org.offices %}<option value="{{ od.id }}" {{ 'selected' if f.org_unit_id|string == od.id|string }}>{{ od.name }}</option>{% endfor %}
+        {% for od in org.offices if not od.retired or f.org_unit_id|string == od.id|string %}<option value="{{ od.id }}" {{ 'selected' if f.org_unit_id|string == od.id|string }}>{{ od.name }}</option>{% endfor %}
       </optgroup>
       {% endif %}
       <optgroup label="Division chiefs (whole division)">
-        {% for d in org.divisions %}<option value="{{ d.id }}" {{ 'selected' if f.org_unit_id|string == d.id|string }}>{{ d.name }} — chief</option>{% endfor %}
+        {% for d in org.divisions if not d.retired or f.org_unit_id|string == d.id|string %}<option value="{{ d.id }}" {{ 'selected' if f.org_unit_id|string == d.id|string }}>{{ d.name }} — chief{{ ' (retired)' if d.retired }}</option>{% endfor %}
       </optgroup>
       {% for d in org.divisions %}{% if d.sections %}
       <optgroup label="{{ d.short_name or d.name }} — sections">
-        {% for s in d.sections %}<option value="{{ s.id }}" {{ 'selected' if f.org_unit_id|string == s.id|string }}>{{ s.name }}</option>{% endfor %}
+        {% for s in d.sections if not s.retired or f.org_unit_id|string == s.id|string %}<option value="{{ s.id }}" {{ 'selected' if f.org_unit_id|string == s.id|string }}>{{ s.name }}{{ ' (retired)' if s.retired }}</option>{% endfor %}
       </optgroup>
       {% endif %}{% endfor %}
       {% if org.admin_sections %}
       <optgroup label="Units outside divisions">
-        {% for s in org.admin_sections %}<option value="{{ s.id }}" {{ 'selected' if f.org_unit_id|string == s.id|string }}>{{ s.name }}{% if s.office_name %} ({{ s.office_name }}){% endif %}</option>{% endfor %}
+        {% for s in org.admin_sections if not s.retired or f.org_unit_id|string == s.id|string %}<option value="{{ s.id }}" {{ 'selected' if f.org_unit_id|string == s.id|string }}>{{ s.name }}{% if s.office_name %} ({{ s.office_name }}){% endif %}{{ ' (retired)' if s.retired }}</option>{% endfor %}
       </optgroup>
       {% endif %}
     </select>

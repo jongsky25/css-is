@@ -3,6 +3,7 @@ from datetime import date
 
 import documents_permissions as permissions
 from documents_storage import rows, transaction
+import storage as st
 import tzutil as tz
 import work
 import work_blockers
@@ -59,7 +60,11 @@ def create_in_transaction(conn, user, case_id, fields):
     title = work._text(fields.get('title'), 'Contribution title', 250)
     output = work._text(fields.get('expected_output'), 'Expected output', 4000)
     unit_id = int(fields.get('unit_id') or case['unit_id'])
-    if not conn.execute('SELECT 1 FROM org_unit WHERE id=?', (unit_id,)).fetchone():
+    # A case filed under a since-retired unit keeps taking contributions there
+    # (the transition keeps existing work with its owners); a newly chosen
+    # unit must be current.
+    if not (st.unit_is_active(conn, unit_id) or (unit_id == case['unit_id'] and
+            conn.execute('SELECT 1 FROM org_unit WHERE id=?', (unit_id,)).fetchone())):
         raise ValueError('Choose the contributing unit.')
     proposed = work._account(conn, fields['proposed_owner_id'])['id'] if fields.get('proposed_owner_id') else None
     due = _due(conn, case_id, fields.get('due_date'))

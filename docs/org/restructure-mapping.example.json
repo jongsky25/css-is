@@ -1,0 +1,23 @@
+{
+  "bureau_path": "BLHSD",
+  "reuse": {
+    "BLHSD/OD": "OD4",
+    "BLHSD/ADMIN": "AU"
+  },
+  "retire": [
+    "BLHSD/HSDD/S1",
+    "BLHSD/HSDD/S2",
+    "BLHSD/HSDD/S3",
+    "BLHSD/HSMED/S4",
+    "BLHSD/HSMED/S5",
+    "BLHSD/HSDD",
+    "BLHSD/HSMED"
+  ],
+  "staff": [
+    {"rp_id": 101, "unit": "OD3", "designation": "Director III"},
+    {"rp_id": 102, "unit": "HSIDD", "designation": "Division Chief"},
+    {"rp_id": 103, "unit": "S7", "designation": "Section Head"},
+    {"rp_id": 104, "unit": "MSU", "designation": "Unit Head"},
+    {"rp_id": 105, "unit": "S8"}
+  ]
+}

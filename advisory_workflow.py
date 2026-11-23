@@ -226,7 +226,7 @@ def save_draft(conn, user, event_token, fields, *, unit_id, audience, external, 
             raise docs.Conflict('The advisory changed. Open the latest draft before saving again; your entered values are shown below.')
         if not record and expected_revision!=0:
             raise docs.Conflict('The advisory changed. Reload before saving.')
-        if not conn.execute("SELECT 1 FROM org_unit WHERE id=? AND level='division'",(unit_id,)).fetchone():
+        if not (st.unit_is_active(conn,unit_id,'division') or (record and record['unit_id']==unit_id)):
             raise ValueError('Choose an owning division.')
         source_value = source(conn,ev)
         if digest(encoded(source_value))!=expected_source:

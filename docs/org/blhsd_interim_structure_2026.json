@@ -3,7 +3,7 @@
   "status": "draft-copy; number, signature and Annex A pending",
   "human_reference": "BLHSD_INTERIM_STRUCTURE_2026.md",
   "privacy": "No personal names. Seat holders are entered in the application directory, not here.",
-  "proposed_paths_note": "Paths are a proposal for the Office Connect org_unit tree (bureau > office > division > section). AU keeps the ADMIN segment that rooms/travel/meal approvals rely on.",
+  "proposed_paths_note": "Paths are a proposal for the Office Connect org_unit tree (bureau > office > division > section). MSU and AU are stored at section level (units outside any division); AU keeps the ADMIN segment that rooms/travel/meal approvals rely on. The MSU lead needs the designation \"Unit Head\"; the AU lead keeps \"Admin Head\".",
   "transition": {
     "carry_over_days": 14,
     "rule": "Existing work arrangements may continue for two weeks; DPCR/IPCR commitments stay with originally responsible staff; reassignment needs justification and approval of both Directors as applicable."
@@ -13,10 +13,10 @@
      "head_seat": "Director IV", "oversees": ["HSIDD", "HSGPAD", "LHSIID"]},
     {"key": "OD3", "level": "office", "name": "Office of the Director III", "parent": "BLHSD", "path": "BLHSD/OD3",
      "head_seat": "Director III", "oversees": ["LHPFD", "LHSSD", "MSU"]},
-    {"key": "MSU", "level": "unit", "name": "Management Support Unit", "parent": "OD3", "path": "BLHSD/OD3/MSU",
+    {"key": "MSU", "level": "section", "name": "Management Support Unit", "parent": "OD3", "path": "BLHSD/OD3/MSU",
      "head_seat": "Chief Administrative Officer (Lead)",
      "topics": ["strategic planning", "policy coordination", "performance monitoring", "directives tracking", "management briefs", "executive reports"]},
-    {"key": "AU", "level": "unit", "name": "Administrative Unit", "parent": "BLHSD", "path": "BLHSD/ADMIN",
+    {"key": "AU", "level": "section", "name": "Administrative Unit", "parent": "BLHSD", "path": "BLHSD/ADMIN",
      "head_seat": "Administrative Officer IV (Lead)", "supports": ["OD4", "OD3"],
      "topics": ["personnel administration", "records", "communications", "scheduling", "finance", "procurement", "property", "supplies", "logistics", "leave", "hiring", "contract renewal", "201 files"]},
 

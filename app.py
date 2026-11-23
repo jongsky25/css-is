@@ -7617,6 +7617,8 @@ async def directory_add_person(request: Request):
     signature = _decode_photo(p.get("signature_data", ""))
     conn = get_conn()
     try:
+        if org_id and not st.unit_is_active(conn, org_id):
+            org_id = None                   # retired units take no new staff
         rp_id = st.add_rp(conn, name, is_internal=is_internal, org_unit_id=org_id, **detail)
         if photo:
             st.set_rp_photo(conn, rp_id, photo[0], photo[1])
@@ -7671,6 +7673,10 @@ async def directory_update_person(request: Request, rp_id: int):
     warn = ""
     conn = get_conn()
     try:
+        if org_id and not st.unit_is_active(conn, org_id):
+            # Retired units take no new staff; someone already filed there keeps it.
+            org_id = (st.get_rp(conn, rp_id) or {}).get("org_unit_id") if org_id == (
+                st.get_rp(conn, rp_id) or {}).get("org_unit_id") else None
         st.update_rp(conn, rp_id, name=name, org_unit_id=org_id, **detail)
         # Keep the linked account's login email in sync with the directory, so
         # activating/resetting/sign-in all use the current email (not a stale copy

@@ -274,7 +274,7 @@ def register_in_transaction(conn, user, fields, now=None, suppress_assignments=F
     if not subject or len(subject)>500 or not typ or len(typ)>100:
         raise ValueError('Subject (up to 500 characters) and type (up to 100) are required.')
     unit = int(fields['unit_id']) if fields.get('unit_id') else None
-    if unit and not conn.execute('SELECT 1 FROM org_unit WHERE id=?',(unit,)).fetchone():
+    if unit and not st.unit_is_active(conn,unit):
         raise ValueError('Unknown unit.')
     # Registration instant, not issue date, governs permanent annual numbering.
     now = now or datetime.now(ZoneInfo('Asia/Manila'))
@@ -341,8 +341,8 @@ def rule_save(conn,user,name,body, rule_id=None, revision=None, state='draft'):
         for uid in set(body.get('assignees',[]) + ([body['lead_id']] if body.get('lead_id') else [])):
             active_account(conn,uid)
         for unit_id in set(body.get('unit_ids',[]) + ([body['lead_unit_id']] if body.get('lead_unit_id') else [])):
-            if not conn.execute('SELECT 1 FROM org_unit WHERE id=?',(unit_id,)).fetchone():
-                raise ValueError('Unknown routing unit.')
+            if not st.unit_is_active(conn,unit_id):
+                raise ValueError('Unknown routing unit. Retired units cannot receive new routing.')
         family=None
         if rule_id:
             old=rows(conn,'SELECT * FROM document_rule_version WHERE id=?',(rule_id,))
@@ -507,7 +507,7 @@ def mutate(conn,user,doc_id,revision,action,data):
             text=reason(data.get('reason'))
             lead=int(data.get('lead_id') or 0); active_account(conn,lead)
             unit=int(data.get('unit_id') or 0)
-            if not conn.execute("SELECT 1 FROM org_unit WHERE id=? AND level IN ('division','office','bureau','section')",(unit,)).fetchone():
+            if not st.unit_is_active(conn,unit,('division','office','bureau','section')):
                 raise ValueError('Choose the lead office or division.')
             tag_people, tag_sections, tagged = tags.resolve(conn, doc, data, initial=True)
             recipients={lead} | tagged | {int(k.split(':',1)[1]) for k,v in data.items() if k.startswith('recipient:') and v=='yes'}
