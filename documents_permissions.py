@@ -30,7 +30,7 @@ def has_role(conn, user, role, unit_id=None):
 
 def seats(conn, user):
     result = []
-    for unit in rows(conn, "SELECT id,level,path FROM org_unit WHERE level IN ('division','bureau')"):
+    for unit in rows(conn, "SELECT id,level,path FROM org_unit WHERE level IN ('division','office','bureau')"):
         oic = conn.execute('SELECT admin_user_id FROM section_oic WHERE org_unit_id=?', (unit['id'],)).fetchone()
         if user['id'] in st.org_unit_chiefs(conn, unit['id']) or (oic and oic[0] == user['id']):
             result.append({**unit, 'oic': bool(oic and oic[0] == user['id'])})
@@ -41,9 +41,23 @@ def director(conn, user):
     return bool(st._org_accounts_at_rank(conn, 3) and user['id'] in st._org_accounts_at_rank(conn, 3)) or any(s['level'] == 'bureau' for s in seats(conn, user))
 
 
+def director_for(conn, user, unit_id):
+    """Director-class authority over one unit: the Director overseeing it (or the OIC
+    on that Director's office), or the top Director / bureau OIC for bureau and
+    Administrative Unit items. With one Director this equals director()."""
+    office = st.overseeing_office_unit(conn, unit_id)
+    if office:
+        oic = conn.execute('SELECT admin_user_id FROM section_oic WHERE org_unit_id=?', (office,)).fetchone()
+        if oic and oic[0] == user['id']:
+            return True
+    elif any(s['level'] == 'bureau' for s in seats(conn, user)):
+        return True
+    return user['id'] in st.director_accounts_for_unit(conn, unit_id)
+
+
 def review_authority(conn, user, doc):
     """Current directory authority; callers still check the assigned reviewer."""
-    return director(conn, user) if doc['review_class'] == 'director' else any(
+    return director_for(conn, user, doc['unit_id']) if doc['review_class'] == 'director' else any(
         seat['level'] == 'bureau' or scope_contains(conn, seat['id'], doc['unit_id'])
         for seat in seats(conn, user))
 

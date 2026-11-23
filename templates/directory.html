@@ -97,14 +97,14 @@
   </div>
 
   <!-- OFFICE OF THE DIRECTOR (head office, above the divisions) -->
-  {% if org.directorate %}
-  {% set od = org.directorate %}
+  {% if org.offices %}
   <div class="dcard">
-    <h2>Office of the Director</h2>
-    <p class="hint">The head office — the whole bureau rolls up to it. It sits <strong>above</strong> the divisions, not under any of them.</p>
+    <h2>{{ 'Offices of the Directors' if org.offices|length > 1 else 'Office of the Director' }}</h2>
+    <p class="hint">{% if org.offices|length > 1 %}Each Director heads an office and approves for the units nested under it. Units under no office (the bureau itself, the Administrative Unit) go to the top Director.{% else %}The head office — the whole bureau rolls up to it. It sits <strong>above</strong> the divisions, not under any of them.{% endif %}</p>
     <div class="table-wrap">
     <table class="resp-table">
       <tr><th>Office</th><th>Short</th><th>Path</th><th></th></tr>
+      {% for od in org.offices %}
       <tr id="row-{{ od.id }}">
         <td>
           <span class="disp">{{ od.name }}</span>
@@ -127,6 +127,7 @@
           </div>
         </td>
       </tr>
+      {% endfor %}
     </table>
     </div>
   </div>

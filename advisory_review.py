@@ -23,16 +23,24 @@ def effective_chief(conn, unit_id):
     return p.actor(conn,{'id':candidates[0]})['id']
 
 
-def effective_director(conn):
-    acting=rows(conn,"SELECT o.admin_user_id FROM section_oic o JOIN org_unit u ON u.id=o.org_unit_id WHERE u.level='bureau'")
-    candidates=[r['admin_user_id'] for r in acting] if acting else st._org_accounts_at_rank(conn,3)
+def effective_director(conn, unit_id=None):
+    """The Director who approves for `unit_id`: the Director overseeing it (Director
+    IV for Divisions 1-3, bureau and AU items; Director III for hers), or the OIC
+    designated on that Director's office. A bureau-level OIC still stands in for
+    the top Director."""
+    office=st.overseeing_office_unit(conn,unit_id)
+    if office:
+        acting=rows(conn,'SELECT admin_user_id FROM section_oic WHERE org_unit_id=?',(office,))
+    else:
+        acting=rows(conn,"SELECT o.admin_user_id FROM section_oic o JOIN org_unit u ON u.id=o.org_unit_id WHERE u.level='bureau'")
+    candidates=[r['admin_user_id'] for r in acting] if acting else st.director_accounts_for_unit(conn,unit_id)
     if len(candidates)!=1:
-        raise ValueError('Exactly one current Director or designated bureau OIC is required.')
+        raise ValueError('Exactly one current Director or designated OIC must oversee the owning division.')
     return p.actor(conn,{'id':candidates[0]})['id']
 
 
 def routing(conn, record):
-    chief=effective_chief(conn,record['unit_id']); director=effective_director(conn)
+    chief=effective_chief(conn,record['unit_id']); director=effective_director(conn,record['unit_id'])
     if len({chief,director,record['initiator_id']})!=3:
         raise ValueError('Preparer, Division Chief reviewer and Director approver must be different people. Correct the formal routing first.')
     return chief,director
@@ -59,7 +67,7 @@ def require_current(conn,doc):
 
 
 def stage_authority(conn,user,record,stage):
-    expected=effective_chief(conn,record['unit_id']) if stage=='chief' else effective_director(conn)
+    expected=effective_chief(conn,record['unit_id']) if stage=='chief' else effective_director(conn,record['unit_id'])
     return user['id']==expected and user['id']!=record['initiator_id']
 
 
@@ -129,7 +137,7 @@ def mutate(conn,user,advisory_id,revision,action,data):
             if stage=='director' and not conn.execute('''SELECT 1 FROM advisory_decision a JOIN document_review r ON r.id=a.review_id
                 WHERE a.packet_id=? AND a.stage='chief' AND r.decision='endorsed' ''',(review['id'],)).fetchone():
                 raise d.Conflict('Division Chief endorsement of this exact packet is required.')
-            if action=='endorse' and effective_director(conn)!=review['director_id']:
+            if action=='endorse' and effective_director(conn,record['unit_id'])!=review['director_id']:
                 raise d.Conflict('The Director assignment changed. Ask the initiator to reroute this submission.')
             decision={'endorse':'endorsed','approve':'approved','return':'changes_requested'}[action]
             rid=d.record_review_in_transaction(conn,user,doc,decision,reason,delegation=p.seats(conn,user))

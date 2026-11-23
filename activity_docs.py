@@ -368,7 +368,7 @@ def head_of_office(conn) -> tuple:
     name = st.get_setting(conn, "travel.sig.head_name", "")
     title = st.get_setting(conn, "travel.sig.head_title", "")
     if not (name or "").strip():
-        director = st.org_seat_holder(conn, 3)
+        director = st.director_seat_holder(conn)          # the top Director
         if director:
             name, title = director[0], director[1] or "Director"
     return name, title

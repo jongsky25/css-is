@@ -14734,8 +14734,9 @@ def _resolve_unit(org, path):
     """Find a unit (bureau / division / section / admin section) by its rollup path."""
     if org["bureau"] and org["bureau"]["path"] == path:
         return _unit_of(org["bureau"])
-    if org.get("directorate") and org["directorate"]["path"] == path:
-        return _unit_of(org["directorate"])
+    for od in org.get("offices") or ([org["directorate"]] if org.get("directorate") else []):
+        if od["path"] == path:
+            return _unit_of(od)
     for d in org["divisions"]:
         if d["path"] == path:
             return _unit_of(d)

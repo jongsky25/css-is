@@ -1,5 +1,43 @@
 # Cloud/mobile setup status
 
+## Two-Director Phase 1 built — November 23, 2026
+
+Owner said "do the next step once ready". Phase 1 (multi-office model) is built on
+`claude/funny-bohr-qif52k` in [PR #636](https://github.com/jongsky25/css-is/pull/636),
+candidate 10.43. Approvals, advisory/Documents Director review, signatures and team
+views now follow the Director overseeing each unit; one-Director directories behave as
+before. Details and remaining limits: [assessment §Phase 1](ORG_RESTRUCTURE_ASSESSMENT.md).
+No schema, data, preview, merge or deployment. The live directory must not be
+restructured until Phase 2 tooling (re-parent/retire units) exists.
+
+Next: hosted CI on the PR; then Phase 2 (safe restructure tooling) when the owner asks.
+
+## Office restructure reference and assessment — November 23, 2026
+
+Owner supplied the interim BLHSD functional-structure DPO (copy dated November 20,
+unnumbered, Annex A chart not included) and asked to save it as a reference and
+assess where Office Connect must change. Main was `40d15e9` (10.42).
+
+Saved a de-identified [structure reference](org/BLHSD_INTERIM_STRUCTURE_2026.md) with
+[machine-readable units](org/blhsd_interim_structure_2026.json). The repository is
+public, so staff names, named employment status and allowance authorizations are
+not tracked; seat holders belong in the app directory. Wrote the
+[impact assessment](ORG_RESTRUCTURE_ASSESSMENT.md): the code assumes one Director
+and three levels, so entering Director III today breaks advisory review and
+mis-routes approvals; MSU/AU and the second office have no place; units cannot be
+moved or retired; several names are hardcoded.
+
+Version 10.43 (documentation-only release metadata, required by the gate). No code, data, preview, merge or deployment. Checks: JSON parse, local links, diff check, release metadata.
+Owner decisions recorded in the assessment: Director IV approves Director III's own
+requests; final approval follows the Director overseeing the owning division;
+Director III's views default to her units with an all-bureau option; old units kept
+as retired history. AU lead and AU-owned and bureau-owned items go to Director IV; all AU staff
+(including division admins/Director-office support) are approved by the AU lead.
+All policy decisions are recorded. Next: Phase 1 (multi-office model) on a new review
+branch; DPO number/effective date, Annex A and Division 5 acronym still to confirm
+(placeholders acceptable until then). Then Phase 1 (multi-office
+model) on a review branch. Do not change the live directory before Phases 1–2 ship.
+
 ## Final advisory slice ready for fresh gates — November 20, 2026
 
 10.40 is verified deployed by run 44716416861 on `6a3ac9f`: complete required

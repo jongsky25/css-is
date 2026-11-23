@@ -552,12 +552,15 @@ def _division_path(conn, org_path):
 def directory_signers(conn, user_id, settings) -> dict:
     """The head of office and certifying officer for a filer, so they need not be typed on every filing.
     Head of office: the names set under Travel filing settings if given (an acting head, say), otherwise the
-    Director in the directory. Certifying officer: the head of the filer's own division in the directory
+    Director overseeing the filer's unit in the directory. Certifying officer: the head of the filer's own division in the directory
     (never the filer), falling back to the names set under Travel filing settings. `settings` is the
     travel.sig.* dict; the result has the same keys with blanks filled where the directory knows."""
     out = dict(settings)
     if not (settings.get("head_name") or "").strip():
-        director = st.org_seat_holder(conn, 3)
+        profile = st.get_user_profile(conn, user_id) or {}
+        # The Director overseeing the filer's unit (Director III for her
+        # divisions; the top Director for everyone else).
+        director = st.director_seat_holder(conn, profile.get("org_path"))
         if director:
             out["head_name"], out["head_title"] = director[0], director[1] or "Director"
     profile = st.get_user_profile(conn, user_id) or {}

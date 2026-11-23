@@ -1,3 +1,10 @@
+## 10.43 — November 23, 2026
+
+- Resolve "the Director" per unit: the Director heading the nearest office above it, else the top Director (highest grade).
+- Route division chiefs, MSU/office staff, the AU lead and the Director III's own requests to the right Director; only the top Director auto-approves.
+- Make advisory Director review, Documents Director-class review, signatures and Director III team views follow the owning unit.
+- List every Director office in the directory; save the interim structure reference and restructure assessment. No schema or data changes.
+
 ## 10.42 — November 20, 2026
 
 - Confirm and freeze approved advisory PDFs, internal rosters, external recipients and actual issue dates.
