@@ -135,3 +135,75 @@ def test_delete_is_refused_while_anything_references_the_unit(old_bureau):
     ok, reason = st.org_unit_deletable(conn, u["s2"])           # archived staffer still points at it
     assert not ok and "has staff assigned" in reason
     assert st.org_unit_references(conn, u["s2"]) == {"resource_person": 1}
+
+
+@pytest.mark.parametrize("directory, dpo", [
+    ("Canares, Rustom", "Rustom Cañares"),
+    ("Ramos, Raile Jay", "Ralie Jay Ramos"),
+    ("Reneva, Krizza Camille", "Krizza Camille Reñeva"),
+    ("Castro, Mary Anne Millscents", "Mary Anne Milliscent Castro"),
+    ("Gajitos, Maria Lourdes B.", "Dr. Maria Lourdes Gajitos, MO V"),
+    ("Maria Teresa C. Santiago", "Ma. Teresa Santiago"),
+])
+def test_names_match_across_order_accents_titles_and_small_typos(directory, dpo):
+    assert rd._name_score(directory, dpo) >= 0.9
+
+
+@pytest.mark.parametrize("a, b", [
+    ("Santiago, Marifel", "Ma. Carmela Santiago"),
+    ("Dela Cruz, June", "Chariza dela Cruz"),
+    ("Hizon, Irene", "Henry Miguel Hizon"),
+])
+def test_different_people_sharing_a_surname_do_not_match(a, b):
+    assert rd._name_score(a, b) == 0.0
+
+
+def test_unknown_and_ambiguous_names_stop_the_run_and_are_all_listed(old_bureau, tmp_path, capsys):
+    conn = st.connect(old_bureau["db"])
+    conn.execute("INSERT INTO resource_person(name, is_internal, org_unit_id) VALUES ('Staff, RS', 1, NULL)")
+    conn.commit(); conn.close()
+    mapping = dict(old_bureau["mapping"], staff=old_bureau["mapping"]["staff"][:2] + [
+        {"name": "RS Staff", "unit": "S8"}, {"name": "Nobody Here", "unit": "S8"}])
+    mpath = tmp_path / "names.json"
+    mpath.write_text(json.dumps(mapping))
+    assert rd.main(["--db", old_bureau["db"], "--mapping", str(mpath)]) == 2
+    err = capsys.readouterr().err
+    assert "matches more than one record" in err and "No current staff record matches 'Nobody Here'" in err
+
+
+def test_a_former_lead_placed_as_a_member_loses_the_lead_title(old_bureau, tmp_path):
+    p = old_bureau["p"]
+    mapping = dict(old_bureau["mapping"], staff=[{"rp_id": p["chief"], "unit": "LHPFD", "designation": "Division Chief"},
+                                                 {"name": "RS Head", "unit": "S8"},          # head -> member
+                                                 {"rp_id": p["staff"], "unit": "S7", "designation": "Section Head"}])
+    mpath = tmp_path / "lead.json"
+    mpath.write_text(json.dumps(mapping))
+    assert rd.main(["--db", old_bureau["db"], "--mapping", str(mpath), "--apply"]) == 0
+    conn = st.connect(old_bureau["db"])
+    desig = dict(conn.execute("SELECT id, designation FROM resource_person WHERE id IN (?,?,?)",
+                              (p["chief"], p["head"], p["staff"])).fetchall())
+    assert desig == {p["chief"]: "Division Chief", p["head"]: None, p["staff"]: "Section Head"}
+
+
+def test_create_missing_adds_records_only_when_asked(old_bureau, tmp_path, capsys):
+    staff = old_bureau["mapping"]["staff"] + [{"name": "Brand New Person", "unit": "S9", "designation": "Section Head"}]
+    for flag, code in ((False, 2), (True, 0)):
+        mpath = tmp_path / f"new-{flag}.json"
+        mpath.write_text(json.dumps(dict(old_bureau["mapping"], staff=staff, create_missing=flag)))
+        assert rd.main(["--db", old_bureau["db"], "--mapping", str(mpath), "--apply"]) == code
+    assert "NEW    #" in capsys.readouterr().out
+    conn = st.connect(old_bureau["db"])
+    row = conn.execute("SELECT rp.designation, ou.path FROM resource_person rp JOIN org_unit ou ON ou.id=rp.org_unit_id "
+                       "WHERE rp.name='Brand New Person'").fetchone()
+    assert row == ("Section Head", "BLHSD/OD3/LHSSD/S9")
+
+
+def test_an_acting_oic_on_a_retiring_unit_is_cleared_and_logged(old_bureau, capsys):
+    conn = st.connect(old_bureau["db"])
+    acct = st.create_admin_user(conn, "rs-oic@test.local", "x", "y", "section_manager", rp_id=old_bureau["p"]["admin_head"])
+    st.set_section_oic(conn, old_bureau["u"]["s2"], acct)
+    conn.close()
+    assert rd.main(["--db", old_bureau["db"], "--mapping", old_bureau["mpath"], "--apply"]) == 0
+    assert "CLEAR  acting OIC of BLHSD/HSDD/S2" in capsys.readouterr().out
+    conn = st.connect(old_bureau["db"])
+    assert conn.execute("SELECT COUNT(*) FROM section_oic").fetchone()[0] == 0

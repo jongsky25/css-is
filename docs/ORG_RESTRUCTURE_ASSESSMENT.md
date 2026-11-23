@@ -199,3 +199,28 @@ hardcoded names (Phase 3) are untouched.
   routing rules to re-map; never reassigns open work. Runbook:
   [ORG_RESTRUCTURE_RUNBOOK.md](ORG_RESTRUCTURE_RUNBOOK.md).
 - MSU and AU are stored at section level (units outside divisions).
+
+## Phase 3 progress (hardcoded names)
+
+Done:
+- Official CSM report "Approved by" now follows the head of office set under
+  Travel filing settings, else the top Director in the directory (the code
+  constant named a former Director IV). "Prepared by" is unchanged.
+- `apply_directory.py` refuses to run without `--legacy-structure`, so the
+  superseded two-division tree cannot be recreated by accident.
+- Teams and dashboard unit cards show every Director office, including in
+  scoped views.
+
+Owner decisions (November 23, 2026) and what was built:
+- **Branding:** keep "An Equity in Health Section innovation" unchanged.
+- **Calendar colours:** each section head chooses their section's colour, first
+  come, first served, from a fixed 11-colour palette in which every pair is at
+  least 20 apart (CIE76) in light and dark themes (`calendar_tones.py`, page
+  `/calendar/colours`). The Word import reads each colour as the unit holding it;
+  "Section N" mentions suggest that section's colour. Shading counts only near a
+  tone's reference fill; a strong orange still reads as Orange for older files.
+- **Travel certifying officer** for units outside divisions (AU, MSU): the unit
+  lead; the lead's own filing goes to the Director over the unit.
+- **Travel template text:** the Apps Script converter matches old and new division
+  codes and section names from the DPO, so updated source templates convert
+  without script edits; a test ties the list to the structure reference.

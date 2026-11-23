@@ -18,10 +18,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.44"
+APP_VERSION = "10.45"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.45",
+        "date": "November 23, 2026",
+        "summary": "Let each section choose its calendar colour and update names for the new structure.",
+        "changes": [
+            "Section heads choose their section's calendar colour, first come, first served, from colours that always look clearly different.",
+            "Show every Director's office on Teams, and take the report approver and travel certifiers from the directory.",
+            "Recognise the new division and section names in travel templates.",
+            "Show both first names for colleagues who share one, such as several Marias.",
+            "Add an admin page to preview and apply the directory restructure safely."
+        ],
+    },
     {
         "version": "10.44",
         "date": "November 23, 2026",

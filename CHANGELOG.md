@@ -1,3 +1,13 @@
+## 10.45 — November 23, 2026
+
+- Add section-chosen calendar colours (`calendar_tones.py`, `/calendar/colours`): first come, first served, from an 11-colour palette kept at least 20 CIE76 apart in light and dark themes; the Word import maps colours through this registry.
+- Official CSM report "Approved by" follows the head of office setting, else the top Director; Teams/dashboards show every Director office.
+- Travel certifier for units outside divisions is the unit lead; template converter matches old and new DPO unit names.
+- `apply_directory.py` refuses to rebuild the superseded two-division tree without `--legacy-structure`.
+- Division 5 short name confirmed as LHSSD. The restructure script matches DPO names to directory records tolerantly (order, accents, titles, initials, small typos), reports unknown/ambiguous names together, and clears lead titles from former leads placed as members. "Ma." matches "Maria"; an opt-in `create_missing` adds directory records for DPO staff who have none.
+- People who share a first name ("Ma." counts as "Maria") show both first names in the who's-in grid, birthday lists and office answers ("Maria Teresa", "Maria Lourdes"); anyone still alike gets a surname initial.
+- Add Admin → Restructure directory (`/admin/restructure`): upload the private mapping, preview against live data (rolled back), then apply after a backup in one transaction. The restructure engine moves to `directory_restructure.py`; `calendar_tones.py` and the new modules/plan join the deploy bundle.
+
 ## 10.44 — November 23, 2026
 
 - Add `org_unit.retired_at`; retired units stay for history and are refused for new staff, documents, routing rules, Work cases and advisories.

@@ -78,6 +78,74 @@ def first_name(display_name, nickname=None, fallback=""):
     return name.split()[0] if name.split() else fallback
 
 
+_HONORIFICS = {"dr", "dra", "mr", "ms", "mrs", "miss", "engr", "atty", "prof", "hon", "sir", "maam"}
+_SUFFIXES = {"jr", "sr", "ii", "iii", "iv", "v"}
+_PARTICLES = {"de", "del", "dela", "delos", "da", "di", "san", "sta", "sto", "van", "von"}
+_SAME_FIRST = {"ma": "maria"}          # "Ma. Teresa" and "Maria Lourdes" share a first name
+
+
+def given_names(display_name):
+    """The given names as written, without titles, middle initials, surname or suffix:
+    'Ma. Teresa C. Santiago' -> ['Ma.', 'Teresa']; 'Dela Cruz, Juan Miguel' -> ['Juan', 'Miguel'];
+    'Dr. Juan Alfonso R. Perez IV' -> ['Juan', 'Alfonso']."""
+    name = " ".join((display_name or "").replace(",", " , ").split())
+    bare = lambda t: t.strip(".").lower()                                   # noqa: E731
+    if " , " in f" {name} ":
+        toks = name.split(" , ", 1)[1].split()                              # "LAST, First Middle"
+    else:
+        toks = name.split()
+        while toks and bare(toks[-1]) in _SUFFIXES:
+            toks.pop()
+        if toks:
+            toks.pop()                                                      # the surname ...
+            while toks and bare(toks[-1]) in _PARTICLES:                    # ... with "Dela", "San"
+                toks.pop()
+    toks = [t for t in toks if bare(t) not in _HONORIFICS and bare(t) not in _SUFFIXES
+            and len(bare(t)) > 1 and t != ","]                               # middle initials go
+    return toks
+
+
+def _surname_initial(display_name):
+    name = (display_name or "").strip()
+    if "," in name:
+        return name.split(",", 1)[0].strip()[:1].upper()
+    toks = [t for t in name.split() if t.strip(".").lower() not in _SUFFIXES]
+    return toks[-1][:1].upper() if toks else ""
+
+
+def distinct_first_names(people):
+    """{key: short name} for {key: (display_name, nickname)} shown side by side.
+
+    Everyone is called by their nickname, else their first given name. People who would
+    share a first name (owner rule: "Ma." counts as "Maria") show BOTH first names
+    instead: 'Maria Teresa' and 'Maria Lourdes'. Anyone still alike, or with only one
+    given name, gets their surname initial: 'Maria S.'."""
+    first, given = {}, {}
+    for key, (name, nick) in people.items():
+        if nick and nick.strip():
+            first[key] = nick.strip()
+            continue
+        given[key] = given_names(name) or [first_name(name, None, "?")]
+        first[key] = given[key][0]
+    norm = lambda s: _SAME_FIRST.get(s.strip(".").lower(), s.strip(".").lower())   # noqa: E731
+    counts = {}
+    for label in first.values():
+        counts[norm(label)] = counts.get(norm(label), 0) + 1
+    out = {}
+    for key, label in first.items():
+        if key in given and counts[norm(label)] > 1 and len(given[key]) > 1:
+            out[key] = " ".join(given[key][:2])
+        else:
+            out[key] = label
+    seen = {}
+    for label in out.values():
+        seen[label.lower()] = seen.get(label.lower(), 0) + 1
+    for key in given:
+        if seen[out[key].lower()] > 1:
+            out[key] = f"{out[key]} {_surname_initial(people[key][0])}.".replace(" .", "")
+    return out
+
+
 def is_today(month, day, today):
     return occurrence(month, day, today.year) == today
 

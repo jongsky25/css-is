@@ -41,6 +41,7 @@ import meet_relay
 import calendar_import as ci
 import calendar_import_apply as cia
 import calendar_import_suggest as cis
+import calendar_tones as ctones
 import calendar_people as cp
 import office_calendar as oc
 import recurrence
@@ -1649,6 +1650,48 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             "nav_active": "calendar", "error": error, "batches": st.cal_import_list(conn),
         }, status_code=status_code)
 
+    # ── unit colours: chosen by each section head, first come, first served ──
+
+    def _colours_page(request, conn, error="", ok="", status_code=200):
+        user = request.state.user
+        units, palette = ctones.board(conn)
+        for u in units:
+            u["mine"] = ctones.may_choose(conn, user, u["id"])
+        return templates.TemplateResponse(request, "calendar_colours.html", {
+            "nav_active": "calendar", "units": units, "palette": palette,
+            "error": error, "ok": ok, "any_mine": any(u["mine"] for u in units),
+        }, status_code=status_code)
+
+    @router.get("/calendar/colours", response_class=HTMLResponse)
+    def calendar_colours(request: Request):
+        conn = get_conn()
+        try:
+            return _colours_page(request, conn)
+        finally:
+            conn.close()
+
+    @router.post("/calendar/colours")
+    async def calendar_colours_choose(request: Request):
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        f = {k: (v[0] if v else "").strip() for k, v in raw.items()}
+        unit = int(f["unit_id"]) if f.get("unit_id", "").isdigit() else 0
+        conn = get_conn()
+        try:
+            try:
+                if f.get("tone") == "release":
+                    ctones.release(conn, request.state.user, unit)
+                    msg = "Colour released."
+                else:
+                    tone = ctones.choose(conn, request.state.user, unit, f.get("tone", ""))
+                    msg = f"{ctones.PALETTE[tone]['label']} is now your calendar colour."
+            except PermissionError as e:
+                return _colours_page(request, conn, error=str(e), status_code=403)
+            except ValueError as e:
+                return _colours_page(request, conn, error=str(e), status_code=409)
+            return _colours_page(request, conn, ok=msg)
+        finally:
+            conn.close()
+
     @router.get("/calendar/import", response_class=HTMLResponse)
     def calendar_import_form(request: Request):
         denied = _admin_only(request)
@@ -1688,7 +1731,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             batch_id = st.cal_import_create(conn, up.filename, request.state.user["username"], {
                 "drafts": [d.to_dict() for d in res.drafts], "holidays": res.holidays,
                 "warnings": res.warnings, "stats": res.stats, "unmapped_colors": res.unmapped_colors,
-                "suggestions": {"owners": cis.suggest_owners([d.to_dict() for d in res.drafts]),
+                "suggestions": {"owners": cis.suggest_owners([d.to_dict() for d in res.drafts],
+                                                             ctones.section_number_tones(conn)),
                                 "series": cis.suggest_series([d.to_dict() for d in res.drafts])}})
         finally:
             conn.close()
@@ -1703,18 +1747,20 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                    if posted is not None else cia.guess_mapping(conn))
         n_names = (sum(1 for r in cia.people_state(conn, batch)[0] if r["decision"] is None and not r["ignored"])
                    if batch["imported_at"] else 0)
+        held = {t: u["name"] for u in ctones.board(conn)[0] for t in [u["tone"]] if t}
+        labels = {k: ci.OWNER_LABELS[k] + (f" ({held[k]})" if k in held else "") for k in ci.OWNERS}
         return templates.TemplateResponse(request, "calendar_import_review.html", {
             "n_names": n_names,
             "nav_active": "calendar", "batch": batch, "errors": list(errors),
             "rows": cia.review_rows(drafts, existing, posted, batch["payload"].get("suggestions")),
-            "unit_labels": dict(ci.OWNER_LABELS),
+            "unit_labels": labels,
             "stats": batch["payload"]["stats"], "file_warnings": batch["payload"]["warnings"],
             "holidays": cia.holiday_choices(batch, have_hol),
             "hol_ticked": {k[4:] for k in (posted or {}) if k.startswith("hol_")},
             "hol_kinds": dict(st.HOLIDAY_KINDS),
             "undo": cia.undo_preview(conn, batch) if batch["imported_at"] else None,
             "undone": undone,
-            "owners": [(k, ci.OWNER_LABELS[k], cia.OWNER_TONES[k]) for k in ci.OWNERS],
+            "owners": [(k, labels[k], cia.OWNER_TONES[k]) for k in ci.OWNERS],
             "mapping": mapping, "units": oc.unit_choices(conn),
             "audience": (posted or {}).get("audience", "bureau"),
             "kinds": dict(FORM_KIND_LABELS),

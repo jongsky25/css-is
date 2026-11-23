@@ -1,5 +1,37 @@
 # Cloud/mobile setup status
 
+## 10.43 live; Phase 2 merged; Phase 3 candidate 10.45 — November 23, 2026
+
+10.43 verified deployed by run 45151910184 (fresh verified live snapshot, upload, live
+/login v10.43). Owner: "merge 637 when ready": all required checks passed on `c23ab03`;
+[PR #637](https://github.com/jongsky25/css-is/pull/637) merged at `0731da0` (10.44); its
+guarded deployment must be verified.
+
+Phase 3 (owner decisions: keep Equity branding; sections choose calendar colours first
+come, first served; unit lead certifies travel for AU/MSU; templates use DPO unit names)
+is candidate 10.45 on `claude/funny-bohr-qif52k`. Local: 1,479 calendar/travel/route/
+two-Director/CSM tests passed; 23 Chromium-dependent tests skipped here.
+
+Division 5 short name confirmed LHSSD (owner corrected an earlier "LHSDD"). A private staff mapping (70 named staff from the DPO,
+one home unit each; never committed) was built and dry-run against a synthetic database:
+every name matched exactly one record. It was sent to the owner as a file.
+
+With owner permission, a manual "Restructure dry run" workflow was added to the private
+backups repo (decrypts the newest snapshot on the runner only; writes nothing). Run on the
+Nov 22 copy: 46 current records, 40 of 70 DPO staff matched, 30 DPO staff have no record
+(5 leads), 6 records are not in the DPO. Name-level results went to the owner privately.
+Fixed "Ma."/"Maria" matching; added opt-in `create_missing`.
+
+Owner decisions recorded in the private mapping (create missing records; #355 is Chariza
+dela Cruz -> S4; #286/#314 -> S2). Third dry run on the Nov 22 copy succeeded (exit 0):
+44 moved, 28 created, old units retired with history, one old-unit acting OIC cleared.
+10.44 verified live (run 45162375137). Built Admin -> Restructure directory (preview against
+live data, apply after backup) on the Phase 3 PR; fixed the missing calendar_tones.py in the
+deploy bundle (the import-closure test caught it).
+
+Next: CI and merge of PR #638 on owner instruction; after 10.45 is live, the owner previews
+and applies the mapping at /admin/restructure; then accounts for new leads, OICs, colours.
+
 ## Phase 1 merged; Phase 2 tooling candidate 10.44 — November 23, 2026
 
 Owner instructed "merge pr 636 if ready". All required checks passed on `43423f8`;

@@ -246,6 +246,8 @@ RUNTIME_PY = [
     "supplies_reports.py", "supplies_routes.py",
     # Imported by app.py for the daily reminder sweep the scheduler loop fires.
     "send_reminders.py", "email_params.py",
+    # Interim BLHSD restructure (docs/ORG_RESTRUCTURE_ASSESSMENT.md).
+    "calendar_tones.py", "directory_restructure.py", "restructure_routes.py",
 ]
 ALLOW = RUNTIME_PY + [
     "version.py",            # drives the login version string
@@ -253,6 +255,7 @@ ALLOW = RUNTIME_PY + [
     "build_info.json",       # build telemetry for the /ops admin dashboard
     "Dockerfile", ".dockerignore", "requirements.txt", "README.md",
     "templates/**", "static/**", "assets/**",
+    "docs/org/blhsd_interim_structure_2026.json",   # the restructure plan (no names)
 ]
 IGNORE = ["**/__pycache__/**"]
 

@@ -47,7 +47,8 @@ DEFAULT_SCOPE = "blend"            # mine + bureau-wide
 
 # Colour tokens for the owner unit (the Word legend): the template resolves a
 # token to a CSS variable; this module never emits a colour value.
-UNIT_TONES = ("green", "yellow", "magenta", "orange", "cyan", "blue", "grey")
+import calendar_tones as _ctones
+UNIT_TONES = _ctones.TONES + (_ctones.NO_TONE,)
 _TONES_SETTING = "calendar_unit_tones"      # JSON {org_unit_id: tone}, set by the importer (B2)
 
 
@@ -576,6 +577,11 @@ def birthday_people(conn):
                     "full_name": rp_name or uname,
                     "card": {"name": name, "initials": _initials(rp_name or uname),
                              "photo_url": f"/photo/{rp_id}" if rp_id and has_photo else None}})
+    # People who share a first name ("Maria", "Ma.") show both first names.
+    short = bd.distinct_first_names({i: (r[7] or (r[1] or "").split("@")[0].title(), r[2])
+                                     for i, r in enumerate(rows)})
+    for i, p in enumerate(out):
+        p["name"] = p["card"]["name"] = short[i]
     return out
 
 

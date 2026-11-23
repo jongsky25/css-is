@@ -50,7 +50,7 @@ BLHSD (including Technical Office functions)
 ```
 
 \* The order gives no acronym for Division 5 ("Local Health Systems Support
-Division"). `LHSSD` is a working short name pending confirmation.
+Division"); the office confirmed `LHSSD` (November 23, 2026).
 
 Key differences from the structure currently modelled in Office Connect
 (2 divisions — HSDD and HSMED — with 5 sections, an Administrative section and
@@ -269,7 +269,7 @@ Head: Medical Officer III (detailed). No mailbox listed.
 
 1. Final DPO number, signature and effective date (drives the two-week window).
 2. Annex A organizational chart.
-3. Division 5 acronym; Division 3 mandate text (blank in the order).
+3. Division 3 mandate text (blank in the order). Division 5 acronym confirmed: LHSSD.
 4. Whether the Office of the Director III is a level *between* the bureau and
    Divisions 4/5/MSU for approvals, or a peer office with oversight only.
 5. Who approves when a matter spans both Directors' units (e.g. bureau-wide

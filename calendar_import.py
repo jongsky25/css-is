@@ -9,10 +9,11 @@ What the Word file looks like (CY 2026 BLHSD):
   * one table per month: row 0 = "JANUARY 2026", row 1 = weekday names, then one row
     per week, Sunday first; a day cell = the day number on its first line, then one
     paragraph per activity;
-  * who OWNS an activity is only its colour: Bureau = green, Section 1 = yellow,
-    Section 2 = magenta, Section 3 = orange, Section 4 = cyan, Section 5 = blue.
-    It is run-level highlight or shading, not the cell. Pastel cell tints
-    (weekday/week backgrounds) mean nothing and are ignored;
+  * who OWNS an activity is only its colour (run-level highlight or shading, not
+    the cell). Each colour is a calendar tone (calendar_tones.PALETTE) that one unit
+    holds -- sections choose theirs, first come, first served; the review screen
+    maps tone -> unit. Pastel cell tints (weekday/week backgrounds) mean nothing and
+    are ignored;
   * a multi-day activity is repeated in every day cell, weekends blank;
   * times, status ("(Tentative)", "POSTPONED") and people are free text.
 
@@ -43,15 +44,19 @@ import docx
 from docx.oxml.ns import qn
 
 import calendar_people as _people
+import calendar_tones as _tones
 
-OWNERS = ("bureau", "s1", "s2", "s3", "s4", "s5")
-OWNER_LABELS = {"bureau": "Bureau", "s1": "Section 1", "s2": "Section 2",
-                "s3": "Section 3", "s4": "Section 4", "s5": "Section 5"}
+# An owner is a calendar TONE; which unit holds it is the registry's business.
+OWNERS = _tones.TONES
+OWNER_LABELS = {t: _tones.PALETTE[t]["label"] for t in OWNERS}
 
-# Word highlight names that carry an owner (the legend). Anything else — white,
-# red, the dark* shades — is decoration and votes for nobody.
-_HIGHLIGHT_OWNER = {"green": "bureau", "yellow": "s1", "magenta": "s2",
-                    "cyan": "s4", "blue": "s5"}
+# Word highlight names that carry an owner. Anything else (white, black, the grey
+# and remaining dark* shades) is decoration and votes for nobody.
+_HIGHLIGHT_OWNER = {v["highlight"]: k for k, v in _tones.PALETTE.items() if v["highlight"]}
+# A shading counts as a tone only when it is this close (CIE76) to the tone's
+# reference fill: the colours page tells sections to use exactly that fill, and an
+# in-between colour (violet, amber...) stays unmapped rather than guessed.
+SHADING_MATCH = 20
 
 _MONTHS = {n.lower(): i for i, n in enumerate(_cal.month_name) if n}
 _MONTHS.update({n.lower(): i for i, n in enumerate(_cal.month_abbr) if n})
@@ -95,18 +100,22 @@ class ParseResult:
 # ── colour → owner ───────────────────────────────────────────────────────────
 
 def _fill_owner(hex_fill):
-    """Owner for a shading fill. Orange (saturated, hue ~36°) = Section 3; a real blue
-    (hue 195–235°, clearly saturated) = Section 5; every pale tint is background."""
+    """Owner tone for a shading fill. A real blue, even a soft one (hue 195-235°,
+    saturation >= 0.15), is Blue; a saturated orange is Orange; any other saturated
+    fill (>= 0.6) counts only when it is a palette tone's reference fill (within
+    SHADING_MATCH). Every pale tint is background."""
     try:
         r, g, b = (int(hex_fill[i:i + 2], 16) / 255 for i in (0, 2, 4))
     except (ValueError, TypeError):
         return None
     h, s, _v = colorsys.rgb_to_hsv(r, g, b)
     hue = h * 360
-    if s >= 0.6 and 20 <= hue <= 45:
-        return "s3"
     if s >= 0.15 and 195 <= hue <= 235:
-        return "s5"
+        return "blue"
+    if s >= 0.6 and 20 <= hue <= 45:
+        return "orange"                 # the legend's orange, as earlier files used it
+    if s >= 0.6:
+        return _tones.nearest_tone(hex_fill, limit=SHADING_MATCH)
     return None
 
 

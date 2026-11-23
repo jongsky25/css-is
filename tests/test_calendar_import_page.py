@@ -149,23 +149,26 @@ def test_upload_stores_a_batch_and_shows_the_review(admin, conn, units):
     for needle in ("CALIM TA Palawan", "CALIM Loose end", "2026-10", "Section 4", "Holidays in the file (1)",
                    "Which unit does each colour belong to", "Import the ticked items"):
         assert needle in html, needle
-    assert "name=\"map_s1\"" in html and "name=\"inc_0\"" in html
+    assert "name=\"map_yellow\"" in html and "name=\"inc_0\"" in html
     assert admin.get("/calendar/import/99999", follow_redirects=False).status_code == 303
 
 
-def test_the_review_guesses_units_by_name(admin, conn, units):
+def test_the_review_starts_from_the_colours_sections_chose(admin, conn, units):
+    import calendar_tones
+    calendar_tones.assign_batch(conn, {"yellow": units["Section 1"], "cyan": units["Section 4"]})
     html = admin.get(f"/calendar/import/{batch_id(upload(admin))}").text
-    for key, name in (("s1", "Section 1"), ("s4", "Section 4")):        # "bureau" is ambiguous in a real DB
+    for key, name in (("yellow", "Section 1"), ("cyan", "Section 4")):
         sel = html.split(f'name="map_{key}"')[1].split("</select>")[0]
         assert f'value="{units[name]}" selected' in sel, key
+    assert "Yellow (Section 1)" in html
 
 
 # ------------------------------------------------------------------- import ---
 
 def test_import_creates_the_ticked_items_with_owner_tone_and_one_audit_line(admin, conn, units):
     bid = batch_id(upload(admin))
-    form = form_for(conn, bid, map_bureau=units["Bureau"], map_s1=units["Section 1"],
-                    map_s4=units["Section 4"])
+    form = form_for(conn, bid, map_green=units["Bureau"], map_yellow=units["Section 1"],
+                    map_cyan=units["Section 4"])
     last_audit = conn.execute("SELECT COALESCE(MAX(id), 0) FROM audit_log").fetchone()[0]
     r = post_import(admin, bid, form)
     assert r.status_code == 303 and titles(conn) == [
@@ -192,14 +195,14 @@ def test_import_creates_the_ticked_items_with_owner_tone_and_one_audit_line(admi
 
 def test_the_mapping_is_remembered_for_the_next_upload(admin, conn, units):
     bid = batch_id(upload(admin))
-    post_import(admin, bid, form_for(conn, bid, map_s1=units["Section 1"]))
+    post_import(admin, bid, form_for(conn, bid, map_yellow=units["Section 1"]))
     html = admin.get(f"/calendar/import/{batch_id(upload(admin, make_docx({20: [('CALIM Next one', 'hl:yellow')]})))}").text
-    assert f'value="{units["Section 1"]}" selected' in html.split('name="map_s1"')[1].split("</select>")[0]
+    assert f'value="{units["Section 1"]}" selected' in html.split('name="map_yellow"')[1].split("</select>")[0]
 
 
 def test_unticked_rows_are_not_imported_and_edits_are_used(admin, conn, units):
     bid = batch_id(upload(admin))
-    form = form_for(conn, bid, map_s4=units["Section 4"])
+    form = form_for(conn, bid, map_cyan=units["Section 4"])
     for k in [k for k in form if k.startswith("inc_")][1:]:
         del form[k]                                           # keep only the first row
     form.update(title_0="CALIM TA Palawan (edited)", kind_0="meeting", status_0="tentative", owner_0="",
@@ -214,7 +217,7 @@ def test_unticked_rows_are_not_imported_and_edits_are_used(admin, conn, units):
 
 def test_unit_audience_applies_only_where_a_unit_was_mapped(admin, conn, units):
     bid = batch_id(upload(admin))
-    post_import(admin, bid, form_for(conn, bid, audience="unit", map_s4=units["Section 4"]))
+    post_import(admin, bid, form_for(conn, bid, audience="unit", map_cyan=units["Section 4"]))
     by = {e["title"]: e for e in st.cal_list_between(conn, "2026-10-01", "2026-10-31")
           if e["title"].startswith("CALIM ")}
     assert by["CALIM TA Palawan"]["audience"] == "unit"
@@ -254,7 +257,7 @@ def test_a_bad_row_blocks_the_whole_import_and_keeps_what_was_typed(admin, conn,
     ({"owner_0": "s9"}, "unknown owner"),
     ({"start_0": "soon"}, "YYYY-MM-DD"),
     ({"audience": "world"}, "who can see"),
-    ({"map_s1": "999999"}, "no longer exists"),
+    ({"map_yellow": "999999"}, "no longer exists"),
 ])
 def test_validation_messages(admin, conn, units, over, message):
     bid = batch_id(upload(admin))
@@ -264,7 +267,7 @@ def test_validation_messages(admin, conn, units, over, message):
 
 def test_two_colours_cannot_share_a_unit(admin, conn, units):
     bid = batch_id(upload(admin))
-    r = post_import(admin, bid, form_for(conn, bid, map_s1=units["Section 1"], map_s4=units["Section 1"]))
+    r = post_import(admin, bid, form_for(conn, bid, map_yellow=units["Section 1"], map_cyan=units["Section 1"]))
     assert r.status_code == 400 and "same unit" in r.text and titles(conn) == []
 
 
@@ -307,8 +310,10 @@ def test_review_puts_items_that_need_a_person_first_and_folds_the_clean_ones(adm
 
 
 def test_a_suggested_owner_is_shown_but_never_filled_in(admin, conn, units):
+    import calendar_tones
+    calendar_tones.assign_batch(conn, {"yellow": units["Section 1"]})
     bid, html = _review_html(admin, {20: [("CALIM prep meeting (Sec1)", None)]})
-    assert "Suggested: <b>Section 1</b>" in html and 'data-use="s1"' in html
+    assert "Suggested: <b>Yellow (Section 1)</b>" in html and 'data-use="yellow"' in html
     i = next(i for i, d in enumerate(st.cal_import_get(conn, bid)["payload"]["drafts"])
              if d["title"] == "CALIM prep meeting (Sec1)")
     sel = html.split(f'name="owner_{i}"')[1].split("</select>")[0]

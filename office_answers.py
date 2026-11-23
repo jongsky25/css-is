@@ -92,8 +92,8 @@ _GROUPS = (("onsite", "In the office"), ("wfh", "Working from home"),
 
 
 def _names(conn, ids):
-    people = {p["user_id"]: bd.first_name(p["name"], p["nickname"], p["name"])
-              for p in st.colleague_directory(conn)}
+    people = bd.distinct_first_names({p["user_id"]: (p["name"], p["nickname"])
+                                      for p in st.colleague_directory(conn)})
     return sorted((people[i] for i in ids if i in people), key=str.lower)
 
 

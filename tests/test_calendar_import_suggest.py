@@ -10,9 +10,15 @@ def d(title, start, owner=None, tags=(), hint=None, end=None, kind="meeting"):
             "people_hint": hint, "kind": kind}
 
 
-def test_a_section_named_in_the_line_suggests_that_unit():
-    out = cis.suggest_owners([d("BUHC for BARMM KII (Doc Malou, Tek, Sec1)", "2026-01-26")])
-    assert out[0]["owner"] == "s1" and "Section 1" in out[0]["why"]
+def test_a_section_named_in_the_line_suggests_that_sections_colour():
+    out = cis.suggest_owners([d("BUHC for BARMM KII (Doc Malou, Tek, Sec1)", "2026-01-26")], {1: "yellow"})
+    assert out[0]["owner"] == "yellow" and "Section 1" in out[0]["why"]
+    out = cis.suggest_owners([d("Section 10 planning", "2026-01-26")], {10: "pink"})
+    assert out[0]["owner"] == "pink"
+
+
+def test_a_section_with_no_colour_suggests_nothing():
+    assert cis.suggest_owners([d("Section 7 planning", "2026-01-26")], {1: "yellow"}) == {}
 
 
 def test_two_different_sections_in_a_line_suggest_nothing():
@@ -20,19 +26,19 @@ def test_two_different_sections_in_a_line_suggest_nothing():
 
 
 def test_a_tag_one_unit_almost_owns_suggests_that_unit_for_an_unowned_item():
-    owned = [d(f"PK {i}", "2026-02-02", owner="s4", tags=["PK"]) for i in range(4)]
+    owned = [d(f"PK {i}", "2026-02-02", owner="cyan", tags=["PK"]) for i in range(4)]
     out = cis.suggest_owners(owned + [d("PK something", "2026-03-02", tags=["PK"])])
-    assert out[4]["owner"] == "s4"
+    assert out[4]["owner"] == "cyan"
 
 
 def test_a_shared_tag_suggests_nothing():
-    owned = ([d("a", "2026-02-02", owner="s4", tags=["UHC"]) for _ in range(2)]
-             + [d("b", "2026-02-02", owner="s1", tags=["UHC"]) for _ in range(2)])
+    owned = ([d("a", "2026-02-02", owner="cyan", tags=["UHC"]) for _ in range(2)]
+             + [d("b", "2026-02-02", owner="yellow", tags=["UHC"]) for _ in range(2)])
     assert cis.suggest_owners(owned + [d("c", "2026-03-02", tags=["UHC"])]) == {}
 
 
 def test_an_owned_item_is_never_given_a_suggestion():
-    assert cis.suggest_owners([d("Sec 3 thing", "2026-01-26", owner="s1")]) == {}
+    assert cis.suggest_owners([d("Sec 3 thing", "2026-01-26", owner="yellow")], {3: "orange"}) == {}
 
 
 def test_a_regular_repeat_is_suggested_as_a_series():

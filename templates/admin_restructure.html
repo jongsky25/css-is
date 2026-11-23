@@ -1,0 +1,74 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Restructure the directory{% endblock %}
+{% block head %}
+<style>
+  .rs-card { border:1px solid var(--line); border-radius:12px; padding:1rem; margin:0 0 1rem; background:var(--surface); }
+  .rs-card h2 { font-size:1.05rem; margin:0 0 .5rem; }
+  .rs-hint { color:var(--soft); font-size:.9rem; margin:.3rem 0 .7rem; }
+  .rs-log { max-height:60vh; overflow:auto; font:.8rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+            white-space:pre-wrap; word-break:break-word; background:var(--bg); border:1px solid var(--line);
+            border-radius:8px; padding:.6rem; margin:.4rem 0 0; }
+  .rs-counts { display:flex; flex-wrap:wrap; gap:.4rem .9rem; margin:.2rem 0 .4rem; font-size:.9rem; }
+  .rs-ok { color:var(--green, #2d7b57); font-weight:700; }
+  .rs-stop { color:var(--red, #b42318); font-weight:700; }
+  .rs-form { display:grid; gap:.6rem; }
+  .rs-form label { display:flex; gap:.5rem; align-items:flex-start; }
+</style>
+{% endblock %}
+{% block content %}
+{{ page_header("Restructure the directory", "Move the directory onto the new bureau structure. Preview first; nothing changes until you apply.") }}
+{{ flash(err=error) }}
+
+{% if applied %}
+<div class="rs-card" role="status">
+  <h2 class="rs-ok">✓ The directory was restructured.</h2>
+  <p class="rs-hint">A backup was taken first: <strong>{{ backup }}</strong> (Admin → Backups can restore it).
+    Next: give the new leads app accounts, set any acting OICs still needed on the new units, and ask section heads to choose their <a href="/calendar/colours">calendar colours</a>.</p>
+</div>
+{% endif %}
+
+{% if log is defined and log %}
+<div class="rs-card">
+  <h2>{% if applied %}What changed{% elif previewed %}<span class="rs-ok">Preview: ready to apply</span>{% else %}<span class="rs-stop">Preview stopped — nothing would change</span>{% endif %}</h2>
+  <div class="rs-counts">
+    <span>Units created or moved: <strong>{{ counts.units }}</strong></span>
+    <span>Staff placed: <strong>{{ counts.staff }}</strong></span>
+    <span>New staff records: <strong>{{ counts.created }}</strong></span>
+    <span>Old units retired: <strong>{{ counts.retired }}</strong></span>
+  </div>
+  <details {{ "open" if not previewed and not applied }}><summary>Every change, line by line</summary>
+    <pre class="rs-log">{{ log|join("\n") }}</pre></details>
+</div>
+{% endif %}
+
+{% if pending and not applied %}
+<div class="rs-card">
+  <h2>Apply the previewed mapping</h2>
+  <p class="rs-hint">Previewed by {{ pending.by }} at {{ pending.at[:16].replace("T", " ") }} · {{ pending.mapping.staff|length }} staff entries.
+    Applying takes a backup first, then makes every change at once — or none if anything is wrong.
+    Open tasks, documents and approvals stay with their current owners. Old units are retired, never deleted.</p>
+  <form method="post" action="/admin/restructure/apply" class="rs-form">
+    <input type="hidden" name="digest" value="{{ pending.digest }}">
+    <label><input type="checkbox" name="confirm" value="1" required>
+      <span>I reviewed the preview and want to restructure the live directory now.</span></label>
+    <div><button class="btn" type="submit">Apply the restructure</button></div>
+  </form>
+  <form method="post" action="/admin/restructure/discard" style="margin-top:.6rem">
+    <button class="btn btn-ghost" type="submit">Discard this preview</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="rs-card">
+  <h2>{{ "Preview another mapping" if pending else "1 · Preview" }}</h2>
+  <p class="rs-hint">Upload the private staff mapping (.json). The preview runs against live data and changes nothing.
+    Unknown or ambiguous names, or old units that still have staff, stop the preview with the reason.
+    Guide: <code>docs/ORG_RESTRUCTURE_RUNBOOK.md</code>.</p>
+  <form method="post" action="/admin/restructure/preview" enctype="multipart/form-data" class="rs-form">
+    <label for="rs-file" style="display:block">Staff mapping file
+      <input id="rs-file" type="file" name="mapping" accept=".json,application/json" required></label>
+    <div><button class="btn" type="submit">Preview</button></div>
+  </form>
+</div>
+{% endblock %}

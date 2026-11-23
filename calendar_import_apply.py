@@ -11,9 +11,10 @@ drafts into calendar entries. Three rules keep it safe to run:
     batch twice, creates nothing new and never overwrites an edit made since.
   * ONE AUDIT LINE for the whole batch, not 380.
 
-Colours: the Word legend names an OWNER (Bureau, Section 1-5); the app owns UNITS.
-The mapping between them is chosen once here, remembered, and also written as the
-unit colours the calendar draws (`calendar_unit_tones`, read by office_calendar).
+Colours: a Word colour names an OWNER tone; the app owns UNITS. Which unit holds
+which tone is the calendar colour registry (calendar_tones: sections choose their
+own, first come, first served). The review screen starts from it, an administrator
+may adjust it for the batch, and the choice is written back to the registry.
 """
 from __future__ import annotations
 
@@ -22,40 +23,26 @@ import re
 
 import calendar_import as ci
 import calendar_people as cp
+import calendar_tones as tones
 import storage as st
 
-OWNER_TONES = {"bureau": "green", "s1": "yellow", "s2": "magenta",
-               "s3": "orange", "s4": "cyan", "s5": "blue"}
-_MAP_SETTING = "calendar_import_owner_units"       # JSON {owner key: org_unit id}
-_TONES_SETTING = "calendar_unit_tones"             # JSON {org_unit id: tone}  (office_calendar)
+OWNER_TONES = {t: t for t in ci.OWNERS}            # an owner key IS its tone
 IMPORT_KINDS = ("meeting", "training", "travel", "deadline", "audit_mr", "banner")
 IMPORT_AUDIENCES = ("bureau", "unit")
 
 
 def saved_mapping(conn):
-    try:
-        raw = json.loads(st.get_setting(conn, _MAP_SETTING) or "{}")
-    except ValueError:
-        raw = {}
-    return {k: int(v) for k, v in raw.items() if k in ci.OWNERS and str(v).isdigit()}
+    """tone -> org_unit id, from the colour registry."""
+    return {t: uid for t, uid in tones.holders(conn).items() if t in ci.OWNERS}
 
 
 def guess_mapping(conn):
-    """owner key -> org_unit id: what was chosen last time, else a best guess from
-    the unit names ("Section 3", "Sec 3", "... III"). Anything unsure stays unset."""
+    """tone -> org_unit id: the registry, plus Green for the bureau when nobody holds it."""
     out = dict(saved_mapping(conn))
-    units = conn.execute("SELECT id, name, COALESCE(short_name, ''), level FROM org_unit").fetchall()
-    for key in ci.OWNERS:
-        if key in out:
-            continue
-        if key == "bureau":
-            hit = [u for u in units if u[3] == "bureau"]
-        else:
-            n = key[1]
-            rx = re.compile(rf"\b(section|sec\.?)\s*{n}\b|\bs{n}\b", re.I)
-            hit = [u for u in units if u[3] == "section" and (rx.search(u[1]) or rx.search(u[2]))]
-        if len(hit) == 1:
-            out[key] = hit[0][0]
+    if "green" not in out:
+        bureau = conn.execute("SELECT id FROM org_unit WHERE level='bureau' AND retired_at IS NULL").fetchall()
+        if len(bureau) == 1 and bureau[0][0] not in out.values():
+            out["green"] = bureau[0][0]
     return out
 
 
@@ -140,7 +127,7 @@ def apply(conn, batch, posted, by):
     for key in ci.OWNERS:
         v = posted.get(f"map_{key}", "")
         if v.isdigit():
-            if conn.execute("SELECT 1 FROM org_unit WHERE id=?", (int(v),)).fetchone() is None:
+            if not st.unit_is_active(conn, int(v)):
                 errors.append(f"{ci.OWNER_LABELS[key]}: that unit no longer exists.")
             else:
                 mapping[key] = int(v)
@@ -220,15 +207,8 @@ def apply(conn, batch, posted, by):
 
 
 def _remember(conn, mapping):
-    """Keep the owner->unit choice for next time, and give each mapped unit its legend
-    colour on the calendar (leaving every other unit's colour alone)."""
-    st.set_setting(conn, _MAP_SETTING, json.dumps(mapping))
-    try:
-        tones = json.loads(st.get_setting(conn, _TONES_SETTING) or "{}")
-    except ValueError:
-        tones = {}
-    tones.update({str(uid): OWNER_TONES[key] for key, uid in mapping.items()})
-    st.set_setting(conn, _TONES_SETTING, json.dumps(tones))
+    """Write the batch's tone -> unit choice back to the colour registry."""
+    tones.assign_batch(conn, mapping)
 
 
 # ── the people step (B3) ───────────────────────────────────────────────────────

@@ -187,6 +187,13 @@ def run(db_path):
 
 
 if __name__ == "__main__":
+    # SUPERSEDED: this builds the pre-2026 tree (HSDD/HSMED, Sections 1-5). The
+    # interim BLHSD structure is applied with scripts/restructure_directory.py
+    # (docs/ORG_RESTRUCTURE_RUNBOOK.md). Re-running this would recreate retired units.
+    if "--legacy-structure" not in sys.argv:
+        sys.exit("apply_directory.py builds the superseded 2-division structure. "
+                 "Use scripts/restructure_directory.py; pass --legacy-structure only to rebuild history.")
+    sys.argv.remove("--legacy-structure")
     db = sys.argv[1] if len(sys.argv) > 1 else "css_is.db"
     bk, n, total = run(db)
     print("DB:", db, "| backup:", bk)

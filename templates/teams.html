@@ -80,7 +80,7 @@
 
 {% if tree.bureau %}{{ ucard(tree.bureau, '🏛️', 'bureau') }}{% endif %}
 
-{% if tree.directorate and tree.directorate.card %}{{ ucard(tree.directorate, '⭐') }}{% endif %}
+{% for o in (tree.offices if tree.offices is defined else ([tree.directorate] if tree.directorate else [])) %}{% if o and o.card %}{{ ucard(o, '⭐') }}{% endif %}{% endfor %}
 
 {% for d in tree.divisions %}
 <div class="group">

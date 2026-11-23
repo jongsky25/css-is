@@ -30,5 +30,10 @@
 .cal-schedule .cal-schedule-event[data-tone=orange] { background:var(--cal-orange-bg); border-color:var(--cal-orange); color:var(--cal-orange); }
 .cal-schedule .cal-schedule-event[data-tone=cyan] { background:var(--cal-cyan-bg); border-color:var(--cal-cyan); color:var(--cal-cyan); }
 .cal-schedule .cal-schedule-event[data-tone=blue] { background:var(--cal-blue-bg); border-color:var(--cal-blue); color:var(--cal-blue); }
+.cal-schedule .cal-schedule-event[data-tone=red] { background:var(--cal-red-bg); border-color:var(--cal-red); color:var(--cal-red); }
+.cal-schedule .cal-schedule-event[data-tone=purple] { background:var(--cal-purple-bg); border-color:var(--cal-purple); color:var(--cal-purple); }
+.cal-schedule .cal-schedule-event[data-tone=maroon] { background:var(--cal-maroon-bg); border-color:var(--cal-maroon); color:var(--cal-maroon); }
+.cal-schedule .cal-schedule-event[data-tone=lime] { background:var(--cal-lime-bg); border-color:var(--cal-lime); color:var(--cal-lime); }
+.cal-schedule .cal-schedule-event[data-tone=pink] { background:var(--cal-pink-bg); border-color:var(--cal-pink); color:var(--cal-pink); }
 @media(max-width:759px) { .cal-schedule-day { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; } .cal-schedule .fc { font-size:.9rem; } }
 @media print { #cal-schedule-grid, .cal-schedule-tools { display:none !important; } #cal-schedule-list[hidden] { display:block !important; } }

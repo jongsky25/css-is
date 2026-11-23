@@ -206,3 +206,18 @@ def test_the_calendar_page_offers_the_list_and_filters_by_type(app_mod, viewer, 
     assert "🎂 Zedrick" in viewer.get("/calendar?scope=mine").text
     assert "🎂 Zedrick" not in viewer.get("/calendar?scope=mine&kind=meeting").text
     st.set_user_nickname(c, uid, "")
+
+
+def test_people_sharing_a_first_name_show_both_first_names():
+    got = bd.distinct_first_names({
+        1: ("Ma. Teresa C. Santiago", None), 2: ("Maria Lourdes B. Gajitos", None),
+        3: ("Bulasa, Maria Olga V.", None), 4: ("Marifel M. Santiago", None),
+        5: ("Maria Santos", None), 6: ("Maria Reyes", None), 7: ("Maria Rhodalyn Jurada", "Rhoda")})
+    assert got == {1: "Ma. Teresa", 2: "Maria Lourdes", 3: "Maria Olga", 4: "Marifel",
+                   5: "Maria S.", 6: "Maria R.", 7: "Rhoda"}
+
+
+def test_given_names_skip_titles_initials_surnames_and_suffixes():
+    assert bd.given_names("Dr. Juan Alfonso R. Perez IV") == ["Juan", "Alfonso"]
+    assert bd.given_names("Ronnel John Dela Cruz") == ["Ronnel", "John"]
+    assert bd.given_names("Dela Cruz, Juan Miguel") == ["Juan", "Miguel"]

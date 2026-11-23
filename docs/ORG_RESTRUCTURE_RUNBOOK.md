@@ -24,9 +24,35 @@ uncommitted**. It holds staff record ids, so it must never be committed.
   changes, their designation. Leads need: Director titles with their grade
   ("Director IV"/"Director III"), "Division Chief", "Section Head",
   "Unit Head" (MSU lead), "Admin Head" (AU lead). Use `rp_id` (from the staff
-  edit URL `/directory/person/<id>/edit`) or an exact `name`.
+  edit URL `/directory/person/<id>/edit`) or the `name` as written in the DPO:
+  matching ignores order, accents, titles/credentials, middle initials and small
+  typos, and an unknown or ambiguous name stops the run with the candidates listed.
+- **Every lead must carry its designation in the mapping.** A staff member listed
+  without one keeps their current designation unless it is a lead title (Section
+  Head, Division Chief, Admin/Unit Head, Director), which is cleared: only the
+  leads named in the order lead in the new structure.
+- `"create_missing": true` adds a directory record for each DPO name that has none
+  (the Nov 22 dry run found 30, including five leads). Ambiguous names still stop.
+- Staff with more than one assignment in the order get one home unit (owner
+  decision: AU members, including division admins and Director-office support,
+  are AU staff). Unnamed vacancies are left out.
 
-## 2. Dry run on a copy
+## 2. Preview and apply from the admin page (live)
+
+Admin → **Restructure directory** (`/admin/restructure`, administrators only):
+
+1. Upload the private mapping. **Preview** runs the whole restructure against live
+   data in a transaction that is rolled back — nothing changes — and shows the
+   counts plus every change line by line. A problem stops it with the reason.
+2. Tick the confirmation and **Apply**. It takes a backup first (listed under
+   Admin → Backups, restorable), then applies everything in one transaction. If
+   the backup fails, nothing is changed. Applying requires the exact previewed
+   file; uploading another one needs a new preview.
+3. The pending mapping is kept only until apply or discard.
+
+The command line below remains for copies and local checks.
+
+## 2b. Dry run on a copy (command line)
 
 ```bash
 .venv/bin/python scripts/restructure_directory.py --db /path/to/copy.db --mapping /path/to/restructure-mapping.json
@@ -47,8 +73,8 @@ transaction. Re-running afterwards is a no-op.
 
 1. Re-map each `REMAP` routing rule in Documents → routing rules (retired units
    are refused for new routing).
-2. Set OICs for the OIC-led divisions (Divisions 1, 3, 4) where an acting
-   designation is needed beyond the "Division Chief" designation.
+2. Acting OICs set on retired units are cleared (each is logged). Set OICs again
+   on the new units where an acting designation is still needed.
 3. Check: Directory shows both offices; a Division 4 chief's request names the
    Director III; the Director III's request names the Director IV.
 

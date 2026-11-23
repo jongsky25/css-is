@@ -11407,17 +11407,12 @@ _WB_MATRIX_ROWS = [("onsite", "In the office"), ("wfh", "Working from home"),
 
 
 def _first_names(people):
-    """{user_id: short display name}: the first name only, or "First L." when two
-    people at this viewer's level share one (extended until they differ)."""
-    parts = {uid: (p["name"].split() or ["?"]) for uid, p in people.items()}
-    out = {uid: ps[0] for uid, ps in parts.items()}
-    counts = {}
-    for n in out.values():
-        counts[n.lower()] = counts.get(n.lower(), 0) + 1
-    for uid, ps in parts.items():
-        if counts[out[uid].lower()] > 1 and len(ps) > 1:
-            out[uid] = f"{ps[0]} {ps[-1][0]}."
-    return out
+    """{user_id: short display name}: the first name only; people at this viewer's
+    level who share one show both first names ("Maria Teresa"), else "First L."
+    (birthdays.distinct_first_names)."""
+    import birthdays
+    return birthdays.distinct_first_names(
+        {uid: (p["name"], p.get("nickname")) for uid, p in people.items()})
 
 
 def _whereabouts_matrix(people, ndays):
