@@ -30,7 +30,8 @@ CHANGELOG = [
             "Section heads choose their section's calendar colour, first come, first served, from colours that always look clearly different.",
             "Show every Director's office on Teams, and take the report approver and travel certifiers from the directory.",
             "Recognise the new division and section names in travel templates.",
-            "Show both first names for colleagues who share one, such as several Marias."
+            "Show both first names for colleagues who share one, such as several Marias.",
+            "Add an admin page to preview and apply the directory restructure safely."
         ],
     },
     {

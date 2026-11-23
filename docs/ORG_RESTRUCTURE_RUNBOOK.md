@@ -37,7 +37,22 @@ uncommitted**. It holds staff record ids, so it must never be committed.
   decision: AU members, including division admins and Director-office support,
   are AU staff). Unnamed vacancies are left out.
 
-## 2. Dry run on a copy
+## 2. Preview and apply from the admin page (live)
+
+Admin → **Restructure directory** (`/admin/restructure`, administrators only):
+
+1. Upload the private mapping. **Preview** runs the whole restructure against live
+   data in a transaction that is rolled back — nothing changes — and shows the
+   counts plus every change line by line. A problem stops it with the reason.
+2. Tick the confirmation and **Apply**. It takes a backup first (listed under
+   Admin → Backups, restorable), then applies everything in one transaction. If
+   the backup fails, nothing is changed. Applying requires the exact previewed
+   file; uploading another one needs a new preview.
+3. The pending mapping is kept only until apply or discard.
+
+The command line below remains for copies and local checks.
+
+## 2b. Dry run on a copy (command line)
 
 ```bash
 .venv/bin/python scripts/restructure_directory.py --db /path/to/copy.db --mapping /path/to/restructure-mapping.json

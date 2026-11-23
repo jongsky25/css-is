@@ -22,8 +22,15 @@ Nov 22 copy: 46 current records, 40 of 70 DPO staff matched, 30 DPO staff have n
 (5 leads), 6 records are not in the DPO. Name-level results went to the owner privately.
 Fixed "Ma."/"Maria" matching; added opt-in `create_missing`.
 
-Next: owner decisions on the unmatched records and on creating missing staff; rerun the
-dry run; CI and merge of the Phase 3 PR on owner instruction after 10.44 is verified live.
+Owner decisions recorded in the private mapping (create missing records; #355 is Chariza
+dela Cruz -> S4; #286/#314 -> S2). Third dry run on the Nov 22 copy succeeded (exit 0):
+44 moved, 28 created, old units retired with history, one old-unit acting OIC cleared.
+10.44 verified live (run 45162375137). Built Admin -> Restructure directory (preview against
+live data, apply after backup) on the Phase 3 PR; fixed the missing calendar_tones.py in the
+deploy bundle (the import-closure test caught it).
+
+Next: CI and merge of PR #638 on owner instruction; after 10.45 is live, the owner previews
+and applies the mapping at /admin/restructure; then accounts for new leads, OICs, colours.
 
 ## Phase 1 merged; Phase 2 tooling candidate 10.44 — November 23, 2026
 

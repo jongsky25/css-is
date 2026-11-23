@@ -84,6 +84,7 @@ import dashboard_export as dx
 import office_calendar as oc_cal
 import office_connect as oc
 import birthday_cards
+import restructure_routes
 import birthdays
 import calendar_answers
 import office_answers
@@ -787,6 +788,10 @@ NAV_GROUPS = [
         {"key": "directory", "url": "/directory", "label": "Directory",
          "hint": "Org units, staff & speakers",
          "kw": "directory org units staff speakers people tree organization roster", "cap": "directory"},
+        {"key": "restructure", "url": "/admin/restructure", "label": "Restructure directory",
+         "hint": "Move the directory onto a new bureau structure (preview, then apply)",
+         "kw": "restructure reorganize reorganization new structure divisions sections dpo directory move retire",
+         "cap": "manage_users", "in_nav": False},
         {"key": "cleanup", "url": "/directory/cleanup", "label": "Name cleanup",
          "hint": "Quick speaker/name dedup tool",
          "kw": "name cleanup dedup duplicate merge speakers harmonize fix names", "cap": "directory",
@@ -18037,6 +18042,8 @@ def _calendar_check_dates(start, end):
 
 
 app.include_router(birthday_cards.make_router(templates, get_conn, _today_local, _audit))
+# ---- Directory restructure (admin; docs/ORG_RESTRUCTURE_RUNBOOK.md) ----
+app.include_router(restructure_routes.make_router(templates, get_conn, lambda: DB, _audit))
 app.include_router(advisory_routes.make_router(templates, get_conn, _base_url))
 app.include_router(activity_advisory_routes.make_router(
     templates, get_conn, _can_manage_event, _share_url, _base_url, _audit))
