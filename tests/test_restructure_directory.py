@@ -143,6 +143,7 @@ def test_delete_is_refused_while_anything_references_the_unit(old_bureau):
     ("Reneva, Krizza Camille", "Krizza Camille Reñeva"),
     ("Castro, Mary Anne Millscents", "Mary Anne Milliscent Castro"),
     ("Gajitos, Maria Lourdes B.", "Dr. Maria Lourdes Gajitos, MO V"),
+    ("Maria Teresa C. Santiago", "Ma. Teresa Santiago"),
 ])
 def test_names_match_across_order_accents_titles_and_small_typos(directory, dpo):
     assert rd._name_score(directory, dpo) >= 0.9
@@ -182,3 +183,16 @@ def test_a_former_lead_placed_as_a_member_loses_the_lead_title(old_bureau, tmp_p
     desig = dict(conn.execute("SELECT id, designation FROM resource_person WHERE id IN (?,?,?)",
                               (p["chief"], p["head"], p["staff"])).fetchall())
     assert desig == {p["chief"]: "Division Chief", p["head"]: None, p["staff"]: "Section Head"}
+
+
+def test_create_missing_adds_records_only_when_asked(old_bureau, tmp_path, capsys):
+    staff = old_bureau["mapping"]["staff"] + [{"name": "Brand New Person", "unit": "S9", "designation": "Section Head"}]
+    for flag, code in ((False, 2), (True, 0)):
+        mpath = tmp_path / f"new-{flag}.json"
+        mpath.write_text(json.dumps(dict(old_bureau["mapping"], staff=staff, create_missing=flag)))
+        assert rd.main(["--db", old_bureau["db"], "--mapping", str(mpath), "--apply"]) == code
+    assert "NEW    #" in capsys.readouterr().out
+    conn = st.connect(old_bureau["db"])
+    row = conn.execute("SELECT rp.designation, ou.path FROM resource_person rp JOIN org_unit ou ON ou.id=rp.org_unit_id "
+                       "WHERE rp.name='Brand New Person'").fetchone()
+    assert row == ("Section Head", "BLHSD/OD3/LHSSD/S9")

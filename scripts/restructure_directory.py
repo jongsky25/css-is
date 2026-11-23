@@ -22,6 +22,8 @@ current directory moves onto the plan:
 What it does (docs/ORG_RESTRUCTURE_ASSESSMENT.md, Phase 2):
   * reused units keep their id (staff, history and references follow them) and
     are moved/renamed into place; missing plan units are created;
+  * with "create_missing": true, a listed name that has NO directory record is
+    added as a new internal staff record (ambiguous names still stop the run);
   * listed staff move to their new unit (designation updated when given; a former
     lead listed as a member loses the lead title). Names are matched tolerantly
     (order, accents, titles, middle initials, small typos); an unknown or
@@ -74,13 +76,17 @@ _NOISE = set("dr dra mr ms mrs miss engr atty prof hon sir maam doc md mph msc m
              "rn rmt rph phd ceso iii iv jr sr".split())
 
 
+# Common Filipino name abbreviations, written either way in official lists.
+_ALIASES = {"ma": "maria", "ma.": "maria", "jo": "jose"}
+
+
 def _name_tokens(name):
     """Comparable name tokens: accents folded (Reñeva -> reneva), punctuation and
     titles/credentials dropped, single-letter middle initials ignored."""
     import unicodedata
     text = unicodedata.normalize("NFKD", str(name or "")).encode("ascii", "ignore").decode().lower()
     text = re.sub(r"[^a-z ]", " ", text.replace("-", " "))
-    return [t for t in text.split() if len(t) > 1 and t not in _NOISE]
+    return [_ALIASES.get(t, t) for t in text.split() if len(t) > 1 and t not in _NOISE]
 
 
 def _name_score(a, b):
@@ -181,8 +187,15 @@ def build(conn, plan, mapping, log):
         try:
             rp_id, name = _person(conn, entry, people)
         except LookupError as exc:
-            problems.append(str(exc))
-            continue
+            # Opt-in: a DPO name with NO directory record at all becomes a new
+            # internal staff record. An ambiguous name never does.
+            if not (mapping.get("create_missing") and entry.get("name") and str(exc).startswith("No current")):
+                problems.append(str(exc))
+                continue
+            name = entry["name"].strip()
+            rp_id = conn.execute("INSERT INTO resource_person(name, is_internal, org_unit_id) VALUES (?,1,?)",
+                                 (name, ids[entry["unit"]])).lastrowid
+            log.append(f"NEW    #{rp_id} {name} (no directory record; created)")
         if rp_id in placed:
             problems.append(f"#{rp_id} {name} is listed twice ({placed[rp_id]} and {entry['unit']}).")
             continue

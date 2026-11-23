@@ -4,7 +4,7 @@
 - Official CSM report "Approved by" follows the head of office setting, else the top Director; Teams/dashboards show every Director office.
 - Travel certifier for units outside divisions is the unit lead; template converter matches old and new DPO unit names.
 - `apply_directory.py` refuses to rebuild the superseded two-division tree without `--legacy-structure`.
-- Division 5 short name confirmed as LHSSD. The restructure script matches DPO names to directory records tolerantly (order, accents, titles, initials, small typos), reports unknown/ambiguous names together, and clears lead titles from former leads placed as members.
+- Division 5 short name confirmed as LHSSD. The restructure script matches DPO names to directory records tolerantly (order, accents, titles, initials, small typos), reports unknown/ambiguous names together, and clears lead titles from former leads placed as members. "Ma." matches "Maria"; an opt-in `create_missing` adds directory records for DPO staff who have none.
 
 ## 10.44 — November 23, 2026
 

@@ -16,8 +16,14 @@ Division 5 short name confirmed LHSSD (owner corrected an earlier "LHSDD"). A pr
 one home unit each; never committed) was built and dry-run against a synthetic database:
 every name matched exactly one record. It was sent to the owner as a file.
 
-Next: CI on the Phase 3 PR, merge on owner instruction after 10.44 is verified live; then,
-with owner permission, dry-run the mapping on a copy of the latest live backup.
+With owner permission, a manual "Restructure dry run" workflow was added to the private
+backups repo (decrypts the newest snapshot on the runner only; writes nothing). Run on the
+Nov 22 copy: 46 current records, 40 of 70 DPO staff matched, 30 DPO staff have no record
+(5 leads), 6 records are not in the DPO. Name-level results went to the owner privately.
+Fixed "Ma."/"Maria" matching; added opt-in `create_missing`.
+
+Next: owner decisions on the unmatched records and on creating missing staff; rerun the
+dry run; CI and merge of the Phase 3 PR on owner instruction after 10.44 is verified live.
 
 ## Phase 1 merged; Phase 2 tooling candidate 10.44 — November 23, 2026
 
