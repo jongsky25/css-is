@@ -1,3 +1,9 @@
+## 10.44 — November 23, 2026
+
+- Add `org_unit.retired_at`; retired units stay for history and are refused for new staff, documents, routing rules, Work cases and advisories.
+- Add unit move/retire/restore helpers and a deletion guard covering every table that references a unit.
+- Add `scripts/restructure_directory.py` (plan + private mapping; dry run by default; backup and single transaction on apply; routing-rule re-map report) and its runbook.
+
 ## 10.43 — November 23, 2026
 
 - Resolve "the Director" per unit: the Director heading the nearest office above it, else the top Director (highest grade).
