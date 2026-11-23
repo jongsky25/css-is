@@ -58,8 +58,8 @@ transaction. Re-running afterwards is a no-op.
 
 1. Re-map each `REMAP` routing rule in Documents → routing rules (retired units
    are refused for new routing).
-2. Set OICs for the OIC-led divisions (Divisions 1, 3, 4) where an acting
-   designation is needed beyond the "Division Chief" designation.
+2. Acting OICs set on retired units are cleared (each is logged). Set OICs again
+   on the new units where an acting designation is still needed.
 3. Check: Directory shows both offices; a Division 4 chief's request names the
    Director III; the Director III's request names the Director IV.
 

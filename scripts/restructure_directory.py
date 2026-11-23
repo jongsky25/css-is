@@ -29,7 +29,8 @@ What it does (docs/ORG_RESTRUCTURE_ASSESSMENT.md, Phase 2):
     (order, accents, titles, middle initials, small typos); an unknown or
     ambiguous name stops the run and is reported with the candidates;
   * listed old units are RETIRED, never deleted -- retiring refuses while
-    current staff or an acting OIC remain there;
+    current staff remain there; an acting OIC set on a retiring unit is cleared
+    (and logged), since that seat no longer exists;
   * open Work, documents, approvals and supplies are NOT reassigned: the
     transition rule keeps existing commitments with their current owners;
   * reports active document routing rules that still point at retired units,
@@ -225,6 +226,14 @@ def build(conn, plan, mapping, log):
             raise ValueError(f"Unit to retire {path} does not exist.")
         if path in {_target_path(bureau_path, u["path"]) for u in plan["units"]}:
             raise ValueError(f"{path} is part of the new structure; it cannot be retired.")
+        oic = conn.execute("SELECT so.admin_user_id, COALESCE(rp.name, a.username) FROM section_oic so "
+                           "JOIN admin_user a ON a.id = so.admin_user_id LEFT JOIN resource_person rp ON rp.id = a.rp_id "
+                           "WHERE so.org_unit_id=?", (unit["id"],)).fetchone()
+        if oic:
+            # An acting OIC of a unit that is going away covers a seat nobody reports
+            # to any more; set OICs again on the new units where still needed.
+            conn.execute("DELETE FROM section_oic WHERE org_unit_id=?", (unit["id"],))
+            log.append(f"CLEAR  acting OIC of {path} (account #{oic[0]} {oic[1]}): the unit is retired")
         try:
             st.retire_org_unit(conn, unit["id"], commit=False)
         except ValueError as exc:

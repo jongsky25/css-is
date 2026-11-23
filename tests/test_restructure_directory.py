@@ -196,3 +196,14 @@ def test_create_missing_adds_records_only_when_asked(old_bureau, tmp_path, capsy
     row = conn.execute("SELECT rp.designation, ou.path FROM resource_person rp JOIN org_unit ou ON ou.id=rp.org_unit_id "
                        "WHERE rp.name='Brand New Person'").fetchone()
     assert row == ("Section Head", "BLHSD/OD3/LHSSD/S9")
+
+
+def test_an_acting_oic_on_a_retiring_unit_is_cleared_and_logged(old_bureau, capsys):
+    conn = st.connect(old_bureau["db"])
+    acct = st.create_admin_user(conn, "rs-oic@test.local", "x", "y", "section_manager", rp_id=old_bureau["p"]["admin_head"])
+    st.set_section_oic(conn, old_bureau["u"]["s2"], acct)
+    conn.close()
+    assert rd.main(["--db", old_bureau["db"], "--mapping", old_bureau["mpath"], "--apply"]) == 0
+    assert "CLEAR  acting OIC of BLHSD/HSDD/S2" in capsys.readouterr().out
+    conn = st.connect(old_bureau["db"])
+    assert conn.execute("SELECT COUNT(*) FROM section_oic").fetchone()[0] == 0
