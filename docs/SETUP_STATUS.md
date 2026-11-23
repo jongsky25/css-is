@@ -12,7 +12,7 @@ come, first served; unit lead certifies travel for AU/MSU; templates use DPO uni
 is candidate 10.45 on `claude/funny-bohr-qif52k`. Local: 1,479 calendar/travel/route/
 two-Director/CSM tests passed; 23 Chromium-dependent tests skipped here.
 
-Division 5 short name confirmed LHSDD. A private staff mapping (70 named staff from the DPO,
+Division 5 short name confirmed LHSSD (owner corrected an earlier "LHSDD"). A private staff mapping (70 named staff from the DPO,
 one home unit each; never committed) was built and dry-run against a synthetic database:
 every name matched exactly one record. It was sent to the owner as a file.
 

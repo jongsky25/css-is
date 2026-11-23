@@ -31,7 +31,7 @@
       "head_seat": "Director III",
       "oversees": [
         "LHPFD",
-        "LHSDD",
+        "LHSSD",
         "MSU"
       ]
     },
@@ -298,12 +298,12 @@
       ]
     },
     {
-      "key": "LHSDD",
+      "key": "LHSSD",
       "number": 5,
       "level": "division",
       "name": "Local Health Systems Support Division",
       "parent": "OD3",
-      "path": "BLHSD/OD3/LHSDD",
+      "path": "BLHSD/OD3/LHSSD",
       "head_seat": "Division Chief",
       "has_division_admin": true
     },
@@ -312,8 +312,8 @@
       "number": 9,
       "level": "section",
       "name": "Institutional Supportive Supervision and Coordination Section",
-      "parent": "LHSDD",
-      "path": "BLHSD/OD3/LHSDD/S9",
+      "parent": "LHSSD",
+      "path": "BLHSD/OD3/LHSSD/S9",
       "head_seat": "Section Head",
       "mailboxes": [],
       "topics": [
@@ -332,8 +332,8 @@
       "number": 10,
       "level": "section",
       "name": "Local Optimization and Implementation Section",
-      "parent": "LHSDD",
-      "path": "BLHSD/OD3/LHSDD/S10",
+      "parent": "LHSSD",
+      "path": "BLHSD/OD3/LHSSD/S10",
       "head_seat": "Section Head",
       "mailboxes": [],
       "topics": [
