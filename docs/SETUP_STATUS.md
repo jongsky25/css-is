@@ -19,10 +19,11 @@ Version 10.43 (documentation-only release metadata, required by the gate). No co
 Owner decisions recorded in the assessment: Director IV approves Director III's own
 requests; final approval follows the Director overseeing the owning division;
 Director III's views default to her units with an all-bureau option; old units kept
-as retired history. AU lead and AU-owned items go to Director IV. Still open:
-who approves AU staff who also serve as division admins or Director-office support.
-Next: answer that question and confirm the DPO number/effective date, Annex A and
-Division 5 acronym. Then Phase 1 (multi-office
+as retired history. AU lead and AU-owned and bureau-owned items go to Director IV; all AU staff
+(including division admins/Director-office support) are approved by the AU lead.
+All policy decisions are recorded. Next: Phase 1 (multi-office model) on a new review
+branch; DPO number/effective date, Annex A and Division 5 acronym still to confirm
+(placeholders acceptable until then). Then Phase 1 (multi-office
 model) on a review branch. Do not change the live directory before Phases 1–2 ship.
 
 ## Final advisory slice ready for fresh gates — November 20, 2026

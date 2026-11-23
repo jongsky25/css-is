@@ -144,15 +144,6 @@ for intake mapping.
 4. **Old units are kept as retired history**, not renamed or deleted. Past records
    keep their original unit; new work uses the new units.
 5. **AU approvals:** the AU lead's own requests and AU-owned items go to the
-   **Director IV**. Part (b) below is still open.
-
-### Open: Administrative Unit approval chain
-
-The AU sits under the bureau and supports both Directors; the order does not place
-it under either. Needed:
-
-- (a) **Decided:** Director IV approves the AU lead's own requests and is final
-  approver for AU-owned items.
-- (b) For AU members who are **also a division admin** or a **Director's office
-  support**, who approves their leave/AWA: the AU lead (one home unit) or the
-  division chief/Director they support day to day?
+   **Director IV**. All AU staff, including those who also serve as division
+   admins or Director-office support, are approved by the **AU lead** (one home
+   unit per person; no secondary-assignment feature needed for approvals).
