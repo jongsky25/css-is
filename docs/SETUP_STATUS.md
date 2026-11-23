@@ -15,7 +15,7 @@ and three levels, so entering Director III today breaks advisory review and
 mis-routes approvals; MSU/AU and the second office have no place; units cannot be
 moved or retired; several names are hardcoded.
 
-No code, data, preview, merge or deployment. Checks: JSON parse, local links, diff check.
+Version 10.43 (documentation-only release metadata, required by the gate). No code, data, preview, merge or deployment. Checks: JSON parse, local links, diff check, release metadata.
 Next: owner answers the five decisions in the assessment and confirms the DPO
 number/effective date, Annex A and Division 5 acronym. Then Phase 1 (multi-office
 model) on a review branch. Do not change the live directory before Phases 1–2 ship.

@@ -1,3 +1,8 @@
+## 10.43 — November 23, 2026
+
+- Save the interim BLHSD functional structure as a de-identified repository reference with machine-readable units.
+- Add the restructure impact assessment and phased plan. Documentation only; no application behavior, data or schema changes.
+
 ## 10.42 — November 20, 2026
 
 - Confirm and freeze approved advisory PDFs, internal rosters, external recipients and actual issue dates.
