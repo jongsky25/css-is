@@ -131,12 +131,27 @@ Equity-section branding and directory examples.
 topics/mailboxes, add "who handles X" verified answers, and use the mailboxes
 for intake mapping.
 
-## Decisions needed from the office
+## Decisions (owner, November 23, 2026)
 
-1. Who approves the **Director III's own** requests (leave/AWA/wellness):
-   Director IV, or auto-approved as today?
-2. For bureau-wide items (advisories, cross-division documents), is final
-   approval always Director IV, or the Director overseeing the owning unit?
-3. Should Director III's team views be limited to Divisions 4–5 and MSU?
-4. Keep old units as retired history (recommended) rather than renaming them?
-5. Who approves AU staff requests: the AU lead then which Director?
+1. **Director III's own requests** (leave/AWA/wellness) are approved by the
+   **Director IV**. Only the Director IV keeps automatic self-approval.
+2. **Final approval** for advisories and division-owned documents goes to the
+   **Director who oversees the owning division** (Director IV for Divisions 1–3;
+   Director III for Divisions 4–5 and MSU). Items owned by a Director's office
+   go to that Director. Items owned by the bureau or AU are still open.
+3. **Director III's team views** default to Divisions 4–5 and the MSU, with an
+   option to switch to the whole bureau.
+4. **Old units are kept as retired history**, not renamed or deleted. Past records
+   keep their original unit; new work uses the new units.
+5. **AU approvals** — pending clarification (see below).
+
+### Open: Administrative Unit approval chain
+
+The AU sits under the bureau and supports both Directors; the order does not place
+it under either. Needed:
+
+- (a) Which Director approves the **AU lead's** own requests, and is final
+  approver for AU-owned items: Director IV, Director III, or either?
+- (b) For AU members who are **also a division admin** or a **Director's office
+  support**, who approves their leave/AWA: the AU lead (one home unit) or the
+  division chief/Director they support day to day?

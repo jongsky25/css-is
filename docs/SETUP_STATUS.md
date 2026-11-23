@@ -16,8 +16,12 @@ mis-routes approvals; MSU/AU and the second office have no place; units cannot b
 moved or retired; several names are hardcoded.
 
 Version 10.43 (documentation-only release metadata, required by the gate). No code, data, preview, merge or deployment. Checks: JSON parse, local links, diff check, release metadata.
-Next: owner answers the five decisions in the assessment and confirms the DPO
-number/effective date, Annex A and Division 5 acronym. Then Phase 1 (multi-office
+Owner decisions recorded in the assessment: Director IV approves Director III's own
+requests; final approval follows the Director overseeing the owning division;
+Director III's views default to her units with an all-bureau option; old units kept
+as retired history. AU approval chain awaits clarification.
+Next: answer the AU question and confirm the DPO number/effective date, Annex A and
+Division 5 acronym. Then Phase 1 (multi-office
 model) on a review branch. Do not change the live directory before Phases 1–2 ship.
 
 ## Final advisory slice ready for fresh gates — November 20, 2026
