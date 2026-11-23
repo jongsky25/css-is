@@ -24,7 +24,16 @@ uncommitted**. It holds staff record ids, so it must never be committed.
   changes, their designation. Leads need: Director titles with their grade
   ("Director IV"/"Director III"), "Division Chief", "Section Head",
   "Unit Head" (MSU lead), "Admin Head" (AU lead). Use `rp_id` (from the staff
-  edit URL `/directory/person/<id>/edit`) or an exact `name`.
+  edit URL `/directory/person/<id>/edit`) or the `name` as written in the DPO:
+  matching ignores order, accents, titles/credentials, middle initials and small
+  typos, and an unknown or ambiguous name stops the run with the candidates listed.
+- **Every lead must carry its designation in the mapping.** A staff member listed
+  without one keeps their current designation unless it is a lead title (Section
+  Head, Division Chief, Admin/Unit Head, Director), which is cleared: only the
+  leads named in the order lead in the new structure.
+- Staff with more than one assignment in the order get one home unit (owner
+  decision: AU members, including division admins and Director-office support,
+  are AU staff). Unnamed vacancies are left out.
 
 ## 2. Dry run on a copy
 

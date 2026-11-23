@@ -135,3 +135,50 @@ def test_delete_is_refused_while_anything_references_the_unit(old_bureau):
     ok, reason = st.org_unit_deletable(conn, u["s2"])           # archived staffer still points at it
     assert not ok and "has staff assigned" in reason
     assert st.org_unit_references(conn, u["s2"]) == {"resource_person": 1}
+
+
+@pytest.mark.parametrize("directory, dpo", [
+    ("Canares, Rustom", "Rustom Cañares"),
+    ("Ramos, Raile Jay", "Ralie Jay Ramos"),
+    ("Reneva, Krizza Camille", "Krizza Camille Reñeva"),
+    ("Castro, Mary Anne Millscents", "Mary Anne Milliscent Castro"),
+    ("Gajitos, Maria Lourdes B.", "Dr. Maria Lourdes Gajitos, MO V"),
+])
+def test_names_match_across_order_accents_titles_and_small_typos(directory, dpo):
+    assert rd._name_score(directory, dpo) >= 0.9
+
+
+@pytest.mark.parametrize("a, b", [
+    ("Santiago, Marifel", "Ma. Carmela Santiago"),
+    ("Dela Cruz, June", "Chariza dela Cruz"),
+    ("Hizon, Irene", "Henry Miguel Hizon"),
+])
+def test_different_people_sharing_a_surname_do_not_match(a, b):
+    assert rd._name_score(a, b) == 0.0
+
+
+def test_unknown_and_ambiguous_names_stop_the_run_and_are_all_listed(old_bureau, tmp_path, capsys):
+    conn = st.connect(old_bureau["db"])
+    conn.execute("INSERT INTO resource_person(name, is_internal, org_unit_id) VALUES ('Staff, RS', 1, NULL)")
+    conn.commit(); conn.close()
+    mapping = dict(old_bureau["mapping"], staff=old_bureau["mapping"]["staff"][:2] + [
+        {"name": "RS Staff", "unit": "S8"}, {"name": "Nobody Here", "unit": "S8"}])
+    mpath = tmp_path / "names.json"
+    mpath.write_text(json.dumps(mapping))
+    assert rd.main(["--db", old_bureau["db"], "--mapping", str(mpath)]) == 2
+    err = capsys.readouterr().err
+    assert "matches more than one record" in err and "No current staff record matches 'Nobody Here'" in err
+
+
+def test_a_former_lead_placed_as_a_member_loses_the_lead_title(old_bureau, tmp_path):
+    p = old_bureau["p"]
+    mapping = dict(old_bureau["mapping"], staff=[{"rp_id": p["chief"], "unit": "LHPFD", "designation": "Division Chief"},
+                                                 {"name": "RS Head", "unit": "S8"},          # head -> member
+                                                 {"rp_id": p["staff"], "unit": "S7", "designation": "Section Head"}])
+    mpath = tmp_path / "lead.json"
+    mpath.write_text(json.dumps(mapping))
+    assert rd.main(["--db", old_bureau["db"], "--mapping", str(mpath), "--apply"]) == 0
+    conn = st.connect(old_bureau["db"])
+    desig = dict(conn.execute("SELECT id, designation FROM resource_person WHERE id IN (?,?,?)",
+                              (p["chief"], p["head"], p["staff"])).fetchall())
+    assert desig == {p["chief"]: "Division Chief", p["head"]: None, p["staff"]: "Section Head"}

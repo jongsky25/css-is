@@ -179,7 +179,7 @@ function tm_rep_(body, pattern, repl) { body.replaceText(tm_pat_(pattern), repl)
 // Unit names a source template may carry, before and after the interim BLHSD
 // structure DPO (docs/org/BLHSD_INTERIM_STRUCTURE_2026.md). Matching either lets
 // the office update its source templates without editing this script.
-const TM_DIVISION_CODES = ['HSDD', 'HSMED', 'HSIDD', 'HSGPAD', 'LHSIID', 'LHPFD', 'LHSSD'];
+const TM_DIVISION_CODES = ['HSDD', 'HSMED', 'HSIDD', 'HSGPAD', 'LHSIID', 'LHPFD', 'LHSDD'];
 const TM_SECTION_NAMES = [
   'Special Concerns and Equity in Health', 'Equity in Health and Special Concerns',
   'Local Health Systems? Integration', 'Primary Care', 'Governance and Equity',

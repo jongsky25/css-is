@@ -16,13 +16,16 @@ current directory moves onto the plan:
       "reuse":  {"BLHSD/OD": "OD4", "BLHSD/ADMIN": "AU"},   # existing unit -> plan key
       "retire": ["BLHSD/HSDD/S1", "BLHSD/HSDD", ...],       # old units kept as history
       "staff":  [{"rp_id": 12, "unit": "S7", "designation": "Section Head"},
-                 {"name": "Exact Directory Name", "unit": "AU"}]
+                 {"name": "Name as in the DPO", "unit": "AU"}]
     }
 
 What it does (docs/ORG_RESTRUCTURE_ASSESSMENT.md, Phase 2):
   * reused units keep their id (staff, history and references follow them) and
     are moved/renamed into place; missing plan units are created;
-  * listed staff move to their new unit (designation updated when given);
+  * listed staff move to their new unit (designation updated when given; a former
+    lead listed as a member loses the lead title). Names are matched tolerantly
+    (order, accents, titles, middle initials, small typos); an unknown or
+    ambiguous name stops the run and is reported with the candidates;
   * listed old units are RETIRED, never deleted -- retiring refuses while
     current staff or an acting OIC remain there;
   * open Work, documents, approvals and supplies are NOT reassigned: the
@@ -34,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import os
 import sqlite3
 import sys
@@ -65,19 +69,61 @@ def _unit_by_path(conn, path):
     return dict(zip(("id", "name", "short_name", "level", "retired_at"), row)) if row else None
 
 
-def _person(conn, entry):
+# Titles and credentials that never identify a person ("Dr. ... MD, MPH").
+_NOISE = set("dr dra mr ms mrs miss engr atty prof hon sir maam doc md mph msc mba mpm mpa "
+             "rn rmt rph phd ceso iii iv jr sr".split())
+
+
+def _name_tokens(name):
+    """Comparable name tokens: accents folded (Reñeva -> reneva), punctuation and
+    titles/credentials dropped, single-letter middle initials ignored."""
+    import unicodedata
+    text = unicodedata.normalize("NFKD", str(name or "")).encode("ascii", "ignore").decode().lower()
+    text = re.sub(r"[^a-z ]", " ", text.replace("-", " "))
+    return [t for t in text.split() if len(t) > 1 and t not in _NOISE]
+
+
+def _name_score(a, b):
+    """0..1 likeness of two names in any order ("Canares, Rustom" = "Rustom Cañares").
+    Tokens match when spelled within a typo ("Ralie"/"Raile"); every token of the
+    shorter name must match, and at least two must."""
+    from difflib import SequenceMatcher
+    ta, tb = _name_tokens(a), _name_tokens(b)
+    if not ta or not tb:
+        return 0.0
+    short, long_ = (ta, tb) if len(ta) <= len(tb) else (tb, ta)
+    pool, hits = list(long_), 0
+    for t in short:
+        best = max(pool, key=lambda u: SequenceMatcher(None, t, u).ratio(), default=None)
+        if best is not None and SequenceMatcher(None, t, best).ratio() >= 0.7:
+            pool.remove(best)
+            hits += 1
+    if hits < min(2, len(short)) or hits < len(short):
+        return 0.0
+    return 0.9 + 0.1 * hits / len(long_)
+
+
+def _person(conn, entry, people=None):
+    """(rp_id, name) of the current internal staff record an entry means: by rp_id,
+    else the single best name match. Raises LookupError naming the candidates when
+    the name is unknown or ambiguous -- never a guess."""
     if entry.get("rp_id"):
         row = conn.execute("SELECT id, name FROM resource_person WHERE id=? AND is_internal=1 "
                            "AND archived_at IS NULL", (int(entry["rp_id"]),)).fetchone()
-    else:
-        found = conn.execute("SELECT id, name FROM resource_person WHERE name=? AND is_internal=1 "
-                             "AND archived_at IS NULL", (entry.get("name") or "",)).fetchall()
-        if len(found) > 1:
-            raise ValueError(f"More than one current staff record is named {entry.get('name')!r}; use rp_id.")
-        row = found[0] if found else None
-    if not row:
-        raise ValueError(f"No current internal staff record for {entry!r}.")
-    return row
+        if not row:
+            raise LookupError(f"No current internal staff record #{entry['rp_id']}.")
+        return row
+    if people is None:
+        people = conn.execute("SELECT id, name FROM resource_person WHERE is_internal=1 "
+                              "AND archived_at IS NULL").fetchall()
+    scored = sorted(((_name_score(entry.get("name"), n), i, n) for i, n in people), reverse=True)
+    scored = [x for x in scored if x[0] > 0]
+    if not scored:
+        raise LookupError(f"No current staff record matches {entry.get('name')!r}.")
+    if len(scored) > 1 and scored[1][0] >= scored[0][0] - 0.02:
+        raise LookupError(f"{entry.get('name')!r} matches more than one record: "
+                          + ", ".join(f"#{i} {n}" for _s, i, n in scored[:3]) + ". Use rp_id.")
+    return scored[0][1], scored[0][2]
 
 
 def build(conn, plan, mapping, log):
@@ -125,16 +171,39 @@ def build(conn, plan, mapping, log):
                 (u["name"], u["key"], u["level"], target)).lastrowid
             log.append(f"CREATE {target} [{u['level']}] {u['name']}")
 
+    people = conn.execute("SELECT id, name FROM resource_person WHERE is_internal=1 "
+                          "AND archived_at IS NULL").fetchall()
+    problems, placed = [], {}
     for entry in mapping.get("staff") or []:
         if entry.get("unit") not in ids:
-            raise ValueError(f"Staff entry names unknown unit {entry.get('unit')!r}.")
-        rp_id, name = _person(conn, entry)
+            problems.append(f"{entry.get('name') or entry.get('rp_id')!r}: unknown unit {entry.get('unit')!r}.")
+            continue
+        try:
+            rp_id, name = _person(conn, entry, people)
+        except LookupError as exc:
+            problems.append(str(exc))
+            continue
+        if rp_id in placed:
+            problems.append(f"#{rp_id} {name} is listed twice ({placed[rp_id]} and {entry['unit']}).")
+            continue
+        placed[rp_id] = entry["unit"]
         conn.execute("UPDATE resource_person SET org_unit_id=? WHERE id=?", (ids[entry["unit"]], rp_id))
+        line = f"STAFF  #{rp_id} {name} -> {entry['unit']}"
         if entry.get("designation") is not None:
             conn.execute("UPDATE resource_person SET designation=? WHERE id=?",
                          (entry["designation"].strip() or None, rp_id))
-        log.append(f"STAFF  #{rp_id} -> {entry['unit']}"
-                   + (f" as {entry['designation']!r}" if entry.get("designation") is not None else ""))
+            line += f" as {entry['designation']!r}"
+        else:
+            # Only the listed leads lead in the new structure: a former section head
+            # or chief placed as a member loses that title (and the approvals it
+            # carries); any other designation is kept.
+            old = conn.execute("SELECT designation FROM resource_person WHERE id=?", (rp_id,)).fetchone()[0]
+            if old and st._org_rank(old, None) >= 1:
+                conn.execute("UPDATE resource_person SET designation=NULL WHERE id=?", (rp_id,))
+                line += f" (lead title {old!r} cleared)"
+        log.append(line)
+    if problems:
+        raise ValueError("Staff could not be matched:\n  - " + "\n  - ".join(problems))
 
     retired = []
     for path in sorted(mapping.get("retire") or [], key=lambda p: -p.count("/")):

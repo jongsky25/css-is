@@ -9,70 +9,390 @@
     "rule": "Existing work arrangements may continue for two weeks; DPCR/IPCR commitments stay with originally responsible staff; reassignment needs justification and approval of both Directors as applicable."
   },
   "units": [
-    {"key": "OD4", "level": "office", "name": "Office of the Director IV", "parent": "BLHSD", "path": "BLHSD/OD4",
-     "head_seat": "Director IV", "oversees": ["HSIDD", "HSGPAD", "LHSIID"]},
-    {"key": "OD3", "level": "office", "name": "Office of the Director III", "parent": "BLHSD", "path": "BLHSD/OD3",
-     "head_seat": "Director III", "oversees": ["LHPFD", "LHSSD", "MSU"]},
-    {"key": "MSU", "level": "section", "name": "Management Support Unit", "parent": "OD3", "path": "BLHSD/OD3/MSU",
-     "head_seat": "Chief Administrative Officer (Lead)",
-     "topics": ["strategic planning", "policy coordination", "performance monitoring", "directives tracking", "management briefs", "executive reports"]},
-    {"key": "AU", "level": "section", "name": "Administrative Unit", "parent": "BLHSD", "path": "BLHSD/ADMIN",
-     "head_seat": "Administrative Officer IV (Lead)", "supports": ["OD4", "OD3"],
-     "topics": ["personnel administration", "records", "communications", "scheduling", "finance", "procurement", "property", "supplies", "logistics", "leave", "hiring", "contract renewal", "201 files"]},
-
-    {"key": "HSIDD", "number": 1, "level": "division", "name": "Health Systems Integration and Development Division", "parent": "OD4", "path": "BLHSD/OD4/HSIDD",
-     "head_seat": "Division Chief (OIC)", "has_division_admin": true},
-    {"key": "S1", "number": 1, "level": "section", "name": "Local Health Systems Integration Section", "parent": "HSIDD", "path": "BLHSD/OD4/HSIDD/S1",
-     "head_seat": "Section Head", "mailboxes": ["healthsystemsblhsd@doh.gov.ph", "hcpn@doh.gov.ph"],
-     "topics": ["P/CWHS", "province-wide health system", "city-wide health system", "HCPN", "PCPN", "LHS maturity level", "UHC grants", "referral pathways", "private sector engagement"]},
-    {"key": "S2", "number": 2, "level": "section", "name": "Primary Care Section", "parent": "HSIDD", "path": "BLHSD/OD4/HSIDD/S2",
-     "head_seat": "Section Head", "mailboxes": ["blhsdpurokalusugan@doh.gov.ph"],
-     "topics": ["primary care", "BHW", "barangay health workers", "empanelment", "YAKAP", "GAMOT", "primary care benefit package", "Purok Kalusugan"]},
-
-    {"key": "HSGPAD", "number": 2, "level": "division", "name": "Health Systems Governance and Performance Accountability Division", "parent": "OD4", "path": "BLHSD/OD4/HSGPAD",
-     "head_seat": "Division Chief", "has_division_admin": true},
-    {"key": "S3", "number": 3, "level": "section", "name": "Governance and Equity Section", "parent": "HSGPAD", "path": "BLHSD/OD4/HSGPAD/S3",
-     "head_seat": "Section Head", "mailboxes": ["healthequity@doh.gov.ph"],
-     "topics": ["local health governance", "Local Health Board", "equity", "GIDA", "unserved", "underserved", "ICC", "indigenous peoples", "IP"]},
-    {"key": "S4", "number": 4, "level": "section", "name": "Performance Accountability Section", "parent": "HSGPAD", "path": "BLHSD/OD4/HSGPAD/S4",
-     "head_seat": "Section Head", "mailboxes": ["lguhsc@doh.gov.ph"],
-     "topics": ["LGU Health Scorecard", "Seal of Good Local Governance", "SGLG", "performance indicators", "LGU profile data", "good practices", "awards", "recognition"]},
-
-    {"key": "LHSIID", "number": 3, "level": "division", "name": "Local Health Systems Intelligence and Innovation Division", "parent": "OD4", "path": "BLHSD/OD4/LHSIID",
-     "head_seat": "Division Chief (OIC)", "has_division_admin": true, "mandate_missing_in_source": true},
-    {"key": "S5", "number": 5, "level": "section", "name": "Data Systems, Analytics and Innovation Section", "parent": "LHSIID", "path": "BLHSD/OD4/LHSIID/S5",
-     "head_seat": "Section Head", "mailboxes": [],
-     "topics": ["information systems", "digital platforms", "databases", "LGU profiling", "dashboards", "analytics", "interoperability", "data governance", "digital transformation", "innovation", "Office Connect"]},
-    {"key": "S6", "number": 6, "level": "section", "name": "Knowledge Management and Capacity Development Section", "parent": "LHSIID", "path": "BLHSD/OD4/LHSIID/S6",
-     "head_seat": "Section Head", "mailboxes": ["blhsdleadgov@doh.gov.ph"],
-     "topics": ["knowledge management", "research", "evidence synthesis", "communities of practice", "capacity development", "training", "DOH Representatives"]},
-
-    {"key": "LHPFD", "number": 4, "level": "division", "name": "Local Health Planning and Financing Division", "parent": "OD3", "path": "BLHSD/OD3/LHPFD",
-     "head_seat": "Division Chief (OIC)", "has_division_admin": true},
-    {"key": "S7", "number": 7, "level": "section", "name": "Local Health Planning Section", "parent": "LHPFD", "path": "BLHSD/OD3/LHPFD/S7",
-     "head_seat": "Section Head", "mailboxes": ["blhsdliph@doh.gov.ph"],
-     "topics": ["LIPH", "local investment plan for health", "AOP", "annual operational plan", "DOH Menu of Assistance", "TA matching", "P/CDOHO"]},
-    {"key": "S8", "number": 8, "level": "section", "name": "Local Health Financing Section", "parent": "LHPFD", "path": "BLHSD/OD3/LHPFD/S8",
-     "head_seat": "Section Head", "mailboxes": ["blhsdlhf@doh.gov.ph"],
-     "topics": ["Special Health Fund", "SHF", "health financing", "Terms of Partnership", "population-based services contracting", "health expenditure tracking", "strategic purchasing", "resource mobilization"]},
-
-    {"key": "LHSSD", "number": 5, "level": "division", "name": "Local Health Systems Support Division", "parent": "OD3", "path": "BLHSD/OD3/LHSSD",
-     "head_seat": "Division Chief", "has_division_admin": true, "short_name_unconfirmed": true},
-    {"key": "S9", "number": 9, "level": "section", "name": "Institutional Supportive Supervision and Coordination Section", "parent": "LHSSD", "path": "BLHSD/OD3/LHSSD/S9",
-     "head_seat": "Section Head", "mailboxes": [],
-     "topics": ["DOH Wellness Clinics", "DWC", "IFVSS", "integrated field visits", "supportive supervision", "Regional Health Councils", "institutional recognition", "inter-agency"]},
-    {"key": "S10", "number": 10, "level": "section", "name": "Local Optimization and Implementation Section", "parent": "LHSSD", "path": "BLHSD/OD3/LHSSD/S10",
-     "head_seat": "Section Head", "mailboxes": [],
-     "topics": ["P/CDOHO", "regional counterparts", "CHD optimization", "implementation governance", "program convergence", "CHD operating budget"]}
+    {
+      "key": "OD4",
+      "level": "office",
+      "name": "Office of the Director IV",
+      "parent": "BLHSD",
+      "path": "BLHSD/OD4",
+      "head_seat": "Director IV",
+      "oversees": [
+        "HSIDD",
+        "HSGPAD",
+        "LHSIID"
+      ]
+    },
+    {
+      "key": "OD3",
+      "level": "office",
+      "name": "Office of the Director III",
+      "parent": "BLHSD",
+      "path": "BLHSD/OD3",
+      "head_seat": "Director III",
+      "oversees": [
+        "LHPFD",
+        "LHSDD",
+        "MSU"
+      ]
+    },
+    {
+      "key": "MSU",
+      "level": "section",
+      "name": "Management Support Unit",
+      "parent": "OD3",
+      "path": "BLHSD/OD3/MSU",
+      "head_seat": "Chief Administrative Officer (Lead)",
+      "topics": [
+        "strategic planning",
+        "policy coordination",
+        "performance monitoring",
+        "directives tracking",
+        "management briefs",
+        "executive reports"
+      ]
+    },
+    {
+      "key": "AU",
+      "level": "section",
+      "name": "Administrative Unit",
+      "parent": "BLHSD",
+      "path": "BLHSD/ADMIN",
+      "head_seat": "Administrative Officer IV (Lead)",
+      "supports": [
+        "OD4",
+        "OD3"
+      ],
+      "topics": [
+        "personnel administration",
+        "records",
+        "communications",
+        "scheduling",
+        "finance",
+        "procurement",
+        "property",
+        "supplies",
+        "logistics",
+        "leave",
+        "hiring",
+        "contract renewal",
+        "201 files"
+      ]
+    },
+    {
+      "key": "HSIDD",
+      "number": 1,
+      "level": "division",
+      "name": "Health Systems Integration and Development Division",
+      "parent": "OD4",
+      "path": "BLHSD/OD4/HSIDD",
+      "head_seat": "Division Chief (OIC)",
+      "has_division_admin": true
+    },
+    {
+      "key": "S1",
+      "number": 1,
+      "level": "section",
+      "name": "Local Health Systems Integration Section",
+      "parent": "HSIDD",
+      "path": "BLHSD/OD4/HSIDD/S1",
+      "head_seat": "Section Head",
+      "mailboxes": [
+        "healthsystemsblhsd@doh.gov.ph",
+        "hcpn@doh.gov.ph"
+      ],
+      "topics": [
+        "P/CWHS",
+        "province-wide health system",
+        "city-wide health system",
+        "HCPN",
+        "PCPN",
+        "LHS maturity level",
+        "UHC grants",
+        "referral pathways",
+        "private sector engagement"
+      ]
+    },
+    {
+      "key": "S2",
+      "number": 2,
+      "level": "section",
+      "name": "Primary Care Section",
+      "parent": "HSIDD",
+      "path": "BLHSD/OD4/HSIDD/S2",
+      "head_seat": "Section Head",
+      "mailboxes": [
+        "blhsdpurokalusugan@doh.gov.ph"
+      ],
+      "topics": [
+        "primary care",
+        "BHW",
+        "barangay health workers",
+        "empanelment",
+        "YAKAP",
+        "GAMOT",
+        "primary care benefit package",
+        "Purok Kalusugan"
+      ]
+    },
+    {
+      "key": "HSGPAD",
+      "number": 2,
+      "level": "division",
+      "name": "Health Systems Governance and Performance Accountability Division",
+      "parent": "OD4",
+      "path": "BLHSD/OD4/HSGPAD",
+      "head_seat": "Division Chief",
+      "has_division_admin": true
+    },
+    {
+      "key": "S3",
+      "number": 3,
+      "level": "section",
+      "name": "Governance and Equity Section",
+      "parent": "HSGPAD",
+      "path": "BLHSD/OD4/HSGPAD/S3",
+      "head_seat": "Section Head",
+      "mailboxes": [
+        "healthequity@doh.gov.ph"
+      ],
+      "topics": [
+        "local health governance",
+        "Local Health Board",
+        "equity",
+        "GIDA",
+        "unserved",
+        "underserved",
+        "ICC",
+        "indigenous peoples",
+        "IP"
+      ]
+    },
+    {
+      "key": "S4",
+      "number": 4,
+      "level": "section",
+      "name": "Performance Accountability Section",
+      "parent": "HSGPAD",
+      "path": "BLHSD/OD4/HSGPAD/S4",
+      "head_seat": "Section Head",
+      "mailboxes": [
+        "lguhsc@doh.gov.ph"
+      ],
+      "topics": [
+        "LGU Health Scorecard",
+        "Seal of Good Local Governance",
+        "SGLG",
+        "performance indicators",
+        "LGU profile data",
+        "good practices",
+        "awards",
+        "recognition"
+      ]
+    },
+    {
+      "key": "LHSIID",
+      "number": 3,
+      "level": "division",
+      "name": "Local Health Systems Intelligence and Innovation Division",
+      "parent": "OD4",
+      "path": "BLHSD/OD4/LHSIID",
+      "head_seat": "Division Chief (OIC)",
+      "has_division_admin": true,
+      "mandate_missing_in_source": true
+    },
+    {
+      "key": "S5",
+      "number": 5,
+      "level": "section",
+      "name": "Data Systems, Analytics and Innovation Section",
+      "parent": "LHSIID",
+      "path": "BLHSD/OD4/LHSIID/S5",
+      "head_seat": "Section Head",
+      "mailboxes": [],
+      "topics": [
+        "information systems",
+        "digital platforms",
+        "databases",
+        "LGU profiling",
+        "dashboards",
+        "analytics",
+        "interoperability",
+        "data governance",
+        "digital transformation",
+        "innovation",
+        "Office Connect"
+      ]
+    },
+    {
+      "key": "S6",
+      "number": 6,
+      "level": "section",
+      "name": "Knowledge Management and Capacity Development Section",
+      "parent": "LHSIID",
+      "path": "BLHSD/OD4/LHSIID/S6",
+      "head_seat": "Section Head",
+      "mailboxes": [
+        "blhsdleadgov@doh.gov.ph"
+      ],
+      "topics": [
+        "knowledge management",
+        "research",
+        "evidence synthesis",
+        "communities of practice",
+        "capacity development",
+        "training",
+        "DOH Representatives"
+      ]
+    },
+    {
+      "key": "LHPFD",
+      "number": 4,
+      "level": "division",
+      "name": "Local Health Planning and Financing Division",
+      "parent": "OD3",
+      "path": "BLHSD/OD3/LHPFD",
+      "head_seat": "Division Chief (OIC)",
+      "has_division_admin": true
+    },
+    {
+      "key": "S7",
+      "number": 7,
+      "level": "section",
+      "name": "Local Health Planning Section",
+      "parent": "LHPFD",
+      "path": "BLHSD/OD3/LHPFD/S7",
+      "head_seat": "Section Head",
+      "mailboxes": [
+        "blhsdliph@doh.gov.ph"
+      ],
+      "topics": [
+        "LIPH",
+        "local investment plan for health",
+        "AOP",
+        "annual operational plan",
+        "DOH Menu of Assistance",
+        "TA matching",
+        "P/CDOHO"
+      ]
+    },
+    {
+      "key": "S8",
+      "number": 8,
+      "level": "section",
+      "name": "Local Health Financing Section",
+      "parent": "LHPFD",
+      "path": "BLHSD/OD3/LHPFD/S8",
+      "head_seat": "Section Head",
+      "mailboxes": [
+        "blhsdlhf@doh.gov.ph"
+      ],
+      "topics": [
+        "Special Health Fund",
+        "SHF",
+        "health financing",
+        "Terms of Partnership",
+        "population-based services contracting",
+        "health expenditure tracking",
+        "strategic purchasing",
+        "resource mobilization"
+      ]
+    },
+    {
+      "key": "LHSDD",
+      "number": 5,
+      "level": "division",
+      "name": "Local Health Systems Support Division",
+      "parent": "OD3",
+      "path": "BLHSD/OD3/LHSDD",
+      "head_seat": "Division Chief",
+      "has_division_admin": true
+    },
+    {
+      "key": "S9",
+      "number": 9,
+      "level": "section",
+      "name": "Institutional Supportive Supervision and Coordination Section",
+      "parent": "LHSDD",
+      "path": "BLHSD/OD3/LHSDD/S9",
+      "head_seat": "Section Head",
+      "mailboxes": [],
+      "topics": [
+        "DOH Wellness Clinics",
+        "DWC",
+        "IFVSS",
+        "integrated field visits",
+        "supportive supervision",
+        "Regional Health Councils",
+        "institutional recognition",
+        "inter-agency"
+      ]
+    },
+    {
+      "key": "S10",
+      "number": 10,
+      "level": "section",
+      "name": "Local Optimization and Implementation Section",
+      "parent": "LHSDD",
+      "path": "BLHSD/OD3/LHSDD/S10",
+      "head_seat": "Section Head",
+      "mailboxes": [],
+      "topics": [
+        "P/CDOHO",
+        "regional counterparts",
+        "CHD optimization",
+        "implementation governance",
+        "program convergence",
+        "CHD operating budget"
+      ]
+    }
   ],
   "old_to_new_topic_moves": [
-    {"old": "HSDD / Section 1 - Local Health System Integration", "new": ["S1", "S2"]},
-    {"old": "HSDD / Section 2 - Local Health Planning & Financing", "new": ["S7", "S8"]},
-    {"old": "HSDD / Section 3 - Leadership and Governance for Health", "new": ["S3", "S6"]},
-    {"old": "HSMED / Section 4 - Equity in Health and Special Concerns", "new": ["S3"]},
-    {"old": "HSMED / Section 5 - LGU Performance and Monitoring", "new": ["S4"]},
-    {"old": "Administrative Section (ADMIN)", "new": ["AU"]},
-    {"old": "Office of the Director", "new": ["OD4", "OD3"]}
+    {
+      "old": "HSDD / Section 1 - Local Health System Integration",
+      "new": [
+        "S1",
+        "S2"
+      ]
+    },
+    {
+      "old": "HSDD / Section 2 - Local Health Planning & Financing",
+      "new": [
+        "S7",
+        "S8"
+      ]
+    },
+    {
+      "old": "HSDD / Section 3 - Leadership and Governance for Health",
+      "new": [
+        "S3",
+        "S6"
+      ]
+    },
+    {
+      "old": "HSMED / Section 4 - Equity in Health and Special Concerns",
+      "new": [
+        "S3"
+      ]
+    },
+    {
+      "old": "HSMED / Section 5 - LGU Performance and Monitoring",
+      "new": [
+        "S4"
+      ]
+    },
+    {
+      "old": "Administrative Section (ADMIN)",
+      "new": [
+        "AU"
+      ]
+    },
+    {
+      "old": "Office of the Director",
+      "new": [
+        "OD4",
+        "OD3"
+      ]
+    }
   ],
   "old_to_new_note": "Topic moves are inferred from mandates and mailbox names, not stated in the order. Confirm before using them to re-map document routing rules."
 }
