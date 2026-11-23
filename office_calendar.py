@@ -577,6 +577,11 @@ def birthday_people(conn):
                     "full_name": rp_name or uname,
                     "card": {"name": name, "initials": _initials(rp_name or uname),
                              "photo_url": f"/photo/{rp_id}" if rp_id and has_photo else None}})
+    # People who share a first name ("Maria", "Ma.") show both first names.
+    short = bd.distinct_first_names({i: (r[7] or (r[1] or "").split("@")[0].title(), r[2])
+                                     for i, r in enumerate(rows)})
+    for i, p in enumerate(out):
+        p["name"] = p["card"]["name"] = short[i]
     return out
 
 
