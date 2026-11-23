@@ -1,5 +1,20 @@
 # Cloud/mobile setup status
 
+## 10.43 live; Phase 2 merged; Phase 3 candidate 10.45 — November 23, 2026
+
+10.43 verified deployed by run 45151910184 (fresh verified live snapshot, upload, live
+/login v10.43). Owner: "merge 637 when ready": all required checks passed on `c23ab03`;
+[PR #637](https://github.com/jongsky25/css-is/pull/637) merged at `0731da0` (10.44); its
+guarded deployment must be verified.
+
+Phase 3 (owner decisions: keep Equity branding; sections choose calendar colours first
+come, first served; unit lead certifies travel for AU/MSU; templates use DPO unit names)
+is candidate 10.45 on `claude/funny-bohr-qif52k`. Local: 1,479 calendar/travel/route/
+two-Director/CSM tests passed; 23 Chromium-dependent tests skipped here.
+
+Next: CI on the Phase 3 PR, merge on owner instruction after 10.44 is verified live; then
+prepare the private staff mapping with the office and dry-run it on a live-data copy.
+
 ## Phase 1 merged; Phase 2 tooling candidate 10.44 — November 23, 2026
 
 Owner instructed "merge pr 636 if ready". All required checks passed on `43423f8`;

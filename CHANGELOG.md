@@ -1,3 +1,10 @@
+## 10.45 — November 23, 2026
+
+- Add section-chosen calendar colours (`calendar_tones.py`, `/calendar/colours`): first come, first served, from an 11-colour palette kept at least 20 CIE76 apart in light and dark themes; the Word import maps colours through this registry.
+- Official CSM report "Approved by" follows the head of office setting, else the top Director; Teams/dashboards show every Director office.
+- Travel certifier for units outside divisions is the unit lead; template converter matches old and new DPO unit names.
+- `apply_directory.py` refuses to rebuild the superseded two-division tree without `--legacy-structure`.
+
 ## 10.44 — November 23, 2026
 
 - Add `org_unit.retired_at`; retired units stay for history and are refused for new staff, documents, routing rules, Work cases and advisories.
