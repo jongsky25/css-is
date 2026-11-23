@@ -80,9 +80,9 @@
     <label for="org_unit_id">Assigned to</label>
     <select id="org_unit_id" name="org_unit_id">
       <option value="">— assign to —</option>
-      {% if org.directorate %}
-      <optgroup label="Office of the Director">
-        <option value="{{ org.directorate.id }}" {{ 'selected' if f.org_unit_id|string == org.directorate.id|string }}>{{ org.directorate.name }}</option>
+      {% if org.offices %}
+      <optgroup label="{{ 'Offices of the Directors' if org.offices|length > 1 else 'Office of the Director' }}">
+        {% for od in org.offices %}<option value="{{ od.id }}" {{ 'selected' if f.org_unit_id|string == od.id|string }}>{{ od.name }}</option>{% endfor %}
       </optgroup>
       {% endif %}
       <optgroup label="Division chiefs (whole division)">
@@ -94,8 +94,8 @@
       </optgroup>
       {% endif %}{% endfor %}
       {% if org.admin_sections %}
-      <optgroup label="Administrative (under bureau)">
-        {% for s in org.admin_sections %}<option value="{{ s.id }}" {{ 'selected' if f.org_unit_id|string == s.id|string }}>{{ s.name }}</option>{% endfor %}
+      <optgroup label="Units outside divisions">
+        {% for s in org.admin_sections %}<option value="{{ s.id }}" {{ 'selected' if f.org_unit_id|string == s.id|string }}>{{ s.name }}{% if s.office_name %} ({{ s.office_name }}){% endif %}</option>{% endfor %}
       </optgroup>
       {% endif %}
     </select>

@@ -3609,7 +3609,13 @@ def org_structure(conn):
     units = list_org_units(conn)
     by_path = {u["path"]: u for u in units}
     bureau = next((u for u in units if u["level"] == "bureau"), None)
-    directorate = next((u for u in units if u["level"] == "office"), None)
+    # Several Directors can each head an office. `offices` lists them all, the
+    # top Director's office first; `directorate` stays that first office so
+    # single-office consumers keep working.
+    top_paths = {d["path"] for d in _top_directors(_director_people(conn))}
+    offices = sorted((u for u in units if u["level"] == "office"),
+                     key=lambda u: (u["path"] not in top_paths, u["path"]))
+    directorate = offices[0] if offices else None
 
     def parent(u):
         return by_path.get(u["path"].rsplit("/", 1)[0]) if "/" in u["path"] else None
@@ -3624,8 +3630,10 @@ def org_structure(conn):
         if par and par["path"] in div_by_path:
             div_by_path[par["path"]]["sections"].append(u)
         else:
-            admin_sections.append(u)        # directly under bureau => administrative
-    return {"bureau": bureau, "directorate": directorate,
+            # Directly under the bureau (the Administrative Unit) or under an
+            # office (e.g. the Management Support Unit): outside any division.
+            admin_sections.append(dict(u, office_name=par["name"] if par and par["level"] == "office" else None))
+    return {"bureau": bureau, "directorate": directorate, "offices": offices,
             "divisions": divisions, "admin_sections": admin_sections}
 
 
@@ -7490,7 +7498,8 @@ def _org_rank(designation, position=None):
     if "division chief" in d:
         return 2
     if ("section head" in d or "section chief" in d
-            or "admin head" in d or "administrative head" in d):
+            or "admin head" in d or "administrative head" in d
+            or "unit head" in d):                  # e.g. the Management Support Unit's lead
         return 1
     return 0
 
@@ -7522,7 +7531,11 @@ def _is_director(conn, user_id):
     rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
     if not rp:
         return False
-    return _org_rank(rp.get("designation"), rp.get("position")) == 3
+    if _org_rank(rp.get("designation"), rp.get("position")) != 3:
+        return False
+    # Only the TOP Director auto-approves; any other Director (e.g. Director III)
+    # files to the top Director like everyone else files to their chief.
+    return not _directors_above_director(conn, user_id)
 
 
 _AUTO_APPROVE_NOTE = ("Auto-approved — the Director sits at the top of the "
@@ -7645,6 +7658,130 @@ def _section_oic_account_id(conn, path, exclude_uid=None):
 
 # ---- approver resolution ------------------------------------------------
 
+# ---- more than one Director (docs/ORG_RESTRUCTURE_ASSESSMENT.md) ----------
+#
+# The bureau can have several Directors, each heading an 'office' org unit and
+# overseeing the units nested beneath it (e.g. Director IV over BLHSD/OD4/...,
+# Director III over BLHSD/OD3/...). "The Director" for any unit is therefore the
+# Director attached to the NEAREST office above it. A unit with no such office
+# above it (the bureau itself, the Administrative Unit, or every unit in a
+# single-Director directory) belongs to the TOP Director: the highest grade read
+# from the title ("Director IV" outranks "Director III"). With one Director --
+# or several without a grade in their titles -- everything resolves exactly as
+# it did before multiple Directors existed.
+
+_DIRECTOR_GRADES = {"v": 5, "iv": 4, "iii": 3, "ii": 2, "i": 1}
+
+
+def _director_grade(designation, position=None):
+    """4 for 'Director IV' / 'OIC-Director IV', 3 for 'Director III', 0 when the
+    title carries no grade. Designation wins over position."""
+    for text in (designation, position):
+        m = re.search(r"director\s+(v|iv|iii|ii|i)\b", (text or "").lower())
+        if m:
+            return _DIRECTOR_GRADES[m.group(1)]
+    return 0
+
+
+def _director_people(conn):
+    """Every internal, unarchived directory person at Director rank:
+    dicts of rp_id, name, designation, position, path, account (active account
+    id or None) and grade."""
+    rows = conn.execute(
+        "SELECT rp.id, rp.name, rp.designation, rp.position, ou.path, "
+        "(SELECT a.id FROM admin_user a WHERE a.rp_id = rp.id AND a.active = 1 "
+        " ORDER BY a.id LIMIT 1) "
+        "FROM resource_person rp LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
+        "WHERE rp.is_internal = 1 AND rp.archived_at IS NULL").fetchall()
+    return [{"rp_id": r[0], "name": r[1], "designation": r[2], "position": r[3],
+             "path": r[4], "account": r[5], "grade": _director_grade(r[2], r[3])}
+            for r in rows if _org_rank(r[2], r[3]) == 3]
+
+
+def _overseeing_office(conn, path, directors):
+    """Path of the nearest 'office' unit at or above `path` that has a Director
+    attached, or None (then the top Director oversees it)."""
+    if not path:
+        return None
+    staffed = {d["path"] for d in directors if d["path"]}
+    offices = {r[0] for r in conn.execute("SELECT path FROM org_unit WHERE level='office'")}
+    p = path
+    while p:
+        if p in offices and p in staffed:
+            return p
+        p = _org_parent_path(p)
+    return None
+
+
+def _top_directors(directors):
+    """The Director(s) with the highest grade -- normally the one Director IV."""
+    if not directors:
+        return []
+    best = max(d["grade"] for d in directors)
+    return [d for d in directors if d["grade"] == best]
+
+
+def _directors_over(conn, path):
+    """Directory persons who are 'the Director' for org `path`."""
+    directors = _director_people(conn)
+    office = _overseeing_office(conn, path, directors)
+    if office:
+        return [d for d in directors if d["path"] == office]
+    return _top_directors(directors)
+
+
+def director_accounts_for_path(conn, path, exclude_uid=None):
+    """Active account ids of the Director(s) overseeing org `path` (see the note
+    above). None/empty path means the bureau as a whole: the top Director."""
+    found = [d["account"] for d in _directors_over(conn, path)
+             if d["account"] and d["account"] != exclude_uid]
+    if found or not path:
+        return found
+    # The overseeing office's Director has no account yet: fall back to the top.
+    return [d["account"] for d in _top_directors(_director_people(conn))
+            if d["account"] and d["account"] != exclude_uid]
+
+
+def director_accounts_for_unit(conn, unit_id, exclude_uid=None):
+    """director_accounts_for_path for an org_unit id (None -> the top Director)."""
+    row = conn.execute("SELECT path FROM org_unit WHERE id=?", (unit_id,)).fetchone() if unit_id else None
+    return director_accounts_for_path(conn, row[0] if row else None, exclude_uid=exclude_uid)
+
+
+def overseeing_office_unit(conn, unit_id):
+    """The org_unit id of the office whose Director oversees `unit_id`, or None
+    when the top Director does (bureau-level and Administrative Unit items)."""
+    row = conn.execute("SELECT path FROM org_unit WHERE id=?", (unit_id,)).fetchone() if unit_id else None
+    office = _overseeing_office(conn, row[0] if row else None, _director_people(conn))
+    hit = conn.execute("SELECT id FROM org_unit WHERE path=?", (office,)).fetchone() if office else None
+    return hit[0] if hit else None
+
+
+def _directors_above_director(conn, user_id):
+    """Who decides a Director's OWN requests: the top Director, or nobody when
+    this account is (one of) the top Director(s)."""
+    directors = _director_people(conn)
+    me = next((d for d in directors if d["account"] == user_id), None)
+    if not directors or me is None:
+        return []
+    best = max(d["grade"] for d in directors)
+    if me["grade"] >= best:
+        return []
+    return [d["account"] for d in directors
+            if d["grade"] == best and d["account"] and d["account"] != user_id]
+
+
+def director_seat_holder(conn, org_path=None):
+    """(name, title) of the Director overseeing `org_path` -- the top Director
+    when it is None -- for signature blocks, or None. Title is the designation,
+    else the position."""
+    people = sorted(_directors_over(conn, org_path), key=lambda d: (d["name"] or "").lower())
+    for d in people:
+        if d["name"]:
+            return d["name"], (d["designation"] or d["position"] or "")
+    return None
+
+
 def _org_accounts_at_rank(conn, rank, org_path=None, exclude_uid=None):
     """Active accounts whose directory role resolves to `rank` (see
     _org_rank), optionally restricted to an exact org_unit.path. The building
@@ -7691,11 +7828,11 @@ def _oic_override_seat(oic_unit, own_rank):
         parent = _org_parent_path(oic_unit["path"])
         return (2, parent) if parent else None
     if oic_unit["level"] == "division":
-        return (3, None)
-    return None                                     # bureau-level (the Director's own seat)
+        return (3, oic_unit["path"])                # the Director overseeing that division
+    return None                                     # office/bureau-level (a Director's own seat)
 
 
-_ORG_LEVEL_RANK = {"section": 1, "division": 2, "bureau": 3}
+_ORG_LEVEL_RANK = {"section": 1, "division": 2, "office": 3, "bureau": 3}
 
 
 def org_unit_chiefs(conn, org_unit_id):
@@ -7714,10 +7851,10 @@ def org_unit_chiefs(conn, org_unit_id):
     if not rank:
         return []
     if rank == 3:
-        # Mirror get_approvers_for's own escalation to the Director: don't
-        # restrict by path, since the Director's directory record isn't
-        # reliably tied to a specific org_unit.
-        return _org_accounts_at_rank(conn, 3)
+        # An office's chief is the Director attached to it; the bureau's is the
+        # top Director. With a single Director both resolve to them, wherever
+        # their directory record happens to be filed.
+        return director_accounts_for_path(conn, path if level == "office" else None)
     return _org_accounts_at_rank(conn, rank, org_path=path)
 
 
@@ -7783,6 +7920,57 @@ def org_seat_holder(conn, rank, org_path=None, exclude_rp_id=None, title_from="d
     return None
 
 
+def _unit_level(conn, path):
+    row = conn.execute("SELECT level FROM org_unit WHERE path=?", (path,)).fetchone() if path else None
+    return row[0] if row else None
+
+
+def _decider_seat(conn, user_id):
+    """(kind, path) of the seat that decides THIS account's rank-routed requests
+    -- the one walk get_approvers_for, approver_name_for and approver_title_for
+    share, so the three can never disagree. kind is:
+      'section'        -> the section chief seat at `path`
+      'division'       -> the division chief seat at `path`
+      'director'       -> the Director overseeing `path` (director_accounts_for_path)
+      'above_director' -> a Director's own request: the top Director, or nobody
+    or (None, None) for an unlinked account / nobody above."""
+    me = get_admin_user_by_id(conn, user_id)
+    rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
+    if not rp:
+        return None, None
+    rank = _org_rank(rp.get("designation"), rp.get("position"))
+
+    override = _oic_override_seat(_oic_org_unit_for(conn, user_id), rank)
+    if override:
+        orank, path = override
+        if orank == 2 and _unit_level(conn, path) not in (None, "division"):
+            return "director", path                 # section directly under an office/bureau
+        return ("division" if orank == 2 else "director"), path
+
+    rank = _escalation_rank(rp.get("designation"), rp.get("position"))
+    path = rp.get("org_path")
+    if rank == 0:                                   # staff -> section chief (same unit)
+        if _unit_level(conn, path) == "office":     # a Director's own office staff
+            return "director", path
+        return "section", path
+    if rank == 1:                                   # section/unit head -> one level up
+        parent = _org_parent_path(path)
+        if not parent:
+            return None, None
+        if _unit_level(conn, parent) == "division":
+            return "division", parent
+        return "director", path                     # e.g. MSU lead -> Director III
+    if rank == 2:                                   # division chief / admin head -> their Director
+        return "director", path
+    return "above_director", None                   # a Director -> the top Director (or nobody)
+
+
+def _office_oic_for(conn, path, exclude_uid=None):
+    """Acting OIC set on the office whose Director oversees `path`, if any."""
+    office = _overseeing_office(conn, path, _director_people(conn))
+    return _section_oic_account_id(conn, office, exclude_uid=exclude_uid) if office else None
+
+
 def approver_name_for(conn, user_id):
     """The NAME of who decides THIS person's requests, for the apply/hub copy
     ('Send for approval of Ray Justin Ventura'). Mirrors approver_title_for's
@@ -7801,32 +7989,18 @@ def approver_name_for(conn, user_id):
     ABOVE their real rank -- a division chief named to cover one of their own
     sections decides it (and is named here) as the division chief they really
     are, not as that section's stand-in."""
-    me = get_admin_user_by_id(conn, user_id)
-    rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
-    if not rp:
-        return None
-    rank = _org_rank(rp.get("designation"), rp.get("position"))
-
-    override = _oic_override_seat(_oic_org_unit_for(conn, user_id), rank)
-    if override:
-        orank, path = override
-        oic = (_account_display_name(conn, _section_oic_account_id(conn, path, exclude_uid=user_id))
-               if path else None)
-        return oic or _org_seat_name(conn, orank, org_path=path, exclude_uid=user_id)
-
-    rank = _escalation_rank(rp.get("designation"), rp.get("position"))
-    path = rp.get("org_path")
-    if rank == 0:                                   # staff -> section chief (same unit)
+    kind, path = _decider_seat(conn, user_id)
+    if kind in ("section", "division"):
         oic = _account_display_name(conn, _section_oic_account_id(conn, path, exclude_uid=user_id))
-        return oic or _org_seat_name(conn, 1, org_path=path, exclude_uid=user_id)
-    if rank == 1:                                   # section chief -> division chief (parent)
-        parent = _org_parent_path(path)
-        if not parent:
-            return None
-        oic = _account_display_name(conn, _section_oic_account_id(conn, parent, exclude_uid=user_id))
-        return oic or _org_seat_name(conn, 2, org_path=parent, exclude_uid=user_id)
-    if rank == 2:                                   # division chief -> the Director
-        return _org_seat_name(conn, 3, exclude_uid=user_id)
+        return oic or _org_seat_name(conn, 1 if kind == "section" else 2, org_path=path, exclude_uid=user_id)
+    if kind == "director":
+        oic = _account_display_name(conn, _office_oic_for(conn, path, exclude_uid=user_id))
+        names = [d["name"] for d in _directors_over(conn, path)
+                 if d["name"] and d["account"] != user_id]
+        return oic or (" / ".join(sorted(set(names))) if names else None)
+    if kind == "above_director":
+        names = [_account_display_name(conn, a) for a in _directors_above_director(conn, user_id)]
+        return " / ".join(n for n in names if n) or None
     return None
 
 
@@ -7848,8 +8022,11 @@ def get_approvers_for(conn, user_id):
     (STAFF_ONBOARDING_AVATAR_PLAN.md §7a.2):
       * regular staff        -> their section chief(s), same unit
       * a section chief/head -> the division chief of the parent division
-      * a division chief      -> the Director
-      * the Director (or an unlinked account) -> nobody here; admins are the
+      * a division chief      -> the Director overseeing their division (the
+        Director of the nearest office above it, else the top Director)
+      * a unit head directly under an office (e.g. MSU) -> that office's Director
+      * a Director below the top (e.g. Director III) -> the top Director
+      * the top Director (or an unlinked account) -> nobody here; admins are the
         fallback (see is_approver_for).
     Never the requester themselves.
 
@@ -7871,34 +8048,18 @@ def get_approvers_for(conn, user_id):
     there's nothing to redirect: their own requests keep escalating through
     their real rank (division chief -> Director) exactly as if they held no
     OIC assignment at all."""
-    me = get_admin_user_by_id(conn, user_id)
-    if not me or not me.get("rp_id"):
-        return []
-    rp = get_rp(conn, me["rp_id"])
-    if not rp:
-        return []
-    rank = _org_rank(rp.get("designation"), rp.get("position"))
-
-    override = _oic_override_seat(_oic_org_unit_for(conn, user_id), rank)
-    if override:
-        orank, path = override
-        approvers = _org_accounts_at_rank(conn, orank, org_path=path, exclude_uid=user_id)
-        return _with_section_oic(conn, approvers, path, exclude_uid=user_id) if path else approvers
-
-    rank = _escalation_rank(rp.get("designation"), rp.get("position"))
-    path = rp.get("org_path")
-    if rank == 0:                                   # staff -> section chief (same unit)
-        approvers = _org_accounts_at_rank(conn, 1, org_path=path, exclude_uid=user_id)
+    kind, path = _decider_seat(conn, user_id)
+    if kind in ("section", "division"):
+        approvers = _org_accounts_at_rank(conn, 1 if kind == "section" else 2,
+                                          org_path=path, exclude_uid=user_id)
         return _with_section_oic(conn, approvers, path, exclude_uid=user_id)
-    if rank == 1:                                   # section chief -> division chief (parent)
-        parent = _org_parent_path(path)
-        if not parent:
-            return []
-        approvers = _org_accounts_at_rank(conn, 2, org_path=parent, exclude_uid=user_id)
-        return _with_section_oic(conn, approvers, parent, exclude_uid=user_id)
-    if rank == 2:                                   # division chief -> the Director
-        return _org_accounts_at_rank(conn, 3, exclude_uid=user_id)
-    return []                                       # Director -> admin fallback
+    if kind == "director":                          # the Director overseeing this unit
+        approvers = director_accounts_for_path(conn, path, exclude_uid=user_id)
+        oic = _office_oic_for(conn, path, exclude_uid=user_id)
+        return approvers + [oic] if oic is not None and oic not in approvers else approvers
+    if kind == "above_director":                    # Director III -> Director IV; top -> admins
+        return _directors_above_director(conn, user_id)
+    return []
 
 
 def is_approver_for(conn, user, subject_user_id):
@@ -7996,30 +8157,14 @@ def approver_title_for(conn, user_id):
     unless they're already ranked at or above that seat (a division chief
     covering one of their own sections), in which case this reads exactly as
     it would with no OIC assignment at all: their own real rank decides."""
-    me = get_admin_user_by_id(conn, user_id)
-    rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
-    if not rp:
-        return "an administrator"
-    rank = _org_rank(rp.get("designation"), rp.get("position"))
-
-    override = _oic_override_seat(_oic_org_unit_for(conn, user_id), rank)
-    if override:
-        orank, path = override
-        if orank == 2 and _org_role_filled(conn, 2, org_path=path):
-            return "your division chief"
-        if orank == 3 and _org_role_filled(conn, 3):
-            return "the Director"
-        return "an administrator"
-
-    rank = _escalation_rank(rp.get("designation"), rp.get("position"))
-    path = rp.get("org_path")
-    if rank == 0 and _org_role_filled(conn, 1, org_path=path):
+    kind, path = _decider_seat(conn, user_id)
+    if kind == "section" and _org_role_filled(conn, 1, org_path=path):
         return "your section chief"
-    if rank == 1:
-        parent = _org_parent_path(path)
-        if parent and _org_role_filled(conn, 2, org_path=parent):
-            return "your division chief"
-    if rank == 2 and _org_role_filled(conn, 3):
+    if kind == "division" and _org_role_filled(conn, 2, org_path=path):
+        return "your division chief"
+    if kind == "director" and _directors_over(conn, path):
+        return "the Director"
+    if kind == "above_director" and _directors_above_director(conn, user_id):
         return "the Director"
     return "an administrator"
 
@@ -8078,7 +8223,14 @@ def team_scope_for_user(conn, user, *, area=None):
     """, (user["id"],)).fetchone() if user else None
     if row:
         path, designation, position = row
-        if _org_rank(designation, position) >= 3:      # the Director
+        if _org_rank(designation, position) >= 3:      # a Director
+            # The top Director's team is the whole bureau. Another Director
+            # (e.g. Director III) sees the office they head and everything
+            # nested under it; a bureau_access grant (above) widens that to the
+            # whole bureau when they need it.
+            uid = user["id"]
+            if path and _unit_level(conn, path) == "office" and _directors_above_director(conn, uid):
+                return path, "unit"
             return None, "bureau"
         if path:
             return path, "unit"
@@ -11370,7 +11522,8 @@ def work_arrangement_signatories(conn, user_id=None):
     resolved from live data rather than hardcoded — nothing else in this repo
     hardcodes a person's name and this shouldn't be the first thing that does.
 
-      * Approved by — the directory's Director (org rank 3).
+      * Approved by — the top Director in the directory (the bureau-wide
+        annex is approved at the top; see director_seat_holder).
       * Prepared by — the wa_prepared_by_name app_setting override when an
         admin has pinned one, otherwise whoever is generating the export.
         Either way the printed title is read live from that person's
@@ -11379,7 +11532,8 @@ def work_arrangement_signatories(conn, user_id=None):
         pinning a signatory keeps their real position current even if it
         changes later, the same way "Approved by" already does.
     """
-    approved_name = _org_seat_name(conn, 3) or ""
+    top = director_seat_holder(conn)
+    approved_name = top[0] if top else ""
     approved_title = ""
     if approved_name:
         row = conn.execute(

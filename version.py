@@ -25,10 +25,11 @@ CHANGELOG = [
     {
         "version": "10.43",
         "date": "November 23, 2026",
-        "summary": "Save the interim bureau structure as a planning reference.",
+        "summary": "Prepare approvals for two Directors under the new bureau structure.",
         "changes": [
-            "Add a reference describing the new offices, divisions, sections, mandates and unit mailboxes.",
-            "Record where Office Connect must change before the new structure is entered; no app behavior changes."
+            "Send each division's approvals, advisories and Director reviews to the Director who oversees it.",
+            "Route the Director III's own requests to the Director IV, and keep automatic approval for the Director IV only.",
+            "List every Director's office in the directory and save the new structure as a reference."
         ],
     },
     {

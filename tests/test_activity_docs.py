@@ -664,7 +664,7 @@ def signatory(viewer, conn, relay, monkeypatch, director, **setting):
     for k in ("head_name", "head_title"):
         st.set_setting(conn, f"travel.sig.{k}", setting.get(k, ""))
     conn.commit()
-    monkeypatch.setattr(st, "org_seat_holder", lambda c, rank, **kw: director if rank == 3 else None)
+    monkeypatch.setattr(st, "director_seat_holder", lambda c, org_path=None: director)
     eid = create(viewer, kind="travel", title="CALEP Field Visit", audience="bureau",
                  people=[str(uid(conn, "viewer@test.local"))])
     draft(viewer, eid, "dpo")

@@ -1,5 +1,17 @@
 # Cloud/mobile setup status
 
+## Two-Director Phase 1 built — November 23, 2026
+
+Owner said "do the next step once ready". Phase 1 (multi-office model) is built on
+`claude/funny-bohr-qif52k` in [PR #636](https://github.com/jongsky25/css-is/pull/636),
+candidate 10.43. Approvals, advisory/Documents Director review, signatures and team
+views now follow the Director overseeing each unit; one-Director directories behave as
+before. Details and remaining limits: [assessment §Phase 1](ORG_RESTRUCTURE_ASSESSMENT.md).
+No schema, data, preview, merge or deployment. The live directory must not be
+restructured until Phase 2 tooling (re-parent/retire units) exists.
+
+Next: hosted CI on the PR; then Phase 2 (safe restructure tooling) when the owner asks.
+
 ## Office restructure reference and assessment — November 23, 2026
 
 Owner supplied the interim BLHSD functional-structure DPO (copy dated November 20,

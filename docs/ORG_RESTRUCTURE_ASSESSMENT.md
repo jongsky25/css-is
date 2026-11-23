@@ -147,3 +147,38 @@ for intake mapping.
    **Director IV**. All AU staff, including those who also serve as division
    admins or Director-office support, are approved by the **AU lead** (one home
    unit per person; no secondary-assignment feature needed for approvals).
+
+## Phase 1 implementation (candidate 10.43)
+
+Built on `claude/funny-bohr-qif52k`. Directory-driven; no schema change.
+
+- **Who is "the Director" for a unit:** the Director attached to the nearest
+  `office` unit above it; otherwise the top Director (highest grade read from
+  "Director IV"/"Director III" in designation or position). One shared resolver
+  in `storage.py` (`director_accounts_for_path`, `director_seat_holder`,
+  `_decider_seat`) feeds approvals, approver copy, notifications, signatures,
+  advisory review and Documents.
+- **Approvals:** division chiefs → their overseeing Director; a unit head
+  directly under an office (MSU, designation "Unit Head") → that Director;
+  Director-office staff → their Director; AU lead ("Admin Head") → top Director;
+  Director III → Director IV; only the top Director auto-approves. An OIC set on
+  an office is added beside that Director.
+- **Advisory review / Documents:** Director stage and Director-class review
+  follow the owning unit; office units are valid seats and lead offices.
+- **Team views:** a non-top Director sees her office subtree; the existing
+  per-account bureau access grant (Admin → Users) widens it to the whole bureau.
+- **Signatures:** travel head of office = Director over the filer's unit;
+  activity DPO and AWA annex = top Director.
+- **Directory UI:** every office is listed and selectable; units outside
+  divisions show their office.
+- **Unchanged with one Director:** every rule resolves exactly as before.
+
+**Data the directory needs before switching:** offices at level `office` with
+divisions nested under them (proposed paths in the JSON), Director titles that
+include their grade, the MSU lead designated "Unit Head", and the AU kept at a
+path ending in `/ADMIN`. Re-parenting existing units needs Phase 2 tooling.
+
+**Known limits left for later phases:** Teams/dashboard cards still show one
+directorate card; travel certifier for MSU/AU staff falls back to settings;
+the Documents Director inbox (`director()`) remains open to any Director;
+hardcoded names (Phase 3) are untouched.

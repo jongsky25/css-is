@@ -507,7 +507,7 @@ def mutate(conn,user,doc_id,revision,action,data):
             text=reason(data.get('reason'))
             lead=int(data.get('lead_id') or 0); active_account(conn,lead)
             unit=int(data.get('unit_id') or 0)
-            if not conn.execute("SELECT 1 FROM org_unit WHERE id=? AND level IN ('division','bureau','section')",(unit,)).fetchone():
+            if not conn.execute("SELECT 1 FROM org_unit WHERE id=? AND level IN ('division','office','bureau','section')",(unit,)).fetchone():
                 raise ValueError('Choose the lead office or division.')
             tag_people, tag_sections, tagged = tags.resolve(conn, doc, data, initial=True)
             recipients={lead} | tagged | {int(k.split(':',1)[1]) for k,v in data.items() if k.startswith('recipient:') and v=='yes'}
@@ -596,7 +596,7 @@ def mutate(conn,user,doc_id,revision,action,data):
                 raise ValueError('Choose routine authority or Director approval.')
             reviewer=active_account(conn,int(data['reviewer_id']))
             require(p.can_view(conn,reviewer,doc),'Reviewer needs document access.')
-            require(p.director(conn,reviewer) if klass=='director' else any(s['level'] in ('division','bureau') and (s['level']=='bureau' or p.scope_contains(conn,s['id'],doc['unit_id'])) for s in p.seats(conn,reviewer)), 'Reviewer does not hold the required directory authority.')
+            require(p.director_for(conn,reviewer,doc['unit_id']) if klass=='director' else any(s['level'] in ('division','office','bureau') and (s['level']=='bureau' or p.scope_contains(conn,s['id'],doc['unit_id'])) for s in p.seats(conn,reviewer)), 'Reviewer does not hold the required directory authority.')
             if json.loads(doc['policy_json']).get('approval')=='director' and klass!='director':
                 raise ValueError('This policy requires Director approval.')
             if not doc['current_version'] or doc['verification']!='verified' or doc['reconcile']:
