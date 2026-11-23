@@ -176,6 +176,20 @@ function tm_norm_(s) { return String(s).replace(/[\s\u00a0]+/g, ' ').trim(); }
 // Replace text anywhere in a document body (regex, RE2). Replacements here only ever hold {{placeholders}}.
 function tm_rep_(body, pattern, repl) { body.replaceText(tm_pat_(pattern), repl); }
 
+// Unit names a source template may carry, before and after the interim BLHSD
+// structure DPO (docs/org/BLHSD_INTERIM_STRUCTURE_2026.md). Matching either lets
+// the office update its source templates without editing this script.
+const TM_DIVISION_CODES = ['HSDD', 'HSMED', 'HSIDD', 'HSGPAD', 'LHSIID', 'LHPFD', 'LHSSD'];
+const TM_SECTION_NAMES = [
+  'Special Concerns and Equity in Health', 'Equity in Health and Special Concerns',
+  'Local Health Systems? Integration', 'Primary Care', 'Governance and Equity',
+  'Performance Accountability', 'Data Systems, Analytics and Innovation',
+  'Knowledge Management and Capacity Development', 'Local Health Planning',
+  'Local Health Financing', 'Institutional Supportive Supervision and Coordination',
+  'Local Optimization and Implementation'];
+const TM_SECTION_PATTERN = '(' + TM_SECTION_NAMES.join('|') + ') Section';
+const TM_DIVISION_PATTERN = 'Division: (' + TM_DIVISION_CODES.join('|') + ')';
+
 // Make a whole table cell hold `text`, keeping the look of its first character.
 function tm_setCell_(cell, text) {
   const t = cell.editAsText(), len = t.getText().length;
@@ -382,7 +396,7 @@ function tm_report_(id) {
   tm_section_(body, 'Conclusion', null, '{{conclusion}}', x);
   tm_rep_(body, 'DEMI ARANTXA C\\. SEPE', '{{submitted_by_name}}');
   tm_rep_(body, 'Senior Health Program Officer', '{{submitted_by_title}}');
-  tm_rep_(body, 'Special Concerns and Equity in Health Section', '');
+  tm_rep_(body, TM_SECTION_PATTERN, '');
   tm_rep_(body, 'MARIA LOURDES B\\. GAJITOS, MD, MPH', '{{reviewed_by_name}}');
   tm_rep_(body, 'Medical Officer V', '{{reviewed_by_title}}');
   tm_rep_(body, 'MAR WYNN D\\. BELLO, MD, MPA, CESO IV', '{{approved_by_name}}');
@@ -449,7 +463,7 @@ function tm_cenrr_(id) {
   tm_sheetRep_(sh, 'DR\\. JUNE ROSE A\\. NAIG', '{{printed_name}}', false);
   tm_sheetRep_(sh, 'Employee No\\. 20240016', 'Employee No. {{employee_no}}', false);
   tm_sheetRep_(sh, 'Office: BLHSD', 'Office: {{office}}', false);
-  tm_sheetRep_(sh, 'Division: HSDD', 'Division: {{division}}', false);
+  tm_sheetRep_(sh, TM_DIVISION_PATTERN, 'Division: {{division}}', false);
   tm_sheetRep_(sh, 'To attend the .*per DPO No\\. 2026-0507', 'To {{purpose}} on {{dates}} per {{dpo_ref}}', false);
   // one repeating line: the date and the details share a cell, the amount sits beside it
   const line = tm_sheetRow_(sh, 'Taxi fare from');

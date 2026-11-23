@@ -18,7 +18,7 @@ from datetime import date
 import calendar_import as ci
 import recurrence
 
-_SECTION = re.compile(r"\b(?:section|sec|s)\s*\.?\s*([1-5])\b(?!\s*\d)", re.I)
+_SECTION = re.compile(r"\b(?:section|sec|s)\s*\.?\s*(10|[1-9])\b(?!\s*\d)", re.I)
 MIN_TAG_OWNED = 3          # a tag must be owned by at least this many other drafts ...
 MIN_TAG_SHARE = 0.8        # ... and this share of them to count as that unit's
 
@@ -27,8 +27,11 @@ def _is_owned(d):
     return bool(d.get("owner"))
 
 
-def suggest_owners(drafts):
-    """{index: {"owner": key, "why": sentence}} for each unowned draft that has a signal."""
+def suggest_owners(drafts, section_tones=None):
+    """{index: {"owner": key, "why": sentence}} for each unowned draft that has a signal.
+    `section_tones` ({section number: tone}, calendar_tones.section_number_tones) turns a
+    "Section 7" mention into that section's colour; without it mentions are not used."""
+    section_tones = section_tones or {}
     by_tag = defaultdict(Counter)
     for d in drafts:
         if _is_owned(d):
@@ -39,10 +42,10 @@ def suggest_owners(drafts):
         if _is_owned(d):
             continue
         text = " ".join(filter(None, [d.get("title"), d.get("people_hint")]))
-        sections = {f"s{n}" for n in _SECTION.findall(text)}
-        if len(sections) == 1:
-            key = sections.pop()
-            out[i] = {"owner": key, "why": f"The line mentions {ci.OWNER_LABELS[key]}."}
+        numbers = {int(n) for n in _SECTION.findall(text)}
+        if len(numbers) == 1 and next(iter(numbers)) in section_tones:
+            n = numbers.pop()
+            out[i] = {"owner": section_tones[n], "why": f"The line mentions Section {n}."}
             continue
         votes = Counter()
         for t in d.get("tags") or []:
@@ -53,7 +56,7 @@ def suggest_owners(drafts):
                     votes[owner] += 1
         if len(votes) == 1:
             key = next(iter(votes))
-            out[i] = {"owner": key, "why": f"{ci.OWNER_LABELS[key]} owns almost every other '{d['tags'][0]}' item in this file."}
+            out[i] = {"owner": key, "why": f"The {ci.OWNER_LABELS[key].lower()} owner has almost every other '{d['tags'][0]}' item in this file."}
     return out
 
 

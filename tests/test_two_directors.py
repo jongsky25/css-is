@@ -222,3 +222,11 @@ def test_scoped_tree_keeps_each_office(bureau, app_mod):
     scoped = app_mod._scoped_org_struct(org, "TB/OD3")
     assert [o["path"] for o in scoped["offices"]] == ["TB/OD3"]
     assert {d["path"] for d in scoped["divisions"]} == {"TB/OD3/D4"}
+
+
+def test_travel_certifier_for_units_outside_divisions_is_the_unit_lead(bureau):
+    conn, a = bureau["conn"], bureau["a"]
+    assert travel.directory_signers(conn, a["au_staff"], {})["certifier_name"] == "TD AU Lead"
+    assert travel.directory_signers(conn, a["msu_staff"], {})["certifier_name"] == "TD MSU Lead"
+    assert travel.directory_signers(conn, a["au_lead"], {})["certifier_name"] == "TD Director Four"
+    assert travel.directory_signers(conn, a["msu_lead"], {})["certifier_name"] == "TD Director Three"

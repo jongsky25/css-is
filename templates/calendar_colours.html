@@ -1,0 +1,46 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Calendar colours{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v={{ APP_VERSION }}">{% endblock %}
+{% block content %}
+{{ page_header("Calendar colours", "Each section chooses its own colour for the calendar, first come, first served. Every colour on the list looks clearly different from the others.") }}
+<p class="cal-back"><a href="/calendar">← Back to the calendar</a></p>
+{% if error %}<div class="cal-flash err" role="alert">✕ {{ error }}</div>{% endif %}
+{% if ok %}<div class="cal-flash" role="status">✓ {{ ok }}</div>{% endif %}
+
+<h2 class="cal-h2">Colours</h2>
+<ul class="cal-units" aria-label="Colours and who has them">
+  {% for t in palette %}
+  <li class="cal-unit" data-tone="{{ t.key }}"><i aria-hidden="true"></i>{{ t.label }} — {{ t.holder or "free" }}</li>
+  {% endfor %}
+</ul>
+<p class="cal-range">Mark your activities in the Word Calendar of Activities with the same colour: Word's
+  highlight for most colours, or shading for Orange, Lime and Pink. The calendar import reads it as your section's.</p>
+
+<h2 class="cal-h2">Sections and units</h2>
+{% if not any_mine %}<p class="cal-range">Only a section head (or its acting OIC) can choose a section's colour. Ask yours if it needs changing.</p>{% endif %}
+<table class="cal-table">
+  <thead><tr><th scope="col">Unit</th><th scope="col">Colour</th><th scope="col"><span class="sr-only">Change</span></th></tr></thead>
+  <tbody>
+  {% for u in units %}
+  <tr>
+    <th scope="row">{{ u.name }}</th>
+    <td>{% if u.tone %}<span class="cal-unit" data-tone="{{ u.tone }}"><i aria-hidden="true"></i>{{ (palette|selectattr("key", "equalto", u.tone)|first).label }}</span>{% else %}None yet{% endif %}</td>
+    <td>
+      {% if u.mine %}
+      <form method="post" action="/calendar/colours" class="cal-inline">
+        <input type="hidden" name="unit_id" value="{{ u.id }}">
+        <label>Choose
+          <select name="tone" aria-label="Colour for {{ u.name }}">
+            {% for t in palette if not t.holder or t.key == u.tone %}<option value="{{ t.key }}" {{ "selected" if t.key == u.tone }}>{{ t.label }}</option>{% endfor %}
+            {% if u.tone %}<option value="release">No colour (release {{ (palette|selectattr("key", "equalto", u.tone)|first).label }})</option>{% endif %}
+          </select></label>
+        <button class="cal-btn" type="submit">Save</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

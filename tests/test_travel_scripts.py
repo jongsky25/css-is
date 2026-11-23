@@ -176,3 +176,19 @@ def test_activity_document_titles_keep_their_capitals(formatted):
     }.items():
         assert formatted["doc"][key]["text"] == title
         assert formatted["doc"][key]["bold"] is True
+
+
+def test_template_unit_patterns_cover_every_unit_in_the_structure_reference():
+    """Source templates may name any current division or section; the converter's
+    alternations must cover the interim structure reference (docs/org)."""
+    import json, re
+    src = (ROOT / "apps_script" / "travel_templates.gs").read_text()
+    plan = json.loads((ROOT / "docs" / "org" / "blhsd_interim_structure_2026.json").read_text())
+    codes = re.search(r"TM_DIVISION_CODES = \[(.*?)\];", src, re.S).group(1)
+    names = re.search(r"TM_SECTION_NAMES = \[(.*?)\];", src, re.S).group(1)
+    for unit in plan["units"]:
+        if unit["level"] == "division":
+            assert f"'{unit['key']}'" in codes, unit["key"]
+        elif unit["key"].startswith("S"):
+            base = unit["name"].removesuffix(" Section")
+            assert any(re.fullmatch(p, base) for p in re.findall(r"'([^']+)'", names)), base

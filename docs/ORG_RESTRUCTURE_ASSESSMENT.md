@@ -211,11 +211,16 @@ Done:
 - Teams and dashboard unit cards show every Director office, including in
   scoped views.
 
-Needs owner input before changing:
-- "Equity in Health Section" branding on public/login pages: which unit (if any)
-  the app is credited to now.
-- Calendar import colour → section mapping (`calendar_import.py`): the colours
-  the office will use for the ten new sections.
-- Travel Apps Script template literals (`apps_script/travel_templates.gs`):
-  depend on the updated official templates.
-- Travel certifying officer for MSU/AU staff (no division chief): who certifies.
+Owner decisions (November 23, 2026) and what was built:
+- **Branding:** keep "An Equity in Health Section innovation" unchanged.
+- **Calendar colours:** each section head chooses their section's colour, first
+  come, first served, from a fixed 11-colour palette in which every pair is at
+  least 20 apart (CIE76) in light and dark themes (`calendar_tones.py`, page
+  `/calendar/colours`). The Word import reads each colour as the unit holding it;
+  "Section N" mentions suggest that section's colour. Shading counts only near a
+  tone's reference fill; a strong orange still reads as Orange for older files.
+- **Travel certifying officer** for units outside divisions (AU, MSU): the unit
+  lead; the lead's own filing goes to the Director over the unit.
+- **Travel template text:** the Apps Script converter matches old and new division
+  codes and section names from the DPO, so updated source templates convert
+  without script edits; a test ties the list to the structure reference.

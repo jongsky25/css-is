@@ -47,7 +47,8 @@ DEFAULT_SCOPE = "blend"            # mine + bureau-wide
 
 # Colour tokens for the owner unit (the Word legend): the template resolves a
 # token to a CSS variable; this module never emits a colour value.
-UNIT_TONES = ("green", "yellow", "magenta", "orange", "cyan", "blue", "grey")
+import calendar_tones as _ctones
+UNIT_TONES = _ctones.TONES + (_ctones.NO_TONE,)
 _TONES_SETTING = "calendar_unit_tones"      # JSON {org_unit_id: tone}, set by the importer (B2)
 
 

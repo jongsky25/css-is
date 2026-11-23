@@ -546,14 +546,19 @@ def _division_path(conn, org_path):
         return None
     if row[0] == "division":
         return org_path
-    return org_path.rsplit("/", 1)[0] if row[0] == "section" and "/" in org_path else None
+    if row[0] != "section" or "/" not in org_path:
+        return None
+    parent = org_path.rsplit("/", 1)[0]
+    # A section directly under the bureau or an office (AU, MSU) has no division.
+    return parent if st._unit_level(conn, parent) == "division" else None
 
 
 def directory_signers(conn, user_id, settings) -> dict:
     """The head of office and certifying officer for a filer, so they need not be typed on every filing.
     Head of office: the names set under Travel filing settings if given (an acting head, say), otherwise the
     Director overseeing the filer's unit in the directory. Certifying officer: the head of the filer's own division in the directory
-    (never the filer), falling back to the names set under Travel filing settings. `settings` is the
+    (never the filer); for units outside a division, the unit lead (the Director for
+    the lead's own filing); falling back to the names set under Travel filing settings. `settings` is the
     travel.sig.* dict; the result has the same keys with blanks filled where the directory knows."""
     out = dict(settings)
     if not (settings.get("head_name") or "").strip():
@@ -569,6 +574,16 @@ def directory_signers(conn, user_id, settings) -> dict:
                            title_from="position") if division else None
     if chief:
         out["certifier_name"], out["certifier_title"] = chief[0], chief[1] or "Division Chief"
+    elif profile.get("org_path") and not division:
+        # Units outside any division (Administrative Unit, Management Support Unit):
+        # the unit lead certifies (owner decision, docs/ORG_RESTRUCTURE_ASSESSMENT.md);
+        # the lead's own filing goes to the Director over the unit.
+        lead = st.org_seat_holder(conn, 1, org_path=profile["org_path"], exclude_rp_id=profile.get("rp_id"),
+                                  title_from="position")
+        if not lead and st._unit_level(conn, profile["org_path"]) == "section":
+            lead = st.director_seat_holder(conn, profile["org_path"])
+        if lead:
+            out["certifier_name"], out["certifier_title"] = lead[0], lead[1] or "Unit Head"
     return out
 
 

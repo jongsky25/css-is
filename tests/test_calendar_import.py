@@ -70,10 +70,11 @@ def one(text, color="hl:cyan", day=6, month=10):
 # ----------------------------------------------------------------- owners ---
 
 @pytest.mark.parametrize("color, owner", [
-    ("hl:green", "bureau"), ("hl:yellow", "s1"), ("hl:magenta", "s2"),
-    ("shd:ff9900", "s3"), ("hl:cyan", "s4"),
-    ("shd:6fa8dc", "s5"), ("shd:9fc5e8", "s5"), ("shd:c9daf8", "s5"), ("shd:4a86e8", "s5"),
-    ("hl:blue", "s5"),
+    ("hl:green", "green"), ("hl:yellow", "yellow"), ("hl:magenta", "magenta"),
+    ("shd:ff9900", "orange"), ("hl:cyan", "cyan"),
+    ("shd:6fa8dc", "blue"), ("shd:9fc5e8", "blue"), ("shd:c9daf8", "blue"), ("shd:4a86e8", "blue"),
+    ("hl:blue", "blue"), ("hl:red", "red"), ("hl:darkMagenta", "purple"), ("hl:darkRed", "maroon"),
+    ("shd:99cc00", "lime"), ("shd:ff66aa", "pink"),
 ])
 def test_owner_comes_from_the_colour_legend(color, owner):
     assert one("Some Meeting", color).owner == owner
@@ -99,7 +100,7 @@ def test_the_colour_covering_most_of_the_text_wins():
     _color_run(par, "Big yellow part of the line ", "hl:yellow")
     _color_run(par, "(1pm)", "hl:cyan")
     buf = io.BytesIO(); doc.save(buf); buf.seek(0)
-    assert ci.parse(buf).drafts[0].owner == "s1"
+    assert ci.parse(buf).drafts[0].owner == "yellow"
 
 
 # ------------------------------------------------------------------- days ---
@@ -200,7 +201,7 @@ def test_a_line_break_inside_a_paragraph_makes_two_lines():
     _color_run(par, "Second meeting", "hl:yellow")
     buf = io.BytesIO(); doc.save(buf); buf.seek(0)
     assert [(d.title, d.owner) for d in ci.parse(buf).drafts] == [
-        ("First meeting", "s4"), ("Second meeting", "s1")]
+        ("First meeting", "cyan"), ("Second meeting", "yellow")]
 
 
 # ------------------------------------------------------------------ times ---
@@ -365,7 +366,7 @@ def test_owner_by_majority_with_a_warning_when_colours_disagree():
     res = build((10, {5: [("Joint thing", "hl:cyan")], 6: [("Joint thing", "hl:cyan")],
                       7: [("Joint thing", "hl:yellow")]}))
     (d,) = res.drafts
-    assert d.owner == "s4" and any("different owners" in w for w in d.warnings)
+    assert d.owner == "cyan" and any("different owners" in w for w in d.warnings)
 
 
 def test_time_comes_from_the_first_day_of_a_range():
