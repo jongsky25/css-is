@@ -223,3 +223,21 @@ def test_route_official_docx(viewer):
                            "period": "quarter:2026-Q1"})
     assert r.status_code == 200
     assert r.content[:2] == b"PK"
+
+
+def test_approved_by_follows_head_of_office_setting_then_directory(app_mod, monkeypatch):
+    import storage as st
+    conn = st.connect(app_mod.DB)
+    try:
+        st.set_setting(conn, "travel.sig.head_name", "Acting Head, MD")
+        st.set_setting(conn, "travel.sig.head_title", "OIC-Director IV")
+        conn.commit()
+        assert app_mod._csm_approved_by(conn) == {"name": "ACTING HEAD, MD", "title": "OIC-Director IV"}
+        st.set_setting(conn, "travel.sig.head_name", "")
+        conn.commit()
+        monkeypatch.setattr(st, "director_seat_holder", lambda c, org_path=None: ("Top Director", "Director IV"))
+        assert app_mod._csm_approved_by(conn) == {"name": "TOP DIRECTOR", "title": "Director IV"}
+        monkeypatch.setattr(st, "director_seat_holder", lambda c, org_path=None: None)
+        assert app_mod._csm_approved_by(conn)["name"] == ""
+    finally:
+        conn.close()

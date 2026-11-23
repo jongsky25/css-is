@@ -215,3 +215,10 @@ def test_single_director_directory_behaves_as_before(bureau):
     assert approvers(bureau, "chief4") == {a["dir4"]}
     assert approvers(bureau, "msu_lead") == {a["dir4"]}
     assert st.director_accounts_for_unit(conn, u["s7"]) == [a["dir4"]]
+
+
+def test_scoped_tree_keeps_each_office(bureau, app_mod):
+    org = st.org_structure(bureau["conn"])
+    scoped = app_mod._scoped_org_struct(org, "TB/OD3")
+    assert [o["path"] for o in scoped["offices"]] == ["TB/OD3"]
+    assert {d["path"] for d in scoped["divisions"]} == {"TB/OD3/D4"}

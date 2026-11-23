@@ -199,3 +199,23 @@ hardcoded names (Phase 3) are untouched.
   routing rules to re-map; never reassigns open work. Runbook:
   [ORG_RESTRUCTURE_RUNBOOK.md](ORG_RESTRUCTURE_RUNBOOK.md).
 - MSU and AU are stored at section level (units outside divisions).
+
+## Phase 3 progress (hardcoded names)
+
+Done:
+- Official CSM report "Approved by" now follows the head of office set under
+  Travel filing settings, else the top Director in the directory (the code
+  constant named a former Director IV). "Prepared by" is unchanged.
+- `apply_directory.py` refuses to run without `--legacy-structure`, so the
+  superseded two-division tree cannot be recreated by accident.
+- Teams and dashboard unit cards show every Director office, including in
+  scoped views.
+
+Needs owner input before changing:
+- "Equity in Health Section" branding on public/login pages: which unit (if any)
+  the app is credited to now.
+- Calendar import colour → section mapping (`calendar_import.py`): the colours
+  the office will use for the ten new sections.
+- Travel Apps Script template literals (`apps_script/travel_templates.gs`):
+  depend on the updated official templates.
+- Travel certifying officer for MSU/AU staff (no division chief): who certifies.

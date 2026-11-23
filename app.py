@@ -8524,11 +8524,24 @@ def _csm_region_label_t(raw):
     return _CSM_REGION_ALIAS.get(_norm_key(raw), raw)
 
 
-# Report signatories (edit here). Shown in the official report's signature block.
+# Report signatories. Shown in the official report's signature block.
 CSM_PREPARED_BY = {"name": "RUSTOM CANARES",
                    "title": "Administrative Assistant III"}
-CSM_APPROVED_BY = {"name": "MAR WYNN D. BELLO, MD, MPA, CESO IV",
-                   "title": "Director IV"}
+# Last resort only: "Approved by" normally comes from _csm_approved_by (the head of
+# office set under Travel filing settings, else the top Director in the directory),
+# so a change of Director needs no code edit.
+CSM_APPROVED_BY = {"name": "", "title": "Director IV"}
+
+
+def _csm_approved_by(conn):
+    """The official CSM report's approving signatory: the same head of office the
+    travel and activity forms use (an acting head set under Travel filing settings
+    wins), else the top Director in the directory."""
+    import activity_docs
+    name, title = activity_docs.head_of_office(conn)
+    if (name or "").strip():
+        return {"name": name.strip().upper(), "title": (title or "").strip() or CSM_APPROVED_BY["title"]}
+    return dict(CSM_APPROVED_BY)
 # Citizen's Charter answer wording exactly as printed in the official template
 # (display only; counting still keys off the canonical CSM_CC*_OPTS in the same
 # order, so the i-th template label lines up with the i-th tallied option). The
@@ -14009,7 +14022,7 @@ def reports_export(request: Request, type: int = 1, fmt: str = "docx",
             meta.update({
                 "title": "Client Satisfaction Measurement Report",
                 "period_info": _csm_period_heading(period),
-                "prepared_by": CSM_PREPARED_BY, "approved_by": CSM_APPROVED_BY,
+                "prepared_by": CSM_PREPARED_BY, "approved_by": _csm_approved_by(conn),
                 "seal_path": _csm_seal_path(),
                 "formula_path": _csm_asset("csm_formula.png"),
                 "sign_date": _now_local().strftime("%B %d, %Y"),
@@ -14372,6 +14385,7 @@ def _scoped_org_struct(org_struct, org):
             divs.append({**d, "sections": secs})
     od = org_struct.get("directorate")
     return {"directorate": od if (od and (od.get("path") or "").startswith(org)) else None,
+            "offices": keep(org_struct.get("offices", [])),
             "divisions": divs, "admin_sections": keep(org_struct.get("admin_sections", []))}
 
 
@@ -14798,19 +14812,23 @@ def _build_unit_cards(atoms, org, instances, period):
         admin.append({"unit": _unit_of(s), "card": sc})
     di.assign_unit_badges(all_sections)                # ALL sections compete bureau-wide
 
-    # The Office of the Director is the head office, not a section — it stands on
-    # its own (absolute badges only), outside the sections cohort.
-    od = org.get("directorate")
-    od_card = card_for(od) if od else None
-    if od_card:
-        di.assign_unit_badges([od_card])
+    # Each Director's office is a head office, not a section — it stands on its
+    # own (absolute badges only), outside the sections cohort. `directorate` stays
+    # the top Director's office for single-office callers; `offices` lists all.
+    office_units = org.get("offices") or ([org["directorate"]] if org.get("directorate") else [])
+    offices = []
+    for od in office_units:
+        oc = card_for(od)
+        if oc:
+            di.assign_unit_badges([oc])
+        offices.append({"unit": _unit_of(od), "card": oc})
 
     by_path = {}
-    for c in [bureau_card, od_card, *div_cards, *all_sections]:
+    for c in [bureau_card, *[o["card"] for o in offices], *div_cards, *all_sections]:
         if c:
             by_path[c["path"]] = c
     return {"bureau": ({"unit": _unit_of(bureau), "card": bureau_card} if bureau else None),
-            "directorate": ({"unit": _unit_of(od), "card": od_card} if od else None),
+            "directorate": offices[0] if offices else None, "offices": offices,
             "divisions": divisions, "admin": admin, "by_path": by_path}
 
 
@@ -16178,8 +16196,8 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
 
         if tree.get("bureau"):
             _add(tree["bureau"]["card"], "bureau")
-        if tree.get("directorate"):
-            _add(tree["directorate"]["card"], "office")
+        for o in tree.get("offices") or ([tree["directorate"]] if tree.get("directorate") else []):
+            _add(o["card"], "office")
         for d in tree["divisions"]:
             _add(d["card"], "division")
             for s in d["sections"]:
