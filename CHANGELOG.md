@@ -1,3 +1,9 @@
+## 10.46 — November 23, 2026
+
+- Raise the full-suite job limit from 75 to 100 minutes: ~10,660 tests take 48–65 min of test time on identical code depending on the hosted runner (~45% spread); one run reached 75 min at 98% with no failures. Per-test setup is 20–50 ms; the time is test work spread across the suite.
+- Save Annex A (proposed organizational chart) beside the structure reference and note its Division 3 naming difference from the order's text.
+- Update the setup status with the 10.43–10.45 releases and the restructure switch-on steps. No application behavior changes.
+
 ## 10.45 — November 23, 2026
 
 - Add section-chosen calendar colours (`calendar_tones.py`, `/calendar/colours`): first come, first served, from an 11-colour palette kept at least 20 CIE76 apart in light and dark themes; the Word import maps colours through this registry.

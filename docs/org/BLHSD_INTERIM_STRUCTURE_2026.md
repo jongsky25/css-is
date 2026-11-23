@@ -11,9 +11,15 @@ shown as signed. It states it takes effect immediately and rescinds inconsistent
 issuances. Record the final number, signature date and effective date here once
 issued; until then treat this as the approved-for-planning structure.
 
-**Annex A** (organizational chart) is referenced as an integral part of the
-order but was not included in the received PDF. Request it before finalizing
-the directory tree.
+**Annex A** (organizational chart) was received separately on November 23, 2026
+as "BLHSD Proposed Organizational Structure":
+[blhsd-annex-a-proposed-structure.jpg](blhsd-annex-a-proposed-structure.jpg). It
+matches this reference (Director IV over Divisions 1–3 and the AU; Director III
+over Divisions 4–5 and the MSU; Sections 1–10) **except Division 3's name**: the
+chart says "Health Systems Intelligence, Knowledge and Capacity Development
+Division (HSIKCDD)", the order's text "Local Health Systems Intelligence and
+Innovation Division (LHSIID)". Pending the office's confirmation, this reference
+keeps the order's text.
 
 ## Why this file exists
 
@@ -268,10 +274,10 @@ Head: Medical Officer III (detailed). No mailbox listed.
 ## Open points to confirm with the office
 
 1. Final DPO number, signature and effective date (drives the two-week window).
-2. Annex A organizational chart.
+2. Division 3's name: the order's "LHSIID" or Annex A's "HSIKCDD" (Annex A received).
 3. Division 3 mandate text (blank in the order). Division 5 acronym confirmed: LHSSD.
-4. Whether the Office of the Director III is a level *between* the bureau and
-   Divisions 4/5/MSU for approvals, or a peer office with oversight only.
-5. Who approves when a matter spans both Directors' units (e.g. bureau-wide
-   advisories, leave of a Director, cross-division documents).
+4. ~~Whether the Office of the Director III sits between the bureau and its units~~
+   Decided: each Director approves for the units nested under their office.
+5. ~~Who approves when a matter spans both Directors' units~~ Decided: the Director
+   over the owning unit; bureau and AU items go to the Director IV.
 6. Mailboxes for Sections 5, 9 and 10, and whether old mailboxes are retired.
