@@ -296,7 +296,7 @@ function checkAdvisoryTemplate() {
   const wanted = ADVISORY_PLACEHOLDERS_;
   info.variants.forEach(function (v) {
     const missing = wanted.filter(function (k) { return v.placeholders.indexOf(k) < 0; });
-    Logger.log('Slide %s: has %s%s', v.variant, v.placeholders.join(', ') || '(none)',
+    Logger.log('Slide %s: has %s%s', String(v.variant), v.placeholders.join(', ') || '(none)',
                missing.length ? ' | missing: ' + missing.join(', ') : ' | complete');
   });
 }

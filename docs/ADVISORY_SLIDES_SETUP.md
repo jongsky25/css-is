@@ -13,6 +13,12 @@ users. The new advisory pages arrive in a later update.
    project. File, New, Script, name it `advisory_slides`, and paste in `apps_script/advisory_slides.gs`.
    Also replace `travel_docs.gs` with the version in this repository (it now hands `advisory_*`
    requests to the new file). The Drive API service (v3) is already on for travel.
+   **Permissions.** This project lists its permissions by hand. In Project Settings tick "Show
+   'appsscript.json' manifest file in editor", open `appsscript.json`, and add these two entries to
+   `oauthScopes` (otherwise the next step fails with "Specified permissions are not sufficient to
+   call SlidesApp.openById"):
+   `https://www.googleapis.com/auth/presentations` (open and fill Slides) and
+   `https://www.googleapis.com/auth/script.external_request` (the slide picture taken for review).
 2. **Make the master template.** In the editor, choose `makeAdvisoryTemplate` and Run. Allow the
    Slides permission it asks for. It copies the office template
    ([BLHSDTO-Advisory-Template](https://docs.google.com/presentation/d/1T750K6cphrzOo6_-3GlP_9vdEt-fKXLWnZSjCGWbHY4/edit))
