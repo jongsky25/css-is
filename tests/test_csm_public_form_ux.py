@@ -1,5 +1,5 @@
 """Browser checks for the public Type-1 CSM form (Spot Feedback #121): the Citizen's Charter skip rule, the
-one-question-at-a-time mode with the new steps, submitting with every optional question blank, and phone width.
+one-question-at-a-time mode with the new steps (including who served the client), submitting with every optional question blank, and phone width.
 
 Optional runner: pip install playwright && python -m playwright install chromium. The browser is served by the
 anonymous TestClient; every other host is blocked."""
@@ -70,7 +70,12 @@ def test_the_questions_one_at_a_time_mode_walks_through_the_new_steps(page, walk
     page.locator('#conv-toggle').click()
     pw.expect(page.locator('#f-age')).to_be_visible()                     # step 1: about you
     pw.expect(page.locator('#csm-cc')).to_be_hidden()
+    pw.expect(page.locator('#f-served')).to_be_hidden()
     page.locator('#conv-next').click()                                    # nothing in step 1 is required
+    pw.expect(page.locator('#f-served')).to_be_visible()                  # step 2: who served you (optional)
+    pw.expect(page.locator('#f-age')).to_be_hidden()
+    pw.expect(page.locator('#csm-cc')).to_be_hidden()
+    page.locator('#conv-next').click()
     pw.expect(page.locator('#csm-cc')).to_be_visible()
     pw.expect(page.get_by_text("Citizen's Charter", exact=False).first).to_be_visible()   # the heading stays in this mode
     page.locator('#conv-next').click()                                    # CC is optional too

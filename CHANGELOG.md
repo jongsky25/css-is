@@ -1,7 +1,11 @@
-## 10.49 — November 24, 2026
+## 10.50 — November 24, 2026
 
 - Calendar item page (`templates/calendar_entry.html`, `calendar_routes.py`): when the item is linked to a CSS activity the viewer can manage (`can_manage_event`), "Related actions" shows an Advisory card linking to `/activities/{token}/advisory` and `/advisories`. Unlinked items that can collect feedback get a "Create the activity to prepare an advisory" button (the existing `/create?from_entry=` form), since an advisory is stored against a CSS activity.
 - Advisory pages (`advisory_routes.py`, new `templates/advisory_error.html`): a browser that opens an advisory page it may not see (404/409/422) now gets an HTML page with links back; requests that do not ask for HTML still get the plain-text message. Private drafts stay visible only to those the document rules allow (the initiator and reviewers); an Administrator is not given access. No change to the advisory routes or workflow.
+
+## 10.49 — November 24, 2026
+
+- Turn on the optional "Who served you?" question (`ask_served_by`) on the Type 1 (walk-in / CSM) forms: the public QR form and the paper-entry form. It lists current internal staff; the submit handlers already validated and stored `response.served_by_rp_id`, and an unknown, external or blank pick still stores nothing. In the one-question-at-a-time mode it is its own optional step after "About you". Activity (Type 2) and resource-person (Type 3) forms are unchanged.
 
 ## 10.48 — November 24, 2026
 
