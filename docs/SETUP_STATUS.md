@@ -1,5 +1,13 @@
 # Cloud/mobile setup status
 
+## Travel claims vs DM 2026-0521 scoped — November 24, 2026
+
+Owner asked to scope travel-claim improvements against DOH DM 2026-0521 (pre-audit
+directives on per diem, TNVS, airfare, baggage, cash advances). Scope only, nothing built:
+[TRAVEL_DM_2026_0521_SCOPE.md](TRAVEL_DM_2026_0521_SCOPE.md) (gap map, increments DM1-DM6,
+seven owner decisions). Next: owner answers the decisions; recommended first build DM1.
+The restructure next steps below are unchanged.
+
 ## Restructure ready to switch on; 10.45 live — November 23, 2026
 
 Released and verified today (each guarded deployment: verified live snapshot, upload,
