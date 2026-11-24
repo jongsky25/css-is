@@ -4,13 +4,14 @@ import storage as st
 
 
 def can_manage(user, ev, conn=None):
-    """Current creator/admin or permitted section-manager team authority."""
+    """Creator, Super Administrator, or a manager level within its unit reach
+    (storage.activity_scope_for_user)."""
     if not user or not ev:
         return False
     if user['role']=='admin' or (bool(ev.get('created_by')) and ev['created_by']==user['username']):
         return True
     if conn is None or not ev.get('id') or not auth.can(user['role'],'manage_event'):
         return False
-    scope_path,kind=st.team_scope_for_user(conn,user)
+    scope_path,kind,exact=st.activity_scope_for_user(conn,user)
     if kind=='none':return False
-    return st.event_in_team_scope(st.event_scope_paths(conn,ev['id']),scope_path)
+    return st.event_in_team_scope(st.event_scope_paths(conn,ev['id']),scope_path,exact)

@@ -91,7 +91,7 @@ def authority(conn,context,action):
         JOIN admin_user u ON u.id=c.account_id JOIN telegram_grant g ON g.connection_id=c.id AND g.account_id=c.account_id
         WHERE c.id=? AND c.generation=? AND c.telegram_user_id=? AND c.private_chat_id=? AND c.state='active'
         AND c.bot_identity=? AND c.bot_fingerprint=? AND u.active=1 AND u.must_change=0
-        AND u.role IN ('viewer','encoder','section_manager','admin')
+        AND u.role IN ('''+auth.role_sql_list()+''')
         AND g.generation=c.generation AND g.action=? AND g.revoked_at IS NULL AND g.bot_identity=? AND g.bot_fingerprint=?''',
         (context['connection_id'],context['generation'],context['sender_id'],context['sender_id'],bot[0],bot[2],action,bot[0],bot[2]))
     if not found:

@@ -1,3 +1,12 @@
+## 10.50 — November 24, 2026
+
+- User levels (owner decisions on `docs/USER_LEVELS_ASSESSMENT.md`). Stored role codes are unchanged for existing accounts, so nobody is signed out and no Telegram/MCP/integration grant is revoked. `admin` is now labelled Super Administrator and keeps every power and override.
+- New `system_admin` (Administrator): new capability `operate` covers `/ops` and `/admin/*` except `/admin/users`, `/admin/audit`, `/admin/sharing`, `/admin/integrations`, `/admin/backups`, `/admin/restructure` and `/admin/documents` (still `manage_users`, Super Administrator only). It has directory, hide, merge, walk-in and feedback triage. It has no overrides: activities, approvals and team sight follow the directory, as for any manager.
+- New `division_manager`: Section Manager capabilities with reach over the whole division (`storage.activity_scope_for_user`).
+- Section Manager (and Administrator) activity reach: their own unit. At division/office/bureau level this is that unit alone (`exact`) unless they are its chief (rank 2+) or acting OIC. The management feeds (`event_feed_scope`, `list_events`, home strips) use the same rule.
+- Calendar notice of meeting (`calendar_notice.can_send`) and starting an item for a room booking no longer admit every Section Manager bureau-wide; they need the unit reach above.
+- Labels: Viewer → Staff, Encoder → Staff + survey encoding. Unused capability `wipe` removed. Hard-coded role lists in travel drafts, calendar actions and four Telegram queries now use `auth.valid_role` / `auth.role_sql_list()`, so the new levels can use Telegram.
+
 ## 10.49 — November 24, 2026
 
 - Turn on the optional "Who served you?" question (`ask_served_by`) on the Type 1 (walk-in / CSM) forms: the public QR form and the paper-entry form. It lists current internal staff; the submit handlers already validated and stored `response.served_by_rp_id`, and an unknown, external or blank pick still stores nothing. In the one-question-at-a-time mode it is its own optional step after "About you". Activity (Type 2) and resource-person (Type 3) forms are unchanged.

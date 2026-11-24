@@ -4,7 +4,7 @@ Office Connect auth — minimal, stdlib-only authentication + role-based access 
 What it does:
   * hashes passwords with PBKDF2-HMAC-SHA256 + a per-user salt (no dependencies),
   * signs session cookies whose random IDs are registered/revoked in storage, and
-  * defines the four roles and exactly what each one may do (the capability map).
+  * defines the roles and exactly what each one may do (the capability map).
 
 Security notes (on the record):
   * This is intended for an INTERNAL / LAN tool served over plain HTTP, so the
@@ -29,32 +29,65 @@ import time
 # Roles + capabilities — the single source of truth for "who may do what".
 # ---------------------------------------------------------------------
 
-ROLES = ["viewer", "encoder", "section_manager", "admin"]
+# Stored role codes. The codes are kept stable on purpose: session cookies,
+# Telegram/MCP/integration grants and the audit log all carry them, and a role
+# change revokes an account's sessions and grants. "admin" therefore still means
+# the full-power account (shown as Super Administrator); "system_admin" is the
+# narrower Administrator added in 10.50 (docs/USER_LEVELS_ASSESSMENT.md).
+ROLES = ["viewer", "encoder", "section_manager", "division_manager", "system_admin", "admin"]
 ROLE_LABELS = {
-    "viewer": "Viewer",
-    "encoder": "Encoder",
+    "viewer": "Staff",
+    "encoder": "Staff + survey encoding",
     "section_manager": "Section Manager",
-    "admin": "Administrator",
+    "division_manager": "Division Manager",
+    "system_admin": "Administrator",
+    "admin": "Super Administrator",
 }
 ROLE_BLURB = {
-    "viewer": "View everything; cannot create or edit.",
-    "encoder": "Viewer + manual/paper data entry.",
-    "section_manager": "Encoder + edit data, create activities, response windows, link trees, "
-                       "reports, adding external resource persons.",
-    "admin": "Full access, including the directory, hiding people, managing users, and editing/"
-             "archiving individual walk-in (Type 1) entries.",
+    "viewer": "Everything their seat in the directory, their unit and their module grants allow; "
+              "nothing system-wide.",
+    "encoder": "Staff + manual/paper survey entry.",
+    "section_manager": "Staff + survey encoding + create and run activities, response windows, "
+                       "link trees, reports and outside resource persons, for their OWN unit "
+                       "(a chief or acting OIC also covers the units under them).",
+    "division_manager": "Section Manager for the whole division they sit in.",
+    "system_admin": "Runs the system: directory, email, holidays, AI, rules, appearance, travel and "
+                    "AWA settings, feedback, Ops. Does not manage accounts, roles, backups, audit or "
+                    "restructure, and has no override over approvals, team views or other units' "
+                    "activities.",
+    "admin": "Full access: accounts and roles, bureau-wide sight grants, acting OICs, backups, audit, "
+             "restructure, and the overrides (any activity, approvals of unplaced staff).",
 }
 
+_MANAGER_CAPS = {"view", "encode", "edit_data", "create_activity", "manage_event", "add_external_rp"}
+_OPERATOR_CAPS = _MANAGER_CAPS | {"operate", "directory", "hide", "triage_feedback",
+                                  "manage_walkin_entries", "merge_activity"}
+
 # Capability map. Every gated action checks one of these names.
+#   operate      -- system operations and settings (most of /admin, /ops)
+#   manage_users -- accounts, roles, sight grants, backups, audit, restructure
 ROLE_CAPS = {
-    "viewer":          {"view"},
-    "encoder":         {"view", "encode"},
-    "section_manager": {"view", "encode", "edit_data", "create_activity", "manage_event",
-                        "add_external_rp"},
-    "admin":           {"view", "encode", "edit_data", "create_activity", "manage_event",
-                        "directory", "hide", "manage_users", "wipe", "triage_feedback",
-                        "manage_walkin_entries", "merge_activity", "add_external_rp"},
+    "viewer":           {"view"},
+    "encoder":          {"view", "encode"},
+    "section_manager":  set(_MANAGER_CAPS),
+    "division_manager": set(_MANAGER_CAPS),
+    "system_admin":     set(_OPERATOR_CAPS),
+    "admin":            _OPERATOR_CAPS | {"manage_users"},
 }
+
+# Roles whose activity reach is limited to a unit (activity_permissions).
+ACTIVITY_MANAGER_ROLES = ("section_manager", "division_manager", "system_admin")
+
+
+def is_super_admin(user):
+    """The full-power account. The only role with overrides."""
+    return bool(user) and (user.get("role") if isinstance(user, dict) else None) == "admin"
+
+
+def role_sql_list():
+    """A SQL-safe literal list of every valid role, for queries that filter
+    active accounts (the codes are fixed identifiers, never user input)."""
+    return ",".join("'" + r + "'" for r in ROLE_CAPS)
 
 
 def can(role, capability):

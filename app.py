@@ -768,7 +768,7 @@ NAV_GROUPS = [
     {"name": "Administrator", "items": [
         {"key": "appearance", "url": "/admin/appearance", "label": "Appearance",
          "section": "Day to day", "hint": "Seasonal page themes, avatar outfits & schedules",
-         "kw": "appearance theme seasonal halloween christmas costume avatar outfit schedule", "cap": "manage_users"},
+         "kw": "appearance theme seasonal halloween christmas costume avatar outfit schedule", "cap": "operate"},
         {"key": "feedback", "url": "/admin/feedback", "label": "Feedback",
          "section": "Day to day",
          "hint": "In-page comments from users",
@@ -777,18 +777,18 @@ NAV_GROUPS = [
          "hint": "Ranked interface-friction opportunities",
          "kw": "ux insights telemetry friction dead click rage click ranked opportunities "
                "behavior passive analytics what to fix handoff export download ai",
-         "cap": "manage_users",
+         "cap": "operate",
          "in_nav": False},
         {"key": "ai", "url": "/admin/ai", "label": "AI",
          "hint": "Gemini mode, budget & interaction log",
          "kw": "ai gemini assistant budget model llm nl router answers cap quota interaction "
                "log feedback test connection",
-         "cap": "manage_users"},
+         "cap": "operate"},
         {"key": "rules", "url": "/admin/rules", "label": "Learned rules",
          "hint": "FAQ rules that answer without AI",
          "kw": "learned rules faq frequently asked questions ai search bar non-ai deterministic "
                "answers save credits budget promote candidate question mining teach",
-         "cap": "manage_users",
+         "cap": "operate",
          "in_nav": False},
         {"key": "directory", "url": "/directory", "label": "Directory",
          "hint": "Org units, staff & speakers",
@@ -813,7 +813,7 @@ NAV_GROUPS = [
          "kw": "backups snapshots restore schedule export data safety", "cap": "manage_users"},
         {"key": "ops", "url": "/ops", "label": "Ops",
          "hint": "Health & performance",
-         "kw": "ops operations health performance metrics monitoring status uptime", "cap": "manage_users",
+         "kw": "ops operations health performance metrics monitoring status uptime", "cap": "operate",
          "in_nav": False},
         {"key": "audit", "url": "/admin/audit", "label": "Audit",
          "hint": "Tamper-evident change log",
@@ -827,7 +827,7 @@ NAV_GROUPS = [
          "hint": "Turn email notifications on or off",
          "kw": "email mail notifications toggle switch off preview test outbox "
                "reminders digest csm wellness awa feedback invite reset",
-         "cap": "manage_users"},
+         "cap": "operate"},
         {"key": "documents_setup", "url": "/admin/documents/setup", "label": "Documents setup",
          "hint": "Appoint the initial Documents permissions and workflow administrators",
          "kw": "documents setup initial permissions workflow administrators", "cap": "manage_users"},
@@ -835,21 +835,21 @@ NAV_GROUPS = [
          "hint": "Holidays and work suspensions",
          "kw": "holiday holidays suspension work suspension typhoon non-working special "
                "regular calendar whereabouts day off proclamation",
-         "cap": "manage_users"},
+         "cap": "operate"},
         {"key": "calendar_import", "url": "/calendar/import", "label": "Import calendar",
          "hint": "Bring the yearly Word Calendar of Activities into the Office calendar",
          "kw": "import calendar word docx upload calendar of activities yearly office calendar "
-               "bring in migrate", "cap": "manage_users", "in_nav": False},
+               "bring in migrate", "cap": "operate", "in_nav": False},
         {"key": "wa_reopen", "url": "/admin/work-arrangement", "label": "AWA filing",
          "hint": "Temporarily reopen a closed filing period",
          "kw": "awa work arrangement reopen deadline override filing period cww wfh "
                "annex c closed open late",
-         "cap": "manage_users"},
+         "cap": "operate"},
         {"key": "admin_travel", "url": "/admin/travel", "label": "Travel filing settings",
          "hint": "Travel filing on or off, the signatories and the documents relay",
          "kw": "travel filing settings enable switch signatories head of office director oic "
                "certifying officer relay google docs templates administrators station",
-         "cap": "manage_users"},
+         "cap": "operate"},
     ]},
 ]
 
@@ -2112,12 +2112,22 @@ def _issue_session(user):
         conn.close()
 
 
+_SUPER_ADMIN_PATHS = ("/admin/users", "/admin/audit", "/admin/sharing", "/admin/integrations",
+                      "/admin/backups", "/admin/restructure", "/admin/documents")
+
+
 def _required_cap(path):
     """The capability a path requires beyond simple login, or None. Coarse by
     prefix so management subtrees are protected without per-handler guards.
     ('/' is intentionally None — its route redirects non-creators to /dashboard.)"""
     if path.startswith("/admin"):
-        return "manage_users"
+        # Accounts, sight grants, backups, audit, restructure and first-time
+        # module setup stay with the Super Administrator; the rest of /admin is
+        # system operation, open to the Administrator as well
+        # (docs/USER_LEVELS_ASSESSMENT.md).
+        if any(path == p or path.startswith(p + "/") for p in _SUPER_ADMIN_PATHS):
+            return "manage_users"
+        return "operate"
     # Adding a new external resource person is narrower than the rest of
     # Directory (org units, internal staff, archiving) — Spot Feedback #90:
     # a section manager can create activities but couldn't add the outside
@@ -2136,7 +2146,7 @@ def _required_cap(path):
     if path.startswith("/dashboard/people/") and path.endswith("/hide"):
         return "hide"
     if path == "/ops":
-        return "manage_users"
+        return "operate"
     return None
 
 
@@ -4478,7 +4488,7 @@ def _ux_analysis_current(request, conn, user, since, events, feedback, retention
     current = st.session_actor(conn, payload) if payload else None
     return (current is not None
             and all(current[key] == user[key] for key in ("id", "username", "role"))
-            and auth.can(current["role"], "manage_users")
+            and auth.can(current["role"], "operate")
             and ai.ai_mode(conn) != "off" and ai.feature_enabled(conn, "ux_analysis")
             and st.list_ui_events(conn, since=since, until=until, version=version, limit=None) == events
             and st.list_spot_feedback(conn) == feedback
@@ -4717,7 +4727,7 @@ def _rule_target_options(user):
 
 @app.get("/admin/rules", response_class=HTMLResponse)
 def admin_rules(request: Request, err: str = "", msg: str = ""):
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     conn = get_conn()
     try:
@@ -4749,7 +4759,7 @@ def _valid_rule_target(user, kind, target_key):
 async def admin_rules_toggle(request: Request):
     """Master on/off for the whole FAQ layer (ai_rules_enabled). Off = every
     query goes straight to the model, as before this feature existed."""
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     posted = await _posted(request)
     on = posted.get("ai_rules_enabled") in ("on", "1", "true", "yes")
@@ -4767,7 +4777,7 @@ async def admin_rules_toggle(request: Request):
 async def admin_rules_create(request: Request):
     """Author a rule by hand, or promote a mined candidate (the promote button
     posts here with the question + dominant target pre-filled)."""
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     posted = await _posted(request)
     user = request.state.user
@@ -4794,7 +4804,7 @@ async def admin_rules_create(request: Request):
 @app.post("/admin/rules/{rid}")
 async def admin_rules_edit(request: Request, rid: int):
     """Edit, enable/disable, or delete one rule (action field picks which)."""
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     posted = await _posted(request)
     user = request.state.user
@@ -4864,7 +4874,7 @@ def _email_blockers(conn):
 @app.get("/admin/email", response_class=HTMLResponse)
 def admin_email(request: Request, msg: str = "", err: str = "", log_feature: str = "",
                 log_status: str = "", log_q: str = "", log_limit: int = 50):
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     conn = get_conn()
     try:
@@ -4922,7 +4932,7 @@ def admin_email(request: Request, msg: str = "", err: str = "", log_feature: str
 def admin_email_log_csv(request: Request, log_feature: str = "", log_status: str = "", log_q: str = ""):
     """The send log as CSV, filtered the same as the console. Recipients are personal data, so
     the export is manage_users-only and audited; cells that could run as spreadsheet formulas are neutralised."""
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     conn = get_conn()
     try:
@@ -4944,7 +4954,7 @@ def admin_email_log_csv(request: Request, log_feature: str = "", log_status: str
 
 @app.post("/admin/email/toggle")
 async def admin_email_toggle(request: Request):
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     posted = await _posted(request)
     key = posted.get("key", "")
@@ -4970,7 +4980,7 @@ async def admin_email_policy(request: Request):
     """Delivery policy for ALL outgoing mail, account mail included: a staging address that
     receives everything instead of the real recipients, the sender name, a reply-to, and a
     subject prefix. Blank clears a field."""
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     posted = await _posted(request)
     clean = lambda k, n: " ".join((posted.get(k) or "").split())[:n]   # noqa: E731
@@ -4994,7 +5004,7 @@ async def admin_email_policy(request: Request):
 
 @app.post("/admin/email/option")
 async def admin_email_option(request: Request):
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     posted = await _posted(request)
     key = posted.get("key", "")
@@ -5016,7 +5026,7 @@ async def admin_email_pause(request: Request):
     """One switch that holds every non-account email (invites, password resets
     and registration-link re-sends keep working). Queued room and calendar
     mail waits and goes out after resume; scheduled jobs skip while paused."""
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     posted = await _posted(request)
     paused = posted.get("paused") in ("on", "1", "true", "yes")
@@ -5033,7 +5043,7 @@ async def admin_email_pause(request: Request):
 
 @app.post("/admin/email/params")
 async def admin_email_params(request: Request):
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     posted = await _posted(request)
 
@@ -5067,7 +5077,7 @@ async def admin_email_params(request: Request):
 
 @app.get("/admin/email/preview/{key}", response_class=HTMLResponse)
 def admin_email_preview(request: Request, key: str):
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     result = mailer.preview(key)
     if result is None:
@@ -5078,7 +5088,7 @@ def admin_email_preview(request: Request, key: str):
 
 @app.post("/admin/email/test")
 async def admin_email_test(request: Request):
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     posted = await _posted(request)
     key = posted.get("key", "")
@@ -17503,7 +17513,7 @@ def admin_holidays(request: Request, year: int = 0, ok: str = "", err: str = "")
     """The small calendar of days nobody is expected at work. Edited here by an
     admin: proclamations change yearly and a suspension can be declared the
     night before."""
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     year = year if 2000 <= year <= 2100 else _today_local().year
     conn = get_conn()
@@ -17519,7 +17529,7 @@ def admin_holidays(request: Request, year: int = 0, ok: str = "", err: str = "")
 
 @app.post("/admin/holidays")
 async def admin_holidays_save(request: Request):
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     p = await _posted(request)
     conn = get_conn()
@@ -17551,7 +17561,7 @@ def admin_work_arrangement(request: Request, ok: str = "", err: str = ""):
     has already passed — the escape hatch for "I need to update my AWA but
     the window already closed." Lists the next period as well as the current
     one and a few before it; periods still open on their own aren't shown."""
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     conn = get_conn()
     try:
@@ -17588,7 +17598,7 @@ def admin_work_arrangement(request: Request, ok: str = "", err: str = ""):
 
 @app.post("/admin/work-arrangement/colleague-status")
 async def admin_work_arrangement_colleague_status(request: Request):
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     posted = await _posted(request)
     value = (posted.get("scope") or "").strip()
@@ -17609,7 +17619,7 @@ async def admin_work_arrangement_colleague_status(request: Request):
 
 @app.post("/admin/work-arrangement/reopen")
 async def admin_work_arrangement_reopen(request: Request):
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "operate")):
         return r
     user = request.state.user
     posted = await _posted(request)

@@ -1,5 +1,8 @@
 # User levels assessment — November 24, 2026
 
+> **Status:** owner decided on November 24 (section 5). Candidate **10.50** implements the
+> new levels on `claude/gracious-einstein-10xohq` (PR #644). Not released.
+
 Owner request: "with a bigger feature base and increase in number of users, maybe it
 is time to assess the current user level." This is a read-only code assessment of
 main at `741ef68` (10.49 candidate merged). No code changed. Live account counts per role
@@ -138,3 +141,46 @@ system-wide?**
 5. Before phase 1: on Admin → Users & roles, how many accounts hold each role, and
    who holds Administrator and Section Manager today? This sizes the migration and tells us
    whether finding 2 currently affects anyone.
+
+## 5. Owner decisions and live counts (November 24, 2026)
+
+Live accounts, counted once from Admin → Users & roles at the owner's request
+(counts only; no names copied): **73 accounts: 17 Administrators, 38 Section
+Managers (10 still pending invites), 17 Viewers, 1 Encoder (pending)**. 16 admins are linked
+to a directory seat (7 at a top-level unit, 9 deeper) and 1 is unlinked. Section Managers: 4 at a
+top-level unit, 8 one level down, 26 deeper. Bureau-wide sight grants: 2 "work
+arrangement", 1 "everything". These counts are before the restructure is applied.
+
+Decisions:
+1. **Keep a full-power level, but not for every administrator.** A *Super Administrator*
+   keeps all current powers and overrides. A narrower *Administrator* has neither.
+2. **Section Managers are limited to their own unit**, and a **Division Manager** level is added.
+3. **Viewer and Encoder merge** into Staff, with survey encoding as an option.
+4. **Split administration now:** the Super Administrator keeps accounts, roles, sight grants, OICs,
+   backups, audit, sharing, integrations, restructure and module setup. The Administrator runs operations
+   and settings.
+
+### What 10.50 does
+
+| Level (label) | Stored code | Reach |
+|---|---|---|
+| Staff | `viewer` | Their seat, unit and grants |
+| Staff + survey encoding | `encoder` | Staff + `/encode` |
+| Section Manager | `section_manager` | Activities, monitor, notices for **their own unit**. At division/office level, that unit alone unless they are its chief or acting OIC. |
+| Division Manager | `division_manager` | The same, for the **whole division** they sit in |
+| Administrator | `system_admin` | Section Manager reach + capability `operate` (most of `/admin`, `/ops`) + directory, hide, merges, walk-ins, feedback. **No overrides.** |
+| Super Administrator | `admin` | Everything, including `manage_users` pages and the overrides |
+
+The stored codes are unchanged for existing accounts. A role change signs the person out and
+revokes their Telegram/MCP/integration grants, so relabelling `admin` as Super Administrator
+avoided doing that to 16 active people. All 17 current administrators are therefore Super
+Administrators after deploy. **Owner action after release:** on Admin → Users &
+roles, move everyone who should not keep full power to *Administrator*, and consider
+moving the 4 Section Managers placed at a top-level unit to *Division Manager* where that
+is their job. Encoding stays a role variant ("Staff + survey encoding") rather than a
+separate account flag, which gives the same result without a schema change.
+
+Not in 10.50 (still open from section 2): seatless Super Administrator bureau sight is kept
+on purpose (decision 1); findings 3 (account seeds in code), 5 (one "chief" helper), 6
+(travel template grant table), 7 (supplies stock visibility) and 8 (readiness page).
+Supplies configuration and Documents setup remain Super Administrator only.

@@ -1,15 +1,17 @@
 # Cloud/mobile setup status
 
-## User levels assessed — November 24, 2026
+## User levels: owner decided; candidate 10.50 — November 24, 2026
 
-Owner asked to assess the user levels given the larger feature set and user count.
-Read-only assessment of main `741ef68`: [USER_LEVELS_ASSESSMENT.md](USER_LEVELS_ASSESSMENT.md).
-The four global roles still reflect the survey-era design, while most modules decide access through
-directory seats and module grants. Main risks: Section Manager is unscoped for
-calendar notices/starts; a seatless Administrator sees bureau-wide wellness/AWA data;
-authority is seeded in code; "chief" and "admin" have several definitions. No code changed.
-Next: owner answers the five decisions in section 4 of that document; then phase 1 (safety fixes)
-becomes a release candidate. The items above (10.49 CI, travel DM, restructure) are unchanged.
+Owner asked to assess user levels: [USER_LEVELS_ASSESSMENT.md](USER_LEVELS_ASSESSMENT.md).
+Owner decisions (section 5 there): Super Administrator keeps full power, and a narrower Administrator
+is added; Section Managers are limited to their own unit, and a Division Manager level is added; Viewer and
+Encoder merge into Staff; administration is split now. Live counts (owner-authorized
+sign-in; counts only): 73 accounts: 17 admin, 38 section managers, 17 viewers, 1 encoder.
+Candidate 10.50 on `claude/gracious-einstein-10xohq` (PR #644) implements this. Existing
+codes are kept, so nobody is signed out. Not merged or released. After release, the owner moves the
+admins who should not keep full power to Administrator on Admin → Users & roles. The owner
+account's password was shared in chat and must be changed. Next: CI on PR #644; release
+on owner instruction; remaining findings 3, 5-8 are listed in section 5.
 
 ## Type 1 "Who served you?" turned on; 10.47 and 10.48 merged — November 24, 2026
 

@@ -3438,13 +3438,64 @@ def event_feed_scope(conn, user):
     an account the directory does not place ("none"): `_path_in_scope(path, None)`
     is True for everything, so scoping it would hand it the whole bureau — it
     falls back to what it created instead."""
-    scope_path, kind = team_scope_for_user(conn, user)
+    scope_path, kind, exact = activity_scope_for_user(conn, user)
     if kind == "none":
         return user["username"], None, kind
-    return None, (scope_path, kind), kind
+    return None, (scope_path, kind, exact), kind
 
 
-def event_in_team_scope(ev, scope_path):
+def _scope_exact(team_scope):
+    return bool(team_scope) and len(team_scope) > 2 and bool(team_scope[2])
+
+
+def _division_ancestor(conn, path):
+    """The nearest unit at or above `path` whose level is 'division', or None."""
+    parts = (path or "").split("/")
+    for n in range(len(parts), 0, -1):
+        candidate = "/".join(parts[:n])
+        if candidate and _unit_level(conn, candidate) == "division":
+            return candidate
+    return None
+
+
+def activity_scope_for_user(conn, user):
+    """(scope_path, kind, exact) of the activities an account may MANAGE and
+    sees in the management feeds (docs/USER_LEVELS_ASSESSMENT.md).
+
+    Starts from team_scope_for_user (the directory decides), then applies the
+    account's level:
+      * Division Manager -> the whole division their unit sits in.
+      * Section Manager / Administrator -> their own unit. A unit at section
+        level keeps its subtree; at division/office/bureau level the reach is
+        that unit alone (exact) unless they are its chief or acting OIC.
+      * Super Administrator, Directors and bureau-wide sight grants are as
+        team_scope_for_user says. Staff never manage, so their answer only
+        shapes feeds they cannot open."""
+    scope_path, kind = team_scope_for_user(conn, user)
+    role = (user or {}).get("role")
+    if kind != "unit" or not scope_path or role == "admin":
+        return scope_path, kind, False
+    if role == "division_manager":
+        return (_division_ancestor(conn, scope_path) or scope_path), kind, False
+    if role not in ("section_manager", "system_admin"):
+        return scope_path, kind, False
+    if _unit_level(conn, scope_path) not in ("division", "office", "bureau"):
+        return scope_path, kind, False
+    row = conn.execute("""
+        SELECT rp.designation, rp.position, ou.id FROM admin_user a
+        JOIN resource_person rp ON rp.id = a.rp_id
+        LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+        WHERE a.id = ? LIMIT 1""", (user["id"],)).fetchone()
+    if row and _org_rank(row[0], row[1]) >= 2:
+        return scope_path, kind, False
+    if row and row[2] is not None and conn.execute(
+            "SELECT 1 FROM section_oic WHERE org_unit_id=? AND admin_user_id=?",
+            (row[2], user["id"])).fetchone():
+        return scope_path, kind, False
+    return scope_path, kind, True
+
+
+def event_in_team_scope(ev, scope_path, exact=False):
     """Is this activity the viewer's team's, for the MANAGEMENT feeds?
 
     The same rule the landing card uses: the ORGANISING unit is inside the
@@ -3460,10 +3511,13 @@ def event_in_team_scope(ev, scope_path):
     section that owns the engagement, which is also the right answer.
 
     A None scope_path is bureau-wide and lets everything through (_path_in_scope).
+    `exact` limits the match to that one unit, not the units under it (a Section
+    Manager placed at division level -- see activity_scope_for_user).
     """
-    if _path_in_scope(ev.get("lead_path"), scope_path):
+    inside = (lambda p: p == scope_path) if (exact and scope_path) else (lambda p: _path_in_scope(p, scope_path))
+    if inside(ev.get("lead_path")):
         return True
-    return any(_path_in_scope(p, scope_path) for p in (ev.get("rp_paths") or ()))
+    return any(inside(p) for p in (ev.get("rp_paths") or ()))
 
 
 def event_scope_paths(conn, event_id):
@@ -3548,7 +3602,7 @@ def list_events(conn, created_by=None, lifecycles=None, team_scope=None,
             "lead_path": r[11],
             "rp_paths": [p for p in (r[12] or "").split(",") if p],
         }
-        if team_scope and not event_in_team_scope(ev, team_scope[0]):
+        if team_scope and not event_in_team_scope(ev, team_scope[0], _scope_exact(team_scope)):
             continue
         out.append({**ev, **event_registration_summary(conn, r[0])})
     return out
@@ -6425,8 +6479,10 @@ def activities_by_creator(conn, created_by, limit=6, archived=0, all_creators=Fa
                 if r[14] is not None:
                     if r[14] not in ev_in_scope:
                         ev_in_scope[r[14]] = event_in_team_scope(
-                            event_scope_paths(conn, r[14]), team_scope[0])
+                            event_scope_paths(conn, r[14]), team_scope[0], _scope_exact(team_scope))
                     mine = ev_in_scope[r[14]]
+                elif _scope_exact(team_scope):
+                    mine = bool(r[15]) and r[15] == team_scope[0]
                 else:
                     mine = bool(r[15]) and _path_in_scope(r[15], team_scope[0])
                 if not mine:

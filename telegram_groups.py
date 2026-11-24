@@ -1,4 +1,5 @@
 """Explicit group/topic registration and allowlisted shared routing."""
+import auth
 import json
 import secrets
 import time
@@ -71,7 +72,7 @@ def lifecycle(value):
 def linked(conn, account_id, admin=False):
     found=rows(conn,'''SELECT c.*,u.role FROM telegram_connection c JOIN admin_user u ON u.id=c.account_id
         WHERE c.account_id=? AND c.state='active' AND u.active=1 AND u.must_change=0
-        AND u.role IN ('viewer','encoder','section_manager','admin')''',(account_id,))
+        AND u.role IN ('''+auth.role_sql_list()+''')''',(account_id,))
     bot=transport.config()
     if not found or (admin and found[0]['role']!='admin'):
         raise ValueError('A current linked administrator account is required.' if admin else 'An active private account link is required.')
@@ -212,7 +213,7 @@ def authorize_delivery(conn, delivery, bot):
         return None
     actor=rows(conn,'''SELECT c.*,u.username,u.role FROM telegram_connection c JOIN admin_user u ON u.id=c.account_id
         WHERE c.id=? AND c.generation=? AND c.state='active' AND u.active=1 AND u.must_change=0
-        AND u.role IN ('viewer','encoder','section_manager','admin')''',(delivery['connection_id'],delivery['generation']))
+        AND u.role IN ('''+auth.role_sql_list()+''')''',(delivery['connection_id'],delivery['generation']))
     if business and (not actor or not links.authorized(conn,actor[0]['account_id'],shared.action(projection))
             or not links.origin() or len(links.origin())>200):
         return None

@@ -18,10 +18,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.49"
+APP_VERSION = "10.50"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.50",
+        "date": "November 24, 2026",
+        "summary": "New user levels: Super Administrator, Administrator and Division Manager.",
+        "changes": [
+            "Existing administrators are now Super Administrators, with the same access as before. A new Administrator level runs system settings (email, holidays, AI, rules, appearance, travel and AWA settings, feedback, Ops) without access to accounts, backups, audit or restructure.",
+            "A new Division Manager level manages activities across their whole division.",
+            "Section Managers manage activities and send calendar notices only for their own unit. Chiefs and acting OICs still cover the units under them.",
+            "Viewer is now called Staff, and Encoder is called Staff + survey encoding."
+        ],
+    },
     {
         "version": "10.49",
         "date": "November 24, 2026",
