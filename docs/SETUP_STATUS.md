@@ -1,18 +1,23 @@
 # Cloud/mobile setup status
 
-## User levels: owner decided; candidate 10.51 — November 24, 2026
+## User levels 10.51 released — November 24, 2026
 
-Owner asked to assess user levels: [USER_LEVELS_ASSESSMENT.md](USER_LEVELS_ASSESSMENT.md).
-Owner decisions (section 5 there): Super Administrator keeps full power, and a narrower Administrator
-is added (owner then narrowed it to Section Manager + survey data fixes); Section Managers are limited to their own unit, and a Division Manager level is added; Viewer and
-Encoder merge into Staff; administration is split now. Live counts (owner-authorized
-sign-in; counts only): 73 accounts: 17 admin, 38 section managers, 17 viewers, 1 encoder.
-Candidate 10.51 on `claude/gracious-einstein-10xohq` (PR #644) implements this. On the first
-start it switches every admin except the owner account to Administrator (audited, once;
-those accounts sign in again). Not merged or released. After release, the owner moves division-level
-Section Managers to Division Manager where that fits. The owner
-account's password was shared in chat and must be changed. Next: CI on PR #644; release
-on owner instruction; remaining findings 3, 5-8 are listed in section 5.
+Owner asked to assess user levels: [USER_LEVELS_ASSESSMENT.md](USER_LEVELS_ASSESSMENT.md)
+(decisions in section 5). On owner instruction ("merge"), PR #644 merged at `092076f` after
+all required checks passed; guarded deployment run 45394898810 succeeded and the live
+/login shows v10.51 (checked 13:52 UTC, public page only).
+
+Levels: Staff, Staff + survey encoding, Section Manager (own unit), Division Manager
+(whole division), Administrator (Section Manager + survey data fixes) and Super
+Administrator (everything). On its first start 10.51 switches every `admin` except the owner
+account to Administrator (audited as `change_role` by `system`, once). If the owner account
+was not active with the admin role, the switch waits. Not verified by signing in: the owner
+can confirm on Admin → Users & roles (16 Administrators, 1 Super Administrator) and in the
+audit log.
+
+Owner actions: change the owner account's password (it was shared in chat); move
+division-level Section Managers to Division Manager where that fits. Open findings 3, 5-8
+(section 5 of the assessment) wait for the owner to choose when to resume.
 
 ## Type 1 "Who served you?" turned on; 10.47 and 10.48 merged — November 24, 2026
 
