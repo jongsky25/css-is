@@ -18,10 +18,26 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.51"
+APP_VERSION = "10.52"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.52",
+        "date": "November 24, 2026",
+        "summary": "Start a new advisory from the Advisories page, made as a Google Slides file.",
+        "changes": [
+            "Advisories has a New advisory button. Choose an activity you manage, make a new activity together with the advisory, or write a general advisory that is not about an activity.",
+            "Check the prefilled details, pick a design, and Office Connect makes the advisory as a Google Slides file from the office template, shared with everyone in your section.",
+            "Each advisory has one page showing where it is (Draft, Division Chief, Director, Issued), who it is waiting for, and a button to open it in Google Slides.",
+            "Send to Division Chief takes a copy of the slide as it is at that moment; that copy is what the Division Chief and Director review and approve. Open comments in the slide are kept with it.",
+            "While the advisory is being reviewed, your section can comment in Google Slides but not edit. If it is sent back, editing comes back. After approval, the file becomes read-only.",
+            "If the Slides file is changed after approval, issuing is stopped until it is sent for review again.",
+            "After issue, the advisory page has Share to group chats: on a phone, Share opens the phone's share menu with the advisory picture and a ready message for Viber or Messenger. Copy message and Download image work everywhere.",
+            "General advisories (not about an activity) are never shown on a public page.",
+            "This needs the office relay set up for Google Slides; until then the page says so and activity advisories keep the old editor."
+        ],
+    },
     {
         "version": "10.51",
         "date": "November 24, 2026",

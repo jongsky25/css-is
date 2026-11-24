@@ -1,8 +1,18 @@
 {% extends "dash_layout.html" %}
-{% block title %}Advisory register — Office Connect{% endblock %}
+{% block title %}Advisories{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/advisory.css">{% endblock %}
 {% block content %}
 <div style="max-width:58rem;margin:auto;overflow-wrap:anywhere">
-<h1>Advisory register</h1><p><a href="/advisories/issued">Issued advisories for you</a> · <a href="/advisories/existing">Existing activity advisories</a></p><p>Prepare an advisory from its activity. Counts and queues include only records you may access.</p>
+<h1>Advisories</h1>
+<div class="adv-main"><a class="btn" href="/advisories/new">+ New advisory</a><a href="/advisories/issued">Issued advisories for you</a></div>
+<details class="adv-help"{% if not total %} open{% endif %}><summary>How advisories work</summary>
+<ol>
+<li><strong>Start:</strong> press <em>New advisory</em> and say what it is for: an activity, a new activity, or a general notice.</li>
+<li><strong>Write it:</strong> you and your section edit it in Google Slides.</li>
+<li><strong>Review:</strong> your Division Chief, then the Director, approve it or send it back with comments.</li>
+<li><strong>Issue:</strong> it is emailed to the people you chose, and you can share it to group chats.</li>
+</ol></details>
+<p class="lead">You see only the advisories you prepare, edit or review. <a href="/advisories/existing">Older activity advisories</a></p>
 {% if not available %}<p>Changes are unavailable while Documents or Shared work is disabled.</p>{% endif %}
 <form method="get" style="display:flex;flex-wrap:wrap;gap:.8rem;align-items:end">
 <label for="division">Owning division<br><select name="division" id="division" style="max-width:100%"><option value="0">All permitted divisions</option>{% for unit in divisions %}<option value="{{ unit.id }}" {% if division==unit.id %}selected{% endif %}>{{ unit.name }}</option>{% endfor %}</select></label>
@@ -12,7 +22,7 @@
 <p>Month uses the latest actual issue date, or the reservation date for an advisory not yet issued.</p>
 <nav aria-label="Advisory status counts"><ul style="display:flex;flex-wrap:wrap;gap:.6rem 1.8rem">{% for key,label in queue_labels.items() %}<li><a href="{{ queue_links[key] }}">{{ label }}: {{ counts.get(key,0) }}</a></li>{% endfor %}</ul></nav>
 <p>{{ total }} permitted advisory record{{ '' if total==1 else 's' }}</p>
-{% for item in items %}<article style="border-bottom:1px solid var(--line);padding:1rem 0"><a href="/advisories/{{ item.id }}"><strong>{{ item.number }}</strong> — {{ item.subject }}</a><p>{{ item.division }} · {{ queue_labels.get(item.stage,item.stage) }} · {{ item.audience }}{% if item.delivery_attention %} · Distribution needs attention{% endif %}</p></article>{% else %}<p>No advisories match this view.</p>{% endfor %}
+{% for item in items %}<article style="border-bottom:1px solid var(--line);padding:1rem 0"><a href="/advisories/{{ item.id }}"><strong>{{ item.number }}</strong> — {{ item.subject }}</a><p>{{ item.division }} · {{ queue_labels.get(item.stage,item.stage) }} · {{ {'internal':'Office staff','external':'Outside','both':'Office staff and outside'}.get(item.audience,item.audience) }}{% if item.activity_title %} · Activity: {{ item.activity_title }}{% elif item.kind == 'general' %} · General{% endif %}{% if item.delivery_attention %} · Distribution needs attention{% endif %}</p></article>{% else %}{% if status == 'all' and not month and audience == 'all' and not division %}<div class="adv-card"><p style="margin-top:0"><strong>No advisories yet.</strong></p><p>Start your first one: it only takes a minute.</p><a class="btn" href="/advisories/new">+ New advisory</a></div>{% else %}<p>No advisories match these filters. <a href="/advisories">Show all</a></p>{% endif %}{% endfor %}
 <p>{% if older %}<a href="/advisories?before={{ older }}&amp;{{ filter_query }}">Older advisories</a> · {% endif %}<a href="/advisories?{{ filter_query }}">Latest advisories</a></p>
 </div>
 {% endblock %}

@@ -1,0 +1,64 @@
+{% extends "dash_layout.html" %}
+{% block title %}New advisory: details{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/advisory.css">{% endblock %}
+{% block content %}
+<div class="adv">
+<p><a href="/advisories/new{% if kind == 'activity' %}?pick=activity{% endif %}">← Back</a></p>
+<h1>New advisory</h1>
+<p class="lead">Step 2 of 2 · Check the details. Everything here can still be changed later in Google Slides.</p>
+{% if error %}<p class="adv-alert" role="alert">{{ error }}{% if field %} <a href="#{{ field }}">Go to it ↓</a>{% endif %}</p>{% endif %}
+{% if off %}<p class="adv-note" role="status">{{ off }}</p>{% endif %}
+<form method="post" action="/advisories/new">
+<input type="hidden" name="kind" value="{{ kind }}">
+<input type="hidden" name="operation_key" value="{{ operation_key }}">
+{% if ev %}<input type="hidden" name="event_token" value="{{ ev.event_token }}">{% endif %}
+<fieldset {% if off %}disabled{% endif %} style="border:0;padding:0;margin:0">
+
+{% if kind == 'activity' and ev %}
+<div class="adv-card"><h2>For this activity</h2><p style="margin:0"><strong>{{ ev.title }}</strong><br>{{ v.dates }}{% if ev.venue %} · {{ ev.venue }}{% endif %}</p>
+<p style="margin:.5rem 0 0"><a href="/advisories/new?pick=activity">Choose a different activity</a></p></div>
+{% elif kind == 'new_activity' %}
+<div class="adv-card"><h2>The new activity</h2>
+<p class="hint" style="margin-top:0">The activity is made together with the advisory, using the title and venue below. Registration, forms and links can be added later from the activity's Manage page.</p>
+<div class="adv-field"><label for="activity_date">Activity date</label><input type="date" id="activity_date" name="activity_date" value="{{ v.activity_date }}" required></div>
+<div class="adv-field"><label for="section_id">Organizing section</label><select id="section_id" name="section_id" required><option value="">Choose a section</option>{% for s in sections %}<option value="{{ s.id }}" {% if v.section_id == s.id|string %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></div>
+</div>
+{% else %}
+<div class="adv-card"><h2>A general advisory</h2><p style="margin:0">Not linked to an activity.</p></div>
+{% endif %}
+
+<div class="adv-field"><label for="title">Title</label><input type="text" id="title" name="title" maxlength="200" required value="{{ v.title }}"></div>
+{% if kind != 'general' %}
+<div class="adv-field"><label for="dates">Dates <span class="hint">As they should appear on the advisory.</span></label><input type="text" id="dates" name="dates" maxlength="200" value="{{ v.dates }}" placeholder="December 15-17, 2026"></div>
+{% endif %}
+<div class="adv-field"><label for="venue">Venue <span class="hint">Or "Online". Leave empty if it does not apply.</span></label><input type="text" id="venue" name="venue" maxlength="240" value="{{ v.venue }}"></div>
+<div class="adv-field"><label for="message">Main message <span class="hint">Optional. You can also write it directly in Google Slides.</span></label><textarea id="message" name="message" rows="4" maxlength="2000">{{ v.message }}</textarea></div>
+<div class="adv-field"><label for="attention">Attention <span class="hint">Who the advisory is for, e.g. "LHSD Division Chiefs and Heads of HPUs".</span></label><textarea id="attention" name="attention" rows="2" maxlength="600">{{ v.attention }}</textarea></div>
+<div class="adv-field"><label for="contact">Contact person <span class="hint">Names, phone and email for questions. We remember this for your next advisory.</span></label><textarea id="contact" name="contact" rows="3" maxlength="600">{{ v.contact }}</textarea></div>
+<div class="adv-field"><label for="link">Main link <span class="hint">{% if kind == 'general' %}Optional. If you add one, a QR code for it goes on the advisory.{% else %}Optional. Leave empty to use the activity's page; the QR code points to it.{% endif %}</span></label><input type="url" id="link" name="link" maxlength="500" value="{{ v.link }}" placeholder="https://"></div>
+
+<fieldset class="adv-field" id="designs" style="border:0;padding:0">
+<legend>Design</legend>
+{% if designs %}
+<div class="adv-designs">{% for d in designs %}
+<label class="adv-design"><input type="radio" name="variant" value="{{ d.variant }}" {% if v.variant == d.variant|string %}checked{% endif %} required>
+{% if d.has_png %}<img src="/advisories/designs/{{ d.variant }}.png" alt="" loading="lazy" width="320" height="453">{% endif %}
+<span>Design {{ d.variant }}</span></label>{% endfor %}</div>
+{% else %}<p class="adv-note">{{ designs_error or 'The advisory designs could not be loaded.' }}</p>{% endif %}
+</fieldset>
+
+<fieldset class="adv-field" id="audience" style="border:0;padding:0">
+<legend>Who gets it when it is issued?</legend>
+<label><input type="radio" name="audience" value="internal" {% if v.audience == 'internal' %}checked{% endif %}> Office staff only</label><br>
+<label><input type="radio" name="audience" value="both" {% if v.audience == 'both' %}checked{% endif %}> Office staff and outside recipients</label><br>
+<label><input type="radio" name="audience" value="external" {% if v.audience == 'external' %}checked{% endif %}> Outside recipients only</label>
+</fieldset>
+<div class="adv-field"><label for="external">Outside email addresses <span class="hint">Only if you chose outside recipients. One per line, or separated by commas.</span></label><textarea id="external" name="external" rows="3">{{ v.external }}</textarea></div>
+
+<div class="adv-field"><label for="unit_id">Owning division <span class="hint">Its Division Chief reviews the advisory before the Director.</span></label><select id="unit_id" name="unit_id" required><option value="">Choose a division</option>{% for d in divisions %}<option value="{{ d.id }}" {% if v.unit_id == d.id|string %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
+
+<div class="adv-main"><button class="btn" type="submit">Create advisory</button><span class="hint">This takes the next number and makes the Google Slides file. Nothing is sent to anyone.</span></div>
+</fieldset>
+</form>
+</div>
+{% endblock %}

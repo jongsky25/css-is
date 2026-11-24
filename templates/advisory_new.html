@@ -1,0 +1,36 @@
+{% extends "dash_layout.html" %}
+{% block title %}New advisory{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/advisory.css">{% endblock %}
+{% block content %}
+<div class="adv">
+<p><a href="/advisories">← Advisories</a></p>
+<h1>New advisory</h1>
+<p class="lead">Step 1 of 2 · What is this advisory for?</p>
+{% if off %}<p class="adv-note" role="status">{{ off }}</p>{% endif %}
+{% if pick != 'activity' %}
+<div class="adv-choices">
+  <a class="adv-choice" href="/advisories/new?pick=activity"><span class="icon" aria-hidden="true">📅</span><div><strong>An activity already in Office Connect</strong><span>Pick it from your activities. Its title, dates and venue are filled in for you.</span></div></a>
+  <a class="adv-choice" href="/advisories/new/details?kind=new_activity"><span class="icon" aria-hidden="true">✨</span><div><strong>A new activity</strong><span>Make the activity and its advisory together. You can add registration and forms later.</span></div></a>
+  <a class="adv-choice" href="/advisories/new/details?kind=general"><span class="icon" aria-hidden="true">📣</span><div><strong>Not about an activity</strong><span>A general announcement, reminder or notice.</span></div></a>
+</div>
+{% else %}
+<form method="get" action="/advisories/new" class="adv-field" role="search">
+  <input type="hidden" name="pick" value="activity">
+  <label for="q">Find your activity</label>
+  <div style="display:flex;gap:.5rem"><input type="search" id="q" name="q" value="{{ q }}" placeholder="Type part of the title" style="flex:1;min-height:44px"><button class="btn" type="submit">Search</button></div>
+</form>
+<ul class="adv-list">
+{% for ev in activities %}
+  {% if ev.advisory_id %}
+  <li><a href="/advisories/{{ ev.advisory_id }}"><strong>{{ ev.title }}</strong><small>{{ ev.dates }}{% if ev.section %} · {{ ev.section }}{% endif %} · Already has an advisory: open it</small></a></li>
+  {% else %}
+  <li><a href="/advisories/new/details?kind=activity&amp;event={{ ev.event_token }}"><strong>{{ ev.title }}</strong><small>{{ ev.dates }}{% if ev.section %} · {{ ev.section }}{% endif %}{% if not ev.upcoming %} · already happened{% endif %}</small></a></li>
+  {% endif %}
+{% else %}
+  <li><p>{% if q %}No activity you manage matches "{{ q }}".{% else %}You have no activities in the last 90 days or coming up.{% endif %} You can <a href="/advisories/new/details?kind=new_activity">make a new activity with the advisory</a> instead.</p></li>
+{% endfor %}
+</ul>
+<p><a href="/advisories/new">← Choose something else</a></p>
+{% endif %}
+</div>
+{% endblock %}

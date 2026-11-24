@@ -99,3 +99,25 @@ def install(conn):
         for operation in ('UPDATE','DELETE'):
             conn.execute(f'''CREATE TRIGGER IF NOT EXISTS {table}_no_{operation.lower()}
                 BEFORE {operation} ON {table} BEGIN SELECT RAISE(ABORT,'Advisory history is immutable'); END''')
+    # Google Slides advisories (docs/ADVISORY_SLIDES_PLAN.md increment 2): kind, details before the first
+    # reviewed revision, the section whose members edit the file, and the Slides file itself.
+    _install_slides(conn)
+
+
+def _install_slides(conn):
+    columns = {r[1] for r in conn.execute('PRAGMA table_info(advisory_record)')}
+    for name, definition in [('kind', "TEXT CHECK(kind IN ('activity','general'))"), ('details_json', 'TEXT'),
+                             ('section_id', 'INTEGER REFERENCES org_unit(id)'), ('slides_file_id', 'TEXT'),
+                             ('slides_json', 'TEXT'), ('slides_error', 'TEXT')]:
+        if name not in columns:
+            conn.execute(f'ALTER TABLE advisory_record ADD COLUMN {name} {definition}')
+    conn.executescript('''
+    CREATE UNIQUE INDEX IF NOT EXISTS advisory_slides_file_idx ON advisory_record(slides_file_id) WHERE slides_file_id IS NOT NULL;
+    CREATE TABLE IF NOT EXISTS advisory_start_request (
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), operation_key TEXT NOT NULL,
+      payload_hash TEXT NOT NULL, advisory_id INTEGER NOT NULL REFERENCES advisory_record(id),
+      PRIMARY KEY(actor_id,operation_key));
+    CREATE TABLE IF NOT EXISTS advisory_template_cache (
+      variant INTEGER PRIMARY KEY, slide_id TEXT NOT NULL, placeholders_json TEXT NOT NULL,
+      png BLOB, fetched_at TEXT NOT NULL);
+    ''')

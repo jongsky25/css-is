@@ -4,7 +4,7 @@
 // A template may be a Google Doc or a Google Sheet; the script checks which.
 // Script Properties: SHARED_SECRET, ROOT_FOLDER_ID, ALLOWED_DOMAIN (doh.gov.ph),
 // TPL_appendix_a, TPL_appendix_b, TPL_mc114_justification, TPL_jo_cert, TPL_travel_report,
-// TPL_cenrr, TPL_rer.
+// TPL_cenrr, TPL_rer. advisory_slides.gs (optional companion) adds TPL_advisory.
 const P = PropertiesService.getScriptProperties();
 
 function doPost(e) {
@@ -14,6 +14,9 @@ function doPost(e) {
     const req = JSON.parse(env.payload);
     if (String(req.action || '').indexOf('document_') === 0 && typeof documentOperation_ === 'function') {
       return reply_(documentOperation_(req, ['inspect','preview','extract','text','sign','status','intake_list','intake_check','intake_file']));
+    }
+    if (String(req.action || '').indexOf('advisory_') === 0) {
+      return reply_(typeof advisoryOperation_ === 'function' ? advisoryOperation_(req) : { ok: false, error: 'advisory_not_installed' });
     }
     switch (req.action) {
       case 'ping': return reply_({ ok: true, version: 2 });

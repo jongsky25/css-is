@@ -139,6 +139,7 @@ def mutate_in_transaction(conn,user,record,doc,action,data,reason):
     if not live(conn,issued):raise ValueError('This issue has been cancelled or superseded.')
     if action in ('publish','unpublish'):
         if action=='publish' and issued['audience']=='internal':raise ValueError('Internal-only advisories cannot be published publicly.')
+        if action=='publish' and not record.get('event_id'):raise ValueError('A general advisory has no public activity page to show it on.')
         if data.get('issue_id')!=str(issued['id']):raise d.Conflict('Confirm the exact issued version before changing publication.')
         conn.execute('''INSERT INTO advisory_publication VALUES (?,?,?,?) ON CONFLICT(advisory_id) DO UPDATE
             SET issue_id=excluded.issue_id,actor_id=excluded.actor_id,updated_at=excluded.updated_at''',

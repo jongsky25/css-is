@@ -69,11 +69,19 @@ def get_visible(conn, user, advisory_id):
         raise permissions.Denied('Advisory not found or unavailable to you.')
     record = found[0]
     docs.get(conn,user,record['document_id'])
+    if record['current_revision'] is None:
+        # A Google Slides advisory before its first review copy: details only, no saved revision yet.
+        stored = json.loads(record.get('details_json') or '{}')
+        payload = {'content':{'headline':stored.get('title','')},'unit_id':record['unit_id'],
+                   'audience':stored.get('audience','internal'),'external':stored.get('external',[])}
+        return dict(record, payload=payload, snapshot={}, ordinal=0)
     revision = rows(conn,'SELECT * FROM advisory_revision WHERE id=? AND advisory_id=?',
                     (record['current_revision'],record['id']))[0]
     return dict(record, payload=json.loads(revision['payload_json']), snapshot=json.loads(revision['source_json']),
                 ordinal=revision['ordinal'])
 
+
+AUDIENCE_SQL="COALESCE(json_extract(revision.payload_json,'$.audience'),json_extract(a.details_json,'$.audience'))"
 
 QUEUE_LABELS={'all':'All statuses','draft':'Draft','chief':'Awaiting Division Chief','director':'Awaiting Director',
               'changes_requested':'Changes requested','approved':'Approved awaiting issuance','issued':'Issued',
@@ -97,14 +105,14 @@ def list_visible(conn, user, *, before=0, unit_id=0, limit=30, status='all', mon
         AND NOT EXISTS(SELECT 1 FROM advisory_delivery newer JOIN document_job next ON next.id=newer.job_id
             WHERE newer.issue_id=delivery.issue_id AND newer.recipient=delivery.recipient AND next.rowid>job.rowid))"""
     where = f"""FROM advisory_record a JOIN document d ON d.id=a.document_id
-        JOIN advisory_revision revision ON revision.id=a.current_revision
-        JOIN event e ON e.id=a.event_id JOIN org_unit u ON u.id=a.unit_id
+        LEFT JOIN advisory_revision revision ON revision.id=a.current_revision
+        LEFT JOIN event e ON e.id=a.event_id JOIN org_unit u ON u.id=a.unit_id
         WHERE {scope.view_sql('d')} AND (:unit=0 OR a.unit_id=:unit)
-        AND (:audience='all' OR json_extract(revision.payload_json,'$.audience')=:audience)
+        AND (:audience='all' OR {AUDIENCE_SQL}=:audience)
         AND (:month='' OR substr(COALESCE((SELECT issued_at FROM advisory_issue WHERE advisory_id=a.id ORDER BY id DESC LIMIT 1),a.reservation_date),1,7)=:month)"""
     selected=f" AND (:status='all' OR (:status='delivery_failures' AND {failure}) OR {stage}=:status)"
     found = rows(conn, f"""SELECT a.id,a.number,a.unit_id,d.subject,d.status,e.event_token,u.name AS division,
-        {stage} AS stage,json_extract(revision.payload_json,'$.audience') AS audience,{failure} AS delivery_attention
+        {stage} AS stage,{AUDIENCE_SQL} AS audience,a.kind,e.title AS activity_title,{failure} AS delivery_attention
         """ + where + selected + ' AND (:before=0 OR a.id<:before) ORDER BY a.id DESC LIMIT :limit', params)
     total = conn.execute('SELECT COUNT(*) ' + where + selected, params).fetchone()[0]
     counts={item['stage']:item['n'] for item in rows(conn,f'SELECT {stage} AS stage,COUNT(*) AS n '+where+' GROUP BY stage',params)}
