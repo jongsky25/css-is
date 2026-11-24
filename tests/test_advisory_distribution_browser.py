@@ -23,14 +23,14 @@ def test_phone_issue_filter_retry_and_publication(browser,approved,app_mod,monke
     url='http://office.test/advisories/'+str(r['id'])
     try:
         page.goto(url)
-        page.get_by_role('link',name='Review issuance and recipients').click()
-        assert page.get_by_role('heading',name='2 unique email recipients').is_visible()
+        page.get_by_role('link',name='Issue the advisory').click()
+        assert page.get_by_role('heading',name='Goes to 2 email addresses').is_visible()
         page.locator('[name=ack_missing]').check();page.locator('[name=reason]').fill('Approved PDF and audience confirmed')
-        page.get_by_role('button',name='Issue and queue PDF emails').click()
+        page.get_by_role('button',name='Issue and send emails').click()
         assert d.raw(c,r['document_id'])['status']=='issued'
-        page.goto(url);page.locator('#issue-reason').fill('Authorized public copy')
-        page.get_by_role('button',name='Publish exact issue publicly').click()
-        assert 'Publicly published' in page.locator('body').inner_text()
+        page.goto(url);page.get_by_text('More actions',exact=True).click();page.locator('#issue-reason').fill('Authorized public copy')
+        page.get_by_role('button',name='Show on the activity\'s public page').click()
+        assert 'Shown on the activity\'s public page' in page.locator('body').inner_text()
         st.set_setting(c,'documents.sending_enabled','1');c.commit()
         monkeypatch.setattr(st,'email_feature_enabled',lambda *a:True);monkeypatch.setattr(mailer,'email_configured',lambda:False)
         operation=c.execute('SELECT job_id FROM advisory_delivery ORDER BY rowid LIMIT 1').fetchone()[0]
@@ -40,9 +40,10 @@ def test_phone_issue_filter_retry_and_publication(browser,approved,app_mod,monke
         page.get_by_role('button',name='Filter',exact=True).click()
         assert '1 permitted advisory record' in page.locator('body').inner_text()
         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
-        page.goto(url);page.get_by_text('Recipient delivery attempts',exact=False).click()
+        page.goto(url)  # the per-person list opens by itself when an email failed
+        assert 'need' in page.locator('body').inner_text() and 'attention' in page.locator('body').inner_text()
         page.locator('#delivery-'+operation).fill('Configured mail transport')
-        page.get_by_role('button',name='Retry confirmed failure').click()
+        page.get_by_role('button',name='Send again').click()
         assert c.execute('SELECT COUNT(*) FROM advisory_delivery').fetchone()[0]==3
         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
         assert not c.execute('SELECT 1 FROM document_dispatch').fetchone()

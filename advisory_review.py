@@ -19,7 +19,7 @@ def effective_chief(conn, unit_id):
     oic=conn.execute('SELECT admin_user_id FROM section_oic WHERE org_unit_id=?',(unit_id,)).fetchone()
     candidates=[oic[0]] if oic else st.org_unit_chiefs(conn,unit_id)
     if len(candidates)!=1:
-        raise ValueError('The owning division needs exactly one current Division Chief or designated OIC.')
+        raise ValueError('This advisory\'s division has no single Division Chief (or acting OIC) on record, so it cannot be reviewed yet. Ask the system administrator to set one in the directory.')
     return p.actor(conn,{'id':candidates[0]})['id']
 
 
@@ -35,14 +35,14 @@ def effective_director(conn, unit_id=None):
         acting=rows(conn,"SELECT o.admin_user_id FROM section_oic o JOIN org_unit u ON u.id=o.org_unit_id WHERE u.level='bureau'")
     candidates=[r['admin_user_id'] for r in acting] if acting else st.director_accounts_for_unit(conn,unit_id)
     if len(candidates)!=1:
-        raise ValueError('Exactly one current Director or designated OIC must oversee the owning division.')
+        raise ValueError('No single Director (or acting OIC) is on record for this division, so it cannot be approved yet. Ask the system administrator to set one in the directory.')
     return p.actor(conn,{'id':candidates[0]})['id']
 
 
 def routing(conn, record):
     chief=effective_chief(conn,record['unit_id']); director=effective_director(conn,record['unit_id'])
     if len({chief,director,record['initiator_id']})!=3:
-        raise ValueError('Preparer, Division Chief reviewer and Director approver must be different people. Correct the formal routing first.')
+        raise ValueError('The person preparing, the Division Chief and the Director must be three different people. Ask someone else in your section to start the advisory, or ask the system administrator to check the directory.')
     return chief,director
 
 
@@ -129,7 +129,7 @@ def mutate(conn,user,advisory_id,revision,action,data):
         elif action in ('endorse','approve','return'):
             review=require_current(conn,doc); stage=doc['review_class']
             if routing(conn,record)!=(review['chief_id'],review['director_id']):
-                raise d.Conflict('Routing changed. The initiator must reroute this submission.')
+                raise d.Conflict('The Division Chief or Director changed since this was sent. The person who started it should press "Restart review with the current Chief and Director".')
             d.require(doc['status']=='in_review' and doc['reviewer_id']==user['id'])
             d.require(stage in ('chief','director') and stage_authority(conn,user,record,stage),'Your current directory authority does not match this review stage.')
             if action=='endorse' and stage!='chief' or action=='approve' and stage!='director':
@@ -225,17 +225,17 @@ def screen(conn,user,record,comments_before=0,actions_before=0):
     doc=d.get(conn,user,record['document_id']); review=packet(conn,record)
     actions=[];problem=''
     if user['id']==record['initiator_id']:
-        if doc['status'] in ('draft','changes_requested'):actions.append(('submit','Submit to Division Chief'))
-        if doc['status'] in ('in_review','approved','changes_requested'):actions.append(('withdraw','Withdraw for revision'))
-        if doc['status']=='in_review':actions.append(('reroute','Resolve routing and restart review'))
-        if doc['status'] in ('draft','in_review','approved','changes_requested'):actions.append(('cancel','Cancel advisory'))
+        if doc['status'] in ('draft','changes_requested'):actions.append(('submit','Send to Division Chief'))
+        if doc['status'] in ('in_review','approved','changes_requested'):actions.append(('withdraw','Take it back to edit'))
+        if doc['status']=='in_review':actions.append(('reroute','Restart review with the current Chief and Director'))
+        if doc['status'] in ('draft','in_review','approved','changes_requested'):actions.append(('cancel','Cancel this advisory'))
     if doc['status']=='in_review':
         try:
             chief,director=routing(conn,record)
-            if review and (chief!=review['chief_id'] or director!=review['director_id']):problem='Routing changed. The initiator must reroute this submission.'
+            if review and (chief!=review['chief_id'] or director!=review['director_id']):problem='The Division Chief or Director changed since this was sent. The person who started it should press "Restart review with the current Chief and Director".'
             if not problem and user['id']==doc['reviewer_id']:
-                actions += [('endorse','Endorse to Director')] if doc['review_class']=='chief' else [('approve','Approve this revision')]
-                actions.append(('return','Return for changes'))
+                actions += [('endorse','Approve and send to the Director')] if doc['review_class']=='chief' else [('approve','Approve')]
+                actions.append(('return','Send back with comments'))
         except ValueError as error:problem=str(error)
     discussion=[]
     if record.get('case_id'):
