@@ -1,3 +1,7 @@
+## 10.49 — November 24, 2026
+
+- Turn on the optional "Who served you?" question (`ask_served_by`) on the Type 1 (walk-in / CSM) forms: the public QR form and the paper-entry form. It lists current internal staff; the submit handlers already validated and stored `response.served_by_rp_id`, and an unknown, external or blank pick still stores nothing. In the one-question-at-a-time mode it is its own optional step after "About you". Activity (Type 2) and resource-person (Type 3) forms are unchanged.
+
 ## 10.48 — November 24, 2026
 
 - Travel filing, increment DM1 of `docs/TRAVEL_DM_2026_0521_SCOPE.md` (owner decisions 2026-11-24): liquidation/reimbursement deadline is the earlier of 5 working days and 7 calendar days after the last day (`travel_rules.due_after`; a non-working 7th day moves back). Existing filings keep their stored deadline until their activity dates change.
