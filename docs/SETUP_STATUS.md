@@ -1,4 +1,12 @@
-# Cloud/mobile setup status
+Owner answered all questions (section members edit; Slides comments too; real activity
+created with the advisory; no public page for general advisories; email plus a Share button;
+Telegram later; friendly-interface requirements recorded in the plan).
+Owner said "start": increment 1 built as candidate 10.51 on this branch (PR #645): relay
+companion `apps_script/advisory_slides.gs`, client `advisory_slides.py`, setup guide
+[ADVISORY_SLIDES_SETUP.md](ADVISORY_SLIDES_SETUP.md). No page uses it yet; no database change.
+Local: 181 advisory/relay/deploy/release tests passed. Not merged or released.
+Next: owner (as office mailbox) follows the setup guide and puts the placeholders in the
+master; then increment 2 (the New advisory flow). Merge/release only on owner instruction.# Cloud/mobile setup status
 
 ## Advisory rethink planned (Google Slides, New advisory flow) — November 24, 2026
 

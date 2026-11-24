@@ -1,3 +1,7 @@
+## 10.51 — November 24, 2026
+
+- Advisory Google Slides, increment 1 of `docs/ADVISORY_SLIDES_PLAN.md`: new relay companion `apps_script/advisory_slides.gs` (`advisory_info`, `advisory_create`, `advisory_snapshot`, `advisory_access`; files only under `ROOT/advisories/`, office-domain sharing without notification emails, request-id idempotent create, snapshot refused if the file changes while it is copied) and the `doPost` hand-off in `travel_docs.gs`. New client `advisory_slides.py` (placeholder fields, QR PNG, digest-checked snapshots, plain-language errors). Setup: `docs/ADVISORY_SLIDES_SETUP.md`. Not yet used by any page; no database change.
+
 ## 10.50 — November 24, 2026
 
 - Calendar item page (`templates/calendar_entry.html`, `calendar_routes.py`): when the item is linked to a CSS activity the viewer can manage (`can_manage_event`), "Related actions" shows an Advisory card linking to `/activities/{token}/advisory` and `/advisories`. Unlinked items that can collect feedback get a "Create the activity to prepare an advisory" button (the existing `/create?from_entry=` form), since an advisory is stored against a CSS activity.

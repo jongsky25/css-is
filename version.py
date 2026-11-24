@@ -18,10 +18,18 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.50"
+APP_VERSION = "10.51"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.51",
+        "date": "November 24, 2026",
+        "summary": "Groundwork for making advisories in Google Slides.",
+        "changes": [
+            "Office Connect can now ask the office relay to make an advisory as a Google Slides file from the office template, take a saved copy for review, and set who may edit or comment. Nothing on screen changes yet; the new advisory pages come in the next update."
+        ],
+    },
     {
         "version": "10.50",
         "date": "November 24, 2026",
