@@ -9,11 +9,24 @@ decisions (recorded there). DM1 (deadline rule, CA hand-in date and reminder, re
 attestation, checklist notes), DM2 (urgent cash advance inside the week, with a
 justification upload), DM3 (meals/lodging default "provided", generated
 Certificate of Non-Provision) and DM4 (AI-read receipt/ticket/fare-screenshot details
-raising four new Admin Unit flag kinds; travel_flag table rebuild on boot) are built as candidate 10.47 in draft PR #640; not merged,
+raising four new Admin Unit flag kinds; travel_flag table rebuild on boot) are built as candidate 10.48 in draft PR #640 (main went to 10.47 with PR #641; merged in); not merged,
 not released. After release a person must run `makeNonProvisionTemplate()` in the travel
 Apps Script project (docs/TRAVEL_DOCS_RELAY_SETUP.md) and the owner should approve the
 certificate wording. Next: CI on PR #640; release on owner instruction; DM5 (baggage per leg) / DM6 (pre-audit view) later.
 The restructure next steps below are unchanged.
+
+## Emails for new staff; Division 3 decided — November 24, 2026
+
+10.46 merged (PR #639). Owner decided Division 3 keeps the order's name, LHSIID (already
+what the plan and mapping use). Owner supplied DOH emails for the staff the switch will
+create; 26 were matched to DPO names (owner confirmed the probable ones and Ma. Carmela
+Santiago) and added to the private mapping. Rule (owner): emails only for new records or
+records not yet in use. Six addresses are not in the DPO; the owner confirmed they are not part of the office, so they are left out.
+Candidate 10.47 adds the `email` support. Apply the restructure after 10.47 is live for
+emails to be set; applying earlier creates the records without emails.
+The 10.46 deploy (main 1076a9d) was blocked on November 24 by a date-dependent Telegram
+test (1 of 11,228; it also fails on 10.45 code from that date). The test fix rides on 10.47,
+which ships 10.46 with it. A dry run with emails on the newest snapshot exited 0 (26 set).
 
 ## Restructure ready to switch on; 10.45 live — November 23, 2026
 

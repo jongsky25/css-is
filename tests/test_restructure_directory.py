@@ -207,3 +207,36 @@ def test_an_acting_oic_on_a_retiring_unit_is_cleared_and_logged(old_bureau, caps
     assert "CLEAR  acting OIC of BLHSD/HSDD/S2" in capsys.readouterr().out
     conn = st.connect(old_bureau["db"])
     assert conn.execute("SELECT COUNT(*) FROM section_oic").fetchone()[0] == 0
+
+
+def test_emails_go_only_to_new_or_unused_records(old_bureau, tmp_path, capsys):
+    p = old_bureau["p"]
+    conn = st.connect(old_bureau["db"])
+    st.create_admin_user(conn, "rs-head@test.local", "x", "y", "section_manager", rp_id=p["head"])   # in use
+    conn.execute("UPDATE resource_person SET email='old@doh.gov.ph' WHERE id=?", (p["chief"],))
+    conn.commit(); conn.close()
+    staff = [{"rp_id": p["chief"], "unit": "LHPFD", "designation": "Division Chief", "email": "new@doh.gov.ph"},
+             {"name": "RS Head", "unit": "S7", "designation": "Section Head", "email": "head@doh.gov.ph"},
+             {"name": "RS Staff", "unit": "S8", "email": "staff@doh.gov.ph"},                 # existing, unused
+             {"name": "Brand New Person", "unit": "S9", "email": "Brand.New@DOH.gov.ph"},     # created
+             {"name": "Second New Person", "unit": "S9", "email": "staff@doh.gov.ph"}]       # address taken
+    mpath = tmp_path / "emails.json"
+    mpath.write_text(json.dumps(dict(old_bureau["mapping"], staff=staff, create_missing=True)))
+    assert rd.main(["--db", old_bureau["db"], "--mapping", str(mpath), "--apply"]) == 0
+    out = capsys.readouterr().out
+    assert "email kept: record already in use" in out and "already belongs to record" in out
+    conn = st.connect(old_bureau["db"])
+    email = lambda n: conn.execute("SELECT email FROM resource_person WHERE name=?", (n,)).fetchone()[0]
+    assert email("RS Chief") == "old@doh.gov.ph"          # never overwritten
+    assert email("RS Head") in (None, "")                  # has an active account
+    assert email("RS Staff") == "staff@doh.gov.ph"
+    assert email("Brand New Person") == "brand.new@doh.gov.ph"
+    assert email("Second New Person") in (None, "")
+
+
+def test_an_invalid_email_stops_the_run(old_bureau, tmp_path, capsys):
+    staff = old_bureau["mapping"]["staff"][:2] + [{"name": "RS Staff", "unit": "S8", "email": "not-an-email"}]
+    mpath = tmp_path / "bad-email.json"
+    mpath.write_text(json.dumps(dict(old_bureau["mapping"], staff=staff)))
+    assert rd.main(["--db", old_bureau["db"], "--mapping", str(mpath)]) == 2
+    assert "Not an email address" in capsys.readouterr().err

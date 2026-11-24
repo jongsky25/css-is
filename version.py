@@ -18,12 +18,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.47"
+APP_VERSION = "10.48"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "10.47",
+        "version": "10.48",
         "date": "November 24, 2026",
         "summary": "Travel claims follow the new DOH pre-audit memo (DM 2026-0521).",
         "changes": [
@@ -34,6 +34,15 @@ CHANGELOG = [
             "Marking a filing ready asks you to confirm that your receipts are genuine and your certifications are accurate.",
             "The checklist explains the new rules for ride-hailing receipts, plane fare screenshots, baggage and the meals and lodging certificate.",
             "Each per diem day now starts with meals and lodging marked as provided; untick only the days they were not, and the Certificate of Non-Provision is made from those days."
+        ],
+    },
+    {
+        "version": "10.47",
+        "date": "November 24, 2026",
+        "summary": "Give new staff records their email during the restructure.",
+        "changes": [
+            "The restructure can add each new staff member's email, so app accounts are easier to set up.",
+            "Existing staff, and anyone who already has an email or an active account, are left untouched."
         ],
     },
     {

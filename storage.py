@@ -89,7 +89,7 @@ TRAVEL_READING_DM_COLS = (("stops", "INTEGER"), ("passengers", "INTEGER"), ("far
 
 
 def _travel_dm_2026_0521(conn):
-    """10.47: the DM 2026-0521 pre-audit checks. Add the reading columns and widen travel_flag's kind CHECK (a table
+    """10.48: the DM 2026-0521 pre-audit checks. Add the reading columns and widen travel_flag's kind CHECK (a table
     rebuild keeping every row; nothing references travel_flag). A no-op on a new or already-migrated database."""
     cols = {row[1] for row in conn.execute("PRAGMA table_info(travel_reading)")}
     for col, typ in TRAVEL_READING_DM_COLS:
@@ -870,7 +870,7 @@ def init_db(conn):
         kind TEXT, amount REAL, currency TEXT, day TEXT, origin TEXT, destination TEXT,
         vendor TEXT, reference TEXT, dep_time TEXT, arr_time TEXT, date_from TEXT, date_to TEXT,
         created_at TEXT,
-        -- DM 2026-0521 (10.47): what the pre-audit checks read; NULL when the document does not show it
+        -- DM 2026-0521 (10.48): what the pre-audit checks read; NULL when the document does not show it
         stops INTEGER, passengers INTEGER, fare_split INTEGER, receipt_source TEXT, fare_brand TEXT, cabin TEXT,
         booked_at TEXT, captured_at TEXT, round_trip INTEGER
     );
