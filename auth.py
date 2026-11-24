@@ -33,7 +33,7 @@ import time
 # Telegram/MCP/integration grants and the audit log all carry them, and a role
 # change revokes an account's sessions and grants. "admin" therefore still means
 # the full-power account (shown as Super Administrator); "system_admin" is the
-# narrower Administrator added in 10.50 (docs/USER_LEVELS_ASSESSMENT.md).
+# narrower Administrator added in 10.51 (docs/USER_LEVELS_ASSESSMENT.md).
 ROLES = ["viewer", "encoder", "section_manager", "division_manager", "system_admin", "admin"]
 ROLE_LABELS = {
     "viewer": "Staff",

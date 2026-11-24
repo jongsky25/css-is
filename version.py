@@ -18,12 +18,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.50"
+APP_VERSION = "10.51"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "10.50",
+        "version": "10.51",
         "date": "November 24, 2026",
         "summary": "New user levels: Super Administrator, Administrator and Division Manager.",
         "changes": [
@@ -31,6 +31,16 @@ CHANGELOG = [
             "A new Division Manager level manages activities across their whole division.",
             "Section Managers manage activities and send calendar notices only for their own unit. Chiefs and acting OICs still cover the units under them.",
             "Viewer is now called Staff, and Encoder is called Staff + survey encoding."
+        ],
+    },
+    {
+        "version": "10.50",
+        "date": "November 24, 2026",
+        "summary": "The calendar item page now links to the activity's advisory.",
+        "changes": [
+            "A calendar item that is linked to an activity now has an Advisory card with buttons to open the advisory and the advisory register.",
+            "A calendar item that is not yet an activity offers a button to create the activity, which is what an advisory is prepared from.",
+            "When an advisory is not available to you (for example, a draft someone else started and has not shared), you now see a clear page with a way back instead of a downloaded text file."
         ],
     },
     {

@@ -21,8 +21,12 @@ import storage as st
 def make_router(templates, get_conn, base_url):
     router = APIRouter()
 
-    def failure(error):
+    def failure(error,request=None):
         status = 404 if isinstance(error,permissions.Denied) else 409 if isinstance(error,documents.Conflict) else 422
+        # A person opening a page gets a readable page with a way back; scripts and tests keep the plain text.
+        if request is not None and 'text/html' in request.headers.get('accept',''):
+            return templates.TemplateResponse(request,'advisory_error.html',{
+                'error':str(error),'denied':isinstance(error,permissions.Denied)},status_code=status)
         return Response(str(error),status_code=status,media_type='text/plain')
 
     def actor(request,conn):
@@ -82,7 +86,7 @@ def make_router(templates, get_conn, base_url):
             return templates.TemplateResponse(request,'advisory_register.html',{
                 **listing,'divisions':workflow.divisions(conn),**filters,'filter_query':urlencode(filters),'queue_links':links,'available':workflow.available(conn)})
         except ValueError as error:
-            return failure(error)
+            return failure(error,request)
         finally: conn.close()
 
     @router.get('/activities/{event_token}/advisory/draft',response_class=HTMLResponse)
@@ -92,7 +96,7 @@ def make_router(templates, get_conn, base_url):
             user=actor(request,conn); ev=st.get_event(conn,event_token)
             if not ev: raise permissions.Denied('Activity not found or unavailable to you.')
             return show(request,conn,user,ev)
-        except ValueError as error: return failure(error)
+        except ValueError as error: return failure(error,request)
         finally: conn.close()
 
     @router.post('/activities/{event_token}/advisory/draft')
@@ -121,7 +125,7 @@ def make_router(templates, get_conn, base_url):
             except (ValueError,advisory.AdvisoryTooLong) as error:
                 return show(request,conn,user,ev,posted=posted,error=str(error),status=409 if isinstance(error,documents.Conflict) else 422)
             return RedirectResponse(f"/advisories/{saved['id']}",status_code=303)
-        except ValueError as error: return failure(error)
+        except ValueError as error: return failure(error,request)
         finally: conn.close()
 
     @router.get('/advisories/existing',response_class=HTMLResponse)
@@ -130,7 +134,7 @@ def make_router(templates, get_conn, base_url):
         try:
             user=actor(request,conn)
             return templates.TemplateResponse(request,'advisory_existing.html',workflow.list_existing(conn,user,max(0,before)))
-        except ValueError as error: return failure(error)
+        except ValueError as error: return failure(error,request)
         finally: conn.close()
 
     @router.get('/advisories/issued',response_class=HTMLResponse)
@@ -140,7 +144,7 @@ def make_router(templates, get_conn, base_url):
             user=actor(request,conn)
             found=advisory_distribution.issued_for_user(conn,user,before)
             return templates.TemplateResponse(request,'advisory_issued.html',{'items':found[:30],'older':found[29]['id'] if len(found)>30 else None})
-        except ValueError as error:return failure(error)
+        except ValueError as error:return failure(error,request)
         finally:conn.close()
 
     @router.get('/advisories/issued/{issue_id}/file.{fmt}')
@@ -150,7 +154,7 @@ def make_router(templates, get_conn, base_url):
             user=actor(request,conn)
             return Response(advisory_distribution.issued_artifact(conn,user,issue_id,fmt),
                 media_type='application/pdf' if fmt=='pdf' else 'image/png',headers={'Cache-Control':'private, no-store'})
-        except ValueError as error:return failure(error)
+        except ValueError as error:return failure(error,request)
         finally:conn.close()
 
     @router.get('/advisories/{advisory_id}',response_class=HTMLResponse)
@@ -160,7 +164,7 @@ def make_router(templates, get_conn, base_url):
             user=actor(request,conn); record=workflow.get_visible(conn,user,advisory_id)
             ev=st.get_event(conn,record['event_token'])
             return show(request,conn,user,ev)
-        except ValueError as error: return failure(error)
+        except ValueError as error: return failure(error,request)
         finally: conn.close()
 
     @router.get('/advisories/{advisory_id}/issue',response_class=HTMLResponse)
@@ -171,7 +175,7 @@ def make_router(templates, get_conn, base_url):
             return templates.TemplateResponse(request,'advisory_issue.html',{
                 **advisory_distribution.preview(conn,user,advisory_id),'action_key':str(uuid.uuid4()),
                 'available':workflow.available(conn)})
-        except ValueError as error:return failure(error)
+        except ValueError as error:return failure(error,request)
         finally:conn.close()
 
     @router.post('/advisories/{advisory_id}/actions')
@@ -191,7 +195,7 @@ def make_router(templates, get_conn, base_url):
                     'record':record,'error':str(error),'reason':data.get('reason','')},
                     status_code=409 if isinstance(error,documents.Conflict) else 422)
             return RedirectResponse(f'/advisories/{advisory_id}',status_code=303)
-        except ValueError as error:return failure(error)
+        except ValueError as error:return failure(error,request)
         finally:conn.close()
 
     @router.get('/advisories/{advisory_id}/history',response_class=HTMLResponse)
@@ -211,7 +215,7 @@ def make_router(templates, get_conn, base_url):
                                       for key in after if before[key]!=after[key]]
             return templates.TemplateResponse(request,'advisory_history.html',{
                 'record':record,'entries':found[:30],'older':found[29]['id'] if len(found)>30 else None})
-        except ValueError as error: return failure(error)
+        except ValueError as error: return failure(error,request)
         finally: conn.close()
 
     @router.get('/advisories/{advisory_id}/revisions/{revision_id}/file.{fmt}')
@@ -223,7 +227,7 @@ def make_router(templates, get_conn, base_url):
             data=workflow.artifact(conn,user,advisory_id,revision_id,fmt)
             return Response(data,media_type='application/pdf' if fmt=='pdf' else 'image/png',headers={
                 'Cache-Control':'private, no-store','Content-Disposition':f'inline; filename="{advisory.filename(record["number"],fmt)}"'})
-        except ValueError as error: return failure(error)
+        except ValueError as error: return failure(error,request)
         finally: conn.close()
 
     return router

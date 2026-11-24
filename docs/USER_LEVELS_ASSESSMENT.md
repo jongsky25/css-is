@@ -1,6 +1,6 @@
 # User levels assessment — November 24, 2026
 
-> **Status:** owner decided on November 24 (section 5). Candidate **10.50** implements the
+> **Status:** owner decided on November 24 (section 5). Candidate **10.51** implements the
 > new levels on `claude/gracious-einstein-10xohq` (PR #644). Not released.
 
 Owner request: "with a bigger feature base and increase in number of users, maybe it
@@ -161,7 +161,7 @@ Decisions:
    operations, directory, hiding people and feedback triage stay with the Super Administrator
    (capability `operate`, kept separate from `manage_users` so it can be handed out later).
 
-### What 10.50 does
+### What 10.51 does
 
 | Level (label) | Stored code | Reach |
 |---|---|---|
@@ -172,7 +172,7 @@ Decisions:
 | Administrator | `system_admin` | Section Manager reach + survey data fixes (edit/archive walk-in entries, merge duplicate activities). **No settings, directory, feedback, accounts or overrides.** |
 | Super Administrator | `admin` | Everything, including `manage_users` pages and the overrides |
 
-**Release switch (owner instruction):** on the first start of 10.50, every account holding
+**Release switch (owner instruction):** on the first start of 10.51, every account holding
 `admin` becomes **Administrator** (`system_admin`). The single exception is the owner account named in
 `BUREAU_ACCESS_SEED`, which stays **Super Administrator**. Each change is audited. The switch runs
 once, and only if that account is active with the admin role. Otherwise it waits, so the system is never
@@ -182,7 +182,7 @@ MCP/integration tool credentials (role change revokes them). Section Managers ke
 whole division to *Division Manager*. Encoding stays a role variant ("Staff + survey encoding")
 rather than a separate account flag, which gives the same result without a schema change.
 
-Not in 10.50 (still open from section 2): seatless Super Administrator bureau sight is kept
+Not in 10.51 (still open from section 2): seatless Super Administrator bureau sight is kept
 on purpose (decision 1); findings 3 (account seeds in code), 5 (one "chief" helper), 6
 (travel template grant table), 7 (supplies stock visibility) and 8 (readiness page).
 Supplies configuration and Documents setup remain Super Administrator only.

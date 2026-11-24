@@ -5426,11 +5426,11 @@ def _seed_bureau_access(conn):
         conn.commit()
 
 
-SUPER_ADMIN_SPLIT_MARKER = "user_levels_admin_split_10_50"
+SUPER_ADMIN_SPLIT_MARKER = "user_levels_admin_split_10_51"
 
 
 def _split_admin_levels(conn):
-    """One-time 10.50 switch (owner instruction, docs/USER_LEVELS_ASSESSMENT.md):
+    """One-time 10.51 switch (owner instruction, docs/USER_LEVELS_ASSESSMENT.md):
     every account holding the old full-power `admin` role becomes the new
     Administrator (`system_admin`), except the account(s) the bureau seed names
     with the admin role (BUREAU_ACCESS_SEED), which stay Super Administrator.
@@ -5454,7 +5454,7 @@ def _split_admin_levels(conn):
     for uid, username in rows:
         conn.execute("UPDATE admin_user SET role='system_admin' WHERE id=?", (uid,))
         audit(conn, "system", "change_role", target_type="user", target_id=username,
-              summary=f"Role of {username}: admin → system_admin (10.50 level split)",
+              summary=f"Role of {username}: admin → system_admin (10.51 level split)",
               before="admin", after="system_admin", commit=False)
     set_setting(conn, SUPER_ADMIN_SPLIT_MARKER, tz.now_iso())
     conn.commit()

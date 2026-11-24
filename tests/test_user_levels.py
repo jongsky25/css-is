@@ -1,5 +1,5 @@
 """
-User levels (docs/USER_LEVELS_ASSESSMENT.md, 10.50).
+User levels (docs/USER_LEVELS_ASSESSMENT.md, 10.51).
 
 * Super Administrator (stored "admin") keeps every power and the overrides.
 * Administrator ("system_admin") is a Section Manager who can also fix survey
@@ -172,7 +172,7 @@ def test_administrator_pages(app_mod, world):
 
 
 def test_release_switch_keeps_one_super_administrator(tmp_path):
-    """10.50 switch: every old admin becomes Administrator except the seeded
+    """10.51 switch: every old admin becomes Administrator except the seeded
     super account; it runs once and never leaves the system without one."""
     conn = st.connect(str(tmp_path / "split.db"))
     st.init_db(conn)
