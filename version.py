@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.49"
+APP_VERSION = "10.50"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.50",
+        "date": "November 24, 2026",
+        "summary": "The calendar item page now links to the activity's advisory.",
+        "changes": [
+            "A calendar item that is linked to an activity now has an Advisory card with buttons to open the advisory and the advisory register.",
+            "A calendar item that is not yet an activity offers a button to create the activity, which is what an advisory is prepared from.",
+            "When an advisory is not available to you (for example, a draft someone else started and has not shared), you now see a clear page with a way back instead of a downloaded text file."
+        ],
+    },
     {
         "version": "10.49",
         "date": "November 24, 2026",

@@ -101,3 +101,14 @@ def test_rendered_artifacts_fit_bound(draft_route,manager):
     sizes=c.execute('SELECT length(data),format FROM advisory_artifact').fetchall()
     assert {fmt for _,fmt in sizes}=={'png','pdf'}
     assert all(0<size<aw.MAX_ARTIFACT_BYTES for size,_ in sizes)
+
+
+def test_a_hidden_private_draft_shows_a_page_to_browsers_and_plain_text_to_scripts(draft_route,manager,admin):
+    c,user,unit,ev,url=draft_route
+    location=manager.post(url,data=form(manager.get(url),unit),follow_redirects=False).headers['location']
+    hidden=admin.get(url)                                                          # someone else's private draft
+    assert hidden.status_code==404 and hidden.headers['content-type'].startswith('text/plain')
+    page=admin.get(url,headers={'accept':'text/html,application/xhtml+xml'})
+    assert page.status_code==404 and page.headers['content-type'].startswith('text/html')
+    assert 'not available to you' in page.text and 'href="/advisories"' in page.text
+    assert 'Document not found or unavailable to you.' in page.text
