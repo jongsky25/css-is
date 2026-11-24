@@ -15,6 +15,7 @@ from typing import Callable, Optional
 CHECKLIST_REV = "FMS-BD-01 r6 2025-06"
 
 CA, LIQ, REI = "ca", "liquidation", "reimbursement"
+LR_ = (LIQ, REI)
 KINDS = (CA, LIQ, REI)
 
 # The questions asked at filing that drive the checklist: (key, label, kinds they apply to).
@@ -29,7 +30,9 @@ ANSWER_KEYS = (
     ("rfid", "I used an RFID toll account", (LIQ, REI)),
     ("lodging_claimed", "I claim lodging (travel within 50 km)", (LIQ, REI)),
     ("per_diem_claimed", "I claim per diem", (LIQ, REI)),
-    ("extra_expenses", "I have extra expenses (baggage, rebooking, cancellation)", (CA, LIQ, REI)),
+    ("extra_expenses", "I have other extra expenses (rebooking, cancellation, or baggage for a cash advance)", (CA, LIQ, REI)),
+    ("baggage_outbound", "I paid for extra baggage on the outbound flight", (LIQ, REI)),
+    ("baggage_return", "I paid for extra baggage on the return flight", (LIQ, REI)),
     ("jo_cos", "I am a Job Order or COS worker", (CA, LIQ, REI)),
     ("representative_signs", "The Department Personnel Order allows a representative or OIC to sign", (CA, LIQ, REI)),
     ("exceeds_daily_rate", "My expenses exceed the daily rate", (LIQ, REI)),
@@ -105,6 +108,24 @@ def _meals_lodging_cert(kind, a):
     unticked days need the Certificate of Non-Provision. Before the itinerary is prepared the answer is
     not known, so a per diem claim still lists the certificate."""
     if kind in (LIQ, REI) and truthy(a.get("per_diem_claimed")) and truthy(a.get("meals_not_provided", 1)):
+        return "required"
+    return None
+
+
+def _extra(kinds):
+    """Extra expenses of any kind: the general answer, or extra baggage on either flight (DM 2026-0521 asks for the
+    baggage per flight, liquidation and reimbursement only)."""
+    def rule(kind, a):
+        if kind not in kinds:
+            return None
+        baggage = kind in LR_ and (truthy(a.get("baggage_outbound")) or truthy(a.get("baggage_return")))
+        return "required" if truthy(a.get("extra_expenses")) or baggage else None
+    return rule
+
+
+def _return_baggage(kind, a):
+    """DM 2026-0521: extra baggage on the return flight is not allowed by default when the outbound had none."""
+    if kind in LR_ and truthy(a.get("baggage_return")) and not truthy(a.get("baggage_outbound")):
         return "required"
     return None
 
@@ -191,13 +212,18 @@ CHECKLIST: tuple = (
     ItemDef("boarding_pass", "Boarding pass", "upload", _when("flew", *LR), 1,
             "Thermal paper needs a photocopy."),
     ItemDef("extra_expense_invoice", "Invoice for extra expenses", "upload",
-            _when("extra_expenses", *LR), 1,
+            _extra(LR), 1,
             "Baggage, rebooking, cancellation. Extra baggage on the return flight is not allowed when the outbound "
             "flight had none, and personal baggage is never paid (DM 2026-0521)."),
     ItemDef("extra_expense_justification", "Justification for extra expenses", "upload",
-            _when("extra_expenses", *KINDS), 1,
+            _extra(KINDS), 1,
             "Extra baggage must be for official use: say what official items were carried. Template pending; may sit "
             "inside Appendix B."),
+    ItemDef("return_baggage_justification", "Justification for extra baggage on the return flight only", "upload",
+            _return_baggage, 1,
+            "You had no extra baggage on the outbound flight, so extra baggage on the return is not allowed by default. "
+            "Explain the official items carried back and why; baggage for personal reasons is not paid, and FMS may deny "
+            "claims it finds excessive (DM 2026-0521)."),
     ItemDef("boat_bus_ticket", "Boat or bus ticket", "upload", _when("boat_bus", *LR), 1,
             "Regular air-conditioned bus only."),
     ItemDef("terminal_fee", "Terminal fee receipt", "upload", _when("terminal_fee", *LR), 1),

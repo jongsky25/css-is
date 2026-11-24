@@ -9,10 +9,11 @@ decisions (recorded there). DM1 (deadline rule, CA hand-in date and reminder, re
 attestation, checklist notes), DM2 (urgent cash advance inside the week, with a
 justification upload), DM3 (meals/lodging default "provided", generated
 Certificate of Non-Provision) and DM4 (AI-read receipt/ticket/fare-screenshot details
-raising four new Admin Unit flag kinds; travel_flag table rebuild on boot) are built as candidate 10.48 in draft PR #640 (main went to 10.47 with PR #641; merged in); not merged,
+raising four new Admin Unit flag kinds; travel_flag table rebuild on boot) and DM5 (baggage
+per flight; return-only baggage needs a justification and an Admin Unit check) are built as candidate 10.48 in draft PR #640 (main went to 10.47 with PR #641; merged in); not merged,
 not released. After release a person must run `makeNonProvisionTemplate()` in the travel
 Apps Script project (docs/TRAVEL_DOCS_RELAY_SETUP.md) and the owner should approve the
-certificate wording. Next: CI on PR #640; release on owner instruction; DM5 (baggage per leg) / DM6 (pre-audit view) later.
+certificate wording. Next: CI on PR #640; release on owner instruction; DM6 (pre-audit view) later.
 The restructure next steps below are unchanged.
 
 ## Emails for new staff; Division 3 decided — November 24, 2026

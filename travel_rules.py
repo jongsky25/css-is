@@ -28,6 +28,7 @@ FLAG_LABELS = {
     "shared_ride": "Multi-stop or shared ride",
     "fare_class": "Fare class not allowed",
     "fare_proof": "Proof of lowest fare incomplete",
+    "return_baggage": "Extra baggage on the return flight only",
 }
 
 # DM 2026-0521: the regular economy fares named as lowest (Cebu Pacific and Philippine Airlines). A brand is only
@@ -242,6 +243,11 @@ def flags_for(filing, itinerary_rows, answers, ceilings, opts=None, is_working=N
             flags.append(FlagSpec("over_ceiling", flag_sig("over_ceiling", key + "|per_diem", row.get("per_diem"), row.get("day_kind")),
                                   f"Per diem {_num(_dec(row.get('per_diem')))} is {_num(_dec(row.get('per_diem')) - rr.per_diem)} "
                                   f"above the {_num(rr.per_diem)} the policy allows for this day.", key))
+    a = answers or {}
+    if tc.truthy(a.get("baggage_return")) and not tc.truthy(a.get("baggage_outbound")):
+        flags.append(FlagSpec("return_baggage", flag_sig("return_baggage", "baggage", 0, ""),
+                              "Extra baggage on the return flight with none on the outbound. Not allowed by default: "
+                              "check the justification that it was for official use (DM 2026-0521)."))
     if (answers or {}).get("role") == "participant":
         flags.append(FlagSpec("participant_only",
                               flag_sig("participant_only", "role", 0, ""),

@@ -178,3 +178,36 @@ def test_an_old_database_is_migrated_keeping_its_flags():
     st.init_db(c)                                                                         # again: nothing changes
     assert c.execute("SELECT COUNT(*) FROM travel_flag").fetchone()[0] == 2 and c.execute("PRAGMA foreign_key_check").fetchall() == []
     c.close()
+
+
+# ------------------------------------------------------------------- DM5: baggage per flight ---
+
+def _codes(kind, answers):
+    return {i.code for i in tr.build_checklist(kind, answers)}
+
+
+def test_baggage_on_either_flight_brings_the_invoice_and_justification():
+    for answers in ({"baggage_outbound": 1}, {"baggage_return": 1}, {"extra_expenses": 1}):
+        got = _codes("reimbursement", answers)
+        assert {"extra_expense_invoice", "extra_expense_justification"} <= got, answers
+    assert not {"extra_expense_invoice", "extra_expense_justification"} & _codes("reimbursement", {})
+    # the baggage questions are for liquidations and reimbursements; a cash advance keeps the general answer
+    assert "extra_expense_justification" not in _codes("ca", {"baggage_return": 1})
+    assert "extra_expense_justification" in _codes("ca", {"extra_expenses": 1})
+
+
+def test_return_only_baggage_needs_its_own_justification_and_an_admin_check():
+    assert "return_baggage_justification" in _codes("liquidation", {"baggage_return": 1})
+    assert "return_baggage_justification" not in _codes("liquidation", {"baggage_return": 1, "baggage_outbound": 1})
+    assert "return_baggage_justification" not in _codes("liquidation", {"baggage_outbound": 1})
+    got = [f for f in tr.flags_for({}, [], {"baggage_return": 1}, {}) if f.kind == "return_baggage"]
+    assert len(got) == 1 and "official use" in got[0].detail
+    assert not [f for f in tr.flags_for({}, [], {"baggage_return": 1, "baggage_outbound": 1}, {})
+                if f.kind == "return_baggage"]
+
+
+def test_generate_opens_the_return_baggage_flag(viewer, conn, relay):
+    ref = mk(viewer, baggage_return="1")
+    r = jpost(viewer, f"/travel/f/{ref}/generate", {"rows": []})
+    assert r.status_code == 200
+    assert [g["kind"] for g in flags(conn, ref)] == ["return_baggage"]

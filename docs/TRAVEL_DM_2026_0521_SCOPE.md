@@ -5,7 +5,14 @@ Travelling Expenses based on 2026 Pre-Audit Observations". It cites PD 1445, EO 
 DO 2019-0225, DM 2023-0092 and DM 2024-0369. The memo itself is not committed; this file
 records only its directives and how they map onto Travel filing.
 
-Status: scoped November 24, 2026; owner decisions recorded below; **DM1, DM2, DM3 and DM4 built** (candidate 10.48) on `claude/cool-davinci-y5s3re`, PR #640.
+Status: scoped November 24, 2026; owner decisions recorded below; **DM1 to DM5 built** (candidate 10.48) on `claude/cool-davinci-y5s3re`, PR #640.
+
+DM5 as built: liquidations and reimbursements ask "extra baggage on the outbound flight" (`baggage_outbound`) and
+"on the return flight" (`baggage_return`); either one brings the extra-expense invoice and justification rows, and the
+general `extra_expenses` answer now reads "other extra expenses (rebooking, cancellation, or baggage for a cash
+advance)". Return-only baggage adds the required upload `return_baggage_justification` and, at generate, an Admin
+Unit flag of the new kind `return_baggage` (same `travel_flag` rebuild). Filings opened before 10.48 keep their
+answers; their `extra_expenses` may still mean baggage, and they get no per-flight check. The assistant's reimbursement-draft tool (`travel_drafts.ReimbursementAnswers`) accepts the two baggage answers too (default false).
 
 DM4 as built (owner decision 5: AI): the receipt reader (`travel_scan`) asks for optional details, accepted only
 when well formed and never required, so older or shorter answers stay valid: `stops`, `passengers`, `fare_split`,

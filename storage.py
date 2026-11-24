@@ -96,7 +96,7 @@ def _travel_dm_2026_0521(conn):
         if cols and col not in cols:
             conn.execute(f"ALTER TABLE travel_reading ADD COLUMN {col} {typ}")
     row = conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='travel_flag'").fetchone()
-    if not row or "shared_ride" in (row[0] or ""):
+    if not row or "return_baggage" in (row[0] or ""):
         conn.commit()
         return
     conn.commit()
@@ -106,7 +106,7 @@ def _travel_dm_2026_0521(conn):
     CREATE TABLE travel_flag (
         id INTEGER PRIMARY KEY,
         filing_id INTEGER NOT NULL REFERENCES travel_filing(id) ON DELETE CASCADE,
-        kind TEXT NOT NULL CHECK (kind IN ('over_ceiling','unlisted_route','no_receipt_over_1000','participant_only','receipt_mismatch','shared_ride','fare_class','fare_proof')),
+        kind TEXT NOT NULL CHECK (kind IN ('over_ceiling','unlisted_route','no_receipt_over_1000','participant_only','receipt_mismatch','shared_ride','fare_class','fare_proof','return_baggage')),
         sig TEXT NOT NULL, detail TEXT,
         state TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open','verified','rejected')),
         supervisor_confirmed INTEGER NOT NULL DEFAULT 0, note TEXT, decided_by TEXT, decided_at TEXT,
@@ -878,7 +878,7 @@ def init_db(conn):
     CREATE TABLE IF NOT EXISTS travel_flag (
         id INTEGER PRIMARY KEY,
         filing_id INTEGER NOT NULL REFERENCES travel_filing(id) ON DELETE CASCADE,
-        kind TEXT NOT NULL CHECK (kind IN ('over_ceiling','unlisted_route','no_receipt_over_1000','participant_only','receipt_mismatch','shared_ride','fare_class','fare_proof')),
+        kind TEXT NOT NULL CHECK (kind IN ('over_ceiling','unlisted_route','no_receipt_over_1000','participant_only','receipt_mismatch','shared_ride','fare_class','fare_proof','return_baggage')),
         sig TEXT NOT NULL, detail TEXT,
         state TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open','verified','rejected')),
         supervisor_confirmed INTEGER NOT NULL DEFAULT 0, note TEXT, decided_by TEXT, decided_at TEXT,
