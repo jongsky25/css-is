@@ -180,4 +180,10 @@ const base = { action: 'advisory_create', request_id: 'adv-7-r1', folder_key: 'a
   out.info = world().ctx.advisoryOperation_({ action: 'advisory_info' });
   out.thumbs = world().ctx.advisoryOperation_({ action: 'advisory_info', thumbnails: true }).variants.map(v => Buffer.from(v.png_b64, 'base64').toString('latin1').slice(0, 4));
 }
+{ // version: the file's Drive version; outside files refused
+  const w = world();
+  const id = w.ctx.advisoryOperation_(base).id;
+  out.version = { mine: w.ctx.advisoryOperation_({ action: 'advisory_version', file_id: id }).version,
+    outside: w.ctx.advisoryOperation_({ action: 'advisory_version', file_id: w.master.id }).error };
+}
 process.stdout.write(JSON.stringify(out));

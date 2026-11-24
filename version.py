@@ -29,7 +29,10 @@ CHANGELOG = [
         "changes": [
             "Advisories has a New advisory button. Choose an activity you manage, make a new activity together with the advisory, or write a general advisory that is not about an activity.",
             "Check the prefilled details, pick a design, and Office Connect makes the advisory as a Google Slides file from the office template, shared with everyone in your section.",
-            "Each advisory has one page showing where it is (Draft, Division Chief, Director, Issued) and a button to open it in Google Slides. Sending a Slides advisory for review comes in the next update.",
+            "Each advisory has one page showing where it is (Draft, Division Chief, Director, Issued), who it is waiting for, and a button to open it in Google Slides.",
+            "Send to Division Chief takes a copy of the slide as it is at that moment; that copy is what the Division Chief and Director review and approve. Open comments in the slide are kept with it.",
+            "While the advisory is being reviewed, your section can comment in Google Slides but not edit. If it is sent back, editing comes back. After approval, the file becomes read-only.",
+            "If the Slides file is changed after approval, issuing is stopped until it is sent for review again.",
             "This needs the office relay set up for Google Slides; until then the page says so and activity advisories keep the old editor."
         ],
     },

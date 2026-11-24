@@ -94,6 +94,10 @@ def test_access_sets_exactly_the_listed_people_and_keeps_the_owner(relay):
     assert a["repeat"] == []                               # already right: nothing changes
 
 
+def test_version_reports_the_drive_version_of_advisory_files_only(relay):
+    assert relay["version"] == {"mine": "2", "outside": "not_allowed"}
+
+
 # ---- client (advisory_slides.py) ----
 
 class FakeCall:
@@ -194,3 +198,9 @@ def test_messages_are_plain_and_never_show_codes():
     for code in list(slides._MESSAGES) + ["something_new"]:
         text = slides.describe(code)
         assert "_" not in text and text.endswith(".")
+
+
+def test_version_returns_the_relay_version():
+    assert slides.version(FILE_ID, call=FakeCall({"id": FILE_ID, "version": "7"})).value == "7"
+    assert slides.version(FILE_ID, call=FakeCall({"id": FILE_ID})).error == "unconfirmed"
+    assert slides.version(FILE_ID, call=FakeCall(ok=False, error="unreachable")).error == "unreachable"

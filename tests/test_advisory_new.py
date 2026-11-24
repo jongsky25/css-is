@@ -217,12 +217,3 @@ def test_numbers_continue_the_day_count_across_old_and_new_records(flow):
     c.execute("INSERT INTO event_advisory(event_id,number,seq_date,seq,headline,created_by,created_at,updated_by,updated_at) "
               "VALUES (?,?,?,?,?,?,?,?,?)", (flow["ev"]["id"], "2026-1124-004", day.isoformat(), 4, "Old", "x", "t", "x", "t"))
     assert new_flow._reserve_number(c, day) == "2026-1124-005"
-
-
-def test_send_for_review_waits_for_the_next_update(flow, manager):
-    page = manager.get("/advisories/new/details?kind=general")
-    made = manager.post("/advisories/new", data=details_form(page), follow_redirects=False)
-    aid = made.headers["location"].split("/")[2].split("?")[0]
-    reply = manager.post(f"/advisories/{aid}/actions", data={"action": "submit", "expected_revision": "1",
-                                                              "operation_key": str(uuid.uuid4()), "reason": "x"})
-    assert reply.status_code == 409 and "next update" in reply.text

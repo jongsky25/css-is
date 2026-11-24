@@ -406,17 +406,173 @@ def home(conn, user, aid):
                     if record['slides_error'] else 'The Google Slides file is being made.')
         next_line = 'Press "Try again" to make it.' if editable else f'{initiator} can make it.'
     elif status == 'changes_requested':
-        headline, next_line = 'Sent back with comments.', 'Make the changes in Google Slides, then send it for review again.'
+        headline, next_line = 'Sent back with comments.', 'Read the comments below, make the changes in Google Slides, then send it again.'
     elif status == 'draft':
         headline = 'Draft. Edit it in Google Slides.'
-        next_line = 'Sending it to your Division Chief for review comes in the next update.'
+        next_line = ('When it is ready, send it to your Division Chief.' if record['initiator_id'] == user['id']
+                     else f'{initiator} sends it for review when it is ready.')
+    elif status == 'in_review':
+        reviewer = rows(conn, 'SELECT reviewer_id FROM document WHERE id=?', (record['document_id'],))[0]['reviewer_id']
+        who = st._account_display_name(conn, reviewer) if reviewer else ''
+        role = 'Division Chief' if stage == 'chief' else 'Director'
+        headline = f'Waiting for the {role}' + (f', {who}.' if who else '.')
+        next_line = ('Please review the copy below and decide.' if reviewer == user['id']
+                     else 'You can read and comment in Google Slides, but not edit, while it is being reviewed.')
+    elif status == 'approved':
+        headline, next_line = 'Approved by the Director.', 'It is ready to issue.'
+    elif issued and status == 'issued':
+        headline, next_line = 'Issued.', ''
+    elif status == 'cancelled':
+        headline, next_line = 'Cancelled.', ''
     else:
         headline, next_line = STEPS[step], ''
+    revision = rows(conn, 'SELECT id,payload_json,created_at FROM advisory_revision WHERE id=?',
+                    (record['current_revision'],)) if record['current_revision'] else []
+    reviewed = None
+    if revision:
+        payload = json.loads(revision[0]['payload_json'])
+        reviewed = {'id': revision[0]['id'], 'taken_at': revision[0]['created_at'],
+                    'comments': (payload.get('slides') or {}).get('comments') or []}
+    can_send = bool(slides_info) and record['initiator_id'] == user['id'] and status in ('draft', 'changes_requested')
     unit = _unit(conn, record['unit_id'])
     section = _unit(conn, record['section_id'])
     return {'record': dict(record, status=status, revision=visible['revision']), 'details': stored, 'steps': STEPS,
             'step': step, 'slides': slides_info, 'editable': editable, 'headline': headline, 'next_line': next_line,
-            'division': unit, 'section': section, 'initiator': initiator,
+            'division': unit, 'section': section, 'initiator': initiator, 'reviewed': reviewed, 'can_send': can_send,
+            'resubmit': bool(revision) and status in ('draft', 'changes_requested'),
             'activity': {'token': record['event_token'], 'title': record['activity_title'],
                          'dates': aa.dates_text({'event_date': record['event_date'], 'end_date': record['end_date']})}
                         if record['event_token'] else None}
+
+
+# ---- increment 3: send for review with a Slides snapshot; access follows the stage ----
+
+def _slides_record(conn, user, aid):
+    aw.get_visible(conn, user, aid)
+    record = _record(conn, aid)
+    if not record.get('kind') or not record['slides_file_id']:
+        raise ValueError('Make the Google Slides file first.')
+    return record
+
+
+def capture(conn, user, aid, snap):
+    """Store the snapshot as the advisory's next immutable revision (or reuse the current one if nothing
+    changed). One transaction; returns the document revision to submit against."""
+    user = permissions.actor(conn, user)
+    if snap.file_id is None or len(snap.pdf) > aw.MAX_ARTIFACT_BYTES or len(snap.png) > aw.MAX_ARTIFACT_BYTES:
+        raise ValueError(slides.describe('snapshot_too_large'))
+    with transaction(conn):
+        user = permissions.actor(conn, user)
+        docs.writable(conn); work.writable(conn)
+        visible = aw.get_visible(conn, user, aid)
+        record = _record(conn, aid)
+        if record['initiator_id'] != user['id']:
+            raise permissions.Denied('Only the person who started this advisory can send it for review.')
+        if visible['status'] not in ('draft', 'changes_requested') or visible['archived_at']:
+            raise docs.Conflict('This advisory is not a draft any more. Reload the page.')
+        if snap.file_id != record['slides_file_id']:
+            raise docs.Conflict('The Slides file does not match this advisory.')
+        stored = json.loads(record['details_json'])
+        ev = st.get_event(conn, record['event_token']) if record['event_token'] else None
+        source_value = aw.source(conn, ev) if ev else {}
+        payload = {'content': {'headline': stored['title']}, 'unit_id': record['unit_id'],
+                   'audience': stored['audience'], 'external': stored['external'],
+                   'slides': {'file_id': snap.file_id, 'version': snap.version, 'modified_time': snap.modified_time,
+                              'pdf_sha256': snap.pdf_sha256, 'png_sha256': snap.png_sha256,
+                              'comments': [{'author': c.author, 'content': c.content, 'quoted': c.quoted,
+                                            'created_time': c.created_time, 'replies': c.replies} for c in snap.comments]}}
+        payload_hash = aw.digest(aw.encoded([payload, source_value]))
+        prior = rows(conn, 'SELECT * FROM advisory_revision WHERE id=?', (record['current_revision'],)) if record['current_revision'] else []
+        doc = docs.raw(conn, record['document_id'])
+        if prior and prior[0]['payload_hash'] == payload_hash:
+            return doc['revision']
+        now = tz.now_iso()
+        ordinal = prior[0]['ordinal'] + 1 if prior else 1
+        rid = conn.execute('SELECT COALESCE(MAX(id),0)+1 FROM advisory_revision').fetchone()[0]
+        vid = conn.execute('''INSERT INTO document_file_version(document_id,url,file_id,fingerprint,role,parent_id,actor_id,created_at,backend)
+            VALUES (?,?,'',?,'draft',?,?,?,'advisory')''', (doc['id'], f'/advisories/{aid}/revisions/{rid}/file.pdf',
+            snap.pdf_sha256, doc['current_version'], user['id'], now)).lastrowid
+        summary = 'Copy taken from Google Slides for review' + (f' (Slides version {snap.version})' if snap.version else '')
+        conn.execute('''INSERT INTO advisory_revision(id,advisory_id,ordinal,version_id,payload_json,payload_hash,source_json,actor_id,created_at,summary)
+            VALUES (?,?,?,?,?,?,?,?,?,?)''', (rid, aid, ordinal, vid, aw.encoded(payload), payload_hash, aw.encoded(source_value),
+            user['id'], now, summary))
+        conn.execute('INSERT INTO advisory_artifact VALUES (?,?,?,?)', (rid, 'pdf', snap.pdf_sha256, snap.pdf))
+        conn.execute('INSERT INTO advisory_artifact VALUES (?,?,?,?)', (rid, 'png', snap.png_sha256, snap.png))
+        conn.execute('UPDATE advisory_record SET current_revision=? WHERE id=?', (rid, aid))
+        conn.execute('''UPDATE document SET current_version=?,revision=revision+1,subject=?,updated_at=?,approved_version=NULL,signed_version=NULL
+            WHERE id=?''', (vid, stored['title'], now, doc['id']))
+        event(conn, doc['id'], user, 'advisory_slides_captured', {'advisory_id': aid, 'revision_id': rid, 'ordinal': ordinal,
+                                                                  'slides_version': snap.version})
+        return doc['revision'] + 1
+
+
+def send_for_review(conn, user, aid, *, reason, operation_key, snapshot=None, access=None):
+    """Take the review copy from Google Slides, then submit it to the Division Chief. Network first,
+    then two short transactions; a failed snapshot changes nothing."""
+    import advisory_review
+    user = permissions.actor(conn, user)
+    record = _slides_record(conn, user, aid)
+    if record['initiator_id'] != user['id']:
+        raise permissions.Denied('Only the person who started this advisory can send it for review.')
+    advisory_review.routing(conn, aw.get_visible(conn, user, aid))      # say who is missing before touching Google
+    taken = (snapshot or slides.snapshot)(record['slides_file_id'])
+    if not taken.ok:
+        raise ValueError(slides.describe(taken.error))
+    revision = capture(conn, user, aid, taken.value)
+    reason = (reason or '').strip() or 'Sent for Division Chief review'
+    docs.mutate(conn, user, record['document_id'], revision, 'advisory_submit', {'operation_key': operation_key, 'reason': reason})
+    return sync_access(conn, user, aid, setter=access)
+
+
+def people_for(conn, aid):
+    """Who should be able to do what with the Slides file, from the advisory's current stage."""
+    record = _record(conn, aid)
+    status = conn.execute('SELECT status FROM document WHERE id=?', (record['document_id'],)).fetchone()[0]
+    team = [p['email'] for p in section_people(conn, _unit(conn, record['section_id'])) if p['email']]
+    starter = _user_address(conn, st.get_admin_user_by_id(conn, record['initiator_id']))
+    team = [starter] + [e for e in team if e != starter]
+    reviewers = []
+    if record['active_packet']:
+        packet = rows(conn, 'SELECT chief_id,director_id FROM advisory_review_packet WHERE id=?', (record['active_packet'],))
+        for uid in (packet[0]['chief_id'], packet[0]['director_id']) if packet else ():
+            account = st.get_admin_user_by_id(conn, uid)
+            if account:
+                reviewers.append(_user_address(conn, account))
+    team = [e for e in team if e]; reviewers = [e for e in reviewers if e]
+    if status in ('draft', 'changes_requested'):
+        return {'editors': team, 'commenters': reviewers, 'readers': []}
+    if status == 'in_review':
+        return {'editors': [], 'commenters': team + reviewers, 'readers': []}
+    return {'editors': [], 'commenters': [], 'readers': team + reviewers}
+
+
+def sync_access(conn, user, aid, *, setter=None):
+    """Apply people_for() to the file (network). A failure is recorded and shown, never undoes a decision."""
+    record = _record(conn, aid)
+    if not record.get('slides_file_id'):
+        return ''
+    want = people_for(conn, aid)
+    domain = st.get_setting(conn, 'advisory.slides_domain') or 'doh.gov.ph'
+    result = (setter or slides.set_access)(record['slides_file_id'], domain=domain, **want)
+    info = json.loads(record['slides_json'])
+    info['access'] = 'ok' if result.ok else result.error[:80]
+    with transaction(conn):
+        conn.execute('UPDATE advisory_record SET slides_json=? WHERE id=?', (aw.encoded(info), aid))
+    return '' if result.ok else ('The advisory moved on, but who can edit the Slides file could not be updated. '
+                                 + slides.describe(result.error))
+
+
+def unchanged_since_approval(conn, user, aid, *, check=None):
+    """'' when the Slides file is still the approved copy; otherwise a sentence saying what to do."""
+    record = _record(conn, aid)
+    if not record.get('kind') or not record['current_revision']:
+        return ''
+    payload = json.loads(rows(conn, 'SELECT payload_json FROM advisory_revision WHERE id=?', (record['current_revision'],))[0]['payload_json'])
+    approved = (payload.get('slides') or {}).get('version')
+    found = (check or slides.version)(record['slides_file_id'])
+    if not found.ok:
+        return 'Could not check the Google Slides file before issuing. ' + slides.describe(found.error)
+    if found.value != approved:
+        return ('The Google Slides file was changed after it was approved, so the approved copy no longer matches it. '
+                'Withdraw it for revision and send it for review again.')
+    return ''

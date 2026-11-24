@@ -109,6 +109,33 @@ def make_router(templates, get_conn, base_url):
         return [dict(id=r[0],name=r[1]) for r in conn.execute("SELECT id,name FROM org_unit WHERE level='section' ORDER BY name,id")
                 if st.unit_is_active(conn,r[0],'section')]
 
+    def home_page(request,conn,user,advisory_id,*,error='',reason='',status=200):
+        q=request.query_params
+        page=new_flow.home(conn,user,advisory_id)
+        record=workflow.get_visible(conn,user,advisory_id)
+        notice=''
+        if q.get('made')=='1' and page['slides']: notice='Advisory created. Open it in Google Slides to write and design it.'
+        if q.get('sent')=='1': notice='Sent to the Division Chief. Your section can still read and comment on it, but not edit it until it comes back.'
+        if q.get('access')=='0' and not error:
+            error='The advisory moved on, but who can edit the Google Slides file could not be updated. Press "Update access" to try again.'
+        review=advisory_review.screen(conn,user,record,int(q.get('comments_before',0)),int(q.get('actions_before',0))) if record.get('current_revision') else None
+        if review: review['actions']=[a for a in review['actions'] if a[0]!='submit']
+        return templates.TemplateResponse(request,'advisory_home.html',{**page,'notice':notice,'error':error,'reason':reason,
+            'review':review,'review_record':record,'action_key':str(uuid.uuid4()),'available':workflow.available(conn),
+            'distribution':advisory_distribution.screen(conn,user,record) if record.get('current_revision') else None},status_code=status)
+
+    @router.post('/advisories/{advisory_id}/access')
+    def new_access(request:Request,advisory_id:int):
+        conn=get_conn()
+        try:
+            user=actor(request,conn); record=workflow.get_visible(conn,user,advisory_id)
+            if not record.get('kind') or not new_flow.can_edit(conn,user,new_flow._record(conn,advisory_id)):
+                raise permissions.Denied('Advisory not found or unavailable to you.')
+            warning=new_flow.sync_access(conn,user,advisory_id)
+            return RedirectResponse(f'/advisories/{advisory_id}'+('?access=0' if warning else ''),status_code=303)
+        except ValueError as error: return failure(error,request)
+        finally: conn.close()
+
     @router.get('/advisories/new',response_class=HTMLResponse)
     def new_choose(request:Request,pick:str='',q:str=''):
         conn=get_conn()
@@ -178,6 +205,25 @@ def make_router(templates, get_conn, base_url):
             except ValueError:
                 return RedirectResponse(f'/advisories/{advisory_id}?made=0',status_code=303)
             return RedirectResponse(f'/advisories/{advisory_id}?made=1',status_code=303)
+        except ValueError as error: return failure(error,request)
+        finally: conn.close()
+
+    @router.post('/advisories/{advisory_id}/send')
+    async def new_send(request:Request,advisory_id:int):
+        raw=await request.body()
+        if len(raw)>16000: return Response('This form is too large.',status_code=413)
+        data=dict(parse_qsl(raw.decode('utf-8',errors='replace'),keep_blank_values=True))
+        conn=get_conn()
+        try:
+            user=actor(request,conn)
+            try:
+                warning=new_flow.send_for_review(conn,user,advisory_id,reason=data.get('reason',''),
+                                                 operation_key=data.get('operation_key',''))
+            except permissions.Denied: raise
+            except ValueError as error:
+                return home_page(request,conn,user,advisory_id,error=str(error),reason=data.get('reason',''),
+                                 status=409 if isinstance(error,documents.Conflict) else 422)
+            return RedirectResponse(f'/advisories/{advisory_id}?sent=1'+('&access=0' if warning else ''),status_code=303)
         except ValueError as error: return failure(error,request)
         finally: conn.close()
 
@@ -271,11 +317,7 @@ def make_router(templates, get_conn, base_url):
         try:
             user=actor(request,conn); record=workflow.get_visible(conn,user,advisory_id)
             if record.get('kind'):
-                made=request.query_params.get('made')
-                page=new_flow.home(conn,user,advisory_id)
-                return templates.TemplateResponse(request,'advisory_home.html',{**page,
-                    'notice':'Advisory created. Open it in Google Slides to write and design it.' if made=='1' and page['slides'] else '',
-                    'error':''})
+                return home_page(request,conn,user,advisory_id)
             ev=st.get_event(conn,record['event_token'])
             return show(request,conn,user,ev)
         except ValueError as error: return failure(error,request)
@@ -300,17 +342,26 @@ def make_router(templates, get_conn, base_url):
         conn=get_conn()
         try:
             user=actor(request,conn); record=workflow.get_visible(conn,user,advisory_id)
-            if record.get('current_revision') is None:
+            slides_kind=bool(record.get('kind'))
+            def refuse(message,status=409):
                 return templates.TemplateResponse(request,'advisory_action_error.html',{'record':record,
-                    'error':'Sending a Google Slides advisory for review comes in the next update.','reason':data.get('reason','')},status_code=409)
+                    'error':message,'reason':data.get('reason','')},status_code=status)
+            if slides_kind and data.get('action')=='submit':
+                return refuse('Use "Send to Division Chief" on the advisory page; it takes a fresh copy from Google Slides first.')
+            if record.get('current_revision') is None:
+                return refuse('Send the advisory for review first.')
+            if slides_kind and data.get('action')=='issue':
+                changed=new_flow.unchanged_since_approval(conn,user,advisory_id)
+                if changed: return refuse(changed)
             try:
                 documents.mutate(conn,user,record['document_id'],data.get('expected_revision'),
                                  'advisory_'+data.get('action',''),data)
             except permissions.Denied:raise
             except ValueError as error:
-                return templates.TemplateResponse(request,'advisory_action_error.html',{
-                    'record':record,'error':str(error),'reason':data.get('reason','')},
-                    status_code=409 if isinstance(error,documents.Conflict) else 422)
+                return refuse(str(error),409 if isinstance(error,documents.Conflict) else 422)
+            if slides_kind:
+                warning=new_flow.sync_access(conn,user,advisory_id)
+                if warning: return RedirectResponse(f'/advisories/{advisory_id}?access=0',status_code=303)
             return RedirectResponse(f'/advisories/{advisory_id}',status_code=303)
         except ValueError as error:return failure(error,request)
         finally:conn.close()

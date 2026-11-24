@@ -11,6 +11,7 @@
 //   advisory_create    -> copy the master, keep one variant, fill placeholders and the QR code, share it
 //   advisory_snapshot  -> PDF + PNG + Drive version + open comments of a file, for review records
 //   advisory_access    -> set exactly who may edit / comment / view the file (no notification emails)
+//   advisory_version   -> the file's current Drive version (to spot edits after approval)
 const ADVISORY_VERSION = 1;
 const ADV_SLUG = /^[A-Za-z0-9_-]{1,40}$/;
 const ADV_REQUEST = /^[A-Za-z0-9:_-]{1,80}$/;
@@ -26,6 +27,7 @@ function advisoryOperation_(req) {
     case 'advisory_create': return advLocked_(function () { return advCreate_(req); });
     case 'advisory_snapshot': return advSnapshot_(req);
     case 'advisory_access': return advLocked_(function () { return advAccess_(req); });
+    case 'advisory_version': return advVersion_(req);
     default: return { ok: false, error: 'unknown_action' };
   }
 }
@@ -155,6 +157,13 @@ function advPutQr_(deck, blob) {
 function advMeta_(file) {
   const meta = Drive.Files.get(file.getId(), { fields: 'id,version,modifiedTime', supportsAllDrives: true });
   return { version: String(meta.version), modified_time: meta.modifiedTime };
+}
+
+function advVersion_(req) {
+  const file = advFile_(req.file_id);
+  if (!file) return { ok: false, error: 'not_allowed' };
+  const meta = advMeta_(file);
+  return { ok: true, id: file.getId(), version: meta.version, modified_time: meta.modified_time };
 }
 
 function advResult_(file, qr) {

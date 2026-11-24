@@ -2,15 +2,14 @@ Owner answered all questions (section members edit; Slides comments too; real ac
 created with the advisory; no public page for general advisories; email plus a Share button;
 Telegram later; friendly-interface requirements recorded in the plan).
 Owner said "start": increment 1 (relay companion `apps_script/advisory_slides.gs`, client
-`advisory_slides.py`, setup guide [ADVISORY_SLIDES_SETUP.md](ADVISORY_SLIDES_SETUP.md)) and, on
-"yes", increment 2 (New advisory flow: existing activity / new activity / general; details with
-design thumbnails; advisory home page with progress bar) are built as candidate 10.51 on this
-branch (PR #645). Additive schema only. Sending a Slides advisory for review is refused until
-increment 3. Local: 232 advisory/Documents/deploy/release tests and 143 accessibility/navigation/
-activity-creation tests passed; phone browser journeys (JS on and off) passed with no sideways
-scroll. Not merged or released.
-Next: owner sets up the relay template (setup guide); increment 3 (snapshot on send for review,
-access locking, drift check) on owner instruction. Merge/release only on owner instruction.
+`advisory_slides.py`, setup guide [ADVISORY_SLIDES_SETUP.md](ADVISORY_SLIDES_SETUP.md)); then
+increment 2 (New advisory flow: existing activity / new activity / general; details with design
+thumbnails; advisory page with progress bar); then increment 3 (Send to Division Chief takes a
+Slides copy as the reviewed revision; Slides access follows the stage; issue refused if the file
+changed after approval). All built as candidate 10.51 on this branch (PR #645); additive schema.
+Not merged or released. Verification is recorded in the PR.
+Next: owner sets up the relay template (setup guide); increment 4 (issue from the snapshot and
+the Share button) on owner instruction. Merge/release only on owner instruction.
 
 ## Advisory rethink planned (Google Slides, New advisory flow) — November 24, 2026
 

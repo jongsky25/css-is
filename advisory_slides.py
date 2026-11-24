@@ -205,6 +205,19 @@ def set_access(file_id: str, *, editors=(), commenters=(), readers=(), domain: s
     return Outcome(True, value=list(r.data.get("changed") or []))
 
 
+def version(file_id: str, *, call=None) -> Outcome:
+    """The file's current Drive version, to tell whether it changed since it was approved."""
+    call = call or gdocs_relay.call
+    if not _FILE_ID.match(file_id or ""):
+        raise ValueError("Not a Drive file id.")
+    r = call("advisory_version", file_id=file_id)
+    if not r.ok:
+        return Outcome(False, error=r.error)
+    if r.data.get("id") != file_id or not str(r.data.get("version") or ""):
+        return Outcome(False, error="unconfirmed")
+    return Outcome(True, value=str(r.data["version"]))
+
+
 _MESSAGES = {
     "not_configured": "Making advisories in Google Slides is not switched on yet. Ask the system administrator.",
     "advisory_not_installed": "The Google Slides part of the office relay is not installed yet. Ask the system administrator.",

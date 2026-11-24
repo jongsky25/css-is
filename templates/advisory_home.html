@@ -17,13 +17,41 @@
 
 <div class="adv-main">
 {% if slides %}
-  <a class="btn" href="{{ slides.url }}" target="_blank" rel="noopener">Open in Google Slides</a>
+  <a class="btn{% if not editable %} ghost{% endif %}" href="{{ slides.url }}" target="_blank" rel="noopener">Open in Google Slides</a>
 {% elif editable %}
   <form method="post" action="/advisories/{{ record.id }}/slides"><button class="btn" type="submit">Try again</button></form>
 {% endif %}
 </div>
 
-{% if slides and (slides.unfilled or slides.qr in ('no_qr_box', 'bad_image')) %}
+{% if can_send %}
+<form method="post" action="/advisories/{{ record.id }}/send" class="adv-card">
+<h2>{{ 'Send it again' if resubmit else 'Ready? Send it for review' }}</h2>
+<p class="hint" style="margin-top:0">Office Connect takes a copy of the slide as it is now. Your Division Chief reviews that copy. Until it comes back, your section can comment in Google Slides but not edit.</p>
+<input type="hidden" name="operation_key" value="{{ action_key }}">
+<div class="adv-field"><label for="send-reason">{{ 'What did you change?' if resubmit else 'Note for the reviewer' }} <span class="hint">{{ 'Required, so the reviewer knows what to look at.' if resubmit else 'Optional.' }}</span></label>
+<textarea id="send-reason" name="reason" rows="2" maxlength="4000" {% if resubmit %}required{% endif %}>{{ reason }}</textarea></div>
+<button class="btn" type="submit">Send to Division Chief</button>
+</form>
+{% endif %}
+
+{% if reviewed %}
+<div class="adv-card"><h2>The copy {{ 'being reviewed' if record.status == 'in_review' else 'last sent for review' if record.status in ('draft','changes_requested') else 'that was approved' }}</h2>
+<a href="/advisories/{{ record.id }}/revisions/{{ reviewed.id }}/file.pdf" target="_blank" rel="noopener"><img src="/advisories/{{ record.id }}/revisions/{{ reviewed.id }}/file.png" alt="The advisory as sent for review" style="width:100%;height:auto;border:1px solid var(--line);border-radius:6px"></a>
+<p class="hint">Taken {{ reviewed.taken_at[:16]|replace('T',' ') }}. <a href="/advisories/{{ record.id }}/revisions/{{ reviewed.id }}/file.pdf" target="_blank" rel="noopener">Open the PDF</a></p>
+{% if reviewed.comments %}<details><summary>Comments open in Google Slides at that time ({{ reviewed.comments|length }})</summary>
+{% for c in reviewed.comments %}<p><strong>{{ c.author or 'Someone' }}</strong>{% if c.quoted %} on “{{ c.quoted }}”{% endif %}: {{ c.content }}{% for r in c.replies %}<br>↳ <strong>{{ r.author }}</strong>: {{ r.content }}{% endfor %}</p>{% endfor %}
+</details>{% endif %}
+</div>
+{% endif %}
+
+{% if slides and slides.access and slides.access != 'ok' %}
+<form method="post" action="/advisories/{{ record.id }}/access" class="adv-note"><p style="margin-top:0">Who can edit the Google Slides file may be out of date.</p><button class="btn ghost" type="submit">Update access</button></form>
+{% endif %}
+
+{% if review %}{% with record = record %}{% include 'advisory_review.html' %}{% endwith %}{% endif %}
+{% if distribution and (record.status in ('approved','issued','cancelled') or distribution.issues) %}{% include 'advisory_distribution.html' %}{% endif %}
+
+{% if slides and editable and not reviewed and (slides.unfilled or slides.qr in ('no_qr_box', 'bad_image')) %}
 <div class="adv-note"><p style="margin-top:0"><strong>Please check in Google Slides:</strong></p><ul style="margin-bottom:0">
 {% if slides.unfilled %}<li>These spots in the design were left empty: {{ slides.unfilled|join(', ') }}. Type over them in the slide.</li>{% endif %}
 {% if slides.qr == 'no_qr_box' %}<li>This design has no place for a QR code. Add one in the slide if you need it.</li>{% endif %}
