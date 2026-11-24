@@ -27,7 +27,7 @@ CHANGELOG = [
         "date": "November 24, 2026",
         "summary": "New user levels: Super Administrator, Administrator and Division Manager.",
         "changes": [
-            "Existing administrators are now Super Administrators, with the same access as before. A new Administrator level runs system settings (email, holidays, AI, rules, appearance, travel and AWA settings, feedback, Ops) without access to accounts, backups, audit or restructure.",
+            "Existing administrators are now Super Administrators, with the same access as before. A new Administrator level is a Section Manager who can also fix survey data: edit or archive walk-in entries and merge duplicate activities.",
             "A new Division Manager level manages activities across their whole division.",
             "Section Managers manage activities and send calendar notices only for their own unit. Chiefs and acting OICs still cover the units under them.",
             "Viewer is now called Staff, and Encoder is called Staff + survey encoding."

@@ -2,8 +2,8 @@
 User levels (docs/USER_LEVELS_ASSESSMENT.md, 10.50).
 
 * Super Administrator (stored "admin") keeps every power and the overrides.
-* Administrator ("system_admin") runs the system but cannot manage accounts,
-  backups, audit or restructure, and has no override over other units' work.
+* Administrator ("system_admin") is a Section Manager who can also fix survey
+  data (walk-in entries, activity merges). No settings, directory or overrides.
 * Section Manager reaches their own unit; at division level that is the
   division unit alone unless they are its chief or acting OIC.
 * Division Manager reaches the whole division they sit in.
@@ -29,8 +29,10 @@ def test_role_catalogue():
     assert auth.ROLE_LABELS["admin"] == "Super Administrator"
     assert auth.ROLE_LABELS["system_admin"] == "Administrator"
     assert auth.ROLE_LABELS["viewer"] == "Staff"
-    assert auth.ROLE_CAPS["admin"] - auth.ROLE_CAPS["system_admin"] == {"manage_users"}
-    assert auth.can("system_admin", "operate") and not auth.can("system_admin", "manage_users")
+    assert auth.ROLE_CAPS["admin"] - auth.ROLE_CAPS["system_admin"] == {
+        "manage_users", "operate", "directory", "hide", "triage_feedback"}
+    assert auth.ROLE_CAPS["system_admin"] - auth.ROLE_CAPS["section_manager"] == {
+        "manage_walkin_entries", "merge_activity"}
     assert auth.ROLE_CAPS["division_manager"] == auth.ROLE_CAPS["section_manager"]
     assert not auth.can("section_manager", "operate")
     assert "wipe" not in set().union(*auth.ROLE_CAPS.values())
@@ -161,8 +163,9 @@ def test_calendar_notice_is_limited_to_the_managers_unit(world):
 def test_administrator_pages(app_mod, world):
     client = TestClient(app_mod.app, raise_server_exceptions=True)
     client.cookies.set(auth.COOKIE_NAME, session_token(world["sys_s1"]))
-    for path in ("/admin/users", "/admin/audit", "/admin/backups", "/admin/restructure"):
+    for path in ("/admin/users", "/admin/audit", "/admin/backups", "/admin/restructure",
+                 "/admin/email", "/admin/holidays", "/admin/rules", "/admin/feedback", "/ops",
+                 "/directory"):
         assert client.get(path, follow_redirects=False).status_code == 403, path
-    for path in ("/admin/email", "/admin/holidays", "/admin/rules", "/ops"):
-        assert client.get(path, follow_redirects=False).status_code == 200, path
+    assert client.get("/arta/entries", follow_redirects=False).status_code == 200
     client.close()

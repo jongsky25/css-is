@@ -156,9 +156,10 @@ Decisions:
    keeps all current powers and overrides. A narrower *Administrator* has neither.
 2. **Section Managers are limited to their own unit**, and a **Division Manager** level is added.
 3. **Viewer and Encoder merge** into Staff, with survey encoding as an option.
-4. **Split administration now:** the Super Administrator keeps accounts, roles, sight grants, OICs,
-   backups, audit, sharing, integrations, restructure and module setup. The Administrator runs operations
-   and settings.
+4. **Split administration now.** First built with the Administrator running settings and operations;
+   the owner then narrowed it (Nov 24): the Administrator keeps **only survey data fixes**. Settings,
+   operations, directory, hiding people and feedback triage stay with the Super Administrator
+   (capability `operate`, kept separate from `manage_users` so it can be handed out later).
 
 ### What 10.50 does
 
@@ -168,7 +169,7 @@ Decisions:
 | Staff + survey encoding | `encoder` | Staff + `/encode` |
 | Section Manager | `section_manager` | Activities, monitor, notices for **their own unit**. At division/office level, that unit alone unless they are its chief or acting OIC. |
 | Division Manager | `division_manager` | The same, for the **whole division** they sit in |
-| Administrator | `system_admin` | Section Manager reach + capability `operate` (most of `/admin`, `/ops`) + directory, hide, merges, walk-ins, feedback. **No overrides.** |
+| Administrator | `system_admin` | Section Manager reach + survey data fixes (edit/archive walk-in entries, merge duplicate activities). **No settings, directory, feedback, accounts or overrides.** |
 | Super Administrator | `admin` | Everything, including `manage_users` pages and the overrides |
 
 The stored codes are unchanged for existing accounts. A role change signs the person out and

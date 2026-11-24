@@ -51,28 +51,32 @@ ROLE_BLURB = {
                        "link trees, reports and outside resource persons, for their OWN unit "
                        "(a chief or acting OIC also covers the units under them).",
     "division_manager": "Section Manager for the whole division they sit in.",
-    "system_admin": "Runs the system: directory, email, holidays, AI, rules, appearance, travel and "
-                    "AWA settings, feedback, Ops. Does not manage accounts, roles, backups, audit or "
-                    "restructure, and has no override over approvals, team views or other units' "
-                    "activities.",
-    "admin": "Full access: accounts and roles, bureau-wide sight grants, acting OICs, backups, audit, "
+    "system_admin": "Section Manager + survey data fixes: edit/archive walk-in (Type 1) entries and "
+                    "merge duplicate activities. No system settings, directory, accounts or overrides.",
+    "admin": "Full access: accounts and roles, sight grants, acting OICs, directory, system settings "
+             "(email, AI, rules, holidays, travel/AWA, appearance), feedback, backups, audit, Ops, "
              "restructure, and the overrides (any activity, approvals of unplaced staff).",
 }
 
 _MANAGER_CAPS = {"view", "encode", "edit_data", "create_activity", "manage_event", "add_external_rp"}
-_OPERATOR_CAPS = _MANAGER_CAPS | {"operate", "directory", "hide", "triage_feedback",
-                                  "manage_walkin_entries", "merge_activity"}
+# The Administrator adds only survey data fixes (owner, Nov 24): walk-in entry
+# edits/archiving and activity merges. Settings, operations, the directory,
+# hiding people and feedback triage are Super Administrator only.
+_ADMINISTRATOR_CAPS = _MANAGER_CAPS | {"manage_walkin_entries", "merge_activity"}
+_SUPER_CAPS = _ADMINISTRATOR_CAPS | {"operate", "directory", "hide", "triage_feedback", "manage_users"}
 
 # Capability map. Every gated action checks one of these names.
 #   operate      -- system operations and settings (most of /admin, /ops)
 #   manage_users -- accounts, roles, sight grants, backups, audit, restructure
+# Both are Super Administrator only today; they stay separate names so a later
+# level can be given operations without accounts.
 ROLE_CAPS = {
     "viewer":           {"view"},
     "encoder":          {"view", "encode"},
     "section_manager":  set(_MANAGER_CAPS),
     "division_manager": set(_MANAGER_CAPS),
-    "system_admin":     set(_OPERATOR_CAPS),
-    "admin":            _OPERATOR_CAPS | {"manage_users"},
+    "system_admin":     set(_ADMINISTRATOR_CAPS),
+    "admin":            set(_SUPER_CAPS),
 }
 
 # Roles whose activity reach is limited to a unit (activity_permissions).

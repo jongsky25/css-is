@@ -4,7 +4,7 @@
 
 Owner asked to assess user levels: [USER_LEVELS_ASSESSMENT.md](USER_LEVELS_ASSESSMENT.md).
 Owner decisions (section 5 there): Super Administrator keeps full power, and a narrower Administrator
-is added; Section Managers are limited to their own unit, and a Division Manager level is added; Viewer and
+is added (owner then narrowed it to Section Manager + survey data fixes); Section Managers are limited to their own unit, and a Division Manager level is added; Viewer and
 Encoder merge into Staff; administration is split now. Live counts (owner-authorized
 sign-in; counts only): 73 accounts: 17 admin, 38 section managers, 17 viewers, 1 encoder.
 Candidate 10.50 on `claude/gracious-einstein-10xohq` (PR #644) implements this. Existing
