@@ -1,5 +1,15 @@
 # Cloud/mobile setup status
 
+## Type 1 "Who served you?" turned on; 10.47 and 10.48 merged — November 24, 2026
+
+Owner asked to let walk-in (Type 1) respondents say who served them. The storage,
+validation, reports and admin edit already existed; only the switch (`ask_served_by` in
+`survey_spec`) was off. Candidate 10.49 on `claude/eloquent-franklin-io5ptd` turns it on
+for the public QR form and the paper-entry form, with tests in
+`tests/test_walkin_served_by.py`. On owner instruction, PR #641 (10.47, deployed and
+verified 04:09 UTC) and PR #640 (10.48, travel DM1-DM6) were merged first so the version
+bump would not conflict. Next: CI on the 10.49 PR; release only on owner instruction.
+
 ## Travel claims vs DM 2026-0521 scoped — November 24, 2026
 
 Owner asked to scope travel-claim improvements against DOH DM 2026-0521 (pre-audit

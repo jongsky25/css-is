@@ -137,7 +137,8 @@ def test_only_confirmed_revision_is_removed_and_duplicate_clicks_are_blocked(sur
 def test_conversation_keeps_focus_after_rating_and_reveals_hidden_error(survey_page):
     page,context,c,token,state=survey_page
     page.goto(f'/r/{token}');page.locator('#conv-toggle').click()
-    page.locator('#conv-next').click();page.locator('#conv-next').click()
+    # About you, who served you, then the Citizen's Charter: all optional steps before the first rating.
+    page.locator('#conv-next').click();page.locator('#conv-next').click();page.locator('#conv-next').click()
     item=page.locator('.item.conv-current')
     item.locator('[value="3"]').check()
     page.wait_for_timeout(600)
