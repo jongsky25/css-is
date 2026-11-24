@@ -18,10 +18,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.46"
+APP_VERSION = "10.47"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.47",
+        "date": "November 24, 2026",
+        "summary": "Travel claims follow the new DOH pre-audit memo (DM 2026-0521).",
+        "changes": [
+            "A liquidation or reimbursement is now due 5 working days or 7 days after the activity, whichever comes first.",
+            "A cash advance shows the date to hand it in to FMS (3 working days before departure), and the daily reminder includes it.",
+            "Marking a filing ready asks you to confirm that your receipts are genuine and your certifications are accurate.",
+            "The checklist explains the new rules for ride-hailing receipts, plane fare screenshots, baggage and the meals and lodging certificate."
+        ],
+    },
     {
         "version": "10.46",
         "date": "November 23, 2026",

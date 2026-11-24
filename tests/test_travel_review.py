@@ -55,7 +55,7 @@ def test_marking_ready_waits_for_the_approval(viewer, conn, unit, relay):
     f = complete(conn, ref)
     with pytest.raises(travel.TravelError, match="Administrative Section reviewer"):
         travel.mark_ready(conn, f)
-    assert "err=" in post(viewer, f"/travel/f/{ref}/ready").headers["location"]
+    assert "err=" in post(viewer, f"/travel/f/{ref}/ready", attest="1").headers["location"]
     assert "Ask an admin to review your papers" in viewer.get(f"/travel/f/{ref}").text
 
 
@@ -103,7 +103,7 @@ def test_the_whole_loop_from_request_to_ready(viewer, encoder, conn, unit, relay
     # the traveller sees the note and cannot mark ready
     page = viewer.get(f"/travel/f/{ref}").text
     assert "The DPO page 2 is not attached." in page and "Send for review again" in page
-    assert "err=" in post(viewer, f"/travel/f/{ref}/ready").headers["location"]
+    assert "err=" in post(viewer, f"/travel/f/{ref}/ready", attest="1").headers["location"]
     # fixed: ask again; the old note is resolved, the reviewer is told it is a second look
     assert "ok=" in ask(viewer, ref, unit[REVIEWER]).headers["location"]
     f = travel.get_by_ref(conn, ref)
@@ -113,7 +113,7 @@ def test_the_whole_loop_from_request_to_ready(viewer, encoder, conn, unit, relay
     assert encoder.post(f"/travel/review/{ref}/approve", follow_redirects=False).status_code == 303
     assert travel.get_by_ref(conn, ref)["review_state"] == "approved"
     assert sent[-1][0] == "viewer@test.local" and "approved" in sent[-1][1]
-    assert "ok=" in post(viewer, f"/travel/f/{ref}/ready").headers["location"]
+    assert "ok=" in post(viewer, f"/travel/f/{ref}/ready", attest="1").headers["location"]
     assert travel.get_by_ref(conn, ref)["status"] == "ready"
     acts = {r_[0] for r_ in conn.execute("SELECT action FROM audit_log")}
     assert {"travel_review_request", "travel_review_feedback", "travel_review_approve"} <= acts
@@ -171,4 +171,4 @@ def test_changing_an_approved_claim_asks_for_a_new_review(viewer, encoder, conn,
     assert travel.get_by_ref(conn, ref)["review_state"] == "approved"
     post(viewer, f"/travel/f/{ref}/item/dpo", drive_url=LINK + "2")
     f = travel.get_by_ref(conn, ref)
-    assert f["review_state"] == "" and "err=" in post(viewer, f"/travel/f/{ref}/ready").headers["location"]
+    assert f["review_state"] == "" and "err=" in post(viewer, f"/travel/f/{ref}/ready", attest="1").headers["location"]

@@ -38,6 +38,8 @@ import ai_core
 import auth
 
 _REF = re.compile(r"^TF-\d{4}-\d{4,}$")
+ATTEST_ERROR = ("Tick the confirmation that your receipts and supporting documents are genuine and your "
+                "certifications are accurate before marking the filing ready.")
 STATUS_BADGE = {"open": "amber", "ready": "blue", "submitted": "green", "withdrawn": "grey"}
 _OPERATION_PATH = {'parameters': [{'name': 'operation_id', 'in': 'path', 'required': True,
                                   'schema': {'type': 'string', 'format': 'uuid'}}]}
@@ -117,9 +119,12 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
             notify(conn, to, subject, body, html=html, feature=feature)
 
 
-    def _decorate(f, today):
+    def _decorate(f, today, conn=None):
         words, tone = travel.deadline_words(f, today) if f["status"] in ("open", "ready") else (None, None)
-        return {**f, "deadline_text": words, "deadline_tone": tone}
+        hand_in = None
+        if conn is not None and f["kind"] == "ca" and f["status"] in ("open", "ready") and f.get("act_start"):
+            hand_in = tr.ca_hand_in_by(conn, f["act_start"]).isoformat()
+        return {**f, "deadline_text": words, "deadline_tone": tone, "ca_hand_in": hand_in}
 
     # ------------------------------------------------------- policy rates (T9) ---
 
@@ -524,7 +529,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
         ca = travel.get_filing(conn, filing["ca_filing_id"]) if filing["ca_filing_id"] else None
         questions = [q_ for q_ in tc.ANSWER_KEYS if filing["kind"] in q_[2]]
         return templates.TemplateResponse(request, "travel_filing.html", {
-            "nav_active": "travel_mine", "tab": "mine", "missing": False, "f": _decorate(filing, today),
+            "nav_active": "travel_mine", "tab": "mine", "missing": False, "f": _decorate(filing, today, conn),
             "items": items, "flags": flags, "missing_list": missing, "ans": ans, "owner": owner,
             "guidance":guidance, "review":rv, "answer_values":answer_values, "draft_answers":draft_answers, "draft_item":draft_item,
             "unmatched_item_draft":bool(draft_item and not any(it["code"] == draft_item["code"] for it in items)),
@@ -1355,7 +1360,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
             flags = travel.flags_of(conn, filing["id"])
             printed = [i for i in items if i["requirement"] == "required" and i["state"] != "na"]
             return templates.TemplateResponse(request, "travel_ready.html", {
-                "nav_active": "travel_mine", "tab": "mine", "f": _decorate(filing, today_local()),
+                "nav_active": "travel_mine", "tab": "mine", "f": _decorate(filing, today_local(), conn),
                 "printed": printed, "missing_list": tr.readiness(filing, items, flags),
                 "guidance":travel_guidance.filing(filing, items, flags, owner=travel.is_owner(request.state.user, filing),
                     review_required=review.required(conn), reviewer=_person(conn, filing.get("reviewer_id"))[1]),
@@ -1377,6 +1382,10 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
                 if bad:
                     return bad
                 back = f"/travel/f/{ref}/ready" if name in ("ready", "submit") else f"/travel/f/{ref}"
+                if name == "ready" and filing["status"] == "open":
+                    form = await request.form()
+                    if not tc.truthy(form.get("attest")):
+                        return _go(back, err=ATTEST_ERROR)
                 try:
                     fn(conn, filing)
                 except travel.TravelError as e:

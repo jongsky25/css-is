@@ -165,18 +165,28 @@ CHECKLIST: tuple = (
             "With highlights, plan of action, recommendations and a dated picture."),
     ItemDef("meals_lodging_cert", "Certification of meals and lodging", "upload",
             _when("per_diem_claimed", *LR), 1,
-            "Template pending; may sit inside Appendix B if the Head of Office signs."),
+            "Certificate of Non-Provision of Meals and Accommodation. Full per diem is not allowed for any day the host "
+            "or regional unit provided meals or lodging; the signer is accountable and an inaccurate certificate is not "
+            "honoured (DM 2026-0521). Template pending; may sit inside Appendix B if the Head of Office signs."),
     ItemDef("plane_ticket", "Plane ticket / e-ticket", "upload", _when("flew", *LR), 1,
-            "Lowest economy fare."),
+            "Lowest regular economy fare. Premium economy, comfort and business class are not allowed unless the "
+            "Office of the President approved them in advance (DM 2024-0369)."),
     ItemDef("plane_fare_proof", "Proof of lowest fare (screenshot or quotation)", "upload",
-            _plane_fare_proof, 1),
+            _plane_fare_proof, 1,
+            "Clear screenshots of the fare options taken just before booking, showing the timestamp, date and fares. "
+            "Lowest regular economy includes Cebu Pacific GO BASIC / GO EASY and PAL Economy Supersaver, Saver, Value "
+            "and Flex. For a PAL round trip, include both the outbound and return fares unless both are Supersaver "
+            "(DM 2026-0521)."),
     ItemDef("boarding_pass", "Boarding pass", "upload", _when("flew", *LR), 1,
             "Thermal paper needs a photocopy."),
     ItemDef("extra_expense_invoice", "Invoice for extra expenses", "upload",
-            _when("extra_expenses", *LR), 1, "Baggage, rebooking, cancellation."),
+            _when("extra_expenses", *LR), 1,
+            "Baggage, rebooking, cancellation. Extra baggage on the return flight is not allowed when the outbound "
+            "flight had none, and personal baggage is never paid (DM 2026-0521)."),
     ItemDef("extra_expense_justification", "Justification for extra expenses", "upload",
             _when("extra_expenses", *KINDS), 1,
-            "Template pending; may sit inside Appendix B."),
+            "Extra baggage must be for official use: say what official items were carried. Template pending; may sit "
+            "inside Appendix B."),
     ItemDef("boat_bus_ticket", "Boat or bus ticket", "upload", _when("boat_bus", *LR), 1,
             "Regular air-conditioned bus only."),
     ItemDef("terminal_fee", "Terminal fee receipt", "upload", _when("terminal_fee", *LR), 1),
@@ -186,7 +196,11 @@ CHECKLIST: tuple = (
     ItemDef("rer", "Receipt for Expenses Incurred (RER), one per ride", "generate",
             _when("rides_rer", *LR), 1),
     ItemDef("ridehail_receipt", "Ride-hailing receipts", "upload", _when("ride_hailing", *LR), 1,
-            "Write 'certified duplicate copy of the original' in ink on every page."),
+            "Official e-receipts from the app or email: one passenger, point to point, matching the itinerary's dates "
+            "and route. Keep them: FMS may check them on your phone or email, and unverified receipts are not paid. "
+            "Multi-stop or shared rides count only with all passengers' claims submitted together, the fare split per "
+            "stop, and a justification (DM 2026-0521). Write 'certified duplicate copy of the original' in ink on every "
+            "page."),
     ItemDef("gov_vehicle_docs", "Government vehicle documents", "upload",
             _when("gov_vehicle", *LR), 1, "Trip ticket, fuel, toll, summary."),
     ItemDef("rfid_docs", "RFID documents", "upload", _when("rfid", *LR), 1,

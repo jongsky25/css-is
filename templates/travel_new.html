@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash %}
 {% block title %}File a travel claim{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=7.89"><script src="/static/js/travel_new.js?v={{ APP_VERSION }}" defer></script>{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=10.47"><script src="/static/js/travel_new.js?v={{ APP_VERSION }}" defer></script>{% endblock %}
 {% block content %}
 {{ page_header("File a travel claim", "A few short questions decide which documents you need.") }}
 {% include "_travel_tabs.html" %}
@@ -11,7 +11,7 @@
 <div class="tv-warn" role="alert">
   <strong>Before you start a new cash advance:</strong> you still have {{ warn|length }} cash advance{{ 's' if warn|length != 1 }} that {{ 'have' if warn|length != 1 else 'has' }} not been liquidated.
   <ul class="tv-missing">{% for w in warn %}<li><a href="/travel/f/{{ w.ref_code }}">{{ w.ref_code }}</a> {{ w.act_title }} (ended {{ w.act_end }})</li>{% endfor %}</ul>
-  <p>Accounting will not release a new advance while an old one is open. You can still continue.</p>
+  <p>Under DM 2026-0521, FMS automatically denies a new cash advance until earlier ones are liquidated (the Liquidation Report certified by the accountant). You can still prepare this one here.</p>
 </div>
 {% endif %}
 

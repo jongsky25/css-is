@@ -67,7 +67,7 @@
   </li>
 {% endmacro %}
 {% block title %}{{ 'Travel claim' if missing else f.ref_code }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=7.89"><script src="/static/js/travel_guidance.js?v=7.89" defer></script>{% if uploads_ready %}<script src="/static/js/travel_upload.js?v={{ APP_VERSION }}" defer></script>{% endif %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=10.47"><script src="/static/js/travel_guidance.js?v=7.89" defer></script>{% if uploads_ready %}<script src="/static/js/travel_upload.js?v={{ APP_VERSION }}" defer></script>{% endif %}{% endblock %}
 {% block content %}
 {% if missing %}
 {{ page_header("Travel claim not found", "") }}
@@ -89,7 +89,8 @@
     <div><dt>Activity dates</dt><dd>{{ f.act_start }}{% if f.act_end != f.act_start %} to {{ f.act_end }}{% endif %}</dd></div>
     {% if f.act_venue %}<div><dt>Venue</dt><dd>{{ f.act_venue }}</dd></div>{% endif %}
     <div><dt>Deadline</dt><dd>{% if f.deadline_date %}{{ f.deadline_date }}{% if f.deadline_text %} · <span class="tv-due {{ f.deadline_tone }}">{{ f.deadline_text }}</span>{% endif %}
-      <small class="tv-hint">5 working days after the last day of the activity.</small>{% else %}None for a cash advance{% endif %}</dd></div>
+      <small class="tv-hint">5 working days or 7 days after the last day of the activity, whichever comes first.</small>{% elif f.ca_hand_in %}Hand in to FMS by {{ f.ca_hand_in }}
+      <small class="tv-hint">At least 3 working days before departure (DM 2026-0521). FMS does not receive late or incomplete requests.</small>{% else %}None for a cash advance{% endif %}</dd></div>
     {% if f.advance_amount %}<div><dt>Cash advance received</dt><dd>₱{{ '{:,.2f}'.format(f.advance_amount) }}</dd></div>{% endif %}
     {% if ca %}<div><dt>Liquidates</dt><dd><a href="/travel/f/{{ ca.ref_code }}">{{ ca.ref_code }}</a></dd></div>{% endif %}
     {% if f.dpo_no %}<div><dt>DPO</dt><dd>{{ f.dpo_no }}{% if f.dpo_date %} dated {{ f.dpo_date }}{% endif %}</dd></div>{% endif %}

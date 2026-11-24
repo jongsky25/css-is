@@ -12,6 +12,8 @@ import travel_checklist as tc
 import travel_rates as rates
 
 DUE_WORKING_DAYS = 5         # working days after the last day of the activity to file
+DUE_CALENDAR_DAYS = 7        # DM 2026-0521: local-travel liquidation within 7 days of return
+CA_HAND_IN_WORKING_DAYS = 3  # DM 2026-0521: a cash advance reaches FMS at least 3 working days before departure
 CA_MIN_LEAD_DAYS = 7         # a cash advance needs MORE than this many days before the activity starts
 NO_RECEIPT_LIMIT = 1000      # an unreceipted fare above this always goes to the Admin Unit
 RECEIPT_MODES = ("tnvs", "taxi")
@@ -53,16 +55,42 @@ def count_working_days(conn, start_iso, end_iso) -> int:
 def deadline_for(conn, kind, act_end_iso, opened_iso):
     """(deadline ISO date or None, rule) where rule is 'after_fact', 'plotted' or 'none'.
 
-    Liquidation and reimbursement are due 5 working days after the last day of the activity,
+    Liquidation and reimbursement are due on the date `due_after` gives for the last day of the activity,
     whether or not it had ended when the filing was opened. A cash advance has no deadline
     while the activity is current or ahead; once it has ended it is held to the same date."""
     end, opened = _d(act_end_iso), _d(opened_iso)
-    due = rooms.add_working_days(conn, end, DUE_WORKING_DAYS).isoformat()
+    due = due_after(conn, end).isoformat()
     if kind in ("liquidation", "reimbursement"):
         return due, "plotted"
     if end < opened:
         return due, "after_fact"
     return None, "none"
+
+
+def due_after(conn, end) -> date:
+    """The filing date for an activity that ended on `end`: the earlier of 5 working days and
+    7 calendar days after it (owner decision on DM 2026-0521, 2026-11-24). A 7th day that is not
+    a working day moves back to the working day before it, never past the last day itself."""
+    end = _d(end)
+    by_working = rooms.add_working_days(conn, end, DUE_WORKING_DAYS)
+    by_calendar = end + timedelta(days=DUE_CALENDAR_DAYS)
+    if by_working <= by_calendar:
+        return by_working
+    day = by_calendar
+    while day > end + timedelta(days=1) and not rooms.is_working_day(conn, day):
+        day -= timedelta(days=1)
+    return day
+
+
+def ca_hand_in_by(conn, act_start_iso) -> date:
+    """The last day a cash advance request should reach FMS: 3 working days before departure
+    (DM 2026-0521). Shown and reminded only; FMS, not the platform, refuses late requests."""
+    day, left = _d(act_start_iso), CA_HAND_IN_WORKING_DAYS
+    while left > 0:
+        day -= timedelta(days=1)
+        if rooms.is_working_day(conn, day):
+            left -= 1
+    return day
 
 
 def ca_lead_error(act_start_iso, today_iso):

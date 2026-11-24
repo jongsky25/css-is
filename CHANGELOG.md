@@ -1,3 +1,10 @@
+## 10.47 — November 24, 2026
+
+- Travel filing, increment DM1 of `docs/TRAVEL_DM_2026_0521_SCOPE.md` (owner decisions 2026-11-24): liquidation/reimbursement deadline is the earlier of 5 working days and 7 calendar days after the last day (`travel_rules.due_after`; a non-working 7th day moves back). Existing filings keep their stored deadline until their activity dates change.
+- Cash advances show "Hand in to FMS by" (3 working days before departure, `travel_rules.ca_hand_in_by`) and the `travel_filing_due` job reminds it within the lead days; display and reminder only, nothing is blocked.
+- "Mark ready" requires a falsification/accuracy confirmation (`attest`); the unliquidated cash advance warning and reminder cite FMS denial and the Notice to Liquidate.
+- Checklist notes for ride-hailing receipts, plane ticket, lowest-fare proof, extra expenses and the meals/lodging certificate follow the memo. `travel.css` cache key moves to 10.47.
+
 ## 10.46 — November 23, 2026
 
 - Raise the full-suite job limit from 75 to 100 minutes: ~10,660 tests take 48–65 min of test time on identical code depending on the hosted runner (~45% spread); one run reached 75 min at 98% with no failures. Per-test setup is 20–50 ms; the time is test work spread across the suite.

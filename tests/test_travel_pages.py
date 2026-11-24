@@ -284,12 +284,12 @@ def test_unknown_rows_and_wrong_kinds_of_input_are_refused(viewer, conn):
 
 def test_ready_needs_everything_then_submit_then_calendar_label(viewer, conn):
     ref = ref_of(blank(viewer))
-    r = post(viewer, f"/travel/f/{ref}/ready")
+    r = post(viewer, f"/travel/f/{ref}/ready", attest="1")
     assert "err=" in r.headers["location"] and travel.get_by_ref(conn, ref)["status"] == "open"
     fill(viewer, conn, ref)
     assert travel.missing_for(conn, travel.get_by_ref(conn, ref)) == []
     assert "err=" in post(viewer, f"/travel/f/{ref}/submit").headers["location"]       # not ready yet
-    assert "ok=" in post(viewer, f"/travel/f/{ref}/ready").headers["location"]
+    assert "ok=" in post(viewer, f"/travel/f/{ref}/ready", attest="1").headers["location"]
     page = viewer.get(f"/travel/f/{ref}/ready").text
     assert "Mark submitted" in page and "sign in ink" in page.lower() or "✎" in page
     assert "ok=" in post(viewer, f"/travel/f/{ref}/submit").headers["location"]
@@ -303,10 +303,20 @@ def test_ready_needs_everything_then_submit_then_calendar_label(viewer, conn):
     assert {"travel_ready", "travel_submit"} <= acts
 
 
+def test_mark_ready_needs_the_dm_2026_0521_confirmation(viewer, conn):
+    ref = ref_of(blank(viewer))
+    fill(viewer, conn, ref)
+    assert 'name="attest"' in viewer.get(f"/travel/f/{ref}/ready").text
+    r = post(viewer, f"/travel/f/{ref}/ready")
+    assert "err=" in r.headers["location"] and travel.get_by_ref(conn, ref)["status"] == "open"
+    assert "ok=" in post(viewer, f"/travel/f/{ref}/ready", attest="1").headers["location"]
+    assert travel.get_by_ref(conn, ref)["status"] == "ready"
+
+
 def test_editing_a_ready_filing_sends_it_back_to_open(viewer, conn):
     ref = ref_of(blank(viewer))
     fill(viewer, conn, ref)
-    post(viewer, f"/travel/f/{ref}/ready")
+    post(viewer, f"/travel/f/{ref}/ready", attest="1")
     assert travel.get_by_ref(conn, ref)["status"] == "ready"
     post(viewer, f"/travel/f/{ref}/answers", role="secretariat", flew="1", cert_of_appearance_available="1")
     f = travel.get_by_ref(conn, ref)

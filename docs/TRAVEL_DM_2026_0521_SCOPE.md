@@ -5,7 +5,7 @@ Travelling Expenses based on 2026 Pre-Audit Observations". It cites PD 1445, EO 
 DO 2019-0225, DM 2023-0092 and DM 2024-0369. The memo itself is not committed; this file
 records only its directives and how they map onto Travel filing.
 
-Status: **scoping only, nothing built.** Written November 24, 2026 on `claude/cool-davinci-y5s3re`.
+Status: scoped November 24, 2026; owner decisions recorded below; **DM1 built** (candidate 10.47) on `claude/cool-davinci-y5s3re`, PR #640.
 
 ## 1. Directive-by-directive gap map
 
@@ -52,7 +52,19 @@ Status: **scoping only, nothing built.** Written November 24, 2026 on `claude/co
 
 **Later / decision first — Foreign travel** (30-day liquidation, different rates). Not modelled today.
 
-## 3. Owner decisions needed
+## 3. Owner decisions (November 24, 2026)
+
+1. **Deadline**: earlier of 5 working days and 7 calendar days after the last day. Built in DM1.
+2. **Unliquidated CA**: accountant certification is external (FMS). No hard block and no "LR certified" tracking;
+   the warning stays acknowledgeable, with stronger wording. DM2 is reduced to the urgent-travel path.
+3. **CA timing**: keep the owner's 7-day rule and add the memo's urgent/expedited path (DM2).
+4. **Meals/lodging**: every day defaults to **provided**; the person unticks a day to claim it, and the
+   unticked days drive the Certificate of Non-Provision (DM3). No cross-checking of other platform data needed.
+5. **AI reading** for TNVS receipts, tickets and fare screenshots: yes (DM4).
+6. **FMS checklist**: still `FMS-BD-01 r6 2025-06`; adopt this memo's changes on top of it for now.
+7. **Foreign travel**: out of scope.
+
+### Originally asked
 
 1. Liquidation deadline: earlier of 7 calendar days / 5 working days (proposed), or switch to the memo's 7 days only?
 2. Unliquidated CA: hard block (memo reading) — and does "liquidated" need an accountant-certified LR date, or is a submitted liquidation enough for the platform?

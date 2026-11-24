@@ -254,7 +254,7 @@ def test_current_deadline_policy_and_travel_switch_are_rechecked(pilot):
     prepare(pilot)
     path = '/account/integrations/mcp/travel-drafts/' + KEY
     page = clients[0].get(path)
-    st.set_holiday(conn, '2026-10-19', 'New holiday', 'regular')
+    st.set_holiday(conn, '2026-10-23', 'New holiday', 'regular')
     assert clients[0].post(path, data=form(page), headers={'Origin': ORIGIN}).status_code == 409
     assert conn.execute('SELECT COUNT(*) FROM travel_filing').fetchone()[0] == 0
     st.set_setting(conn, 'travel.enabled', '0')

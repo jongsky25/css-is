@@ -64,6 +64,20 @@ def test_a_due_filing_is_emailed_once_with_a_link(conn, uid, sent):
     assert sr.send_travel_filing_due(conn, BASE) == 0 and len(sent) == 1          # idempotent
 
 
+def test_a_cash_advance_is_reminded_of_its_fms_hand_in_date(conn, uid, sent):
+    # departs Tue 20 Oct: hand in by Thu 15 Oct (3 working days before), inside the 2 lead days
+    conn.execute("DELETE FROM holiday"); conn.commit()
+    filing(conn, uid, kind="ca", act_start="2026-10-20", act_end="2026-10-21", deadline_date=None)
+    assert sr.send_travel_filing_due(conn, BASE) == 1
+    assert "hand in to fms by oct 15" in sent[0][2].lower()
+
+
+def test_a_cash_advance_far_ahead_is_not_reminded_yet(conn, uid, sent):
+    conn.execute("DELETE FROM holiday"); conn.commit()
+    filing(conn, uid, kind="ca", act_start="2026-11-20", act_end="2026-11-21", deadline_date=None)
+    assert sr.send_travel_filing_due(conn, BASE) == 0
+
+
 def test_overdue_is_included_and_dry_run_counts_without_sending(conn, uid, sent, capsys):
     filing(conn, uid, deadline_date=iso(-3))
     assert sr.send_travel_filing_due(conn, BASE, dry_run=True) == 1

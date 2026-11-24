@@ -3,9 +3,12 @@
 ## Travel claims vs DM 2026-0521 scoped — November 24, 2026
 
 Owner asked to scope travel-claim improvements against DOH DM 2026-0521 (pre-audit
-directives on per diem, TNVS, airfare, baggage, cash advances). Scope only, nothing built:
-[TRAVEL_DM_2026_0521_SCOPE.md](TRAVEL_DM_2026_0521_SCOPE.md) (gap map, increments DM1-DM6,
-seven owner decisions). Next: owner answers the decisions; recommended first build DM1.
+directives on per diem, TNVS, airfare, baggage, cash advances):
+[TRAVEL_DM_2026_0521_SCOPE.md](TRAVEL_DM_2026_0521_SCOPE.md). Owner answered all seven
+decisions (recorded there). DM1 (deadline rule, CA hand-in date and reminder, ready
+attestation, checklist notes) is built as candidate 10.47 in draft PR #640; not merged,
+not released. Next: CI on PR #640, then DM2 (urgent CA path) or DM3 (meals default
+"provided" + Certificate of Non-Provision) on owner instruction.
 The restructure next steps below are unchanged.
 
 ## Restructure ready to switch on; 10.45 live — November 23, 2026
