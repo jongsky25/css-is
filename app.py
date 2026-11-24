@@ -8697,7 +8697,8 @@ def survey_spec(ctx, lang="en"):
         return {
             "kind": "arta", "is_csm": True,
             "subject": "this service", "chips": chips["arta"],
-            "ask_served_by": False,
+            # Optional "Who served you?" pick on the public and paper-entry forms.
+            "ask_served_by": True,
             "regions": CSM_REGIONS,
             "cc1_opts": CSM_CC1_OPTS, "cc2_opts": CSM_CC2_OPTS, "cc3_opts": CSM_CC3_OPTS,
             "services": CSM_SERVICES, "client_types": CSM_PUBLIC_CLIENT_TYPES,

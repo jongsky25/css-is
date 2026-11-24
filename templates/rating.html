@@ -61,18 +61,6 @@
     <input type="hidden" name="att" value="{{ att }}">
     {% include "_survey_feedback.html" %}
 
-    {% if spec.ask_served_by %}
-    <div class="group" style="margin-bottom:1.4rem;">
-      <div class="field">
-        <label for="f-served">{{ t('served_q', lang) }} <span class="opt">{{ t('optional', lang) }}</span></label>
-        <select id="f-served" name="served_by_rp_id">
-          <option value="">{{ t('served_none', lang) }}</option>
-          {% for s in staff %}<option value="{{ s.id }}">{{ s.name }}{% if s.org_path %} ({{ s.org_path }}){% endif %}</option>{% endfor %}
-        </select>
-      </div>
-    </div>
-    {% endif %}
-
     {# Demographics — captured on the rating form for walk-in / standalone surveys.
        Event link-tree flows (att set) already collected these at pre-registration. #}
     {% if not att %}
@@ -142,6 +130,18 @@
       </div>
       {% endif %}
     </fieldset>
+    {% endif %}
+
+    {% if spec.ask_served_by %}
+    <div class="group" data-conv="served" style="margin-bottom:1.4rem;">
+      <div class="field">
+        <label for="f-served">{{ t('served_q', lang) }} <span class="opt">{{ t('optional', lang) }}</span></label>
+        <select id="f-served" name="served_by_rp_id">
+          <option value="">{{ t('served_none', lang) }}</option>
+          {% for s in staff %}<option value="{{ s.id }}">{{ s.name }}{% if s.org_path %} ({{ s.org_path }}){% endif %}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
     {% endif %}
 
     {% if spec.is_csm and not att %}
@@ -312,8 +312,8 @@
   .survey-conv .item.conv-current { display:block; }
   .survey-conv fieldset[data-conv="demo"], .survey-conv fieldset[data-conv="cc"] { display:none; }
   .survey-conv fieldset[data-conv="demo"].conv-current, .survey-conv fieldset[data-conv="cc"].conv-current { display:block; }
-  .survey-conv [data-conv="comments"] { display:none; }
-  .survey-conv [data-conv="comments"].conv-current { display:block; }
+  .survey-conv [data-conv="comments"], .survey-conv [data-conv="served"] { display:none; }
+  .survey-conv [data-conv="comments"].conv-current, .survey-conv [data-conv="served"].conv-current { display:block; }
   .survey-conv fieldset:not([data-conv]) > legend { display:none; }
   .survey-conv fieldset:not([data-conv]) { margin-bottom:0 !important; }
   .survey-conv .item.conv-current .conv-ctx-header { display:block; }
@@ -493,10 +493,12 @@ function toggleChip(btn) {
     required:  {{ t('conv_required', lang)|tojson }},
   };
 
-  // Build flat step list: [demo?, item, item, …, comments?]
+  // Build flat step list: [demo?, served?, cc?, item, item, …, comments?]
   var steps = [];
   var demoFs = form.querySelector('fieldset[data-conv="demo"]');
   if (demoFs) steps.push({ el: demoFs, type: 'demo' });
+  var servedEl = form.querySelector('[data-conv="served"]');
+  if (servedEl) steps.push({ el: servedEl, type: 'served' });
   var ccFs = form.querySelector('fieldset[data-conv="cc"]');
   if (ccFs) steps.push({ el: ccFs, type: 'cc' });
   form.querySelectorAll('.item').forEach(function (item) {
