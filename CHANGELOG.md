@@ -1,3 +1,7 @@
+## 10.53 — November 24, 2026
+
+- Advisory wording polish (owner request after 10.52): `advisory_review.py` action labels; `templates/advisory_review.html` (plain status and history sentences, `humandt` dates, friendly email states), `templates/advisory_distribution.html` (sent/attention counts per issue, per-person list opens on trouble, Publish/Remove only when they apply, rare actions under "More actions"), `templates/advisory_issue.html` (plain confirmation page); `advisory_draft.html` loads `static/css/advisory.css`. Routing and issuing error messages in `advisory_review.py` / `advisory_distribution.py` say what to do. Browser tests updated for the new labels. No behaviour change.
+
 ## 10.52 — November 24, 2026
 
 - Advisory Google Slides, increment 1 of `docs/ADVISORY_SLIDES_PLAN.md`: new relay companion `apps_script/advisory_slides.gs` (`advisory_info`, `advisory_create`, `advisory_snapshot`, `advisory_access`; files only under `ROOT/advisories/`, office-domain sharing without notification emails, request-id idempotent create, snapshot refused if the file changes while it is copied) and the `doPost` hand-off in `travel_docs.gs`. New client `advisory_slides.py` (placeholder fields, QR PNG, digest-checked snapshots, plain-language errors). Setup: `docs/ADVISORY_SLIDES_SETUP.md`.
