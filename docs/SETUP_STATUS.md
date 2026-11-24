@@ -1,5 +1,28 @@
 # Cloud/mobile setup status
 
+## Restructure ready to switch on; 10.45 live — November 23, 2026
+
+Released and verified today (each guarded deployment: verified live snapshot, upload,
+live /login version check): **10.43** two-Director routing (PR #636), **10.44** restructure
+tooling (PR #637), **10.45** section colours, structure names and Admin -> Restructure
+directory (PR #638, run 45209448613). 10.45's normal suite once hit the 75-minute job limit
+at 98% with no failures and passed on its single re-run.
+
+The switch is NOT applied yet. Owner steps: Admin -> Restructure directory -> upload the
+private mapping (sent in chat; never committed) -> Preview (Nov 22 copy: ~19 units, 72
+staff placed, 28 new records, 7 old units retired) -> confirm -> Apply (backup first).
+Afterwards: accounts for the new leads (MSU lead, Division 5 Chief, Section 5/9/10 Heads),
+acting OICs on new units, section colours, any REMAP routing rules.
+
+Annex A received (docs/org/blhsd-annex-a-proposed-structure.jpg). Open: Division 3 name
+(order "LHSIID" vs chart "HSIKCDD") — settle before applying; DPO number/effective date;
+Division 3 mandate. Cleanup after applying: remove the private mapping and dry-run
+workflow from the private backups repository (owner-approved storage, Nov 23).
+
+Test time: ~10,660 tests; per-test setup 20-50 ms; identical code ran 48-65 min of test
+time depending on the hosted runner. Job limit raised to 100 minutes (10.46). Faster
+option for later: parallel test workers (needs a new locked test dependency).
+
 ## 10.43 live; Phase 2 merged; Phase 3 candidate 10.45 — November 23, 2026
 
 10.43 verified deployed by run 45151910184 (fresh verified live snapshot, upload, live
