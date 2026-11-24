@@ -115,16 +115,41 @@ Verification follows `docs/CLOUD_WORKSPACE.md`: synthetic data, fake relay, no o
 Real Slides behavior (placeholder fill, export look, permission changes) needs a live check
 by the owner after the relay is deployed.
 
-## Still to decide (working defaults in brackets)
+## Answers to the open questions (owner, November 24, 2026)
 
-1. **Review stages:** keep Chief → Director? [keep, already built]
-2. **Editors:** preparer only, or co-editors from the section? [preparer plus optional co-editors]
-3. **What recipients get:** PDF, image, or a view link? [PDF attachment; image on link tree]
-4. **New activity created with an advisory:** a real activity at once (needed for its link-tree
-   URL and QR code), or a private activity draft until approval? [real activity]
-5. **General advisories in public:** do they need a public page and QR? [no public page;
-   QR only if the preparer gives a link]
-6. **Comments:** app discussion only, or also Slides comments from reviewers? [app only;
-   Slides comments are not recorded in history]
-7. **Template variants:** offer all three? [yes, with thumbnails]
-8. **Sending:** email only, or also Viber/Telegram posting? [email only for now]
+| # | Question | Answer |
+|---|---|---|
+| D6 | Review stages | Keep Chief → Director. |
+| D7 | Editors | All members of the owning section can edit the Slides file (not only the preparer). |
+| D8 | What recipients get | PDF attachment by email; the approved image on the activity's link tree. |
+| D9 | New activity with an advisory | A real activity is created at once (needed for its link-tree URL and QR code). |
+| D10 | General advisories in public | No public page. A QR code only if the preparer gives a link. |
+| D11 | Comments | App discussion **and** Slides comments. |
+| D12 | Template variants | Offer all three, with thumbnails. |
+
+Consequences for the design:
+
+- **Section editing (D7):** the relay shares the file with every active member of the owning
+  section who has a `@doh.gov.ph` address, without notification emails. Membership is read
+  at creation and again at each access change (submit, return, issue). During review all
+  section editors become commenters; a return gives editing back to the then-current members.
+  Edits are attributed in Slides version history, not in the app.
+- **Slides comments (D11):** reviewers (Chief, Director) get comment access to the file.
+  Slides comments are not part of the app's decision record. At submit, the snapshot step
+  also reads the open Slides comments through the relay (Drive comments API) and stores
+  them with the reviewed version, so the history shows what was open when each decision
+  was made. Returns and approvals are still made only in the app.
+
+## Sending (question 8, still open)
+
+What the app could do when an advisory is issued, from what exists today:
+
+| Option | What it takes | Notes |
+|---|---|---|
+| Email with PDF (built) | Nothing new | Current behavior; delivery is recorded per recipient. |
+| Post to an office Telegram group | Small: the office bot already posts to registered, allowlisted groups and topics (`telegram_groups.py`) | On issue, the preparer ticks which registered group(s) get the approved image, title and link. Recorded like email deliveries. |
+| Share button for Viber / Messenger | Small: phone share sheet | The issued page offers a ready caption, the image and the short link; the person shares it into a Viber/Messenger group by hand. No automatic Viber posting: Viber has no free group-posting API for this use. |
+| Office Connect notice | Built | "Issued advisories for you" already lists it for internal recipients. |
+| Activity calendar entry | Small | Show the issued advisory on the activity's calendar entry. |
+
+Working recommendation: email (built) + Telegram group post + share button.

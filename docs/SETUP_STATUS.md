@@ -7,8 +7,10 @@ template so users can edit freely, and advisories can be started from the Adviso
 (for an existing activity, a new activity made together with it, or no activity). The old
 renderer need not be kept (all issued advisories were trials). Plan and decisions:
 [ADVISORY_SLIDES_PLAN.md](ADVISORY_SLIDES_PLAN.md). Plan only; no code changed.
-Next: owner answers the eight open questions (working defaults recorded), then build
-increment 1 (relay Slides actions and placeholder template) on owner instruction.
+Owner answered seven of eight questions (section members edit; Slides comments too;
+real activity created with the advisory; no public page for general advisories).
+Next: owner picks sending channels (options in the plan), then build increment 1
+(relay Slides actions and placeholder template) on owner instruction.
 
 ## Type 1 "Who served you?" turned on; 10.47 and 10.48 merged — November 24, 2026
 
