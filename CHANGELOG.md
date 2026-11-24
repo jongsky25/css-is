@@ -2,6 +2,7 @@
 
 - Restructure mapping entries may carry an `email`: set only on records the switch creates or on existing records not yet in use (no email, no active account); never overwritten, never duplicated across current records; invalid addresses stop the run.
 - Record the owner's decision that Division 3 keeps the order's name (LHSIID), not Annex A's "HSIKCDD".
+- Fix a date-dependent Telegram notice test that blocked the 10.46 deploy from November 24: change events are stamped by SQLite's real clock, which the frozen test clock cannot reach, so the test now steps past the actual handoff expiry. Test-only; 10.46 ships with this release.
 
 ## 10.46 — November 23, 2026
 

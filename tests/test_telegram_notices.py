@@ -1,6 +1,6 @@
 """Synthetic change-to-provider flow with no real credentials or business replay."""
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date,timedelta
+from datetime import date,datetime,timedelta
 import json
 
 import pytest
@@ -262,10 +262,14 @@ def test_additive_handoff_migration_preserves_old_routes_and_no_backfill(routed)
 
 def test_expired_handoff_and_old_cancelled_route_ids_cannot_revive_delivery(routed):
     c=routed[0][0];stage(c);old=queued(c)[0];p=json.loads(old['projection_json'])
-    bot.cleanup(c,NOW+timedelta(days=31))
+    # The capture trigger stamps events with SQLite's real clock, which the frozen
+    # test clock cannot reach; go past both that handoff expiry and the 30-day route
+    # retention so the test does not depend on today's date.
+    later=max(NOW+timedelta(days=31),datetime.fromisoformat(old['expires_at'])+timedelta(seconds=1))
+    bot.cleanup(c,later)
     assert not rows(c,'SELECT * FROM telegram_change_route')
     assert not notices.allowed(c,old,p,bot.transport.config(),NOW)
-    assert notices.enqueue(c,NOW+timedelta(days=31))==0
+    assert notices.enqueue(c,later)==0
     assert queued(c)[0]['state']=='cancelled'
     st.cal_update(c,routed[1],title='Synthetic new source version')
     stage(c)

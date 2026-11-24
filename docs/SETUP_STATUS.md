@@ -6,9 +6,12 @@
 what the plan and mapping use). Owner supplied DOH emails for the staff the switch will
 create; 26 were matched to DPO names (owner confirmed the probable ones and Ma. Carmela
 Santiago) and added to the private mapping. Rule (owner): emails only for new records or
-records not yet in use. Six addresses are not in the DPO; the owner will clarify them.
+records not yet in use. Six addresses are not in the DPO; the owner confirmed they are not part of the office, so they are left out.
 Candidate 10.47 adds the `email` support. Apply the restructure after 10.47 is live for
 emails to be set; applying earlier creates the records without emails.
+The 10.46 deploy (main 1076a9d) was blocked on November 24 by a date-dependent Telegram
+test (1 of 11,228; it also fails on 10.45 code from that date). The test fix rides on 10.47,
+which ships 10.46 with it. A dry run with emails on the newest snapshot exited 0 (26 set).
 
 ## Restructure ready to switch on; 10.45 live — November 23, 2026
 
