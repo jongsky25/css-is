@@ -1,5 +1,15 @@
 # Cloud/mobile setup status
 
+## Advisory rethink planned (Google Slides, New advisory flow) — November 24, 2026
+
+Owner asked for a planning session: advisories become Google Slides files from the office
+template so users can edit freely, and advisories can be started from the Advisories module
+(for an existing activity, a new activity made together with it, or no activity). The old
+renderer need not be kept (all issued advisories were trials). Plan and decisions:
+[ADVISORY_SLIDES_PLAN.md](ADVISORY_SLIDES_PLAN.md). Plan only; no code changed.
+Next: owner answers the eight open questions (working defaults recorded), then build
+increment 1 (relay Slides actions and placeholder template) on owner instruction.
+
 ## Type 1 "Who served you?" turned on; 10.47 and 10.48 merged — November 24, 2026
 
 Owner asked to let walk-in (Type 1) respondents say who served them. The storage,
