@@ -169,3 +169,34 @@ def test_administrator_pages(app_mod, world):
         assert client.get(path, follow_redirects=False).status_code == 403, path
     assert client.get("/arta/entries", follow_redirects=False).status_code == 200
     client.close()
+
+
+def test_release_switch_keeps_one_super_administrator(tmp_path):
+    """10.50 switch: every old admin becomes Administrator except the seeded
+    super account; it runs once and never leaves the system without one."""
+    conn = st.connect(str(tmp_path / "split.db"))
+    st.init_db(conn)
+    a = st.create_admin_user(conn, "split-a@test.local", "x", "y", "admin", active=True)
+    b = st.create_admin_user(conn, "split-b@test.local", "x", "y", "admin", active=False)
+    m = st.create_admin_user(conn, "split-m@test.local", "x", "y", "section_manager", active=True)
+    conn.commit()
+    st.init_db(conn)                     # no super account yet: nothing changes
+    assert st.get_admin_user_by_id(conn, a)["role"] == "admin"
+    assert not st.get_setting(conn, st.SUPER_ADMIN_SPLIT_MARKER)
+
+    keep = [u for u, _l, r in st.BUREAU_ACCESS_SEED if r == "admin"][0]
+    s = st.create_admin_user(conn, keep, "x", "y", "viewer", active=True)
+    conn.commit()
+    st.init_db(conn)                     # seed makes it admin, then the split runs
+    role = lambda uid: st.get_admin_user_by_id(conn, uid)["role"]
+    assert role(s) == "admin"
+    assert role(a) == "system_admin" and role(b) == "system_admin"
+    assert role(m) == "section_manager"
+    assert st.get_setting(conn, st.SUPER_ADMIN_SPLIT_MARKER)
+    assert conn.execute("SELECT COUNT(*) FROM audit_log WHERE action='change_role' "
+                        "AND after_text='system_admin'").fetchone()[0] == 2
+
+    st.set_admin_role(conn, a, "admin")  # a later promotion sticks
+    st.init_db(conn)
+    assert role(a) == "admin"
+    conn.close()

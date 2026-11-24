@@ -1814,6 +1814,7 @@ def _add_missing_columns(conn):
         conn.commit()
 
     _seed_bureau_access(conn)
+    _split_admin_levels(conn)
     seed_holidays(conn)
 
 
@@ -5423,6 +5424,40 @@ def _seed_bureau_access(conn):
             conn.execute("UPDATE admin_user SET role=? WHERE id=?", (role, uid))
         set_setting(conn, marker, tz.now_iso())
         conn.commit()
+
+
+SUPER_ADMIN_SPLIT_MARKER = "user_levels_admin_split_10_50"
+
+
+def _split_admin_levels(conn):
+    """One-time 10.50 switch (owner instruction, docs/USER_LEVELS_ASSESSMENT.md):
+    every account holding the old full-power `admin` role becomes the new
+    Administrator (`system_admin`), except the account(s) the bureau seed names
+    with the admin role (BUREAU_ACCESS_SEED), which stay Super Administrator.
+
+    Runs once. If no such account exists, is active and still holds `admin`, it
+    does nothing and tries again on the next start, so the system can never be
+    left without a Super Administrator. A role change revokes that account's
+    sessions and tool grants through the existing triggers, as any demotion does.
+    Each change is written to the audit log."""
+    if get_setting(conn, SUPER_ADMIN_SPLIT_MARKER):
+        return
+    keep = tuple(u.lower() for u, _level, role in BUREAU_ACCESS_SEED if role == "admin")
+    if not keep:
+        return
+    qs = ",".join("?" * len(keep))
+    if not conn.execute(f"SELECT 1 FROM admin_user WHERE lower(username) IN ({qs}) "
+                        "AND role='admin' AND active=1 AND must_change=0", keep).fetchone():
+        return
+    rows = conn.execute(f"SELECT id, username FROM admin_user WHERE role='admin' "
+                        f"AND lower(username) NOT IN ({qs}) ORDER BY id", keep).fetchall()
+    for uid, username in rows:
+        conn.execute("UPDATE admin_user SET role='system_admin' WHERE id=?", (uid,))
+        audit(conn, "system", "change_role", target_type="user", target_id=username,
+              summary=f"Role of {username}: admin → system_admin (10.50 level split)",
+              before="admin", after="system_admin", commit=False)
+    set_setting(conn, SUPER_ADMIN_SPLIT_MARKER, tz.now_iso())
+    conn.commit()
 
 
 def user_sees_whole_bureau(conn, user, area=None):

@@ -172,14 +172,15 @@ Decisions:
 | Administrator | `system_admin` | Section Manager reach + survey data fixes (edit/archive walk-in entries, merge duplicate activities). **No settings, directory, feedback, accounts or overrides.** |
 | Super Administrator | `admin` | Everything, including `manage_users` pages and the overrides |
 
-The stored codes are unchanged for existing accounts. A role change signs the person out and
-revokes their Telegram/MCP/integration grants, so relabelling `admin` as Super Administrator
-avoided doing that to 16 active people. All 17 current administrators are therefore Super
-Administrators after deploy. **Owner action after release:** on Admin → Users &
-roles, move everyone who should not keep full power to *Administrator*, and consider
-moving the 4 Section Managers placed at a top-level unit to *Division Manager* where that
-is their job. Encoding stays a role variant ("Staff + survey encoding") rather than a
-separate account flag, which gives the same result without a schema change.
+**Release switch (owner instruction):** on the first start of 10.50, every account holding
+`admin` becomes **Administrator** (`system_admin`). The single exception is the owner account named in
+`BUREAU_ACCESS_SEED`, which stays **Super Administrator**. Each change is audited. The switch runs
+once, and only if that account is active with the admin role. Otherwise it waits, so the system is never
+left without a Super Administrator. Demoted accounts are signed out once and must re-link any
+MCP/integration tool credentials (role change revokes them). Section Managers keep their code.
+**Owner action after release:** on Admin → Users & roles, move the Section Managers whose job covers a
+whole division to *Division Manager*. Encoding stays a role variant ("Staff + survey encoding")
+rather than a separate account flag, which gives the same result without a schema change.
 
 Not in 10.50 (still open from section 2): seatless Super Administrator bureau sight is kept
 on purpose (decision 1); findings 3 (account seeds in code), 5 (one "chief" helper), 6
