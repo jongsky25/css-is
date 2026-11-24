@@ -16,11 +16,16 @@ FEATURE = "travel_scan"
 MAX_BYTES = 6 * 1024 * 1024
 MIME_OK = ("image/jpeg", "image/png", "image/webp", "application/pdf")
 KINDS = ("plane_ticket", "boarding_pass", "bus_boat_ticket", "taxi_receipt", "ridehail_receipt",
-         "terminal_fee", "lodging_bill", "official_receipt", "other")
+         "terminal_fee", "lodging_bill", "official_receipt", "fare_screenshot", "other")
 MAX_AMOUNT = Decimal("1000000")
 # Checklist rows whose uploads are tickets or receipts: an upload to one of these is also read for its amount.
 READ_CODES = frozenset({"plane_ticket", "boarding_pass", "boat_bus_ticket", "terminal_fee", "taxi_receipt",
-                        "ridehail_receipt", "lodging_bill", "extra_expense_invoice", "refund_or"})
+                        "ridehail_receipt", "lodging_bill", "extra_expense_invoice", "refund_or", "plane_fare_proof"})
+# DM 2026-0521 pre-audit details. Optional: an older or shorter answer without them is still a valid reading, and a
+# document that does not show one leaves it out.
+SOURCES = ("app_or_email", "screenshot", "paper", "unknown")
+CABINS = ("economy", "premium_economy", "business", "first", "unknown")
+MAX_COUNT = 20
 
 SYSTEM = (
     "You read Philippine travel documents for a government travel claim: airline e-tickets, "
@@ -38,7 +43,14 @@ PROMPT = (
     "vendor is the airline, operator or business. reference is the ticket, booking or receipt "
     "number. depart_time and arrive_time are the departure and arrival times as 24-hour HH:MM when the "
     "document prints them (leave empty if not shown). note is one short sentence on anything the person "
-    "should double-check."
+    "should double-check. Give these only when the document shows them, otherwise leave them out: for a taxi or "
+    "ride-hailing receipt, stops is the number of drop-off points (1 for a single point-to-point trip), passengers "
+    "the number of passengers, fare_split whether the fare is broken down per stop or passenger, and receipt_source "
+    "whether it is the app's or email's own receipt (app_or_email), a screenshot, or a paper receipt. For an airline "
+    "ticket, fare_brand is the fare type as printed (for example GO BASIC or Economy Supersaver), cabin the class, "
+    "round_trip whether it covers both outbound and return flights, and booked_at when it was booked or issued as "
+    "YYYY-MM-DD HH:MM. A screenshot of airline fare options is kind fare_screenshot: amount is the lowest regular "
+    "economy fare shown and captured_at is the date and time visible on the screenshot as YYYY-MM-DD HH:MM."
 )
 SCHEMA = {"type": "OBJECT", "properties": {
     "readable": {"type": "BOOLEAN"},
@@ -53,11 +65,21 @@ SCHEMA = {"type": "OBJECT", "properties": {
     "depart_time": {"type": "STRING"},
     "arrive_time": {"type": "STRING"},
     "note": {"type": "STRING"},
+    "stops": {"type": "INTEGER"},
+    "passengers": {"type": "INTEGER"},
+    "fare_split": {"type": "BOOLEAN"},
+    "receipt_source": {"type": "STRING", "enum": list(SOURCES)},
+    "fare_brand": {"type": "STRING"},
+    "cabin": {"type": "STRING", "enum": list(CABINS)},
+    "round_trip": {"type": "BOOLEAN"},
+    "booked_at": {"type": "STRING"},
+    "captured_at": {"type": "STRING"},
 }, "required": ["readable", "kind", "amount", "currency", "date", "origin", "destination",
                 "vendor", "reference", "depart_time", "arrive_time", "note"]}
 
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _TIME = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+_STAMP = re.compile(r"^\d{4}-\d{2}-\d{2} ([01]\d|2[0-3]):[0-5]\d$")
 
 
 def sniff(raw: bytes) -> str:
@@ -103,7 +125,33 @@ def clean(parsed) -> dict:
             "origin": _text(p.get("origin"), 80), "destination": _text(p.get("destination"), 80),
             "vendor": _text(p.get("vendor"), 80), "reference": _text(p.get("reference"), 40),
             "depart_time": _hhmm(p.get("depart_time")), "arrive_time": _hhmm(p.get("arrive_time")),
-            "note": _text(p.get("note"), 200)}
+            "note": _text(p.get("note"), 200), **_details(p)}
+
+
+def _count(v):
+    return v if isinstance(v, int) and not isinstance(v, bool) and 1 <= v <= MAX_COUNT else None
+
+
+def _stamp(v) -> str:
+    v = _text(v, 16)
+    if not _STAMP.match(v):
+        return ""
+    try:
+        date.fromisoformat(v[:10])
+    except ValueError:
+        return ""
+    return v
+
+
+def _details(p) -> dict:
+    """The optional DM 2026-0521 details, cleaned: None or "" when absent or unusable."""
+    flag = lambda k: p.get(k) if isinstance(p.get(k), bool) else None      # noqa: E731
+    return {"stops": _count(p.get("stops")), "passengers": _count(p.get("passengers")),
+            "fare_split": flag("fare_split"), "round_trip": flag("round_trip"),
+            "receipt_source": p.get("receipt_source") if p.get("receipt_source") in SOURCES else "",
+            "cabin": p.get("cabin") if p.get("cabin") in CABINS else "",
+            "fare_brand": _text(p.get("fare_brand"), 40), "booked_at": _stamp(p.get("booked_at")),
+            "captured_at": _stamp(p.get("captured_at"))}
 
 
 def validated_receipt(parsed) -> dict:
@@ -139,7 +187,30 @@ def validated_receipt(parsed) -> dict:
         raise ai_core.AIBadResponse("Invalid document date")
     if any(parsed.get(key) and not _TIME.fullmatch(parsed[key]) for key in ("depart_time", "arrive_time")):
         raise ai_core.AIBadResponse("Invalid document time")
+    _validated_details(parsed)
     return clean(parsed)
+
+
+def _validated_details(parsed):
+    """The optional details must be well formed when present; a wrong type rejects the whole reading, as any other
+    malformed field does."""
+    for key in ("stops", "passengers"):
+        if key in parsed and _count(parsed[key]) is None:
+            raise ai_core.AIBadResponse("Invalid document count")
+    for key in ("fare_split", "round_trip"):
+        if key in parsed and not isinstance(parsed[key], bool):
+            raise ai_core.AIBadResponse("Invalid document flag")
+    if "receipt_source" in parsed and parsed["receipt_source"] not in SOURCES:
+        raise ai_core.AIBadResponse("Invalid receipt source")
+    if "cabin" in parsed and parsed["cabin"] not in CABINS:
+        raise ai_core.AIBadResponse("Invalid cabin")
+    if "fare_brand" in parsed:
+        v = parsed["fare_brand"]
+        if not isinstance(v, str) or len(v) > 40 or any(ord(c) < 32 for c in v) or "<" in v or ">" in v:
+            raise ai_core.AIBadResponse("Invalid document text")
+    for key in ("booked_at", "captured_at"):
+        if key in parsed and (not isinstance(parsed[key], str) or (parsed[key] and not _stamp(parsed[key]))):
+            raise ai_core.AIBadResponse("Invalid document time")
 
 
 def _hhmm(v) -> str:

@@ -23,7 +23,22 @@ FLAG_LABELS = {
     "unlisted_route": "Route not on the approved list",
     "no_receipt_over_1000": "No receipt for a fare above 1,000",
     "participant_only": "Participant-only travel",
+    # DM 2026-0521 pre-audit checks on what the AI read off uploads (reading_flags)
+    "receipt_mismatch": "Receipt does not match the itinerary",
+    "shared_ride": "Multi-stop or shared ride",
+    "fare_class": "Fare class not allowed",
+    "fare_proof": "Proof of lowest fare incomplete",
 }
+
+# DM 2026-0521: the regular economy fares named as lowest (Cebu Pacific and Philippine Airlines). A brand is only
+# checked for these two airlines; for any other airline only the cabin is.
+ECONOMY_BRANDS = {
+    "cebu": ("GO BASIC", "GO EASY"),
+    "philippine airlines": ("ECONOMY SUPERSAVER", "SUPERSAVER", "SUPER SAVER", "ECONOMY SAVER", "SAVER",
+                            "ECONOMY VALUE", "VALUE", "ECONOMY FLEX", "FLEX"),
+}
+NOT_ECONOMY = ("premium_economy", "business", "first")
+RECEIPT_TOLERANCE = 1           # pesos a receipt may differ from its itinerary fare (rounding)
 
 PER_DIEM_LABEL = "Per diem above the policy rate"
 
@@ -284,3 +299,76 @@ def completeness(filing, items, flags) -> list:
             missing.append(f"The Admin Unit did not accept: {fl.get('detail') or 'a flagged item'}{why} "
                            "Change it on the prepare page, or talk to them.")
     return missing
+
+
+# ------------------------------------------------- DM 2026-0521: checks on what was read off uploads ---
+
+def _airline(vendor) -> str:
+    v = (vendor or "").lower()
+    if "cebu" in v:
+        return "cebu"
+    if "philippine airlines" in v or v.strip() in ("pal", "pr") or "pal express" in v:
+        return "philippine airlines"
+    return ""
+
+
+def _brand(v) -> str:
+    return " ".join((v or "").upper().replace("-", " ").split())
+
+
+def _rflag(kind, reading, detail) -> FlagSpec:
+    key = f"reading:{reading.get('id')}"
+    return FlagSpec(kind, flag_sig(kind, key, reading.get("amount") or 0, detail[:40]), detail, key)
+
+
+def reading_flags(readings, rows) -> list:
+    """Flags for the DM 2026-0521 pre-audit points, from the readings kept for the filing's uploads
+    (travel_readings.for_filing) and the itinerary rows posted at generate. Only what a reading actually shows is
+    checked: a detail the AI did not read raises nothing. Each flag goes to the Admin Unit like the others."""
+    out = []
+    receipts = [r for r in readings if r.get("doc") == "receipt"]
+    ride_rows = [r for r in rows if r.get("mode") in ("tnvs", "taxi")]
+    for x in receipts:
+        if x.get("item_code") not in ("ridehail_receipt", "taxi_receipt"):
+            continue
+        what = "ride-hailing" if x["item_code"] == "ridehail_receipt" else "taxi"
+        # Inconsistent with the itinerary (dates, amounts)
+        if rows and x.get("day"):
+            same_day = [r for r in ride_rows if r.get("date") == x["day"]]
+            if not same_day:
+                out.append(_rflag("receipt_mismatch", x, f"A {what} receipt dated {x['day']} has no {what} ride on that "
+                                                         "date in the itinerary."))
+            elif x.get("amount") and not any(abs(_dec(r.get("allowance")) - _dec(x["amount"])) <= RECEIPT_TOLERANCE
+                                             for r in same_day):
+                out.append(_rflag("receipt_mismatch", x, f"A {what} receipt of {_num(_dec(x['amount']))} on {x['day']} "
+                                                         "does not match the fare entered for that date."))
+        # Multi-stop or multi-passenger
+        stops, pax = x.get("stops") or 0, x.get("passengers") or 0
+        if stops > 1 or pax > 1:
+            parts = ([f"{stops} stops"] if stops > 1 else []) + ([f"{pax} passengers"] if pax > 1 else [])
+            need = ("Accepted only with every passenger's claim submitted together, consistent with the itinerary, "
+                    "the fare split per stop or passenger, and a justification that it costs less than separate rides.")
+            if x.get("fare_split") == 0:
+                need += " The receipt shows no fare split."
+            out.append(_rflag("shared_ride", x, f"A {what} receipt shows {' and '.join(parts)}. {need}"))
+    tickets = [r for r in receipts if r.get("item_code") in ("plane_ticket", "boarding_pass")]
+    for x in tickets:
+        cabin, brand, airline = x.get("cabin") or "", _brand(x.get("fare_brand")), _airline(x.get("vendor"))
+        if cabin in NOT_ECONOMY:
+            out.append(_rflag("fare_class", x, f"The ticket reads {cabin.replace('_', ' ')} class. Only regular "
+                                               "economy is allowed unless the Office of the President approved it in advance."))
+        elif brand and airline and brand not in ECONOMY_BRANDS[airline]:
+            out.append(_rflag("fare_class", x, f"The fare type reads {x.get('fare_brand')}, which is not one of the "
+                                               "lowest regular economy fares named for this airline."))
+    shots = [r for r in receipts if r.get("item_code") == "plane_fare_proof"]
+    for x in (t for t in tickets if t.get("item_code") == "plane_ticket"):
+        booked = x.get("booked_at") or ""
+        taken = [s.get("captured_at") for s in shots if s.get("captured_at")]
+        if booked and taken and all(t > booked for t in taken):
+            out.append(_rflag("fare_proof", x, f"Every fare screenshot was taken after the ticket was booked ({booked}). "
+                                               "The screenshots must be captured just before booking."))
+        if (_airline(x.get("vendor")) == "philippine airlines" and x.get("round_trip") == 1
+                and "SUPERSAVER" not in _brand(x.get("fare_brand")).replace(" ", "") and len(shots) < 2):
+            out.append(_rflag("fare_proof", x, "A Philippine Airlines round trip that is not Economy Supersaver needs "
+                                               "screenshots of both the outbound and the return fares."))
+    return out

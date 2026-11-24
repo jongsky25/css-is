@@ -5,7 +5,22 @@ Travelling Expenses based on 2026 Pre-Audit Observations". It cites PD 1445, EO 
 DO 2019-0225, DM 2023-0092 and DM 2024-0369. The memo itself is not committed; this file
 records only its directives and how they map onto Travel filing.
 
-Status: scoped November 24, 2026; owner decisions recorded below; **DM1, DM2 and DM3 built** (candidate 10.47) on `claude/cool-davinci-y5s3re`, PR #640.
+Status: scoped November 24, 2026; owner decisions recorded below; **DM1, DM2, DM3 and DM4 built** (candidate 10.47) on `claude/cool-davinci-y5s3re`, PR #640.
+
+DM4 as built (owner decision 5: AI): the receipt reader (`travel_scan`) asks for optional details, accepted only
+when well formed and never required, so older or shorter answers stay valid: `stops`, `passengers`, `fare_split`,
+`receipt_source` (ride receipts); `fare_brand`, `cabin`, `round_trip`, `booked_at` (tickets); a new kind
+`fare_screenshot` with `captured_at` (uploads to the lowest-fare proof row, now also read). `travel_reading` keeps
+them (additive columns). At generate, `travel_rules.reading_flags` adds Admin Unit flags of four new kinds:
+`receipt_mismatch` (a ride receipt with no ride of that kind on its date, or a different fare), `shared_ride`
+(more than one stop or passenger, with what the memo requires), `fare_class` (premium economy, business or first;
+or a Cebu Pacific / PAL fare type outside the named economy fares) and `fare_proof` (every screenshot taken after
+booking; a non-Supersaver PAL round trip with fewer than two screenshots). Only what a reading shows is checked; a
+detail the AI did not read raises nothing. `travel_flag`'s kind CHECK is widened by a table rebuild that keeps every
+row (`storage._travel_dm_2026_0521`). The AI evaluation cases were not changed (suite 1.12.0 still passes); the
+new fields are covered by unit tests in `tests/test_travel_preaudit.py`. Limits: the model's reading accuracy is not
+measured; links pasted instead of uploaded are not read, so they raise no reading flags; FMS's own check of the
+receipt on the claimant's phone or email is unchanged.
 
 DM2 as built: a CA-only question "urgent or unplanned travel" (`urgent_travel`) allows a cash advance from 7 days
 to 1 day before the activity (never once it has started) and adds a required upload, "Written justification for

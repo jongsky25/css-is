@@ -17,7 +17,19 @@ import travel_checklist as tc
 RIDE_MODE = {"plane_ticket": "plane", "boat_bus_ticket": "bus", "taxi_receipt": "taxi", "ridehail_receipt": "tnvs"}
 SEA_WORDS = ("ferry", "boat", "ship", "shipping", "roro", "ro-ro", "fastcraft", "lines", "2go")
 _COLS = ("id", "item_code", "doc", "kind", "amount", "currency", "day", "origin", "destination", "vendor",
-         "reference", "dep_time", "arr_time", "date_from", "date_to")
+         "reference", "dep_time", "arr_time", "date_from", "date_to",
+         # DM 2026-0521 pre-audit details (travel_rules.reading_flags)
+         "stops", "passengers", "fare_split", "receipt_source", "fare_brand", "cabin", "booked_at", "captured_at",
+         "round_trip")
+_DETAILS = ("stops", "passengers", "fare_split", "receipt_source", "fare_brand", "cabin", "booked_at", "captured_at",
+            "round_trip")
+
+
+def _detail(reading, key):
+    v = reading.get(key)
+    if isinstance(v, bool):
+        return 1 if v else 0
+    return v if v not in ("", None) else None
 
 
 def save(conn, filing_id, code, doc, reading) -> bool:
@@ -29,7 +41,8 @@ def save(conn, filing_id, code, doc, reading) -> bool:
         a, b = reading.get("date_from") or "", reading.get("date_to") or ""
         if not a:
             return False
-        row = (filing_id, code, "appearance", None, None, None, None, None, None, None, None, None, None, a, b or a)
+        row = (filing_id, code, "appearance", None, None, None, None, None, None, None, None, None, None, a, b or a,
+               *([None] * len(_DETAILS)))
         dup = conn.execute("SELECT 1 FROM travel_reading WHERE filing_id=? AND item_code=? AND doc='appearance' "
                            "AND date_from=? AND date_to=?", (filing_id, code, a, b or a)).fetchone()
     elif doc == "receipt":
@@ -38,7 +51,7 @@ def save(conn, filing_id, code, doc, reading) -> bool:
         row = (filing_id, code, "receipt", reading.get("kind"), float(reading["amount"]), "PHP", reading.get("date") or None,
                reading.get("origin") or None, reading.get("destination") or None, reading.get("vendor") or None,
                reading.get("reference") or None, reading.get("depart_time") or None, reading.get("arrive_time") or None,
-               None, None)
+               None, None, *(_detail(reading, k) for k in _DETAILS))
         dup = conn.execute("SELECT 1 FROM travel_reading WHERE filing_id=? AND item_code=? AND doc='receipt' AND amount=? "
                            "AND COALESCE(day,'')=? AND COALESCE(vendor,'')=? AND COALESCE(reference,'')=?",
                            (filing_id, code, float(reading["amount"]), reading.get("date") or "", reading.get("vendor") or "",
@@ -48,8 +61,8 @@ def save(conn, filing_id, code, doc, reading) -> bool:
     if dup:
         return False
     conn.execute("INSERT INTO travel_reading(filing_id, item_code, doc, kind, amount, currency, day, origin, destination, "
-                 "vendor, reference, dep_time, arr_time, date_from, date_to, created_at) "
-                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (*row, tz.now_iso()))
+                 "vendor, reference, dep_time, arr_time, date_from, date_to, " + ", ".join(_DETAILS) + ", created_at) "
+                 "VALUES (" + ",".join("?" * (16 + len(_DETAILS))) + ")", (*row, tz.now_iso()))
     conn.commit()
     return True
 

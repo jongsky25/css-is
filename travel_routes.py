@@ -928,7 +928,8 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
             filing = travel.set_derived_answers(conn, filing, {**travel_docs.ride_answers(norm["rows"], ceilings, opts),
                                                                **travel_docs.meals_answers(norm["rows"])})
             travel.sync_flags(conn, filing, tr.flags_for(filing, norm["rows"], travel.answers_of(filing), ceilings,
-                                                         opts, _working(conn)))
+                                                         opts, _working(conn))
+                              + tr.reading_flags(travel_readings.for_filing(conn, filing["id"]), norm["rows"]))
             items = _generate_items(conn, filing)
             wanted = body.get("codes") if isinstance(body.get("codes"), list) else None
             codes = [it["code"] for it in items if (not wanted or it["code"] in wanted)]
