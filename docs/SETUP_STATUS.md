@@ -1,5 +1,16 @@
 # Cloud/mobile setup status
 
+## User levels assessed — November 24, 2026
+
+Owner asked to assess the user levels given the larger feature set and user count.
+Read-only assessment of main `741ef68`: [USER_LEVELS_ASSESSMENT.md](USER_LEVELS_ASSESSMENT.md).
+The four global roles still reflect the survey-era design, while most modules decide access through
+directory seats and module grants. Main risks: Section Manager is unscoped for
+calendar notices/starts; a seatless Administrator sees bureau-wide wellness/AWA data;
+authority is seeded in code; "chief" and "admin" have several definitions. No code changed.
+Next: owner answers the five decisions in section 4 of that document; then phase 1 (safety fixes)
+becomes a release candidate. The items above (10.49 CI, travel DM, restructure) are unchanged.
+
 ## Type 1 "Who served you?" turned on; 10.47 and 10.48 merged — November 24, 2026
 
 Owner asked to let walk-in (Type 1) respondents say who served them. The storage,
