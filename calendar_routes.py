@@ -204,7 +204,7 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
 
     n = sum(1 for i in items if i["layer"] != "holidays")
     page = {
-        "layout": layout, "can_import": auth.can(user["role"], "manage_users"),
+        "layout": layout, "can_import": auth.can(user["role"], "operate"),
         "scope": scope, "scopes": choices, "today": today, "start": start, "end": end,
         "n_items": n, "f": clean, "filtered": any(clean.values()),
         "kinds": KIND_LABELS,
@@ -434,7 +434,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         try:
             sent = calendar_notice.history(conn, e["id"])
             to = calendar_notice.people_recipients(conn, e)
-            return {"can_send": calendar_notice.can_send(user, e), "to": [{"name": n, "email": em} for _u, n, em in to],
+            return {"can_send": calendar_notice.can_send(user, e, conn), "to": [{"name": n, "email": em} for _u, n, em in to],
                     "sent": sent, "agenda_max": calendar_notice.AGENDA_MAX,
                     "changed": bool(sent) and sent[0]["fingerprint"] != calendar_notice.fingerprint(conn, e),
                     "others": [l for l in activity_docs.get_visitors(conn, e["id"]).split("\n") if l and l.lower() != "none"]}
@@ -1055,9 +1055,15 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
 
     def _may_start_item(conn, user, res):
         """Who may make the calendar item for a booking that has none: the person who booked it, the Administrative
-        Section, and administrators and section managers (they can already send the notice of meeting)."""
+        Section, the Super Administrator, and a manager level whose unit reach covers the booking's unit."""
         mine = res["requester_user_id"] is not None and res["requester_user_id"] == user["id"]
-        return mine or rooms.is_room_admin(conn, user) or user.get("role") in ("admin", "section_manager")
+        return (mine or rooms.is_room_admin(conn, user) or user.get("role") == "admin"
+                or calendar_notice.manages_unit(conn, user, res.get("org_unit_id") or _requester_unit(conn, res)))
+
+    def _requester_unit(conn, res):
+        row = conn.execute("SELECT rp.org_unit_id FROM admin_user a JOIN resource_person rp ON rp.id=a.rp_id "
+                           "WHERE a.id=?", (res["requester_user_id"],)).fetchone() if res.get("requester_user_id") else None
+        return row[0] if row else None
 
     @router.get("/calendar/rooms/{rid}", response_class=HTMLResponse)
     def calendar_room(request: Request, rid: int, ok: str = "", err: str = ""):
@@ -1270,8 +1276,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             e = oc.viewable_entry(conn, user, entry_id)
             if e is None:
                 return _not_found(request)
-            if not calendar_notice.can_send(user, e):
-                return RedirectResponse(f"/calendar/entries/{entry_id}?err={quote('Only the person who made this item, the people on it, or a section manager can send the notice.')}", status_code=303)
+            if not calendar_notice.can_send(user, e, conn):
+                return RedirectResponse(f"/calendar/entries/{entry_id}?err={quote('Only the person who made this item, the people on it, or a manager of its unit can send the notice.')}", status_code=303)
             try:
                 if bad:
                     raise ValueError(bad)
@@ -1644,7 +1650,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
     # ── Word import (admin only) ────────────────────────────────────────────
 
     def _admin_only(request):
-        if not auth.can(request.state.user["role"], "manage_users"):
+        if not auth.can(request.state.user["role"], "operate"):
             return templates.TemplateResponse(
                 request, "forbidden.html",
                 {"capability": "importing the calendar", "show_scope": False}, status_code=403)

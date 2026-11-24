@@ -564,16 +564,21 @@
     </div>
     {% endif %}
 
-    {% if u and can(u.role, 'manage_users') %}
+    {% if u and can(u.role, 'operate') %}
     <div class="modcard">
       <div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7.7 1.6 1.6 0 0 0-1.2 1.5v.2a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H1.5a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H7a1.6 1.6 0 0 0 1-1.5V1.5a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V7a1.6 1.6 0 0 0 1.5 1h.2a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg></div>
-      <a class="title" href="/admin/users">Administration</a>
+      <a class="title" href="{{ '/admin/users' if can(u.role, 'manage_users') else '/admin/email' }}">Administration</a>
       <p class="desc">User accounts &amp; roles, the audit trail, backups, sharing, user feedback and system health.</p>
       <div class="subs">
+        {% if can(u.role, 'manage_users') %}
         <a href="/admin/users">Users</a>
         <a href="/admin/audit">Audit log</a>
         <a href="/admin/backups">Backups</a>
         <a href="/admin/sharing">Sharing</a>
+        {% else %}
+        <a href="/admin/email">Email</a>
+        <a href="/admin/holidays">Holidays</a>
+        {% endif %}
         {% if can(u.role, 'triage_feedback') %}<a href="/admin/feedback">Feedback</a>{% endif %}
         <a href="/ops">Health</a>
       </div>

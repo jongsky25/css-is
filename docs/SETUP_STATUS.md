@@ -7,7 +7,7 @@ increment 2 (New advisory flow: existing activity / new activity / general; deta
 thumbnails; advisory page with progress bar); then increment 3 (Send to Division Chief takes a
 Slides copy as the reviewed revision; Slides access follows the stage; issue refused if the file
 changed after approval); then increment 4 (issue from the approved copy; Share to group chats
-button; no public page for general advisories). All built as candidate 10.51 on this branch (PR #645); additive schema.
+button; no public page for general advisories). All built as candidate 10.52 on this branch (PR #645); additive schema.
 Not merged or released. Verification is recorded in the PR.
 Next: owner sets up the relay template (setup guide) and tries it live; increment 5 (remove the
 old poster editor and renderer; clear trial advisories with a backup) on owner instruction. Merge/release only on owner instruction.
@@ -23,6 +23,20 @@ Owner answered seven of eight questions (section members edit; Slides comments t
 real activity created with the advisory; no public page for general advisories).
 Next: owner picks sending channels (options in the plan), then build increment 1
 (relay Slides actions and placeholder template) on owner instruction.
+
+## User levels: owner decided; candidate 10.52 — November 24, 2026
+
+Owner asked to assess user levels: [USER_LEVELS_ASSESSMENT.md](USER_LEVELS_ASSESSMENT.md).
+Owner decisions (section 5 there): Super Administrator keeps full power, and a narrower Administrator
+is added (owner then narrowed it to Section Manager + survey data fixes); Section Managers are limited to their own unit, and a Division Manager level is added; Viewer and
+Encoder merge into Staff; administration is split now. Live counts (owner-authorized
+sign-in; counts only): 73 accounts: 17 admin, 38 section managers, 17 viewers, 1 encoder.
+Candidate 10.51 on `claude/gracious-einstein-10xohq` (PR #644) implements this. On the first
+start it switches every admin except the owner account to Administrator (audited, once;
+those accounts sign in again). Not merged or released. After release, the owner moves division-level
+Section Managers to Division Manager where that fits. The owner
+account's password was shared in chat and must be changed. Next: CI on PR #644; release
+on owner instruction; remaining findings 3, 5-8 are listed in section 5.
 
 ## Type 1 "Who served you?" turned on; 10.47 and 10.48 merged — November 24, 2026
 

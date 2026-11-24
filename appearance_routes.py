@@ -43,7 +43,7 @@ def install_context(app, get_conn):
                 conn.close()
 
         active, personal = await asyncio.to_thread(read)
-        if request.query_params.get("appearance_preview") == "1" and auth.can(request.state.user["role"], "manage_users"):
+        if request.query_params.get("appearance_preview") == "1" and auth.can(request.state.user["role"], "operate"):
             try:
                 active.update(rules.selection(request.query_params.get("theme", "default"),
                                               request.query_params.get("outfit", "monthly"),

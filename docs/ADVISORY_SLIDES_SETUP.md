@@ -1,6 +1,6 @@
 # Advisory Google Slides setup
 
-Increment 1 of the [advisory Slides plan](ADVISORY_SLIDES_PLAN.md) (10.51). Office Connect asks the
+Increment 1 of the [advisory Slides plan](ADVISORY_SLIDES_PLAN.md) (10.52). Office Connect asks the
 office's existing documents relay (the Apps Script that makes travel forms, see
 [TRAVEL_DOCS_RELAY_SETUP.md](TRAVEL_DOCS_RELAY_SETUP.md)) to make each advisory as a Google Slides
 file. No new secret, URL or Space setting is needed: it uses `CSS_DOCS_RELAY_URL` and

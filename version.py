@@ -18,12 +18,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.51"
+APP_VERSION = "10.52"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "10.51",
+        "version": "10.52",
         "date": "November 24, 2026",
         "summary": "Start a new advisory from the Advisories page, made as a Google Slides file.",
         "changes": [
@@ -36,6 +36,17 @@ CHANGELOG = [
             "After issue, the advisory page has Share to group chats: on a phone, Share opens the phone's share menu with the advisory picture and a ready message for Viber or Messenger. Copy message and Download image work everywhere.",
             "General advisories (not about an activity) are never shown on a public page.",
             "This needs the office relay set up for Google Slides; until then the page says so and activity advisories keep the old editor."
+        ],
+    },
+    {
+        "version": "10.51",
+        "date": "November 24, 2026",
+        "summary": "New user levels: Super Administrator, Administrator and Division Manager.",
+        "changes": [
+            "Administrators now manage activities like a Section Manager and can also fix survey data (edit or archive walk-in entries, merge duplicate activities). Accounts, settings, backups, the directory and feedback move to a single Super Administrator.",
+            "A new Division Manager level manages activities across their whole division.",
+            "Section Managers manage activities and send calendar notices only for their own unit. Chiefs and acting OICs still cover the units under them.",
+            "Viewer is now called Staff, and Encoder is called Staff + survey encoding."
         ],
     },
     {

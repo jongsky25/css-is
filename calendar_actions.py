@@ -8,6 +8,7 @@ from datetime import date
 from documents_storage import rows,transaction
 import office_calendar as oc
 import recurrence
+import auth
 import storage as st
 
 FORM_KINDS=('meeting','training','travel','deadline','audit_mr','banner')
@@ -56,7 +57,7 @@ def parse(f, existing=None, allowed_people=()):
 
 def actor(conn,user):
     found=rows(conn,"SELECT * FROM admin_user WHERE id=? AND active=1 AND must_change=0",(user['id'],))
-    if not found or found[0]['role'] not in ('viewer','encoder','section_manager','admin'):
+    if not found or not auth.valid_role(found[0]['role']):
         raise ValueError('A current staff account is required.')
     return found[0]
 
