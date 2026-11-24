@@ -23,6 +23,28 @@
 {% endif %}
 </div>
 
+{% if record.status == 'approved' and distribution and distribution.allowed %}
+<div class="adv-main"><a class="btn" href="/advisories/{{ record.id }}/issue">Issue the advisory</a><span class="hint">You see exactly who gets it before anything is sent.</span></div>
+{% endif %}
+
+{% if share %}
+<section class="adv-card" aria-labelledby="share-title" data-advisory-share data-image="{{ share.image_url }}" data-filename="{{ share.filename }}">
+<h2 id="share-title">Share to group chats</h2>
+<p class="hint" style="margin-top:0">Post the issued advisory in Viber, Messenger or other group chats. Nothing is posted until you pick a chat and press send there.</p>
+<img src="{{ share.image_url }}" alt="The issued advisory" style="width:100%;max-width:22rem;height:auto;border:1px solid var(--line);border-radius:6px">
+<div class="adv-field" style="margin-top:.8rem"><label for="share-caption">Message to go with it</label>
+<textarea id="share-caption" rows="3" readonly>{{ share.caption }}</textarea></div>
+<div class="adv-main">
+<button class="btn" type="button" data-share-button hidden>Share…</button>
+<button class="btn ghost" type="button" data-copy-button hidden>Copy message</button>
+<a class="btn ghost" href="{{ share.image_url }}" download="{{ share.filename }}">Download image</a>
+<a href="{{ share.pdf_url }}" target="_blank" rel="noopener">PDF</a>
+</div>
+<p class="hint" data-share-status role="status"></p>
+</section>
+<script src="/static/js/advisory-share.js?v={{ APP_VERSION|default('0') }}" defer></script>
+{% endif %}
+
 {% if can_send %}
 <form method="post" action="/advisories/{{ record.id }}/send" class="adv-card">
 <h2>{{ 'Send it again' if resubmit else 'Ready? Send it for review' }}</h2>
@@ -34,7 +56,7 @@
 </form>
 {% endif %}
 
-{% if reviewed %}
+{% if reviewed and not share %}
 <div class="adv-card"><h2>The copy {{ 'being reviewed' if record.status == 'in_review' else 'last sent for review' if record.status in ('draft','changes_requested') else 'that was approved' }}</h2>
 <a href="/advisories/{{ record.id }}/revisions/{{ reviewed.id }}/file.pdf" target="_blank" rel="noopener"><img src="/advisories/{{ record.id }}/revisions/{{ reviewed.id }}/file.png" alt="The advisory as sent for review" style="width:100%;height:auto;border:1px solid var(--line);border-radius:6px"></a>
 <p class="hint">Taken {{ reviewed.taken_at[:16]|replace('T',' ') }}. <a href="/advisories/{{ record.id }}/revisions/{{ reviewed.id }}/file.pdf" target="_blank" rel="noopener">Open the PDF</a></p>

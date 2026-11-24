@@ -6,10 +6,11 @@ Owner said "start": increment 1 (relay companion `apps_script/advisory_slides.gs
 increment 2 (New advisory flow: existing activity / new activity / general; details with design
 thumbnails; advisory page with progress bar); then increment 3 (Send to Division Chief takes a
 Slides copy as the reviewed revision; Slides access follows the stage; issue refused if the file
-changed after approval). All built as candidate 10.51 on this branch (PR #645); additive schema.
+changed after approval); then increment 4 (issue from the approved copy; Share to group chats
+button; no public page for general advisories). All built as candidate 10.51 on this branch (PR #645); additive schema.
 Not merged or released. Verification is recorded in the PR.
-Next: owner sets up the relay template (setup guide); increment 4 (issue from the snapshot and
-the Share button) on owner instruction. Merge/release only on owner instruction.
+Next: owner sets up the relay template (setup guide) and tries it live; increment 5 (remove the
+old poster editor and renderer; clear trial advisories with a backup) on owner instruction. Merge/release only on owner instruction.
 
 ## Advisory rethink planned (Google Slides, New advisory flow) — November 24, 2026
 

@@ -1,7 +1,7 @@
 # Advisory rethink: Google Slides and a single "New advisory" flow
 
 Planning session: November 24, 2026, branch `claude/charming-faraday-gxl981`.
-Status: increments 1 (relay), 2 (New advisory flow) and 3 (send for review with a Slides copy) built as candidate 10.51, not released; see [setup](ADVISORY_SLIDES_SETUP.md).
+Status: increments 1 (relay), 2 (New advisory flow) 3 (send for review with a Slides copy) and 4 (issue and Share button) built as candidate 10.51, not released; see [setup](ADVISORY_SLIDES_SETUP.md).
 Replaces the built-in poster editor described in [ADVISORY_POSTERS.md](ADVISORY_POSTERS.md).
 The review/issuance machinery in [ADVISORY_REVIEW.md](ADVISORY_REVIEW.md) and
 [ADVISORY_ISSUANCE.md](ADVISORY_ISSUANCE.md) is kept unless noted.

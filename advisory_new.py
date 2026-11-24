@@ -419,9 +419,12 @@ def home(conn, user, aid):
         next_line = ('Please review the copy below and decide.' if reviewer == user['id']
                      else 'You can read and comment in Google Slides, but not edit, while it is being reviewed.')
     elif status == 'approved':
-        headline, next_line = 'Approved by the Director.', 'It is ready to issue.'
+        headline, next_line = 'Approved by the Director.', 'It is ready to issue: check who gets it, then send it out.'
     elif issued and status == 'issued':
-        headline, next_line = 'Issued.', ''
+        count = conn.execute('''SELECT json_array_length(recipients_json) FROM advisory_issue WHERE advisory_id=?
+            ORDER BY id DESC LIMIT 1''', (aid,)).fetchone()[0]
+        headline = 'Issued.'
+        next_line = f'It was emailed to {count} address{"" if count == 1 else "es"}. Use Share to post it in group chats.'
     elif status == 'cancelled':
         headline, next_line = 'Cancelled.', ''
     else:
@@ -576,3 +579,26 @@ def unchanged_since_approval(conn, user, aid, *, check=None):
         return ('The Google Slides file was changed after it was approved, so the approved copy no longer matches it. '
                 'Withdraw it for revision and send it for review again.')
     return ''
+
+
+# ---- increment 4: after issue — sharing to group chats ----
+
+def share_info(conn, user, aid, base_url=''):
+    """What the Share button sends: the issued image and a ready caption. None before a live issue."""
+    record = _record(conn, aid)
+    issue = rows(conn, '''SELECT i.id,i.issued_at FROM advisory_issue i WHERE i.advisory_id=?
+        AND NOT EXISTS(SELECT 1 FROM advisory_issue_action x WHERE x.issue_id=i.id AND x.action IN ('cancelled','superseded'))
+        ORDER BY i.id DESC LIMIT 1''', (aid,))
+    if not issue:
+        return None
+    stored = json.loads(record['details_json'] or '{}')
+    link = stored.get('link') or (f"{base_url}/e/{record['event_token']}" if record['event_token'] and base_url else '')
+    caption = f"ADVISORY {record['number']}: {stored.get('title', '')}"
+    if stored.get('dates'):
+        caption += f" ({stored['dates']})"
+    if link:
+        caption += f"\n{link}"
+    return {'issue_id': issue[0]['id'], 'issued_at': issue[0]['issued_at'], 'caption': caption, 'link': link,
+            'image_url': f"/advisories/issued/{issue[0]['id']}/file.png",
+            'pdf_url': f"/advisories/issued/{issue[0]['id']}/file.pdf",
+            'filename': f"advisory-{record['number']}.png"}

@@ -45,3 +45,4 @@
 .adv-dl dt { color: var(--soft); }
 .adv-dl dd { margin: 0; white-space: pre-wrap; }
 @media (max-width: 30rem) { .adv-dl { grid-template-columns: 1fr; } .adv-dl dd { margin-bottom: .4rem; } }
+.adv [hidden] { display: none !important; }

@@ -120,6 +120,7 @@ def make_router(templates, get_conn, base_url):
             error='The advisory moved on, but who can edit the Google Slides file could not be updated. Press "Update access" to try again.'
         review=advisory_review.screen(conn,user,record,int(q.get('comments_before',0)),int(q.get('actions_before',0))) if record.get('current_revision') else None
         if review: review['actions']=[a for a in review['actions'] if a[0]!='submit']
+        page['share']=new_flow.share_info(conn,user,advisory_id,base_url(request))
         return templates.TemplateResponse(request,'advisory_home.html',{**page,'notice':notice,'error':error,'reason':reason,
             'review':review,'review_record':record,'action_key':str(uuid.uuid4()),'available':workflow.available(conn),
             'distribution':advisory_distribution.screen(conn,user,record) if record.get('current_revision') else None},status_code=status)
@@ -328,6 +329,11 @@ def make_router(templates, get_conn, base_url):
         conn=get_conn()
         try:
             user=actor(request,conn)
+            record=workflow.get_visible(conn,user,advisory_id)
+            if record.get('kind'):
+                changed=new_flow.unchanged_since_approval(conn,user,advisory_id)
+                if changed:
+                    return templates.TemplateResponse(request,'advisory_action_error.html',{'record':record,'error':changed,'reason':''},status_code=409)
             return templates.TemplateResponse(request,'advisory_issue.html',{
                 **advisory_distribution.preview(conn,user,advisory_id),'action_key':str(uuid.uuid4()),
                 'available':workflow.available(conn)})

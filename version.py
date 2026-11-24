@@ -33,6 +33,8 @@ CHANGELOG = [
             "Send to Division Chief takes a copy of the slide as it is at that moment; that copy is what the Division Chief and Director review and approve. Open comments in the slide are kept with it.",
             "While the advisory is being reviewed, your section can comment in Google Slides but not edit. If it is sent back, editing comes back. After approval, the file becomes read-only.",
             "If the Slides file is changed after approval, issuing is stopped until it is sent for review again.",
+            "After issue, the advisory page has Share to group chats: on a phone, Share opens the phone's share menu with the advisory picture and a ready message for Viber or Messenger. Copy message and Download image work everywhere.",
+            "General advisories (not about an activity) are never shown on a public page.",
             "This needs the office relay set up for Google Slides; until then the page says so and activity advisories keep the old editor."
         ],
     },

@@ -172,3 +172,154 @@ def test_send_page_and_old_submit_route(flow, manager):
     old = manager.post(url + "/actions", data={"action": "submit", "expected_revision": "1",
                                                "operation_key": str(uuid.uuid4()), "reason": "x"})
     assert old.status_code == 409 and "Send to Division Chief" in old.text
+
+
+def issue(c, u, aid, reason="Issue it"):
+    import advisory_distribution as dist
+    planned = dist.preview(c, u["author"], aid)
+    act(c, u["author"], aid, "issue", confirmation=planned["confirmation"], ack_missing="1", reason=reason)
+    return planned
+
+
+def approved(c, u, aid):
+    send(c, u["author"], aid)
+    act(c, u["chief"], aid, "endorse")
+    act(c, u["director"], aid, "approve")
+
+
+def test_issue_freezes_the_reviewed_copy_and_offers_a_share_message(ready):
+    c, u, aid = ready
+    approved(c, u, aid)
+    assert new_flow.share_info(c, u["author"], aid) is None                  # nothing to share before issue
+    planned = issue(c, u, aid)
+    assert "author@doh.gov.ph" in planned["recipients"]
+    share = new_flow.share_info(c, u["author"], aid, "https://office.example")
+    record = aw.get_visible(c, u["author"], aid)
+    assert share["caption"] == f"ADVISORY {record['number']}: Office notice"   # general, no link: no URL line
+    assert share["image_url"] == f"/advisories/issued/{share['issue_id']}/file.png"
+    import advisory_distribution as dist
+    assert dist.issued_artifact(c, u["author"], share["issue_id"], "png") == b"\x89PNGv1"
+    access = Access()
+    new_flow.sync_access(c, u["author"], aid, setter=access)
+    assert access.calls[-1]["editors"] == [] and access.calls[-1]["commenters"] == []
+    page = new_flow.home(c, u["author"], aid)
+    assert page["step"] == 3 and page["headline"] == "Issued."
+    assert "group chats" in page["next_line"]
+    assert c.execute("SELECT COUNT(*) FROM document_job WHERE kind='dispatch'").fetchone()[0] == len(planned["recipients"])
+
+
+def test_general_advisories_cannot_be_published_on_a_public_page(ready):
+    c, u, aid = ready
+    c.execute("UPDATE advisory_record SET details_json=json_set(details_json,'$.audience','both','$.external',json('[\"partner@example.org\"]')) WHERE id=?", (aid,))
+    c.commit()
+    approved(c, u, aid)
+    issued = issue(c, u, aid)
+    assert "partner@example.org" in issued["recipients"]
+    share = new_flow.share_info(c, u["author"], aid)
+    with pytest.raises(ValueError, match="no public activity page"):
+        act(c, u["author"], aid, "publish", issue_id=str(share["issue_id"]))
+
+
+def test_share_caption_uses_the_activity_page_for_activity_advisories(ready):
+    c, u, _ = ready
+    ev = st.create_event(c, "JOAS Batch 2", "2026-12-15", created_by=u["author"]["username"])
+    form = {"kind": "activity", "event_token": ev["event_token"], "operation_key": str(uuid.uuid4()), "title": "JOAS Batch 2",
+            "dates": "December 15-17, 2026", "venue": "", "message": "", "attention": "", "contact": "", "link": "",
+            "audience": "internal", "external": "", "variant": "1",
+            "unit_id": str(c.execute("SELECT id FROM org_unit WHERE path='SND/D1'").fetchone()[0])}
+    aid = new_flow.start(c, u["author"], form, variants=DESIGNS)
+    made = slides.Created(id="SLIDESFILE00000000000002", url="u", name="n", version="2")
+    new_flow.make_file(c, u["author"], aid, create=lambda **k: slides.Outcome(True, value=made))
+    taken = snap()
+    taken.value.file_id = "SLIDESFILE00000000000002"
+    send(c, u["author"], aid, taken=taken)
+    act(c, u["chief"], aid, "endorse"); act(c, u["director"], aid, "approve")
+    issue(c, u, aid)
+    share = new_flow.share_info(c, u["author"], aid, "https://office.example")
+    assert share["caption"].endswith(f"(December 15-17, 2026)\nhttps://office.example/e/{ev['event_token']}")
+
+
+def test_home_page_shows_issue_button_then_share_card(ready, app_mod):
+    c, u, aid = ready
+    approved(c, u, aid)
+    import advisory_distribution as dist
+    from starlette.requests import Request
+
+    def render():
+        page = new_flow.home(c, u["author"], aid)
+        record = aw.get_visible(c, u["author"], aid)
+        page["share"] = new_flow.share_info(c, u["author"], aid, "https://office.example")
+        req = Request({"type": "http", "method": "GET", "path": f"/advisories/{aid}", "headers": [], "query_string": b"",
+                       "state": {"user": u["author"]}})
+        return app_mod.templates.get_template("advisory_home.html").render(
+            request=req, **page, notice="", error="", reason="", review=None, review_record=record, action_key="k",
+            available=True, distribution=dist.screen(c, u["author"], record))
+    before = render()
+    assert "Issue the advisory" in before and "Share to group chats" not in before
+    issue(c, u, aid)
+    after = render()
+    assert "Share to group chats" in after and "advisory-share.js" in after and "Download image" in after
+    assert "Issue the advisory" not in after
+
+
+def test_issued_page_on_a_phone_fits_and_shows_share(ready, app_mod):
+    """Phone width, real CSS: the Share card fits; without the share sheet the Copy button still appears."""
+    from tests.test_document_registration_browser import browser as _b  # noqa: F401
+    pytest.importorskip("playwright.sync_api")
+    import os
+    from pathlib import Path
+    from playwright.sync_api import sync_playwright
+    import advisory_distribution as dist
+    from starlette.requests import Request
+    c, u, aid = ready
+    approved(c, u, aid); issue(c, u, aid)
+    page_data = new_flow.home(c, u["author"], aid)
+    record = aw.get_visible(c, u["author"], aid)
+    page_data["share"] = new_flow.share_info(c, u["author"], aid, "https://office.example")
+    req = Request({"type": "http", "method": "GET", "path": f"/advisories/{aid}", "headers": [], "query_string": b"",
+                   "state": {"user": u["author"]}})
+    html = app_mod.templates.get_template("advisory_home.html").render(
+        request=req, **page_data, notice="", error="", reason="", review=None, review_record=record, action_key="k",
+        available=True, distribution=dist.screen(c, u["author"], record))
+    png = dist.issued_artifact(c, u["author"], page_data["share"]["issue_id"], "png")
+    root = Path(__file__).resolve().parent.parent
+    shots = os.environ.get("ADVISORY_SCREENSHOTS", "")
+    with sync_playwright() as p:
+        try:
+            browser = p.chromium.launch()
+        except Exception as error:  # noqa: BLE001
+            pytest.skip(f"Chromium unavailable: {error}")
+        context = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2 if shots else 1,
+                                      ignore_https_errors=True,
+                                      permissions=["clipboard-read", "clipboard-write"])
+        page = context.new_page()
+
+        def serve(route):
+            path = route.request.url.split("office.test", 1)[1].split("?")[0]
+            if path.startswith("/static/") and (root / path.lstrip("/")).is_file():
+                route.fulfill(path=str(root / path.lstrip("/")))
+            elif path.endswith("file.png"):
+                from PIL import Image
+                import io
+                buf = io.BytesIO(); Image.new("RGB", (400, 566), (20, 60, 140)).save(buf, "PNG")
+                route.fulfill(body=buf.getvalue(), content_type="image/png")
+            elif path == "/page":
+                route.fulfill(body=html, content_type="text/html")
+            else:
+                route.fulfill(status=404, body="")
+        page.route("**/*", serve)
+        # Plain http is not a secure context: no clipboard or share sheet, so those buttons must stay hidden.
+        page.goto("http://office.test/page")
+        assert page.get_by_role("heading", name="Share to group chats").is_visible()
+        assert not page.locator("[data-copy-button]").is_visible() and not page.locator("[data-share-button]").is_visible()
+        assert page.get_by_role("link", name="Download image").is_visible()
+        page.goto("https://office.test/page")
+        assert page.locator("[data-copy-button]").is_visible()
+        assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        page.locator("[data-copy-button]").click()
+        page.wait_for_function("document.querySelector('[data-share-status]').textContent.length > 0")
+        assert page.locator("[data-share-status]").inner_text() == "Message copied. Paste it in the chat."
+        if shots:
+            page.screenshot(path=os.path.join(shots, "7-issued-share.png"), full_page=True)
+        browser.close()
+    assert png.startswith(b"\x89PNG")
