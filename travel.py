@@ -765,7 +765,7 @@ def create_filing(conn, user, *, kind, source, answers, mc114_format="none", rol
     entry_id, event_id = source.get("entry_id"), source.get("event_id")
     live = live_ca(conn, user["id"], entry_id, event_id)
     if kind == "ca":
-        msg = tr.ca_lead_error(start, today)
+        msg = tr.ca_lead_error(start, today, urgent=tc.truthy(ans.get("urgent_travel")))
         if msg:
             raise TravelError(msg)
         if live:

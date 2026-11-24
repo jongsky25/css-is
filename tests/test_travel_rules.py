@@ -85,6 +85,13 @@ def test_cash_advance_needs_more_than_a_week_of_lead():
     assert tr.ca_lead_error("2026-10-21", "2026-10-14")                  # exactly 7 days: too late
     assert tr.ca_lead_error("2026-10-14", "2026-10-14")
     assert tr.ca_lead_error("2026-10-01", "2026-10-14")                  # already over
+    # DM 2026-0521 expedited window: inside the week only when urgent, never once the activity has started
+    assert tr.ca_lead_error("2026-10-21", "2026-10-14", urgent=True) is None
+    assert tr.ca_lead_error("2026-10-15", "2026-10-14", urgent=True) is None
+    assert tr.ca_lead_error("2026-10-14", "2026-10-14", urgent=True)
+    assert "urgent" in tr.ca_lead_error("2026-10-15", "2026-10-14")
+    assert tr.ca_urgent_window("2026-10-15", "2026-10-14") and tr.ca_urgent_window("2026-10-21", "2026-10-14")
+    assert not tr.ca_urgent_window("2026-10-22", "2026-10-14") and not tr.ca_urgent_window("2026-10-14", "2026-10-14")
 
 
 # -------------------------------------------------------------------- rides ---

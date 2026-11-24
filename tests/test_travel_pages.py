@@ -124,6 +124,24 @@ def test_cash_advance_needs_more_than_a_week(viewer, conn):
     assert f["deadline_date"] is None and f["deadline_rule"] == "none"
 
 
+def test_urgent_travel_allows_a_cash_advance_inside_the_week(viewer, conn):
+    """DM 2026-0521 expedited window (owner decision 3): inside the week only as urgent travel, with a justification."""
+    r = blank(viewer, "ca", start=days(3), end=days(4), urgent_travel="1")
+    assert r.status_code == 303
+    f = travel.get_by_ref(conn, ref_of(r))
+    codes = {it["code"]: it for it in travel.view_items(conn, f)}
+    assert codes["urgent_justification"]["requirement"] == "required"
+    page = viewer.get(f"/travel/f/{f['ref_code']}").text
+    assert "Urgent travel: hand in to FMS as soon as possible" in page
+    r = blank(viewer, "ca", start=days(0), end=days(1), urgent_travel="1", title="TRAVELTEST Started")
+    assert r.status_code == 400 and "before the activity starts" in r.text
+
+
+def test_an_ordinary_cash_advance_has_no_urgent_justification(viewer, conn):
+    f = travel.get_by_ref(conn, ref_of(blank(viewer, "ca", start=days(20), end=days(21))))
+    assert "urgent_justification" not in {it["code"] for it in travel.view_items(conn, f)}
+
+
 def test_liquidation_needs_a_cash_advance_or_an_amount(viewer, conn):
     r = blank(viewer, advance_amount="")
     assert r.status_code == 400 and "cash advance" in r.text

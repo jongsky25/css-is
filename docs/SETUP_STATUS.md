@@ -6,11 +6,12 @@ Owner asked to scope travel-claim improvements against DOH DM 2026-0521 (pre-aud
 directives on per diem, TNVS, airfare, baggage, cash advances):
 [TRAVEL_DM_2026_0521_SCOPE.md](TRAVEL_DM_2026_0521_SCOPE.md). Owner answered all seven
 decisions (recorded there). DM1 (deadline rule, CA hand-in date and reminder, ready
-attestation, checklist notes) and DM3 (meals/lodging default "provided", generated
+attestation, checklist notes), DM2 (urgent cash advance inside the week, with a
+justification upload) and DM3 (meals/lodging default "provided", generated
 Certificate of Non-Provision) are built as candidate 10.47 in draft PR #640; not merged,
 not released. After release a person must run `makeNonProvisionTemplate()` in the travel
 Apps Script project (docs/TRAVEL_DOCS_RELAY_SETUP.md) and the owner should approve the
-certificate wording. Next: CI on PR #640; DM2 (urgent CA path) or DM4 on owner instruction.
+certificate wording. Next: CI on PR #640; DM4 (AI receipt/fare reading) on owner instruction.
 The restructure next steps below are unchanged.
 
 ## Restructure ready to switch on; 10.45 live — November 23, 2026

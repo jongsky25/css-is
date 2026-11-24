@@ -37,6 +37,7 @@ ANSWER_KEYS = (
     ("refund", "I am refunding part of the advance", (LIQ,)),
     ("revised_itinerary", "My itinerary changed from the cash advance", (LIQ,)),
     ("official_gasoline", "I need official gasoline", (CA,)),
+    ("urgent_travel", "This is urgent or unplanned travel that could not be filed a week ahead (expedited processing)", (CA,)),
     ("cert_of_appearance_available", "I have a Certificate of Appearance", (LIQ, REI)),
 )
 
@@ -219,6 +220,10 @@ CHECKLIST: tuple = (
     ItemDef("exceeds_rate_cert", "Certification that expenses exceed the daily rate", "upload",
             _when("exceeds_daily_rate", *LR), 1, "Head of Agency certification."),
     ItemDef("refund_or", "DOH official receipt for the refund", "upload", _when("refund", LIQ), 1),
+    ItemDef("urgent_justification", "Written justification for urgent or unplanned travel", "upload",
+            _when("urgent_travel", CA), 1,
+            "Why the travel could not be anticipated in time. The DPO must already be approved. FMS decides whether "
+            "the request takes its expedited processing window (DM 2026-0521)."),
     ItemDef("gasoline_estimate", "Gasoline estimate", "upload", _when("official_gasoline", CA), 1,
             "Cleared by AS-GSD."),
     ItemDef("travel_report", "Post Travel Report", "generate", _always(*LR), 1,

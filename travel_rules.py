@@ -93,14 +93,27 @@ def ca_hand_in_by(conn, act_start_iso) -> date:
     return day
 
 
-def ca_lead_error(act_start_iso, today_iso):
+def ca_lead_error(act_start_iso, today_iso, urgent=False):
     """Why a cash advance cannot be filed for this activity today, or None when it can.
-    Owner's rule: only more than a week before the activity starts (8 or more days ahead)."""
+    Owner's rule: only more than a week before the activity starts (8 or more days ahead). DM 2026-0521 adds an
+    expedited window for urgent or unplanned travel (owner decision 3, 2026-11-24): inside the week a cash advance
+    is allowed when the person marks it urgent, as long as the activity has not started."""
     days = (_d(act_start_iso) - _d(today_iso)).days
     if days > CA_MIN_LEAD_DAYS:
         return None
-    return ("A cash advance can only be filed more than a week before the activity starts. "
-            "Once it is closer or over, file a reimbursement instead.")
+    if days >= 1 and urgent:
+        return None
+    if days >= 1:
+        return ("A cash advance can only be filed more than a week before the activity starts, unless the travel is "
+                "urgent or unplanned: tick that question and upload a written justification. Otherwise file a "
+                "reimbursement instead.")
+    return ("A cash advance can only be filed before the activity starts. File a reimbursement instead.")
+
+
+def ca_urgent_window(act_start_iso, today_iso) -> bool:
+    """True inside the week before the activity starts: only an urgent cash advance can be filed now."""
+    days = (_d(act_start_iso) - _d(today_iso)).days
+    return 1 <= days <= CA_MIN_LEAD_DAYS
 
 
 # ----------------------------------------------------------------- rides ---

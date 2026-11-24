@@ -550,11 +550,14 @@ def send_travel_filing_due(conn, base, dry_run=False):
                                 "ORDER BY deadline_date, id", (horizon,)):
         per_user.setdefault(f["user_id"], {"due": [], "cas": []})["due"].append(f)
     import travel_rules
+    import travel_checklist
     for f in travel._rows(conn, "SELECT * FROM travel_filing WHERE kind='ca' AND status IN ('open','ready') "
                                 "AND deadline_date IS NULL AND act_start>? ORDER BY act_start, id", (today.isoformat(),)):
         hand_in = travel_rules.ca_hand_in_by(conn, f["act_start"])
         if hand_in.isoformat() <= horizon:                  # DM 2026-0521: at FMS 3 working days before departure
-            when = ("Hand in to FMS today" if hand_in == today else
+            urgent = travel_checklist.truthy(travel.answers_of(f).get("urgent_travel"))
+            when = ("Urgent: hand in to FMS as soon as possible" if urgent else
+                    "Hand in to FMS today" if hand_in == today else
                     f"Hand in to FMS by {hand_in:%b} {hand_in.day}" if hand_in > today else
                     f"Late for FMS (was due {hand_in:%b} {hand_in.day})")
             per_user.setdefault(f["user_id"], {"due": [], "cas": []})["due"].append({**f, "_when": when})

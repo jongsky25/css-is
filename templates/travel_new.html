@@ -38,7 +38,7 @@
     {% set blocked = (code == 'ca' and (ca_msg or live_ca)) %}
     <label class="{{ 'off' if blocked }}"><input type="radio" name="kind" value="{{ code }}" {{ 'checked' if f.kind == code and not blocked }} {{ 'disabled' if blocked }} required>
       <span><strong>{{ label }}</strong>
-        {% if code == 'ca' %}<br><small>Money before the trip. Only more than a week before the activity starts.{% if ca_msg %} <em>Too late for this activity.</em>{% elif live_ca %} <em>You already have one.</em>{% endif %}</small>
+        {% if code == 'ca' %}<br><small>Money before the trip. Only more than a week before the activity starts.{% if ca_msg %} <em>Too late for this activity.</em>{% elif live_ca %} <em>You already have one.</em>{% elif ca_urgent %} <em>This activity is less than a week away: only for urgent or unplanned travel. Tick that question under "Your trip" and upload a written justification (DM 2026-0521).</em>{% endif %}</small>
         {% elif code == 'liquidation' %}<br><small>Accounting for a cash advance you received.</small>
         {% else %}<br><small>Claiming money you spent, with no cash advance.</small>{% endif %}</span></label>
     {% endfor %}

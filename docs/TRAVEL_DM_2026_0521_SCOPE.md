@@ -5,7 +5,13 @@ Travelling Expenses based on 2026 Pre-Audit Observations". It cites PD 1445, EO 
 DO 2019-0225, DM 2023-0092 and DM 2024-0369. The memo itself is not committed; this file
 records only its directives and how they map onto Travel filing.
 
-Status: scoped November 24, 2026; owner decisions recorded below; **DM1 and DM3 built** (candidate 10.47) on `claude/cool-davinci-y5s3re`, PR #640.
+Status: scoped November 24, 2026; owner decisions recorded below; **DM1, DM2 and DM3 built** (candidate 10.47) on `claude/cool-davinci-y5s3re`, PR #640.
+
+DM2 as built: a CA-only question "urgent or unplanned travel" (`urgent_travel`) allows a cash advance from 7 days
+to 1 day before the activity (never once it has started) and adds a required upload, "Written justification for
+urgent or unplanned travel" (`urgent_justification`). The filing page and reminder say to hand it in to FMS as soon
+as possible. No Admin Unit flag was added (the `travel_flag.kind` CHECK allows four kinds; a migration is planned
+with DM4); FMS decides whether the request gets its expedited window.
 
 DM3 as built: per diem days start with meals and lodging ticked as provided (server defaults, upload drafts and the
 prepare page; a browser draft saved before 10.47 is reset to provided, with a notice). The generate step stores the

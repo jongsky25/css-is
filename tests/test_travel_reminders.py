@@ -72,6 +72,15 @@ def test_a_cash_advance_is_reminded_of_its_fms_hand_in_date(conn, uid, sent):
     assert "hand in to fms by oct 15" in sent[0][2].lower()
 
 
+def test_an_urgent_cash_advance_is_reminded_to_hand_in_as_soon_as_possible(conn, uid, sent):
+    import json
+    conn.execute("DELETE FROM holiday"); conn.commit()
+    filing(conn, uid, kind="ca", act_start="2026-10-16", act_end="2026-10-17", deadline_date=None,
+           answers_json=json.dumps({"urgent_travel": 1}))
+    assert sr.send_travel_filing_due(conn, BASE) == 1
+    assert "urgent: hand in to fms as soon as possible" in sent[0][2].lower()
+
+
 def test_a_cash_advance_far_ahead_is_not_reminded_yet(conn, uid, sent):
     conn.execute("DELETE FROM holiday"); conn.commit()
     filing(conn, uid, kind="ca", act_start="2026-11-20", act_end="2026-11-21", deadline_date=None)

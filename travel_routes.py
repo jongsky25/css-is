@@ -122,9 +122,10 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
     def _decorate(f, today, conn=None):
         words, tone = travel.deadline_words(f, today) if f["status"] in ("open", "ready") else (None, None)
         hand_in = None
+        urgent = f["kind"] == "ca" and tc.truthy(travel.answers_of(f).get("urgent_travel"))
         if conn is not None and f["kind"] == "ca" and f["status"] in ("open", "ready") and f.get("act_start"):
             hand_in = tr.ca_hand_in_by(conn, f["act_start"]).isoformat()
-        return {**f, "deadline_text": words, "deadline_tone": tone, "ca_hand_in": hand_in}
+        return {**f, "deadline_text": words, "deadline_tone": tone, "ca_hand_in": hand_in, "ca_urgent": urgent}
 
     # ------------------------------------------------------- policy rates (T9) ---
 
@@ -268,7 +269,8 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
         today = today_local()
         live = travel.live_ca(conn, user["id"], source["entry_id"], source["event_id"])
         has_dates = bool(source["start"] and source["end"])
-        ca_msg = tr.ca_lead_error(source["start"], today) if has_dates else None
+        ca_msg = tr.ca_lead_error(source["start"], today, urgent=True) if has_dates else None   # hard block: started
+        ca_urgent = bool(has_dates and tr.ca_urgent_window(source["start"], today))
         cas = [c for c in travel.list_for_user(conn, user["id"])
                if c["kind"] == "ca" and c["status"] == "submitted" and not travel.liquidations_of(conn, c["id"])]
         jo_default = False
@@ -279,7 +281,8 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
         operation_id = operation_id or submissions.issue(conn, user['id'])
         return {"nav_active": "travel_mine", "tab": "new", "source": source, "f": f, "error": error, "ack": ack,
                 "operation_id": operation_id, "submission_status_url": f'/travel/submissions/{operation_id}',
-                "live_ca": live, "ca_msg": ca_msg if has_dates else None, "cas": cas, "jo_default": jo_default,
+                "live_ca": live, "ca_msg": ca_msg if has_dates else None, "ca_urgent": ca_urgent,
+                "cas": cas, "jo_default": jo_default,
                 "kinds": [(k, travel.KIND_LABELS[k]) for k in travel.KINDS
                           if not (k == "reimbursement" and live)],
                 "questions": tc.ANSWER_KEYS, "roles": tc.ROLES, "mc114": travel.MC114_FORMATS,
