@@ -66,6 +66,8 @@ def test_info_lists_each_variant_and_its_placeholders(relay):
     variants = relay["info"]["variants"]
     assert [v["variant"] for v in variants] == [1, 2, 3]
     assert variants[0]["placeholders"] == ["number", "title", "message", "qr"]
+    assert "png_b64" not in variants[0]
+    assert relay["thumbs"] == ["\x89PNG"] * 3
 
 
 def test_snapshot_matches_digests_and_keeps_only_open_comments(relay):

@@ -121,16 +121,28 @@ def _b64(data: str) -> bytes:
         return b""
 
 
-def info(call=gdocs_relay.call) -> Outcome:
-    r = call("advisory_info")
+def info(*, thumbnails: bool = False, call=None) -> Outcome:
+    call = call or gdocs_relay.call
+    r = call("advisory_info", thumbnails=True) if thumbnails else call("advisory_info")
     if not r.ok:
         return Outcome(False, error=r.error)
-    return Outcome(True, value=r.data.get("variants") or [])
+    variants = []
+    for v in r.data.get("variants") or []:
+        try:
+            number = int(v.get("variant"))
+        except (TypeError, ValueError):
+            continue
+        png = _b64(v.get("png_b64")) if thumbnails else b""
+        variants.append({"variant": number, "slide_id": str(v.get("slide_id") or ""),
+                         "placeholders": [str(x) for x in (v.get("placeholders") or [])],
+                         "png": png if png.startswith(b"\x89PNG") else b""})
+    return Outcome(True, value=variants)
 
 
 def create(*, request_id: str, folder_key: str, variant: int, title: str, values: dict,
-           link: str = "", editors=(), domain: str = "doh.gov.ph", call=gdocs_relay.call) -> Outcome:
+           link: str = "", editors=(), domain: str = "doh.gov.ph", call=None) -> Outcome:
     """Make the advisory's Slides file. Safe to repeat: the same request_id returns the same file."""
+    call = call or gdocs_relay.call
     if not _REQUEST.match(request_id or "") or not _SLUG.match(folder_key or ""):
         raise ValueError("request_id and folder_key must be plain identifiers.")
     if not isinstance(variant, int) or not 1 <= variant <= 20:
@@ -151,8 +163,9 @@ def create(*, request_id: str, folder_key: str, variant: int, title: str, values
                                        qr=str(d.get("qr") or "none")))
 
 
-def snapshot(file_id: str, *, call=gdocs_relay.call) -> Outcome:
+def snapshot(file_id: str, *, call=None) -> Outcome:
     """The copy reviewers approve. Refuses bytes that do not match the relay's own digest."""
+    call = call or gdocs_relay.call
     if not _FILE_ID.match(file_id or ""):
         raise ValueError("Not a Drive file id.")
     r = call("advisory_snapshot", file_id=file_id)
@@ -180,8 +193,9 @@ def snapshot(file_id: str, *, call=gdocs_relay.call) -> Outcome:
 
 
 def set_access(file_id: str, *, editors=(), commenters=(), readers=(), domain: str = "doh.gov.ph",
-               call=gdocs_relay.call) -> Outcome:
+               call=None) -> Outcome:
     """Make the file's people exactly these lists (the strongest role wins if someone is listed twice)."""
+    call = call or gdocs_relay.call
     if not _FILE_ID.match(file_id or ""):
         raise ValueError("Not a Drive file id.")
     r = call("advisory_access", file_id=file_id, editors=_people(editors, domain),

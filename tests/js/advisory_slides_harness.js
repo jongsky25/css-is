@@ -176,7 +176,8 @@ const base = { action: 'advisory_create', request_id: 'adv-7-r1', folder_key: 'a
     commenters: ['ana@doh.gov.ph', 'chief@doh.gov.ph'], readers: ['dir@doh.gov.ph'] });
   out.access.repeat = again.changed;
 }
-{ // info lists variants and their placeholders
+{ // info lists variants and their placeholders; thumbnails only when asked
   out.info = world().ctx.advisoryOperation_({ action: 'advisory_info' });
+  out.thumbs = world().ctx.advisoryOperation_({ action: 'advisory_info', thumbnails: true }).variants.map(v => Buffer.from(v.png_b64, 'base64').toString('latin1').slice(0, 4));
 }
 process.stdout.write(JSON.stringify(out));

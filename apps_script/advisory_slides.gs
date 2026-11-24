@@ -85,7 +85,14 @@ function advInfo_(req) {
   const slides = SlidesApp.openById(tpl).getSlides();
   return {
     ok: true, version: ADVISORY_VERSION,
-    variants: slides.map(function (s, i) { return { variant: i + 1, slide_id: s.getObjectId(), placeholders: advPlaceholders_(s) }; })
+    variants: slides.map(function (s, i) {
+      const v = { variant: i + 1, slide_id: s.getObjectId(), placeholders: advPlaceholders_(s) };
+      if (req.thumbnails === true) {
+        const png = advSlidePng_(tpl, s.getObjectId());
+        if (png) v.png_b64 = Utilities.base64Encode(png);
+      }
+      return v;
+    })
   };
 }
 
@@ -168,11 +175,8 @@ function advSnapshot_(req) {
   const pdf = file.getAs('application/pdf').getBytes();
   const deck = SlidesApp.openById(file.getId());
   const slide = deck.getSlides()[0];
-  const token = ScriptApp.getOAuthToken();
-  const resp = UrlFetchApp.fetch('https://docs.google.com/presentation/d/' + file.getId() + '/export/png?pageid=' +
-    encodeURIComponent(slide.getObjectId()), { headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true });
-  if (resp.getResponseCode() !== 200) return { ok: false, error: 'export_failed' };
-  const png = resp.getBlob().getBytes();
+  const png = advSlidePng_(file.getId(), slide.getObjectId());
+  if (!png) return { ok: false, error: 'export_failed' };
   const after = advMeta_(file);
   // Someone edited while the copy was being taken: the PDF and image might not match. Ask the app to try again.
   if (before.version !== after.version) return { ok: false, error: 'changed_during_snapshot' };
@@ -183,6 +187,13 @@ function advSnapshot_(req) {
     png_b64: Utilities.base64Encode(png), png_sha256: advDigest_(png),
     comments: advComments_(file.getId())
   };
+}
+
+// One slide as a PNG, through the presentation's export link with the script's own sign-in. null if it fails.
+function advSlidePng_(presentationId, pageId) {
+  const resp = UrlFetchApp.fetch('https://docs.google.com/presentation/d/' + presentationId + '/export/png?pageid=' +
+    encodeURIComponent(pageId), { headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true });
+  return resp.getResponseCode() === 200 ? resp.getBlob().getBytes() : null;
 }
 
 // Open (unresolved) Slides comments with their replies, so a review record shows what was raised.

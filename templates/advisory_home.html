@@ -1,0 +1,55 @@
+{% extends "dash_layout.html" %}
+{% block title %}Advisory {{ record.number }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/advisory.css">{% endblock %}
+{% block content %}
+<div class="adv">
+<p><a href="/advisories">← Advisories</a></p>
+<h1>{{ details.title }}</h1>
+<p class="lead">Advisory {{ record.number }}{% if activity %} · for <a href="/activities/{{ activity.token }}/manage">{{ activity.title }}</a>{% else %} · General advisory{% endif %}</p>
+
+<ol class="adv-steps" aria-label="Progress">
+{% for name in steps %}<li class="{{ 'done' if loop.index0 < step else 'now' if loop.index0 == step else '' }}"{% if loop.index0 == step %} aria-current="step"{% endif %}>{{ name }}{% if loop.index0 < step %} ✓{% endif %}</li>{% endfor %}
+</ol>
+
+{% if notice %}<p class="adv-ok" role="status">{{ notice }}</p>{% endif %}
+{% if error %}<p class="adv-alert" role="alert">{{ error }}</p>{% endif %}
+<p><strong>{{ headline }}</strong>{% if next_line %} {{ next_line }}{% endif %}</p>
+
+<div class="adv-main">
+{% if slides %}
+  <a class="btn" href="{{ slides.url }}" target="_blank" rel="noopener">Open in Google Slides</a>
+{% elif editable %}
+  <form method="post" action="/advisories/{{ record.id }}/slides"><button class="btn" type="submit">Try again</button></form>
+{% endif %}
+</div>
+
+{% if slides and (slides.unfilled or slides.qr in ('no_qr_box', 'bad_image')) %}
+<div class="adv-note"><p style="margin-top:0"><strong>Please check in Google Slides:</strong></p><ul style="margin-bottom:0">
+{% if slides.unfilled %}<li>These spots in the design were left empty: {{ slides.unfilled|join(', ') }}. Type over them in the slide.</li>{% endif %}
+{% if slides.qr == 'no_qr_box' %}<li>This design has no place for a QR code. Add one in the slide if you need it.</li>{% endif %}
+{% if slides.qr == 'bad_image' %}<li>The QR code could not be added. Add it in the slide if you need it.</li>{% endif %}
+</ul></div>
+{% endif %}
+
+<div class="adv-card"><h2>Details</h2>
+<dl class="adv-dl">
+<dt>Number</dt><dd>{{ record.number }}</dd>
+<dt>Prepared by</dt><dd>{{ initiator }}</dd>
+{% if section %}<dt>Edited by</dt><dd>Everyone in {{ section.name }}</dd>{% endif %}
+{% if division %}<dt>Reviewed by</dt><dd>The Division Chief of {{ division.name }}, then the Director</dd>{% endif %}
+<dt>Goes to</dt><dd>{{ {'internal':'Office staff','external':'Outside recipients','both':'Office staff and outside recipients'}.get(details.audience, details.audience) }}{% if details.external %} ({{ details.external|length }} outside address{{ '' if details.external|length == 1 else 'es' }}){% endif %}</dd>
+{% if details.dates %}<dt>Dates</dt><dd>{{ details.dates }}</dd>{% endif %}
+{% if details.venue %}<dt>Venue</dt><dd>{{ details.venue }}</dd>{% endif %}
+</dl>
+<p class="hint" style="margin-bottom:0">The wording and layout are edited in Google Slides. These details were used to fill it in at the start.</p>
+</div>
+
+<details class="adv-help"><summary>How advisories work</summary>
+<ol>
+<li><strong>Draft:</strong> you and your section edit the advisory in Google Slides.</li>
+<li><strong>Division Chief:</strong> you send it for review; the Chief comments or approves.</li>
+<li><strong>Director:</strong> the Director approves it, or sends it back with comments.</li>
+<li><strong>Issued:</strong> it is emailed to the people chosen, and can be shared to group chats.</li>
+</ol></details>
+</div>
+{% endblock %}
