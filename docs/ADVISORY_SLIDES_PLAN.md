@@ -153,4 +153,49 @@ What the app could do when an advisory is issued, from what exists today:
 | Activity calendar entry | Small | Show the issued advisory on the activity's calendar entry. |
 
 Owner (November 24): Telegram group posting is later, not in this build. Email stays.
-Share button: explained to the owner; decision pending.
+Share button: **approved** (D13). On an issued advisory, a **Share** button opens the phone's
+share menu with the approved image, a ready caption (number, title, dates) and the short
+link, so a person can send it to a Viber/Messenger group. On a computer it shows **Copy
+caption** and **Download image**. It posts nothing by itself and records nothing.
+
+## Easy, friendly interface (owner, November 24, 2026)
+
+Owner asked that the whole feature be easy to understand and friendly. This is a requirement
+for every increment, not a final polish step. Each increment is checked against this list.
+
+**Words**
+- Plain words, not workflow terms: "Send to your Chief for review", not "Submit packet";
+  "Sent back with comments", not "Changes requested". No internal ids or codes on screen.
+- Every page says, in one line at the top, what this advisory is and what happens next, and
+  who is waiting on whom ("Waiting for Dr. Cruz to approve. You'll get an email.").
+- Errors say what went wrong and what to do ("Google Slides didn't answer. Try again in a
+  minute; nothing was lost."), never a stack trace or a bare "Error".
+
+**Guidance**
+- A progress bar on every advisory page: Draft → Chief → Director → Issued, with the
+  current step highlighted and the person's name under it.
+- One main button per step; less common actions in a "More" menu. Destructive actions
+  (cancel, withdraw) ask once, in plain words, before acting.
+- First-time hints: a short "How advisories work" panel (four steps with icons) on the
+  register, which people can close and reopen from a "?" link.
+- Empty states that help: an empty register says "No advisories yet" with the
+  **New advisory** button, not a blank table.
+- After each action, a short confirmation that says what happened and what is next
+  ("Sent to the Chief. You can still read it but not edit it until it comes back.").
+
+**Phone first**
+- Built and checked at phone width first: large tap targets, no sideways scrolling, the
+  main button reachable with a thumb, forms that keep what was typed after a mistake.
+- **Open in Google Slides** opens the Slides app on a phone where it is installed.
+- Works without JavaScript for the core path (create, submit, review, issue).
+
+**Showing, not telling**
+- Template choice shows thumbnails, not names. The advisory page shows the current slide
+  image. Choice cards in "New advisory" have an icon and one line of explanation each.
+- Status colours always come with words (not colour alone), for colour-blind readers.
+
+**Checking it**
+- Each increment includes a phone walk-through with screenshots of every screen in the
+  journey, attached to the PR, plus the existing accessibility checks.
+- Before release of the full feature, a short try-out by one or two office staff who have
+  not seen it, with what confused them recorded and fixed.
