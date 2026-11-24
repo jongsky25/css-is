@@ -7,6 +7,8 @@
 .tv-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r2); padding:var(--s4); margin:0 0 1rem; }
 .tv-card h2 { margin:0 0 .4rem; font-size:1.1rem; }
 .tv-hint { color:var(--soft); font-size:.88rem; margin:.2rem 0 .6rem; }
+.tv-attest { display:flex; gap:.5rem; align-items:flex-start; font-size:.9rem; margin:.4rem 0 .6rem; max-width:44rem; }
+.tv-attest input { margin-top:.25rem; flex:none; }
 .tv-meta { display:flex; flex-wrap:wrap; gap:.3rem 1.2rem; margin:.3rem 0 .8rem; }
 .tv-meta dt { font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); }
 .tv-meta dd { margin:0 0 .3rem; font-weight:600; }

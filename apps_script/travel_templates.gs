@@ -59,8 +59,16 @@ const TM_TEMPLATES = [
              'dates', 'dpo_ref', 'printed_name', 'designation', 'noted_by_name', 'noted_by_title'] },
   { key: 'rer', source: 'RER (Above 300).xlsx', mime: TM_SHEET, build: tm_rer_,
     expect: ['payee_name', 'payee_designation', 'amount_words', 'amount_figures', 'ride_from', 'ride_to', 'ride_date',
-             'ride_mode', 'activity_title', 'dpo_ref'] }
+             'ride_mode', 'activity_title', 'dpo_ref'] },
+  // DM 2026-0521: the office has no Word form for this, so the template is written here from scratch (from: 'blank').
+  // The wording still needs the owner's approval against the official issuance.
+  { key: 'meals_lodging_cert', from: 'blank', mime: TM_DOC, create: tm_nonProvision_,
+    expect: ['date', 'traveler_name', 'traveler_designation', 'activity_title', 'venue', 'dates', 'dpo_ref',
+             'm_date', 'm_what', 'approver_name', 'approver_title'] }
 ];
+
+// Make only the Certificate of Non-Provision template (DM 2026-0521); needs no source folder.
+function makeNonProvisionTemplate() { return tm_make_(['meals_lodging_cert'], false); }
 
 // ------------------------------------------------------------------ entry points ---
 
@@ -72,10 +80,11 @@ function rebuildClaimTemplates() { return tm_make_(['appendix_a', 'claim_liq', '
 
 function tm_make_(only, force) {
   const P = PropertiesService.getScriptProperties();
-  const needOld = TM_TEMPLATES.some(function (t) { return t.from !== 'claims' && (!only || only.indexOf(t.key) >= 0); });
+  const needOld = TM_TEMPLATES.some(function (t) { return t.from !== 'claims' && t.from !== 'blank' && (!only || only.indexOf(t.key) >= 0); });
   if (needOld && TM_SOURCE_FOLDER_ID.indexOf('PUT-') === 0) throw new Error('Set TM_SOURCE_FOLDER_ID at the top of this file first.');
   const source = needOld ? DriveApp.getFolderById(TM_SOURCE_FOLDER_ID) : null;
-  const claims = DriveApp.getFolderById(TM_CLAIMS_FOLDER_ID);
+  const needClaims = TM_TEMPLATES.some(function (t) { return t.from === 'claims' && (!only || only.indexOf(t.key) >= 0); });
+  const claims = needClaims ? DriveApp.getFolderById(TM_CLAIMS_FOLDER_ID) : null;
   const out = tm_outFolder_(P);
   const stamp = Utilities.formatDate(new Date(), 'Asia/Manila', 'MMM d HH:mm');
   const report = [];
@@ -89,10 +98,15 @@ function tm_make_(only, force) {
         try { gaps = tm_missing_(existing, t); } catch (e) { gaps = ['(could not open it)']; }
         if (!gaps.length) { report.push(t.key + ': already good, kept'); return; }
       }
-      const file = tm_find_(t.from === 'claims' ? claims : source, t.source);
-      if (!file) throw new Error('could not find "' + t.source + '" under the ' + (t.from === 'claims' ? 'Claims Templates' : 'source') + ' folder');
-      const id = tm_convert_(file, t.mime, out.getId(), tm_title_(t) + ' (' + stamp + ')');
-      t.build(id);
+      let id;
+      if (t.from === 'blank') {
+        id = t.create(out, tm_title_(t) + ' (' + stamp + ')');
+      } else {
+        const file = tm_find_(t.from === 'claims' ? claims : source, t.source);
+        if (!file) throw new Error('could not find "' + t.source + '" under the ' + (t.from === 'claims' ? 'Claims Templates' : 'source') + ' folder');
+        id = tm_convert_(file, t.mime, out.getId(), tm_title_(t) + ' (' + stamp + ')');
+        t.build(id);
+      }
       P.setProperty('TPL_' + t.key, id);
       const missing = tm_missing_(id, t);
       report.push(t.key + ': ' + (missing.length ? 'MISSING ' + missing.join(', ') : 'all placeholders present')
@@ -429,6 +443,36 @@ function tm_mc114_(id) {
   tm_section_(body, 'This is to justify', 'This justification is issued', '{{body}}', { exact: false, includeStart: true });
   tm_rep_(body, 'JUAN ALFONSO R\\. PEREZ IV, MD, MBA, MPM', '{{approver_name}}');
   tm_rep_(body, 'OIC-Director IV', '{{approver_title}}');
+}
+
+// Certificate of Non-Provision of Meals and Accommodation (DM 2026-0521), written from scratch in the
+// _templates folder. The relay copies the {{m_date}} table row once per day that was not provided.
+function tm_nonProvision_(outFolder, title) {
+  const doc = DocumentApp.create(title), body = doc.getBody();
+  body.clear();
+  body.appendParagraph('CERTIFICATE OF NON-PROVISION OF MEALS AND ACCOMMODATION')
+      .setAlignment(DocumentApp.HorizontalAlignment.CENTER).setBold(true);
+  body.appendParagraph('{{date}}').setAlignment(DocumentApp.HorizontalAlignment.RIGHT).setBold(false);
+  body.appendParagraph('This is to certify that {{traveler_name}}, {{traveler_designation}}, who travelled to attend '
+      + '{{activity_title}} at {{venue}} on {{dates}} as per {{dpo_ref}}, was not provided the meals and/or '
+      + 'accommodation shown below by the host, the organizer or any regional unit, and that no other party paid for them.');
+  const table = body.appendTable([['Date', 'Not provided'], ['{{m_date}}', '{{m_what}}']]);
+  table.getRow(0).editAsText().setBold(true);
+  body.appendParagraph('This certification is issued in support of the claim for travelling expenses. The official who '
+      + 'signs it is accountable if it is later found inaccurate or inconsistent with the actual circumstances, and an '
+      + 'inaccurate certification is not honoured for claiming the allowance (DOH Department Memorandum No. 2026-0521).');
+  body.appendParagraph('');
+  body.appendParagraph('Certified by:');
+  body.appendParagraph('');
+  body.appendParagraph('{{approver_name}}').setBold(true);
+  body.appendParagraph('{{approver_title}}').setBold(false);
+  body.appendParagraph('');
+  body.appendParagraph('Claimant: {{traveler_name}}');
+  doc.saveAndClose();
+  const file = DriveApp.getFileById(doc.getId());
+  outFolder.addFile(file);
+  DriveApp.getRootFolder().removeFile(file);
+  return doc.getId();
 }
 
 // -------------------------------------------------------------------- the Sheets ---

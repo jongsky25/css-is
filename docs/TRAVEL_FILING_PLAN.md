@@ -49,6 +49,7 @@ T1 Foundations, T2 Filing shell, T3 Reminders and bell, T4 Relay, T5 Prepare and
 - **Repeating items**: a filing is for one occurrence (the `date` in the link), but the one-live-cash-advance rule is per entry, so a series allows one live cash advance at a time.
 - **Unliquidated warning** counts only submitted cash advances whose activity has ended.
 - **Editing a ready filing** sends it back to "in progress".
+- **Urgent cash advance (owner, 2026-11-24, DM 2026-0521):** inside that week a cash advance is allowed when the person ticks `urgent_travel`, which requires the `urgent_justification` upload; never once the activity has started. See `docs/TRAVEL_DM_2026_0521_SCOPE.md`.
 - **Cash advance lead time (owner, 2026-10-14):** a cash advance can only be filed when the activity starts more than 7 days away (8 or more days ahead; `travel_rules.ca_lead_error`). Closer or past activities use a reimbursement. So a cash advance never has a deadline (assumption 5 confirmed); liquidation and reimbursement are due 5 calendar days after the last day, rolled to a working day, or 5 working days from opening when the activity had already ended.
 - **Approved routes**: a route type counts as approved only when it has an active `travel_route_type` row and an `rer` ceiling (`travel.ceilings` drops inactive ones). Adding a route in T7 must create its RER ceiling.
 - **Ride documents** (`cenrr`, `rer`) are not known when the filing opens. The checklist adds them from the derived answers `rides_cenrr` / `rides_rer`, set when the itinerary is prepared (T5/T6).

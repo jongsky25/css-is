@@ -95,6 +95,27 @@ def _person(conn, entry, people=None):
     return scored[0][1], scored[0][2]
 
 
+_EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
+
+
+def _set_email(conn, rp_id, email, is_new):
+    """Give a staff record its email only when the record is new, or not yet in
+    use: it has no email of its own and no active account (owner rule). Never
+    overwrites, and never reuses an address another current record holds."""
+    if not _EMAIL.fullmatch(email):
+        raise ValueError(f"Not an email address: {email!r}.")
+    current = conn.execute("SELECT email FROM resource_person WHERE id=?", (rp_id,)).fetchone()[0]
+    active = conn.execute("SELECT 1 FROM admin_user WHERE rp_id=? AND active=1", (rp_id,)).fetchone()
+    if not is_new and ((current or "").strip() or active):
+        return " (email kept: record already in use)"
+    taken = conn.execute("SELECT id FROM resource_person WHERE lower(email)=? AND id<>? AND archived_at IS NULL",
+                         (email, rp_id)).fetchone()
+    if taken:
+        return f" (email not set: {email} already belongs to record #{taken[0]})"
+    conn.execute("UPDATE resource_person SET email=? WHERE id=?", (email, rp_id))
+    return f" email {email}"
+
+
 def build(conn, plan, mapping, log):
     """Apply the plan inside the caller's transaction. Raises on any problem."""
     bureau = conn.execute("SELECT id, path FROM org_unit WHERE level='bureau' ORDER BY id LIMIT 1").fetchone()
@@ -142,7 +163,7 @@ def build(conn, plan, mapping, log):
 
     people = conn.execute("SELECT id, name FROM resource_person WHERE is_internal=1 "
                           "AND archived_at IS NULL").fetchall()
-    problems, placed = [], {}
+    problems, placed, created = [], {}, set()
     for entry in mapping.get("staff") or []:
         if entry.get("unit") not in ids:
             problems.append(f"{entry.get('name') or entry.get('rp_id')!r}: unknown unit {entry.get('unit')!r}.")
@@ -158,6 +179,7 @@ def build(conn, plan, mapping, log):
             name = entry["name"].strip()
             rp_id = conn.execute("INSERT INTO resource_person(name, is_internal, org_unit_id) VALUES (?,1,?)",
                                  (name, ids[entry["unit"]])).lastrowid
+            created.add(rp_id)
             log.append(f"NEW    #{rp_id} {name} (no directory record; created)")
         if rp_id in placed:
             problems.append(f"#{rp_id} {name} is listed twice ({placed[rp_id]} and {entry['unit']}).")
@@ -177,6 +199,11 @@ def build(conn, plan, mapping, log):
             if old and st._org_rank(old, None) >= 1:
                 conn.execute("UPDATE resource_person SET designation=NULL WHERE id=?", (rp_id,))
                 line += f" (lead title {old!r} cleared)"
+        email = (entry.get("email") or "").strip().lower()
+        if email:
+            note = _set_email(conn, rp_id, email, rp_id in created)
+            if note:
+                line += note
         log.append(line)
     if problems:
         raise ValueError("Staff could not be matched:\n  - " + "\n  - ".join(problems))

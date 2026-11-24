@@ -33,6 +33,10 @@ uncommitted**. It holds staff record ids, so it must never be committed.
   leads named in the order lead in the new structure.
 - `"create_missing": true` adds a directory record for each DPO name that has none
   (the Nov 22 dry run found 30, including five leads). Ambiguous names still stop.
+- An optional `email` per staff entry is set only on records the switch creates
+  or on existing records not yet in use (no email and no active account). It
+  never overwrites an email, and an address another current record already holds
+  is skipped and logged. An invalid address stops the run.
 - Staff with more than one assignment in the order get one home unit (owner
   decision: AU members, including division admins and Director-office support,
   are AU staff). Unnamed vacancies are left out.

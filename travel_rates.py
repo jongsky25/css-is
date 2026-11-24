@@ -66,6 +66,10 @@ _REGION = {c: (label, cl) for c, label, cl in REGIONS}
 
 # VI.A.2.i(1): how a full day is shared out, and the departure-day share.
 LODGING, MEALS, INCIDENTALS = Decimal("0.50"), Decimal("0.30"), Decimal("0.20")
+# Per diem rules that pay a meals share (the prepare page asks "Meals were provided" for these) and the one
+# that pays lodging. A day of any other rule has nothing to certify.
+MEAL_DAY_KINDS = ("full", "departure", "monitor", "monitor_late", "liaison", "hpdpb")
+LODGING_DAY_KINDS = ("full",)
 DEPARTURE_SHARE = Decimal("0.50")           # meals 30% + incidentals 20%; no lodging
 SUBSISTENCE_ALLOWANCE = Decimal(50)         # VI.A.2.i(2): taken off meals on working days when paid through payroll
 EARLIEST_LIAISON = "8:00 AM"

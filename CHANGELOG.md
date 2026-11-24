@@ -1,3 +1,21 @@
+## 10.48 — November 24, 2026
+
+- Travel filing, increment DM1 of `docs/TRAVEL_DM_2026_0521_SCOPE.md` (owner decisions 2026-11-24): liquidation/reimbursement deadline is the earlier of 5 working days and 7 calendar days after the last day (`travel_rules.due_after`; a non-working 7th day moves back). Existing filings keep their stored deadline until their activity dates change.
+- Cash advances show "Hand in to FMS by" (3 working days before departure, `travel_rules.ca_hand_in_by`) and the `travel_filing_due` job reminds it within the lead days; display and reminder only, nothing is blocked.
+- "Mark ready" requires a falsification/accuracy confirmation (`attest`); the unliquidated cash advance warning and reminder cite FMS denial and the Notice to Liquidate.
+- DM6: Admin Unit pre-audit page `/travel/preaudit` (Administrative Section only; nav "Pre-audit before FMS"): every claim marked ready with the memo's points worked out by `travel.preaudit_points` from checklist rows, flags and readings. Read-only.
+- DM5: baggage per flight. New liquidation/reimbursement answers `baggage_outbound` and `baggage_return` bring the extra-expense rows; return-only baggage requires `return_baggage_justification` and raises the new flag kind `return_baggage` at generate (added to the same `travel_flag` rebuild). `extra_expenses` is relabelled "other extra expenses".
+- DM4: AI pre-audit checks. `travel_scan` reads optional, validated details (`stops`, `passengers`, `fare_split`, `receipt_source`, `fare_brand`, `cabin`, `round_trip`, `booked_at`; kind `fare_screenshot` with `captured_at`; `plane_fare_proof` uploads are now read). `travel_reading` gains the columns; `travel_flag.kind` adds `receipt_mismatch`, `shared_ride`, `fare_class`, `fare_proof` via a row-preserving rebuild (`storage._travel_dm_2026_0521`). `travel_rules.reading_flags` raises them at generate for the Admin Unit. AI evaluation suite 1.12.0 unchanged and passing.
+- DM2: urgent cash advance inside the owner's 7-day window (DM 2026-0521 expedited processing): new CA-only answer `urgent_travel` lets `travel_rules.ca_lead_error(..., urgent=True)` pass from 7 days to 1 day before the start (never once it has started) and adds the required upload `urgent_justification`. The filing page and reminder say "hand in to FMS as soon as possible". No Admin Unit flag (the flag table allows four kinds); FMS decides the expedited window.
+- DM3: per diem days start with meals and lodging "provided" (`travel_docs.blank_row`, upload drafts, `travel_prepare.js`; pre-10.48 browser drafts are reset with a notice). Unticked days set the derived answer `meals_not_provided` at generate and drive a generated Certificate of Non-Provision of Meals and Accommodation (`meals_lodging_cert`, template key `meals_lodging_cert`, one row per day, approver signs). Its Google template is created by `makeNonProvisionTemplate()` in `apps_script/travel_templates.gs`; until a person runs it, the person's own copy can be linked.
+- Checklist notes for ride-hailing receipts, plane ticket, lowest-fare proof, extra expenses and the meals/lodging certificate follow the memo. `travel.css` cache key moves to 10.48.
+
+## 10.47 — November 24, 2026
+
+- Restructure mapping entries may carry an `email`: set only on records the switch creates or on existing records not yet in use (no email, no active account); never overwritten, never duplicated across current records; invalid addresses stop the run.
+- Record the owner's decision that Division 3 keeps the order's name (LHSIID), not Annex A's "HSIKCDD".
+- Fix a date-dependent Telegram notice test that blocked the 10.46 deploy from November 24: change events are stamped by SQLite's real clock, which the frozen test clock cannot reach, so the test now steps past the actual handoff expiry. Test-only; 10.46 ships with this release.
+
 ## 10.46 — November 23, 2026
 
 - Raise the full-suite job limit from 75 to 100 minutes: ~10,660 tests take 48–65 min of test time on identical code depending on the hosted runner (~45% spread); one run reached 75 min at 98% with no failures. Per-test setup is 20–50 ms; the time is test work spread across the suite.

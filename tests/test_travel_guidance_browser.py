@@ -237,6 +237,7 @@ def test_no_script_ready_and_paper_submission_use_actual_native_forms(travel_pag
     ref=mk(viewer);complete(c,travel.get_by_ref(c,ref))
     cdp=context.new_cdp_session(page);cdp.send('Emulation.setScriptExecutionDisabled',{'value':True})
     page.goto(f'/travel/f/{ref}/ready')
+    page.get_by_role('checkbox',name='I confirm that every receipt').check()
     page.get_by_role('button',name='Mark ready',exact=True).click()
     assert travel.get_by_ref(c,ref)['status']=='ready'
     page.get_by_role('button',name='Mark submitted',exact=True).click()

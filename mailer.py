@@ -897,7 +897,8 @@ def travel_filing_due_message(name, items, owed, link):
     if owed:
         if lines:
             lines.append("")
-        lines.append("Cash advances that still need a liquidation (the activity is over):")
+        lines.append("Cash advances that still need a liquidation (the activity is over). Under DM 2026-0521 a late "
+                     "liquidation gets a Notice to Liquidate and lower priority at FMS, and blocks any new cash advance:")
         for o in owed:
             lines.append(f"  • {o['title']}\n    {o['url']}")
     body = (f"Hello {name or 'there'},\n\nThese travel claims are waiting on you:\n\n" + "\n".join(lines)
@@ -908,7 +909,8 @@ def travel_filing_due_message(name, items, owed, link):
                 f'<span style="font-size:13px; color:{_SOFT};">{_e(sub)}</span></td></tr>')
     cells = "".join(row(i["title"], f"{_TRAVEL_KIND.get(i['kind'], i['kind']).capitalize()} · {i['when']}", i["url"])
                     for i in items)
-    cells += "".join(row(o["title"], "Cash advance · liquidation still to file", o["url"]) for o in owed)
+    cells += "".join(row(o["title"], "Cash advance · liquidation still to file (late: Notice to Liquidate, lower FMS priority)",
+                         o["url"]) for o in owed)
     html = _email_html(
         greeting=f"Hi {name or 'there'},", heading="Travel claims waiting on you",
         intro="These travel claims are waiting on you:",

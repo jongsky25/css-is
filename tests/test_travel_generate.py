@@ -128,6 +128,25 @@ def test_generate_makes_every_required_form_and_marks_them_present(viewer, conn,
     assert st_["gen_state"] == "done" and {i["state"] for i in st_["items"]} == {"done"}
 
 
+def test_unticked_meals_make_the_certificate_and_all_provided_drops_it(viewer, conn, relay):
+    """DM 2026-0521: the Certificate of Non-Provision is made only for days unticked as not provided."""
+    ref = mk(viewer, per_diem_claimed="1")
+    assert "meals_lodging_cert" in items(conn, ref)                       # listed until the itinerary says otherwise
+    day = {**ride("2026-09-01", 0), "day_kind": "full", "meals_provided": False, "lodging_provided": True}
+    r = jpost(viewer, f"/travel/f/{ref}/generate", {"rows": [day]})
+    assert r.status_code == 200 and "meals_lodging_cert" in r.json()["started"]
+    call = next(c for c in relay.calls if c["template_key"] == "meals_lodging_cert")
+    assert call["rows"]["days"]["data"][0]["m_what"] == "Meals"
+    assert items(conn, ref)["meals_lodging_cert"]["doc_state"] == "done:1"
+    assert travel.answers_of(travel.get_by_ref(conn, ref))["meals_not_provided"] == 1
+    relay.calls.clear()
+    day.update(meals_provided=True)
+    r = jpost(viewer, f"/travel/f/{ref}/generate", {"rows": [day]})
+    assert r.status_code == 200 and "meals_lodging_cert" not in r.json()["started"]
+    assert travel.answers_of(travel.get_by_ref(conn, ref))["meals_not_provided"] == 0
+    assert "meals_lodging_cert" not in {i["code"] for i in travel.view_items(conn, travel.get_by_ref(conn, ref))}
+
+
 def test_form_contents_are_not_stored(viewer, conn, relay):
     ref = mk(viewer)
     secret = "ZEBRA-UNIQUE-TEXT-9931"

@@ -12,6 +12,8 @@ import travel_checklist as tc
 import travel_rates as rates
 
 DUE_WORKING_DAYS = 5         # working days after the last day of the activity to file
+DUE_CALENDAR_DAYS = 7        # DM 2026-0521: local-travel liquidation within 7 days of return
+CA_HAND_IN_WORKING_DAYS = 3  # DM 2026-0521: a cash advance reaches FMS at least 3 working days before departure
 CA_MIN_LEAD_DAYS = 7         # a cash advance needs MORE than this many days before the activity starts
 NO_RECEIPT_LIMIT = 1000      # an unreceipted fare above this always goes to the Admin Unit
 RECEIPT_MODES = ("tnvs", "taxi")
@@ -21,7 +23,23 @@ FLAG_LABELS = {
     "unlisted_route": "Route not on the approved list",
     "no_receipt_over_1000": "No receipt for a fare above 1,000",
     "participant_only": "Participant-only travel",
+    # DM 2026-0521 pre-audit checks on what the AI read off uploads (reading_flags)
+    "receipt_mismatch": "Receipt does not match the itinerary",
+    "shared_ride": "Multi-stop or shared ride",
+    "fare_class": "Fare class not allowed",
+    "fare_proof": "Proof of lowest fare incomplete",
+    "return_baggage": "Extra baggage on the return flight only",
 }
+
+# DM 2026-0521: the regular economy fares named as lowest (Cebu Pacific and Philippine Airlines). A brand is only
+# checked for these two airlines; for any other airline only the cabin is.
+ECONOMY_BRANDS = {
+    "cebu": ("GO BASIC", "GO EASY"),
+    "philippine airlines": ("ECONOMY SUPERSAVER", "SUPERSAVER", "SUPER SAVER", "ECONOMY SAVER", "SAVER",
+                            "ECONOMY VALUE", "VALUE", "ECONOMY FLEX", "FLEX"),
+}
+NOT_ECONOMY = ("premium_economy", "business", "first")
+RECEIPT_TOLERANCE = 1           # pesos a receipt may differ from its itinerary fare (rounding)
 
 PER_DIEM_LABEL = "Per diem above the policy rate"
 
@@ -53,11 +71,11 @@ def count_working_days(conn, start_iso, end_iso) -> int:
 def deadline_for(conn, kind, act_end_iso, opened_iso):
     """(deadline ISO date or None, rule) where rule is 'after_fact', 'plotted' or 'none'.
 
-    Liquidation and reimbursement are due 5 working days after the last day of the activity,
+    Liquidation and reimbursement are due on the date `due_after` gives for the last day of the activity,
     whether or not it had ended when the filing was opened. A cash advance has no deadline
     while the activity is current or ahead; once it has ended it is held to the same date."""
     end, opened = _d(act_end_iso), _d(opened_iso)
-    due = rooms.add_working_days(conn, end, DUE_WORKING_DAYS).isoformat()
+    due = due_after(conn, end).isoformat()
     if kind in ("liquidation", "reimbursement"):
         return due, "plotted"
     if end < opened:
@@ -65,14 +83,53 @@ def deadline_for(conn, kind, act_end_iso, opened_iso):
     return None, "none"
 
 
-def ca_lead_error(act_start_iso, today_iso):
+def due_after(conn, end) -> date:
+    """The filing date for an activity that ended on `end`: the earlier of 5 working days and
+    7 calendar days after it (owner decision on DM 2026-0521, 2026-11-24). A 7th day that is not
+    a working day moves back to the working day before it, never past the last day itself."""
+    end = _d(end)
+    by_working = rooms.add_working_days(conn, end, DUE_WORKING_DAYS)
+    by_calendar = end + timedelta(days=DUE_CALENDAR_DAYS)
+    if by_working <= by_calendar:
+        return by_working
+    day = by_calendar
+    while day > end + timedelta(days=1) and not rooms.is_working_day(conn, day):
+        day -= timedelta(days=1)
+    return day
+
+
+def ca_hand_in_by(conn, act_start_iso) -> date:
+    """The last day a cash advance request should reach FMS: 3 working days before departure
+    (DM 2026-0521). Shown and reminded only; FMS, not the platform, refuses late requests."""
+    day, left = _d(act_start_iso), CA_HAND_IN_WORKING_DAYS
+    while left > 0:
+        day -= timedelta(days=1)
+        if rooms.is_working_day(conn, day):
+            left -= 1
+    return day
+
+
+def ca_lead_error(act_start_iso, today_iso, urgent=False):
     """Why a cash advance cannot be filed for this activity today, or None when it can.
-    Owner's rule: only more than a week before the activity starts (8 or more days ahead)."""
+    Owner's rule: only more than a week before the activity starts (8 or more days ahead). DM 2026-0521 adds an
+    expedited window for urgent or unplanned travel (owner decision 3, 2026-11-24): inside the week a cash advance
+    is allowed when the person marks it urgent, as long as the activity has not started."""
     days = (_d(act_start_iso) - _d(today_iso)).days
     if days > CA_MIN_LEAD_DAYS:
         return None
-    return ("A cash advance can only be filed more than a week before the activity starts. "
-            "Once it is closer or over, file a reimbursement instead.")
+    if days >= 1 and urgent:
+        return None
+    if days >= 1:
+        return ("A cash advance can only be filed more than a week before the activity starts, unless the travel is "
+                "urgent or unplanned: tick that question and upload a written justification. Otherwise file a "
+                "reimbursement instead.")
+    return ("A cash advance can only be filed before the activity starts. File a reimbursement instead.")
+
+
+def ca_urgent_window(act_start_iso, today_iso) -> bool:
+    """True inside the week before the activity starts: only an urgent cash advance can be filed now."""
+    days = (_d(act_start_iso) - _d(today_iso)).days
+    return 1 <= days <= CA_MIN_LEAD_DAYS
 
 
 # ----------------------------------------------------------------- rides ---
@@ -186,6 +243,11 @@ def flags_for(filing, itinerary_rows, answers, ceilings, opts=None, is_working=N
             flags.append(FlagSpec("over_ceiling", flag_sig("over_ceiling", key + "|per_diem", row.get("per_diem"), row.get("day_kind")),
                                   f"Per diem {_num(_dec(row.get('per_diem')))} is {_num(_dec(row.get('per_diem')) - rr.per_diem)} "
                                   f"above the {_num(rr.per_diem)} the policy allows for this day.", key))
+    a = answers or {}
+    if tc.truthy(a.get("baggage_return")) and not tc.truthy(a.get("baggage_outbound")):
+        flags.append(FlagSpec("return_baggage", flag_sig("return_baggage", "baggage", 0, ""),
+                              "Extra baggage on the return flight with none on the outbound. Not allowed by default: "
+                              "check the justification that it was for official use (DM 2026-0521)."))
     if (answers or {}).get("role") == "participant":
         flags.append(FlagSpec("participant_only",
                               flag_sig("participant_only", "role", 0, ""),
@@ -243,3 +305,76 @@ def completeness(filing, items, flags) -> list:
             missing.append(f"The Admin Unit did not accept: {fl.get('detail') or 'a flagged item'}{why} "
                            "Change it on the prepare page, or talk to them.")
     return missing
+
+
+# ------------------------------------------------- DM 2026-0521: checks on what was read off uploads ---
+
+def _airline(vendor) -> str:
+    v = (vendor or "").lower()
+    if "cebu" in v:
+        return "cebu"
+    if "philippine airlines" in v or v.strip() in ("pal", "pr") or "pal express" in v:
+        return "philippine airlines"
+    return ""
+
+
+def _brand(v) -> str:
+    return " ".join((v or "").upper().replace("-", " ").split())
+
+
+def _rflag(kind, reading, detail) -> FlagSpec:
+    key = f"reading:{reading.get('id')}"
+    return FlagSpec(kind, flag_sig(kind, key, reading.get("amount") or 0, detail[:40]), detail, key)
+
+
+def reading_flags(readings, rows) -> list:
+    """Flags for the DM 2026-0521 pre-audit points, from the readings kept for the filing's uploads
+    (travel_readings.for_filing) and the itinerary rows posted at generate. Only what a reading actually shows is
+    checked: a detail the AI did not read raises nothing. Each flag goes to the Admin Unit like the others."""
+    out = []
+    receipts = [r for r in readings if r.get("doc") == "receipt"]
+    ride_rows = [r for r in rows if r.get("mode") in ("tnvs", "taxi")]
+    for x in receipts:
+        if x.get("item_code") not in ("ridehail_receipt", "taxi_receipt"):
+            continue
+        what = "ride-hailing" if x["item_code"] == "ridehail_receipt" else "taxi"
+        # Inconsistent with the itinerary (dates, amounts)
+        if rows and x.get("day"):
+            same_day = [r for r in ride_rows if r.get("date") == x["day"]]
+            if not same_day:
+                out.append(_rflag("receipt_mismatch", x, f"A {what} receipt dated {x['day']} has no {what} ride on that "
+                                                         "date in the itinerary."))
+            elif x.get("amount") and not any(abs(_dec(r.get("allowance")) - _dec(x["amount"])) <= RECEIPT_TOLERANCE
+                                             for r in same_day):
+                out.append(_rflag("receipt_mismatch", x, f"A {what} receipt of {_num(_dec(x['amount']))} on {x['day']} "
+                                                         "does not match the fare entered for that date."))
+        # Multi-stop or multi-passenger
+        stops, pax = x.get("stops") or 0, x.get("passengers") or 0
+        if stops > 1 or pax > 1:
+            parts = ([f"{stops} stops"] if stops > 1 else []) + ([f"{pax} passengers"] if pax > 1 else [])
+            need = ("Accepted only with every passenger's claim submitted together, consistent with the itinerary, "
+                    "the fare split per stop or passenger, and a justification that it costs less than separate rides.")
+            if x.get("fare_split") == 0:
+                need += " The receipt shows no fare split."
+            out.append(_rflag("shared_ride", x, f"A {what} receipt shows {' and '.join(parts)}. {need}"))
+    tickets = [r for r in receipts if r.get("item_code") in ("plane_ticket", "boarding_pass")]
+    for x in tickets:
+        cabin, brand, airline = x.get("cabin") or "", _brand(x.get("fare_brand")), _airline(x.get("vendor"))
+        if cabin in NOT_ECONOMY:
+            out.append(_rflag("fare_class", x, f"The ticket reads {cabin.replace('_', ' ')} class. Only regular "
+                                               "economy is allowed unless the Office of the President approved it in advance."))
+        elif brand and airline and brand not in ECONOMY_BRANDS[airline]:
+            out.append(_rflag("fare_class", x, f"The fare type reads {x.get('fare_brand')}, which is not one of the "
+                                               "lowest regular economy fares named for this airline."))
+    shots = [r for r in receipts if r.get("item_code") == "plane_fare_proof"]
+    for x in (t for t in tickets if t.get("item_code") == "plane_ticket"):
+        booked = x.get("booked_at") or ""
+        taken = [s.get("captured_at") for s in shots if s.get("captured_at")]
+        if booked and taken and all(t > booked for t in taken):
+            out.append(_rflag("fare_proof", x, f"Every fare screenshot was taken after the ticket was booked ({booked}). "
+                                               "The screenshots must be captured just before booking."))
+        if (_airline(x.get("vendor")) == "philippine airlines" and x.get("round_trip") == 1
+                and "SUPERSAVER" not in _brand(x.get("fare_brand")).replace(" ", "") and len(shots) < 2):
+            out.append(_rflag("fare_proof", x, "A Philippine Airlines round trip that is not Economy Supersaver needs "
+                                               "screenshots of both the outbound and the return fares."))
+    return out

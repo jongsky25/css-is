@@ -18,8 +18,8 @@ matches this reference (Director IV over Divisions 1–3 and the AU; Director II
 over Divisions 4–5 and the MSU; Sections 1–10) **except Division 3's name**: the
 chart says "Health Systems Intelligence, Knowledge and Capacity Development
 Division (HSIKCDD)", the order's text "Local Health Systems Intelligence and
-Innovation Division (LHSIID)". Pending the office's confirmation, this reference
-keeps the order's text.
+Innovation Division (LHSIID)". **Owner decision (November 24, 2026): use the
+order's text — LHSIID.**
 
 ## Why this file exists
 
@@ -274,7 +274,7 @@ Head: Medical Officer III (detailed). No mailbox listed.
 ## Open points to confirm with the office
 
 1. Final DPO number, signature and effective date (drives the two-week window).
-2. Division 3's name: the order's "LHSIID" or Annex A's "HSIKCDD" (Annex A received).
+2. ~~Division 3's name~~ Decided: the order's "LHSIID" (Annex A's "HSIKCDD" not used).
 3. Division 3 mandate text (blank in the order). Division 5 acronym confirmed: LHSSD.
 4. ~~Whether the Office of the Director III sits between the bureau and its units~~
    Decided: each Director approves for the units nested under their office.

@@ -343,3 +343,49 @@ def test_clock_text_never_shows_military_time():
     import travel_docs as td
     assert [td.clock_text(v) for v in ("00:05", "06:00", "12:00", "13:30", "23:59", "", "8:15 AM", "noon")] == \
         ["12:05 AM", "6:00 AM", "12:00 PM", "1:30 PM", "11:59 PM", "", "8:15 AM", "noon"]
+
+
+# ------------------------------------------------- DM 2026-0521: Certificate of Non-Provision ---
+
+def test_days_start_as_meals_and_lodging_provided():
+    r = td.blank_row("2026-09-01")
+    assert r["meals_provided"] is True and r["lodging_provided"] is True
+    assert td.unprovided_days([r | {"day_kind": "full"}]) == []
+
+
+def test_only_unticked_per_diem_days_go_on_the_certificate():
+    rows = [row("2026-09-01", day_kind="departure", meals_provided=False, lodging_provided=True),
+            row("2026-09-02", day_kind="full", meals_provided=True, lodging_provided=False),
+            row("2026-09-02", day_kind="", meals_provided=False),             # second ride that day: no per diem rule
+            row("2026-09-03", day_kind="full", meals_provided=False, lodging_provided=False),
+            row("2026-09-04", day_kind="full", meals_provided=True, lodging_provided=True),
+            row("2026-09-05", day_kind="commute", meals_provided=False)]       # pays no meals: nothing to certify
+    assert td.unprovided_days(rows) == [("2026-09-01", "Meals"), ("2026-09-02", "Lodging"),
+                                        ("2026-09-03", "Meals and lodging")]
+    assert td.meals_answers(rows) == {"meals_not_provided": 1}
+    assert td.meals_answers([row("2026-09-04", day_kind="full", meals_provided=True, lodging_provided=True)]) == \
+        {"meals_not_provided": 0}
+    p = one(["meals_lodging_cert"], rows)
+    assert p.template_key == "meals_lodging_cert" and p.item_code == "meals_lodging_cert"
+    assert p.rows["days"]["marker"] == "m_date"
+    assert p.rows["days"]["data"] == [{"m_date": td.long_date("2026-09-01"), "m_what": "Meals"},
+                                      {"m_date": td.long_date("2026-09-02"), "m_what": "Lodging"},
+                                      {"m_date": td.long_date("2026-09-03"), "m_what": "Meals and lodging"}]
+    assert p.fields["approver_name"] == SETTINGS["head_name"] and p.fields["traveler_name"] == "Juan Dela Cruz"
+    assert "2026-123" in p.fields["dpo_ref"]
+
+
+def test_no_certificate_is_made_when_every_day_was_provided():
+    assert build(["meals_lodging_cert"], [row("2026-09-01", day_kind="full", meals_provided=True, lodging_provided=True)]) == []
+
+
+def test_the_certificate_template_has_every_placeholder_the_app_fills():
+    import re
+    src = pathlib.Path("apps_script/travel_templates.gs").read_text(encoding="utf-8")
+    m = re.search(r"key: 'meals_lodging_cert',.*?expect: \[(.*?)\] \}", src, re.S)
+    expects = set(re.findall(r"'([a-z0-9_]+)'", m.group(1)))
+    p = one(["meals_lodging_cert"], [row("2026-09-01", day_kind="full", meals_provided=False)])
+    sent = set(p.fields) | {k for spec in p.rows.values() for d in spec["data"] for k in d}
+    assert expects == sent
+    for name in expects:
+        assert "{{%s}}" % name in src, name
