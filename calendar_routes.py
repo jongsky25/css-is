@@ -981,7 +981,12 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             can_css = auth.can(user["role"], "create_activity")
             linked = st.get_event_by_id(conn, e["event_id"]) if e["event_id"] else None
             eligible = can_css and oc.entry_can_collect_feedback(e)
+            try:                                # the advisory lives on the linked activity; same guard as its own routes
+                adv_ok = bool(linked and can_manage_event and can_manage_event(user, linked, conn))
+            except Exception:                   # noqa: BLE001 - the page must open regardless
+                adv_ok = False
             css = {"linked": linked, "eligible": eligible, "manage": auth.can(user["role"], "manage_event"),
+                   "advisory": adv_ok,
                    "candidates": oc.activity_candidates_for_entry(conn, e) if eligible else []}
             room_link = _room_link(request, conn, e)
             filing = _travel_block(conn, user, e, request.query_params.get("date", ""))

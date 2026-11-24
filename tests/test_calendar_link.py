@@ -233,6 +233,16 @@ def test_the_item_page_offers_an_activity_that_already_exists_and_links_it(app_m
     assert "already linked" in again.text
 
 
+def test_a_linked_item_page_offers_the_advisory_only_to_those_who_manage_the_activity(app_mod, admin, viewer, conn):
+    ev, token, _ = new_event(conn, "CALLK Orientation")
+    eid = entry(conn)
+    assert f"/activities/{token}/advisory" not in admin.get(f"/calendar/entries/{eid}").text    # not linked yet
+    st.cal_link_event(conn, eid, ev)
+    page = admin.get(f"/calendar/entries/{eid}").text
+    assert f'href="/activities/{token}/advisory"' in page and 'href="/advisories"' in page
+    assert f"/activities/{token}/advisory" not in viewer.get(f"/calendar/entries/{eid}").text
+
+
 def test_link_activity_validates_its_input(app_mod, manager, conn):
     eid = entry(conn)
     for body, msg in (({"event_id": ""}, "Choose the activity"), ({"event_id": "99999"}, "no longer exists")):
