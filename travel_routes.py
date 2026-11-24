@@ -1067,6 +1067,24 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
         finally:
             conn.close()
 
+    @router.get("/travel/preaudit", response_class=HTMLResponse)
+    def travel_preaudit(request: Request):
+        """DM 2026-0521: before papers go to FMS, where each of the memo's points stands for every claim marked
+        ready. Read-only; Administrative Section members only, like the verify queue."""
+        conn = get_conn()
+        try:
+            bad = _admin_unit(request, conn)
+            if bad:
+                return bad
+            claims = travel.preaudit_list(conn, today_local())
+            return templates.TemplateResponse(request, "travel_preaudit.html", {
+                "nav_active": "travel_preaudit", "claims": claims,
+                "to_check": sum(1 for c in claims if c["to_check"]),
+                "state_labels": {"ok": "Nothing outstanding", "check": "Check", "na": "Not applicable"}},
+                headers={"Cache-Control": "no-store"})
+        finally:
+            conn.close()
+
     @router.post("/travel/verify/{flag_id}")
     async def travel_verify_decide(request: Request, flag_id: int):
         if not _same_origin(request):

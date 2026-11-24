@@ -1239,3 +1239,116 @@ def event_url_for(conn, user, event_id):
         or conn.execute("SELECT 1 FROM event_form ef JOIN form_instance fi ON fi.id=ef.form_instance_id AND fi.survey_type=3 "
                         "JOIN admin_user a ON a.rp_id=fi.rp_id WHERE ef.event_id=? AND a.id=?", (event_id, uid)).fetchone())
     return f"/travel/new?event={event_id}" if hit else None
+
+
+# ------------------------------------------------- DM 2026-0521: the Admin Unit's pre-audit (DM6) ---
+# DM 2026-0521 asks offices to review every claim and its papers before they reach FMS. This works out, for each
+# claim marked ready, where each of the memo's points stands, from what the platform already holds: the checklist
+# rows, the flags and their decisions, and what was read off uploads. Nothing is stored and nothing is decided here;
+# "ok" only means the platform sees nothing outstanding, not that the papers were checked.
+
+PREAUDIT_OK, PREAUDIT_CHECK, PREAUDIT_NA = "ok", "check", "na"
+
+
+def _row_done(it) -> bool:
+    if it.get("state") == "na":
+        return True
+    if it.get("handling") == "generate":
+        return bool(it.get("doc_url"))
+    if it.get("handling") == "carry":
+        return bool(it.get("drive_url") or it.get("note"))
+    return bool(it.get("drive_url"))
+
+
+def preaudit_points(conn, filing, today) -> list:
+    """[{label, state, detail}] for the memo's points, in the memo's order. state is PREAUDIT_OK, _CHECK or _NA."""
+    import travel_readings
+    today = _d(today)
+    items = {it["code"]: it for it in view_items(conn, filing)}
+    flags = flags_of(conn, filing["id"])
+    ans = answers_of(filing)
+    readings = travel_readings.for_filing(conn, filing["id"])
+
+    def unsettled(*kinds):
+        return [f for f in flags if f["kind"] in kinds and f["state"] != "verified"]
+
+    def missing(*codes):
+        return [items[c]["label"] for c in codes if c in items and items[c]["requirement"] == "required"
+                and not _row_done(items[c])]
+
+    def point(label, applies, problems, ok_detail, na_detail="Not part of this claim."):
+        if not applies:
+            return {"label": label, "state": PREAUDIT_NA, "detail": na_detail}
+        if problems:
+            return {"label": label, "state": PREAUDIT_CHECK, "detail": " ".join(problems)}
+        return {"label": label, "state": PREAUDIT_OK, "detail": ok_detail}
+
+    def flag_text(fl):
+        word = "rejected" if fl["state"] == "rejected" else "not yet verified"
+        return f"Flag {word}: {fl['detail']}"
+
+    out = []
+    # 1. Per diem: no full per diem when meals or lodging were provided; the signer of the certificate is accountable.
+    out.append(point("Per diem: meals and lodging", "meals_lodging_cert" in items,
+                     [f"Missing: {m}." for m in missing("meals_lodging_cert")],
+                     "Certificate of Non-Provision is in. Confirm with the host if in doubt: the signer is accountable."))
+    # 2. Ride-hailing: receipts consistent with the itinerary; multi-stop or shared rides only on the memo's conditions.
+    rides = [c for c in ("ridehail_receipt", "taxi_receipt") if c in items]
+    shots = [r for r in readings if r["item_code"] in rides and r.get("receipt_source") in ("screenshot", "paper")]
+    out.append(point("Ride-hailing and taxi receipts", bool(rides),
+                     [flag_text(f) for f in unsettled("receipt_mismatch", "shared_ride")]
+                     + [f"Missing: {m}." for m in missing(*rides)]
+                     + (["Some receipts read as screenshots or paper: FMS validates the digital receipt on the "
+                         "claimant's phone or email."] if shots else []),
+                     "Receipts are in and match the itinerary as far as was read. FMS will still validate them on "
+                     "the claimant's phone or email."))
+    # 3. Airfare: proof of lowest regular economy fare captured before booking; no premium classes.
+    flew = any(c in items for c in ("plane_ticket", "plane_fare_proof"))
+    out.append(point("Airfare and proof of lowest fare", flew,
+                     [flag_text(f) for f in unsettled("fare_class", "fare_proof")]
+                     + [f"Missing: {m}." for m in missing("plane_ticket", "plane_fare_proof", "boarding_pass")],
+                     "Ticket and fare screenshots are in, with nothing flagged."))
+    # 4. Baggage: return-only extra baggage needs an official-use justification; personal baggage is not paid.
+    bag = any(tc.truthy(ans.get(k)) for k in ("baggage_outbound", "baggage_return", "extra_expenses"))
+    out.append(point("Extra baggage and other extra expenses", bag,
+                     [flag_text(f) for f in unsettled("return_baggage")]
+                     + [f"Missing: {m}." for m in missing("extra_expense_invoice", "extra_expense_justification",
+                                                           "return_baggage_justification")],
+                     "Invoice and justification are in. Personal baggage is not paid."))
+    # 5. Cash advance: at FMS 3 working days before departure; no new advance while an earlier one is unliquidated.
+    if filing["kind"] == "ca":
+        problems = []
+        if tc.truthy(ans.get("urgent_travel")):
+            problems += [f"Missing: {m}." for m in missing("urgent_justification")]
+            ok = "Urgent travel: hand in to FMS as soon as possible with the justification for the expedited window."
+        else:
+            hand_in = tr.ca_hand_in_by(conn, filing["act_start"])
+            if today > hand_in:
+                problems.append(f"Past the FMS hand-in date ({hand_in.isoformat()}): FMS will not receive it.")
+            ok = f"Hand in to FMS by {hand_in.isoformat()}."
+        old = unliquidated_cas(conn, filing["user_id"], today)
+        if old:
+            problems.append(f"{len(old)} earlier cash advance{'s' if len(old) != 1 else ''} not yet liquidated: "
+                            "FMS automatically denies a new one.")
+        out.append(point("Cash advance timing and earlier advances", True, problems, ok))
+    else:
+        due = filing.get("deadline_date")
+        late = bool(due) and today > _d(due)
+        out.append(point("Liquidation or reimbursement deadline", bool(due),
+                         [f"Past the deadline ({due}): a late liquidation gets a Notice to Liquidate and lower FMS "
+                          "priority."] if late else [],
+                         f"Due {due}." if due else "", "No deadline recorded."))
+    return out
+
+
+def preaudit_list(conn, today) -> list:
+    """Every claim marked ready (not yet handed in), oldest first, with its pre-audit points and the person."""
+    rows = _rows(conn, """SELECT f.*, COALESCE(NULLIF(rp.name,''), a.username) AS who
+                          FROM travel_filing f JOIN admin_user a ON a.id=f.user_id
+                          LEFT JOIN resource_person rp ON rp.id=a.rp_id
+                          WHERE f.status='ready' AND f.purged_at IS NULL ORDER BY f.ready_at, f.id""")
+    out = []
+    for f in rows:
+        points = preaudit_points(conn, f, today)
+        out.append({"filing": f, "points": points, "to_check": sum(p["state"] == PREAUDIT_CHECK for p in points)})
+    return out

@@ -1,0 +1,30 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Pre-audit before FMS{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=10.48">{% endblock %}
+{% block content %}
+{{ page_header("Pre-audit before FMS", "Claims marked ready to sign, set against DOH Department Memorandum No. 2026-0521 before the papers go to FMS. Worked out from the checklist, the flags and what was read off uploads; nothing is saved or decided here.") }}
+
+<div class="tv-card">
+  <p>{% if claims %}<strong>{{ claims|length }}</strong> claim{{ 's' if claims|length != 1 }} ready; <strong>{{ to_check }}</strong> with something to check.{% else %}No claims are marked ready right now.{% endif %}</p>
+  <p class="tv-hint">"Nothing outstanding" means the platform sees nothing missing or unverified. It is not a check of the papers themselves. Decide flags in <a href="/travel/verify">Verify travel flags</a>.</p>
+</div>
+
+{% for c in claims %}
+{% set f = c.filing %}
+<section class="tv-card" id="pa-{{ f.ref_code }}" aria-labelledby="pa-h-{{ f.ref_code }}">
+  <h2 id="pa-h-{{ f.ref_code }}"><a href="/travel/f/{{ f.ref_code }}">{{ f.ref_code }}</a> · {{ travel_kind_labels[f.kind] }}</h2>
+  <p class="tv-hint">{{ f.who }} · {{ f.act_title }} · {{ f.act_start }}{% if f.act_end != f.act_start %} to {{ f.act_end }}{% endif %}
+    {% if c.to_check %} · <span class="badge amber">{{ c.to_check }} to check</span>{% else %} · <span class="badge green">Nothing outstanding</span>{% endif %}</p>
+  <div class="table-wrap"><table class="list resp-table">
+    <thead><tr><th>Memo point</th><th>Status</th><th>What the platform sees</th></tr></thead>
+    <tbody>
+    {% for p in c.points %}
+    <tr><td data-label="Memo point">{{ p.label }}</td>
+        <td data-label="Status"><span class="badge {{ {'ok':'green','check':'amber','na':'grey'}[p.state] }}">{{ state_labels[p.state] }}</span></td>
+        <td data-label="What the platform sees">{{ p.detail }}</td></tr>
+    {% endfor %}
+    </tbody></table></div>
+</section>
+{% endfor %}
+{% endblock %}

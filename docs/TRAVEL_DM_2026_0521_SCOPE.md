@@ -5,7 +5,15 @@ Travelling Expenses based on 2026 Pre-Audit Observations". It cites PD 1445, EO 
 DO 2019-0225, DM 2023-0092 and DM 2024-0369. The memo itself is not committed; this file
 records only its directives and how they map onto Travel filing.
 
-Status: scoped November 24, 2026; owner decisions recorded below; **DM1 to DM5 built** (candidate 10.48) on `claude/cool-davinci-y5s3re`, PR #640.
+Status: scoped November 24, 2026; owner decisions recorded below; **DM1 to DM6 built** (candidate 10.48) on `claude/cool-davinci-y5s3re`, PR #640.
+
+DM6 as built: Admin Unit page `/travel/preaudit` ("Pre-audit before FMS", Administrative Section only, menu under
+Travel > Admin Unit). For every claim marked ready it shows the memo's points (per diem certificate; ride receipts;
+airfare and proof; baggage and extra expenses; cash-advance hand-in and earlier advances, or the liquidation
+deadline) as "Nothing outstanding", "Check" or "Not applicable", with what the platform sees: missing rows, flags
+not yet verified or rejected, receipts read as screenshots, a passed hand-in date or deadline. Worked out by
+`travel.preaudit_points` from the checklist, flags and readings; read-only, nothing stored. "Nothing outstanding" is
+not a check of the papers themselves.
 
 DM5 as built: liquidations and reimbursements ask "extra baggage on the outbound flight" (`baggage_outbound`) and
 "on the return flight" (`baggage_return`); either one brings the extra-expense invoice and justification rows, and the

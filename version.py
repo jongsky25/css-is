@@ -32,6 +32,7 @@ CHANGELOG = [
             "Urgent or unplanned travel can still get a cash advance within the week before the activity, with a written justification.",
             "Uploaded ride receipts, plane tickets and fare screenshots are checked against the memo: receipts that do not match the itinerary, shared or multi-stop rides, premium fares and late fare screenshots go to the Admin Unit to verify.",
             "Extra baggage is now asked per flight; extra baggage on the return flight only needs a justification that it was for official use.",
+            "The Administrative Section has a pre-audit page listing claims marked ready against the memo's points before the papers go to FMS.",
             "Marking a filing ready asks you to confirm that your receipts are genuine and your certifications are accurate.",
             "The checklist explains the new rules for ride-hailing receipts, plane fare screenshots, baggage and the meals and lodging certificate.",
             "Each per diem day now starts with meals and lodging marked as provided; untick only the days they were not, and the Certificate of Non-Provision is made from those days."

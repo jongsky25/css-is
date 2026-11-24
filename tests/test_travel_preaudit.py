@@ -211,3 +211,61 @@ def test_generate_opens_the_return_baggage_flag(viewer, conn, relay):
     r = jpost(viewer, f"/travel/f/{ref}/generate", {"rows": []})
     assert r.status_code == 200
     assert [g["kind"] for g in flags(conn, ref)] == ["return_baggage"]
+
+
+# ----------------------------------------------------------------- DM6: pre-audit before FMS ---
+
+from datetime import date, timedelta                           # noqa: E402
+from test_travel_flags import unit                             # noqa: E402,F401
+import tzutil as tz                                            # noqa: E402
+
+
+def _ready(conn, ref):
+    conn.execute("UPDATE travel_filing SET status='ready', ready_at=? WHERE ref_code=?", (tz.now_iso(), ref))
+    conn.commit()
+    return travel.get_by_ref(conn, ref)
+
+
+def _points(conn, ref, today=None):
+    f = travel.get_by_ref(conn, ref)
+    return {p["label"]: p for p in travel.preaudit_points(conn, f, today or tz.today_local())}
+
+
+def test_points_follow_the_claim(viewer, conn, relay):
+    ref = mk(viewer, per_diem_claimed="1", flew="1", baggage_return="1")
+    p = _points(conn, ref)
+    assert p["Per diem: meals and lodging"]["state"] == "check"            # certificate not made yet
+    assert p["Airfare and proof of lowest fare"]["state"] == "check"
+    assert p["Extra baggage and other extra expenses"]["state"] == "check"
+    assert p["Ride-hailing and taxi receipts"]["state"] == "na"
+    jpost(viewer, f"/travel/f/{ref}/generate", {"rows": []})                # opens the return-baggage flag
+    assert "Flag not yet verified" in _points(conn, ref)["Extra baggage and other extra expenses"]["detail"]
+
+
+def test_a_clean_claim_shows_nothing_outstanding(viewer, conn, relay):
+    start = tz.today_local() + timedelta(days=2)
+    ref = mk(viewer, start=start.isoformat(), end=(start + timedelta(days=1)).isoformat())
+    p = _points(conn, ref)
+    assert {v["state"] for k, v in p.items() if k != "Liquidation or reimbursement deadline"} == {"na"}
+    assert p["Liquidation or reimbursement deadline"]["state"] == "ok"
+    due = travel.get_by_ref(conn, ref)["deadline_date"]
+    late = _points(conn, ref, date.fromisoformat(due) + timedelta(days=1))["Liquidation or reimbursement deadline"]
+    assert late["state"] == "check" and "Notice to Liquidate" in late["detail"]
+
+
+def test_a_cash_advance_past_its_hand_in_date_is_flagged_for_checking(viewer, conn, relay):
+    start = tz.today_local() + timedelta(days=20)
+    ref = mk(viewer, kind="ca", start=start.isoformat(), end=(start + timedelta(days=1)).isoformat())
+    assert _points(conn, ref)["Cash advance timing and earlier advances"]["state"] == "ok"
+    p = _points(conn, ref, start - timedelta(days=1))["Cash advance timing and earlier advances"]
+    assert p["state"] == "check" and "hand-in date" in p["detail"]
+
+
+def test_the_page_is_for_the_admin_unit_and_lists_ready_claims(viewer, encoder, admin, conn, relay, unit):
+    ref = mk(viewer, flew="1")
+    assert ref not in encoder.get("/travel/preaudit").text                 # not ready yet
+    _ready(conn, ref)
+    page = encoder.get("/travel/preaudit").text
+    assert ref in page and "Airfare and proof of lowest fare" in page and "to check" in page
+    assert viewer.get("/travel/preaudit").status_code == 403
+    assert admin.get("/travel/preaudit").status_code == 403
