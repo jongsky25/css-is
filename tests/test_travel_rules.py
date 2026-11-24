@@ -34,9 +34,28 @@ def test_deadline_is_five_working_days_after_the_last_day(conn):
     assert tr.deadline_for(conn, "reimbursement", "2026-10-12", "2026-10-01") == ("2026-10-19", "plotted")
 
 
-def test_deadline_skips_a_holiday(conn):
+def test_deadline_is_never_later_than_seven_days(conn):
+    # DM 2026-0521: Mon 12 Oct + 5 working days with a holiday on Wed 14 Oct is Tue 20 Oct, past the
+    # 7th day (Mon 19 Oct), so the 7th day wins.
+    st.set_holiday(conn, "2026-10-14", "Test holiday", "regular")
+    assert tr.deadline_for(conn, "liquidation", "2026-10-12", "2026-10-01") == ("2026-10-19", "plotted")
+
+
+def test_a_seventh_day_that_is_a_holiday_moves_back_to_the_working_day_before(conn):
     st.set_holiday(conn, "2026-10-19", "Test holiday", "regular")
-    assert tr.deadline_for(conn, "liquidation", "2026-10-12", "2026-10-01") == ("2026-10-20", "plotted")
+    assert tr.deadline_for(conn, "liquidation", "2026-10-12", "2026-10-01") == ("2026-10-16", "plotted")
+
+
+def test_a_weekend_ending_keeps_the_earlier_working_day_count(conn):
+    # Sat 17 Oct + 5 working days = Fri 23 Oct, before the 7th day (Sat 24 Oct)
+    assert tr.due_after(conn, "2026-10-17") == date(2026, 10, 23)
+
+
+def test_cash_advance_hand_in_is_three_working_days_before_departure(conn):
+    # departs Mon 26 Oct: Fri 23, Thu 22, Wed 21
+    assert tr.ca_hand_in_by(conn, "2026-10-26") == date(2026, 10, 21)
+    st.set_holiday(conn, "2026-10-22", "Test holiday", "regular")
+    assert tr.ca_hand_in_by(conn, "2026-10-26") == date(2026, 10, 20)
 
 
 def test_deadline_counts_from_the_last_day_not_from_opening(conn):
@@ -66,6 +85,13 @@ def test_cash_advance_needs_more_than_a_week_of_lead():
     assert tr.ca_lead_error("2026-10-21", "2026-10-14")                  # exactly 7 days: too late
     assert tr.ca_lead_error("2026-10-14", "2026-10-14")
     assert tr.ca_lead_error("2026-10-01", "2026-10-14")                  # already over
+    # DM 2026-0521 expedited window: inside the week only when urgent, never once the activity has started
+    assert tr.ca_lead_error("2026-10-21", "2026-10-14", urgent=True) is None
+    assert tr.ca_lead_error("2026-10-15", "2026-10-14", urgent=True) is None
+    assert tr.ca_lead_error("2026-10-14", "2026-10-14", urgent=True)
+    assert "urgent" in tr.ca_lead_error("2026-10-15", "2026-10-14")
+    assert tr.ca_urgent_window("2026-10-15", "2026-10-14") and tr.ca_urgent_window("2026-10-21", "2026-10-14")
+    assert not tr.ca_urgent_window("2026-10-22", "2026-10-14") and not tr.ca_urgent_window("2026-10-14", "2026-10-14")
 
 
 # -------------------------------------------------------------------- rides ---
@@ -260,3 +286,15 @@ def test_the_representative_dpo_row_says_it_allows_a_representative_or_oic_to_si
     assert row.label == "DPO allowing a representative or OIC to sign" and "officer-in-charge" in row.note
     question = next(label for key, label, _ in tc.ANSWER_KEYS if key == "representative_signs")
     assert "allows a representative or OIC to sign" in question
+
+
+def test_the_meals_certificate_follows_the_unticked_days():
+    def codes(answers):
+        return {i.code for i in tr.build_checklist("reimbursement", answers)}
+    assert "meals_lodging_cert" in codes({"per_diem_claimed": 1})                      # not prepared yet: listed
+    assert "meals_lodging_cert" in codes({"per_diem_claimed": 1, "meals_not_provided": 1})
+    assert "meals_lodging_cert" not in codes({"per_diem_claimed": 1, "meals_not_provided": 0})
+    assert "meals_lodging_cert" not in codes({"per_diem_claimed": 0, "meals_not_provided": 1})
+    assert "meals_lodging_cert" not in {i.code for i in tr.build_checklist("ca", {"per_diem_claimed": 1})}
+    spec = tc.BY_CODE["meals_lodging_cert"]
+    assert spec.handling == "generate" and "DM 2026-0521" in spec.note

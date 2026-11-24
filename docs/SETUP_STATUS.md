@@ -1,5 +1,22 @@
 # Cloud/mobile setup status
 
+## Travel claims vs DM 2026-0521 scoped — November 24, 2026
+
+Owner asked to scope travel-claim improvements against DOH DM 2026-0521 (pre-audit
+directives on per diem, TNVS, airfare, baggage, cash advances):
+[TRAVEL_DM_2026_0521_SCOPE.md](TRAVEL_DM_2026_0521_SCOPE.md). Owner answered all seven
+decisions (recorded there). DM1 (deadline rule, CA hand-in date and reminder, ready
+attestation, checklist notes), DM2 (urgent cash advance inside the week, with a
+justification upload), DM3 (meals/lodging default "provided", generated
+Certificate of Non-Provision) and DM4 (AI-read receipt/ticket/fare-screenshot details
+raising four new Admin Unit flag kinds; travel_flag table rebuild on boot) and DM5 (baggage
+per flight; return-only baggage needs a justification and an Admin Unit check) and DM6
+(read-only Admin Unit page /travel/preaudit) are built as candidate 10.48 in draft PR #640 (main went to 10.47 with PR #641; merged in); not merged,
+not released. After release a person must run `makeNonProvisionTemplate()` in the travel
+Apps Script project (docs/TRAVEL_DOCS_RELAY_SETUP.md) and the owner should approve the
+certificate wording. Next: CI on PR #640; release on owner instruction; all six increments are built.
+The restructure next steps below are unchanged.
+
 ## Emails for new staff; Division 3 decided — November 24, 2026
 
 10.46 merged (PR #639). Owner decided Division 3 keeps the order's name, LHSIID (already

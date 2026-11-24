@@ -738,6 +738,11 @@ NAV_GROUPS = [
          "hint": "Record the outcome on travel claims that were flagged",
          "kw": "verify travel flags admin unit ceiling route receipt participant supervisor necessity "
                "reject verified", "cap": "room_admin"},
+        {"key": "travel_preaudit", "url": "/travel/preaudit", "label": "Pre-audit before FMS",
+         "section": "Admin Unit",
+         "hint": "Claims marked ready, checked against the DOH pre-audit memo before the papers go to FMS",
+         "kw": "pre-audit preaudit dm 2026-0521 fms review ready claims per diem meals tnvs receipts airfare "
+               "baggage cash advance deadline", "cap": "room_admin"},
         {"key": "travel_admin", "url": "/travel/admin", "label": "Ceilings and routes",
          "section": "Admin Unit",
          "hint": "Fare ceilings and the approved travel routes",

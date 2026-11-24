@@ -549,6 +549,18 @@ def send_travel_filing_due(conn, base, dry_run=False):
                                 "AND deadline_date IS NOT NULL AND deadline_date<=? "
                                 "ORDER BY deadline_date, id", (horizon,)):
         per_user.setdefault(f["user_id"], {"due": [], "cas": []})["due"].append(f)
+    import travel_rules
+    import travel_checklist
+    for f in travel._rows(conn, "SELECT * FROM travel_filing WHERE kind='ca' AND status IN ('open','ready') "
+                                "AND deadline_date IS NULL AND act_start>? ORDER BY act_start, id", (today.isoformat(),)):
+        hand_in = travel_rules.ca_hand_in_by(conn, f["act_start"])
+        if hand_in.isoformat() <= horizon:                  # DM 2026-0521: at FMS 3 working days before departure
+            urgent = travel_checklist.truthy(travel.answers_of(f).get("urgent_travel"))
+            when = ("Urgent: hand in to FMS as soon as possible" if urgent else
+                    "Hand in to FMS today" if hand_in == today else
+                    f"Hand in to FMS by {hand_in:%b} {hand_in.day}" if hand_in > today else
+                    f"Late for FMS (was due {hand_in:%b} {hand_in.day})")
+            per_user.setdefault(f["user_id"], {"due": [], "cas": []})["due"].append({**f, "_when": when})
     for (uid,) in conn.execute("SELECT DISTINCT user_id FROM travel_filing WHERE kind='ca' "
                                "AND status='submitted' AND act_end<?", (today.isoformat(),)).fetchall():
         cas = travel.unliquidated_cas(conn, uid, today)
@@ -561,7 +573,7 @@ def send_travel_filing_due(conn, base, dry_run=False):
             continue
         to = _travel_recipient(conn, acct)
         items = [{"title": f["act_title"], "kind": f["kind"], "url": f"{base}/travel/f/{f['ref_code']}",
-                  "when": travel.deadline_words(f, today)[0] or ""} for f in got["due"]]
+                  "when": f.get("_when") or travel.deadline_words(f, today)[0] or ""} for f in got["due"]]
         owed = [{"title": f["act_title"], "url": f"{base}/travel/f/{f['ref_code']}"} for f in got["cas"]]
         subj, body, html = mailer.travel_filing_due_message(
             _person_name(conn, uid) or acct["username"], items, owed, f"{base}/travel")

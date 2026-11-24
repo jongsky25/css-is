@@ -25,6 +25,8 @@ class ReimbursementAnswers(BaseModel):
     lodging_claimed: StrictBool = False
     per_diem_claimed: StrictBool = False
     extra_expenses: StrictBool = False
+    baggage_outbound: StrictBool = False        # DM 2026-0521 (10.48): extra baggage asked per flight
+    baggage_return: StrictBool = False
     jo_cos: StrictBool = False
     representative_signs: StrictBool = False
     exceeds_daily_rate: StrictBool = False

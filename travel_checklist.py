@@ -5,8 +5,9 @@ One row per document the checklist can ask for. `rule(kind, answers)` returns "r
 and the answers that drive the checklist. Pure data and functions: no database.
 
 Keys in `answers` that are not asked on the form but filled in by the platform:
-`mc114_format` (copied from the filing) and `rides_cenrr` / `rides_rer` (set when the
-itinerary is prepared, from `travel_rules.ride_check`)."""
+`mc114_format` (copied from the filing), `rides_cenrr` / `rides_rer` (set when the
+itinerary is prepared, from `travel_rules.ride_check`) and `meals_not_provided` (set then too:
+1 when any per diem day has meals or lodging unticked as not provided, DM 2026-0521)."""
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Optional
@@ -14,6 +15,7 @@ from typing import Callable, Optional
 CHECKLIST_REV = "FMS-BD-01 r6 2025-06"
 
 CA, LIQ, REI = "ca", "liquidation", "reimbursement"
+LR_ = (LIQ, REI)
 KINDS = (CA, LIQ, REI)
 
 # The questions asked at filing that drive the checklist: (key, label, kinds they apply to).
@@ -28,7 +30,9 @@ ANSWER_KEYS = (
     ("rfid", "I used an RFID toll account", (LIQ, REI)),
     ("lodging_claimed", "I claim lodging (travel within 50 km)", (LIQ, REI)),
     ("per_diem_claimed", "I claim per diem", (LIQ, REI)),
-    ("extra_expenses", "I have extra expenses (baggage, rebooking, cancellation)", (CA, LIQ, REI)),
+    ("extra_expenses", "I have other extra expenses (rebooking, cancellation, or baggage for a cash advance)", (CA, LIQ, REI)),
+    ("baggage_outbound", "I paid for extra baggage on the outbound flight", (LIQ, REI)),
+    ("baggage_return", "I paid for extra baggage on the return flight", (LIQ, REI)),
     ("jo_cos", "I am a Job Order or COS worker", (CA, LIQ, REI)),
     ("representative_signs", "The Department Personnel Order allows a representative or OIC to sign", (CA, LIQ, REI)),
     ("exceeds_daily_rate", "My expenses exceed the daily rate", (LIQ, REI)),
@@ -36,6 +40,7 @@ ANSWER_KEYS = (
     ("refund", "I am refunding part of the advance", (LIQ,)),
     ("revised_itinerary", "My itinerary changed from the cash advance", (LIQ,)),
     ("official_gasoline", "I need official gasoline", (CA,)),
+    ("urgent_travel", "This is urgent or unplanned travel that could not be filed a week ahead (expedited processing)", (CA,)),
     ("cert_of_appearance_available", "I have a Certificate of Appearance", (LIQ, REI)),
 )
 
@@ -96,6 +101,33 @@ def _when(key, *kinds, optional=False):
 
 def _mc114(kind, a):
     return "optional" if a.get("mc114_format") == "separate" else None
+
+
+def _meals_lodging_cert(kind, a):
+    """DM 2026-0521: every day counts as meals and lodging provided unless the person unticks it, and only
+    unticked days need the Certificate of Non-Provision. Before the itinerary is prepared the answer is
+    not known, so a per diem claim still lists the certificate."""
+    if kind in (LIQ, REI) and truthy(a.get("per_diem_claimed")) and truthy(a.get("meals_not_provided", 1)):
+        return "required"
+    return None
+
+
+def _extra(kinds):
+    """Extra expenses of any kind: the general answer, or extra baggage on either flight (DM 2026-0521 asks for the
+    baggage per flight, liquidation and reimbursement only)."""
+    def rule(kind, a):
+        if kind not in kinds:
+            return None
+        baggage = kind in LR_ and (truthy(a.get("baggage_outbound")) or truthy(a.get("baggage_return")))
+        return "required" if truthy(a.get("extra_expenses")) or baggage else None
+    return rule
+
+
+def _return_baggage(kind, a):
+    """DM 2026-0521: extra baggage on the return flight is not allowed by default when the outbound had none."""
+    if kind in LR_ and truthy(a.get("baggage_return")) and not truthy(a.get("baggage_outbound")):
+        return "required"
+    return None
 
 
 def _cert_appearance(kind, a):
@@ -163,20 +195,35 @@ CHECKLIST: tuple = (
             "Sign in ink when submitting."),
     ItemDef("bto_report", "Back-to-office report", "upload", _bto_report, 1,
             "With highlights, plan of action, recommendations and a dated picture."),
-    ItemDef("meals_lodging_cert", "Certification of meals and lodging", "upload",
-            _when("per_diem_claimed", *LR), 1,
-            "Template pending; may sit inside Appendix B if the Head of Office signs."),
+    ItemDef("meals_lodging_cert", "Certificate of Non-Provision of Meals and Accommodation", "generate",
+            _meals_lodging_cert, 1,
+            "Made from the days you unticked on the prepare page. Full per diem is not allowed for any day the host "
+            "or regional unit provided meals or lodging; the head of office who signs is accountable and an "
+            "inaccurate certificate is not honoured (DM 2026-0521)."),
     ItemDef("plane_ticket", "Plane ticket / e-ticket", "upload", _when("flew", *LR), 1,
-            "Lowest economy fare."),
+            "Lowest regular economy fare. Premium economy, comfort and business class are not allowed unless the "
+            "Office of the President approved them in advance (DM 2024-0369)."),
     ItemDef("plane_fare_proof", "Proof of lowest fare (screenshot or quotation)", "upload",
-            _plane_fare_proof, 1),
+            _plane_fare_proof, 1,
+            "Clear screenshots of the fare options taken just before booking, showing the timestamp, date and fares. "
+            "Lowest regular economy includes Cebu Pacific GO BASIC / GO EASY and PAL Economy Supersaver, Saver, Value "
+            "and Flex. For a PAL round trip, include both the outbound and return fares unless both are Supersaver "
+            "(DM 2026-0521)."),
     ItemDef("boarding_pass", "Boarding pass", "upload", _when("flew", *LR), 1,
             "Thermal paper needs a photocopy."),
     ItemDef("extra_expense_invoice", "Invoice for extra expenses", "upload",
-            _when("extra_expenses", *LR), 1, "Baggage, rebooking, cancellation."),
+            _extra(LR), 1,
+            "Baggage, rebooking, cancellation. Extra baggage on the return flight is not allowed when the outbound "
+            "flight had none, and personal baggage is never paid (DM 2026-0521)."),
     ItemDef("extra_expense_justification", "Justification for extra expenses", "upload",
-            _when("extra_expenses", *KINDS), 1,
-            "Template pending; may sit inside Appendix B."),
+            _extra(KINDS), 1,
+            "Extra baggage must be for official use: say what official items were carried. Template pending; may sit "
+            "inside Appendix B."),
+    ItemDef("return_baggage_justification", "Justification for extra baggage on the return flight only", "upload",
+            _return_baggage, 1,
+            "You had no extra baggage on the outbound flight, so extra baggage on the return is not allowed by default. "
+            "Explain the official items carried back and why; baggage for personal reasons is not paid, and FMS may deny "
+            "claims it finds excessive (DM 2026-0521)."),
     ItemDef("boat_bus_ticket", "Boat or bus ticket", "upload", _when("boat_bus", *LR), 1,
             "Regular air-conditioned bus only."),
     ItemDef("terminal_fee", "Terminal fee receipt", "upload", _when("terminal_fee", *LR), 1),
@@ -186,7 +233,11 @@ CHECKLIST: tuple = (
     ItemDef("rer", "Receipt for Expenses Incurred (RER), one per ride", "generate",
             _when("rides_rer", *LR), 1),
     ItemDef("ridehail_receipt", "Ride-hailing receipts", "upload", _when("ride_hailing", *LR), 1,
-            "Write 'certified duplicate copy of the original' in ink on every page."),
+            "Official e-receipts from the app or email: one passenger, point to point, matching the itinerary's dates "
+            "and route. Keep them: FMS may check them on your phone or email, and unverified receipts are not paid. "
+            "Multi-stop or shared rides count only with all passengers' claims submitted together, the fare split per "
+            "stop, and a justification (DM 2026-0521). Write 'certified duplicate copy of the original' in ink on every "
+            "page."),
     ItemDef("gov_vehicle_docs", "Government vehicle documents", "upload",
             _when("gov_vehicle", *LR), 1, "Trip ticket, fuel, toll, summary."),
     ItemDef("rfid_docs", "RFID documents", "upload", _when("rfid", *LR), 1,
@@ -195,6 +246,10 @@ CHECKLIST: tuple = (
     ItemDef("exceeds_rate_cert", "Certification that expenses exceed the daily rate", "upload",
             _when("exceeds_daily_rate", *LR), 1, "Head of Agency certification."),
     ItemDef("refund_or", "DOH official receipt for the refund", "upload", _when("refund", LIQ), 1),
+    ItemDef("urgent_justification", "Written justification for urgent or unplanned travel", "upload",
+            _when("urgent_travel", CA), 1,
+            "Why the travel could not be anticipated in time. The DPO must already be approved. FMS decides whether "
+            "the request takes its expedited processing window (DM 2026-0521)."),
     ItemDef("gasoline_estimate", "Gasoline estimate", "upload", _when("official_gasoline", CA), 1,
             "Cleared by AS-GSD."),
     ItemDef("travel_report", "Post Travel Report", "generate", _always(*LR), 1,

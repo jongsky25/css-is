@@ -83,6 +83,45 @@ def _calendar_entry_doc_any_key(conn):
     """)
 
 
+TRAVEL_READING_DM_COLS = (("stops", "INTEGER"), ("passengers", "INTEGER"), ("fare_split", "INTEGER"),
+                          ("receipt_source", "TEXT"), ("fare_brand", "TEXT"), ("cabin", "TEXT"),
+                          ("booked_at", "TEXT"), ("captured_at", "TEXT"), ("round_trip", "INTEGER"))
+
+
+def _travel_dm_2026_0521(conn):
+    """10.48: the DM 2026-0521 pre-audit checks. Add the reading columns and widen travel_flag's kind CHECK (a table
+    rebuild keeping every row; nothing references travel_flag). A no-op on a new or already-migrated database."""
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(travel_reading)")}
+    for col, typ in TRAVEL_READING_DM_COLS:
+        if cols and col not in cols:
+            conn.execute(f"ALTER TABLE travel_reading ADD COLUMN {col} {typ}")
+    row = conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='travel_flag'").fetchone()
+    if not row or "return_baggage" in (row[0] or ""):
+        conn.commit()
+        return
+    conn.commit()
+    conn.executescript("""
+    BEGIN;
+    ALTER TABLE travel_flag RENAME TO travel_flag_old;
+    CREATE TABLE travel_flag (
+        id INTEGER PRIMARY KEY,
+        filing_id INTEGER NOT NULL REFERENCES travel_filing(id) ON DELETE CASCADE,
+        kind TEXT NOT NULL CHECK (kind IN ('over_ceiling','unlisted_route','no_receipt_over_1000','participant_only','receipt_mismatch','shared_ride','fare_class','fare_proof','return_baggage')),
+        sig TEXT NOT NULL, detail TEXT,
+        state TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open','verified','rejected')),
+        supervisor_confirmed INTEGER NOT NULL DEFAULT 0, note TEXT, decided_by TEXT, decided_at TEXT,
+        created_at TEXT,
+        UNIQUE (filing_id, sig)
+    );
+    INSERT INTO travel_flag (id, filing_id, kind, sig, detail, state, supervisor_confirmed, note, decided_by, decided_at,
+                             created_at)
+        SELECT id, filing_id, kind, sig, detail, state, supervisor_confirmed, note, decided_by, decided_at, created_at
+        FROM travel_flag_old;
+    DROP TABLE travel_flag_old;
+    COMMIT;
+    """)
+
+
 def init_db(conn):
     """Create all the tables (safe to run again -- it won't duplicate)."""
     short_links.init_db(conn)
@@ -830,13 +869,16 @@ def init_db(conn):
         doc TEXT NOT NULL CHECK (doc IN ('receipt','appearance')),
         kind TEXT, amount REAL, currency TEXT, day TEXT, origin TEXT, destination TEXT,
         vendor TEXT, reference TEXT, dep_time TEXT, arr_time TEXT, date_from TEXT, date_to TEXT,
-        created_at TEXT
+        created_at TEXT,
+        -- DM 2026-0521 (10.48): what the pre-audit checks read; NULL when the document does not show it
+        stops INTEGER, passengers INTEGER, fare_split INTEGER, receipt_source TEXT, fare_brand TEXT, cabin TEXT,
+        booked_at TEXT, captured_at TEXT, round_trip INTEGER
     );
     CREATE INDEX IF NOT EXISTS ix_travel_reading_filing ON travel_reading(filing_id);
     CREATE TABLE IF NOT EXISTS travel_flag (
         id INTEGER PRIMARY KEY,
         filing_id INTEGER NOT NULL REFERENCES travel_filing(id) ON DELETE CASCADE,
-        kind TEXT NOT NULL CHECK (kind IN ('over_ceiling','unlisted_route','no_receipt_over_1000','participant_only')),
+        kind TEXT NOT NULL CHECK (kind IN ('over_ceiling','unlisted_route','no_receipt_over_1000','participant_only','receipt_mismatch','shared_ride','fare_class','fare_proof','return_baggage')),
         sig TEXT NOT NULL, detail TEXT,
         state TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open','verified','rejected')),
         supervisor_confirmed INTEGER NOT NULL DEFAULT 0, note TEXT, decided_by TEXT, decided_at TEXT,
@@ -1509,6 +1551,7 @@ def _add_missing_columns(conn):
                updated_at       TEXT
            )""")
     _calendar_entry_doc_any_key(conn)
+    _travel_dm_2026_0521(conn)
     sf_cols = {row[1] for row in conn.execute("PRAGMA table_info(spot_feedback)")}
     # submitter_seen_at: when the person who left the feedback last looked at their
     # "My feedback" page. Drives the unread badge (any newer update = unread).
