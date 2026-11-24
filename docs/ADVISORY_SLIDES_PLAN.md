@@ -152,4 +152,5 @@ What the app could do when an advisory is issued, from what exists today:
 | Office Connect notice | Built | "Issued advisories for you" already lists it for internal recipients. |
 | Activity calendar entry | Small | Show the issued advisory on the activity's calendar entry. |
 
-Working recommendation: email (built) + Telegram group post + share button.
+Owner (November 24): Telegram group posting is later, not in this build. Email stays.
+Share button: explained to the owner; decision pending.
