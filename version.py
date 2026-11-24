@@ -28,7 +28,8 @@ CHANGELOG = [
         "summary": "The calendar item page now links to the activity's advisory.",
         "changes": [
             "A calendar item that is linked to an activity now has an Advisory card with buttons to open the advisory and the advisory register.",
-            "A calendar item that is not yet an activity offers a button to create the activity, which is what an advisory is prepared from."
+            "A calendar item that is not yet an activity offers a button to create the activity, which is what an advisory is prepared from.",
+            "When an advisory is not available to you (for example, a draft someone else started and has not shared), you now see a clear page with a way back instead of a downloaded text file."
         ],
     },
     {

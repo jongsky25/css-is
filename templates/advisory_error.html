@@ -1,0 +1,8 @@
+{% extends "dash_layout.html" %}
+{% block title %}Advisory unavailable — Office Connect{% endblock %}
+{% block content %}<div style="max-width:52rem;margin:auto;overflow-wrap:anywhere">
+<h1>{{ 'This advisory is not available to you' if denied else 'The advisory could not be opened' }}</h1>
+<p role="alert">{{ error }}</p>
+{% if denied %}<p>It may have been started by someone else, or it may be limited to certain people. Ask the person who started it, or a records officer or director for the unit, to give you access.</p>{% endif %}
+<p><a class="btn" href="/advisories">Advisory register</a> <a class="btn ghost" href="/calendar">Back to the calendar</a></p>
+</div>{% endblock %}
