@@ -1,5 +1,15 @@
 # Cloud/mobile setup status
 
+## Emails for new staff; Division 3 decided — November 24, 2026
+
+10.46 merged (PR #639). Owner decided Division 3 keeps the order's name, LHSIID (already
+what the plan and mapping use). Owner supplied DOH emails for the staff the switch will
+create; 26 were matched to DPO names (owner confirmed the probable ones and Ma. Carmela
+Santiago) and added to the private mapping. Rule (owner): emails only for new records or
+records not yet in use. Six addresses are not in the DPO; the owner will clarify them.
+Candidate 10.47 adds the `email` support. Apply the restructure after 10.47 is live for
+emails to be set; applying earlier creates the records without emails.
+
 ## Restructure ready to switch on; 10.45 live — November 23, 2026
 
 Released and verified today (each guarded deployment: verified live snapshot, upload,

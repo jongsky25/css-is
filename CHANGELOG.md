@@ -1,3 +1,8 @@
+## 10.47 — November 24, 2026
+
+- Restructure mapping entries may carry an `email`: set only on records the switch creates or on existing records not yet in use (no email, no active account); never overwritten, never duplicated across current records; invalid addresses stop the run.
+- Record the owner's decision that Division 3 keeps the order's name (LHSIID), not Annex A's "HSIKCDD".
+
 ## 10.46 — November 23, 2026
 
 - Raise the full-suite job limit from 75 to 100 minutes: ~10,660 tests take 48–65 min of test time on identical code depending on the hosted runner (~45% spread); one run reached 75 min at 98% with no failures. Per-test setup is 20–50 ms; the time is test work spread across the suite.
