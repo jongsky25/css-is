@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr, model_
 
 import documents as docs
 import documents_permissions as permissions
+import auth
 import storage as st
 import travel
 import travel_checklist as checklist
@@ -76,7 +77,7 @@ def install(conn):
 
 def actor(conn, user):
     user = permissions.actor(conn, user)
-    if user.get('must_change') or user['role'] not in ('viewer', 'encoder', 'section_manager', 'admin'):
+    if user.get('must_change') or not auth.valid_role(user['role']):
         raise permissions.Denied('Travel drafts are unavailable to you.')
     if not travel.enabled(conn):
         raise docs.Conflict('Travel filing is disabled.')

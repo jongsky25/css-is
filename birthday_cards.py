@@ -2,7 +2,7 @@
 
 A second FastAPI APIRouter (like calendar_routes.py) so app.py does not grow. It cannot import
 `app`, so app.py hands over the Jinja environment, the connection factory, "today" and its audit
-helper. Login is enforced by app._auth_gate by path, and /admin/* additionally requires manage_users.
+helper. Login is enforced by app._auth_gate by path, and /admin/* additionally requires operate (or manage_users for account pages).
 
 Who may send a card is decided in office_calendar.card_celebrants: only someone whose birthday the
 sender may already see, only in the six days before it and on the day. Cards are held until the
@@ -125,7 +125,7 @@ def make_router(templates, get_conn, today_local, audit):
 
     @router.get("/admin/birthday-cards", response_class=HTMLResponse)
     def admin_cards(request: Request, msg: str = ""):
-        if not auth.can(request.state.user["role"], "manage_users"):
+        if not auth.can(request.state.user["role"], "operate"):
             return RedirectResponse("/", status_code=303)
         conn = get_conn()
         try:
@@ -137,7 +137,7 @@ def make_router(templates, get_conn, today_local, audit):
 
     @router.post("/admin/birthday-cards/{card_id}/hidden")
     async def admin_card_hidden(request: Request, card_id: int):
-        if not auth.can(request.state.user["role"], "manage_users"):
+        if not auth.can(request.state.user["role"], "operate"):
             return RedirectResponse("/", status_code=303)
         from urllib.parse import parse_qsl
         hide = dict(parse_qsl((await request.body()).decode("utf-8"))).get("hide") == "1"

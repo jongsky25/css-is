@@ -33,14 +33,32 @@ def fingerprint(conn, e) -> str:
     return hashlib.sha1(json.dumps(basis, default=str).encode()).hexdigest()[:16]
 
 
-def can_send(user, e) -> bool:
-    """The person who made the item, anyone on it, and section managers or admins. Visibility alone is not enough:
-    this emails other people."""
+def can_send(user, e, conn=None) -> bool:
+    """The person who made the item, anyone on it, the Super Administrator, and a manager level (Section/Division
+    Manager, Administrator) whose unit reach covers the unit that owns the item. Visibility alone is not enough:
+    this emails other people. Without `conn` the unit rule cannot be answered and managers are not admitted."""
     if not user or e["status"] == "cancelled":
         return False
-    if user.get("role") in ("admin", "section_manager"):
+    if user.get("role") == "admin":
         return True
-    return user.get("username") == e.get("created_by") or any(p["user_id"] == user["id"] for p in e["people"])
+    if user.get("username") == e.get("created_by") or any(p["user_id"] == user["id"] for p in e["people"]):
+        return True
+    return conn is not None and manages_unit(conn, user, e.get("owner_org_id"))
+
+
+def manages_unit(conn, user, org_unit_id) -> bool:
+    """Does a manager level's unit reach (storage.activity_scope_for_user) cover this org unit?"""
+    if not org_unit_id or user.get("role") not in ("section_manager", "division_manager", "system_admin"):
+        return False
+    row = conn.execute("SELECT path FROM org_unit WHERE id=?", (org_unit_id,)).fetchone()
+    if not row:
+        return False
+    scope_path, kind, exact = st.activity_scope_for_user(conn, user)
+    if kind == "bureau":
+        return True
+    if kind != "unit":
+        return False
+    return row[0] == scope_path if exact else st._path_in_scope(row[0], scope_path)
 
 
 def parse_extra(text):

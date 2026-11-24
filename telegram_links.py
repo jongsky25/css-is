@@ -249,7 +249,7 @@ def authorized(conn, account_id, action):
         return False
     return bool(conn.execute('''SELECT 1 FROM telegram_connection c JOIN admin_user u ON u.id=c.account_id
         JOIN telegram_grant g ON g.connection_id=c.id AND g.account_id=c.account_id AND g.generation=c.generation
-        WHERE c.account_id=? AND c.state='active' AND u.active=1 AND u.must_change=0 AND u.role IN ('viewer','encoder','section_manager','admin') AND g.action=? AND g.revoked_at IS NULL AND g.bot_identity=? AND g.bot_fingerprint=?''', (account_id, action, bot[0], bot[2])).fetchone())
+        WHERE c.account_id=? AND c.state='active' AND u.active=1 AND u.must_change=0 AND u.role IN ('''+auth.role_sql_list()+''') AND g.action=? AND g.revoked_at IS NULL AND g.bot_identity=? AND g.bot_fingerprint=?''', (account_id, action, bot[0], bot[2])).fetchone())
 
 
 def render(conn, projection, sender, bot, now):
