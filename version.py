@@ -27,7 +27,8 @@ CHANGELOG = [
         "date": "November 24, 2026",
         "summary": "The calendar item page now links to the activity's advisory.",
         "changes": [
-            "A calendar item that is linked to an activity now has an Advisory card with buttons to open the advisory and the advisory register."
+            "A calendar item that is linked to an activity now has an Advisory card with buttons to open the advisory and the advisory register.",
+            "A calendar item that is not yet an activity offers a button to create the activity, which is what an advisory is prepared from."
         ],
     },
     {

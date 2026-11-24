@@ -246,7 +246,12 @@
   {% elif css.eligible %}
   <div class="cal-css-box">
     <a class="cal-btn" href="/create?from_entry={{ e.id }}">Collect feedback (CSS)</a>
-    <span class="cal-range">Opens the create-activity form with this item's details filled in; the item is linked to the new activity. The advisory is prepared from that activity, so it appears here once the item is linked.</span>
+    <span class="cal-range">Opens the create-activity form with this item's details filled in; the item is linked to the new activity.</span>
+    <div id="advisory">
+      <strong>📣 Advisory</strong>
+      <a class="cal-btn" href="/create?from_entry={{ e.id }}">Create the activity to prepare an advisory</a>
+      <span class="cal-range">An advisory is prepared from a CSS activity. This creates one from this item, which also gives you the feedback and rating links; the item is linked to it, and the Advisory buttons appear here afterwards.</span>
+    </div>
     {% if css.candidates %}
     <div class="cal-flash warn"><strong>This may already be an activity</strong>
       {% for c in css.candidates %}

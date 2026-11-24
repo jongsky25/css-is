@@ -1,6 +1,6 @@
 ## 10.49 — November 24, 2026
 
-- Calendar item page (`templates/calendar_entry.html`, `calendar_routes.py`): when the item is linked to a CSS activity the viewer can manage (`can_manage_event`), "Related actions" shows an Advisory card linking to `/activities/{token}/advisory` and `/advisories`. Unlinked items get a hint that it appears once linked. No change to the advisory routes or workflow.
+- Calendar item page (`templates/calendar_entry.html`, `calendar_routes.py`): when the item is linked to a CSS activity the viewer can manage (`can_manage_event`), "Related actions" shows an Advisory card linking to `/activities/{token}/advisory` and `/advisories`. Unlinked items that can collect feedback get a "Create the activity to prepare an advisory" button (the existing `/create?from_entry=` form), since an advisory is stored against a CSS activity. No change to the advisory routes or workflow.
 
 ## 10.48 — November 24, 2026
 

@@ -236,10 +236,12 @@ def test_the_item_page_offers_an_activity_that_already_exists_and_links_it(app_m
 def test_a_linked_item_page_offers_the_advisory_only_to_those_who_manage_the_activity(app_mod, admin, viewer, conn):
     ev, token, _ = new_event(conn, "CALLK Orientation")
     eid = entry(conn)
-    assert f"/activities/{token}/advisory" not in admin.get(f"/calendar/entries/{eid}").text    # not linked yet
+    first = admin.get(f"/calendar/entries/{eid}").text                                             # not linked yet
+    assert f"/activities/{token}/advisory" not in first and f'href="/create?from_entry={eid}">Create the activity to prepare an advisory' in first
     st.cal_link_event(conn, eid, ev)
     page = admin.get(f"/calendar/entries/{eid}").text
     assert f'href="/activities/{token}/advisory"' in page and 'href="/advisories"' in page
+    assert "Create the activity to prepare an advisory" not in page
     assert f"/activities/{token}/advisory" not in viewer.get(f"/calendar/entries/{eid}").text
 
 
