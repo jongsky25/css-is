@@ -5,7 +5,16 @@ Travelling Expenses based on 2026 Pre-Audit Observations". It cites PD 1445, EO 
 DO 2019-0225, DM 2023-0092 and DM 2024-0369. The memo itself is not committed; this file
 records only its directives and how they map onto Travel filing.
 
-Status: scoped November 24, 2026; owner decisions recorded below; **DM1 built** (candidate 10.47) on `claude/cool-davinci-y5s3re`, PR #640.
+Status: scoped November 24, 2026; owner decisions recorded below; **DM1 and DM3 built** (candidate 10.47) on `claude/cool-davinci-y5s3re`, PR #640.
+
+DM3 as built: per diem days start with meals and lodging ticked as provided (server defaults, upload drafts and the
+prepare page; a browser draft saved before 10.47 is reset to provided, with a notice). The generate step stores the
+derived answer `meals_not_provided`; the checklist row `meals_lodging_cert` is now a generated "Certificate of
+Non-Provision of Meals and Accommodation", required for a liquidation or reimbursement with per diem until the itinerary
+shows every day provided. It lists one line per unticked day (meals, lodging, or both) and is signed by the approver
+(head of office by default). Its Google template is written by `makeNonProvisionTemplate()` in
+`apps_script/travel_templates.gs` and must be run once by a person; until then the person pastes their own copy.
+Certificate wording needs the owner's approval.
 
 ## 1. Directive-by-directive gap map
 

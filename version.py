@@ -30,7 +30,8 @@ CHANGELOG = [
             "A liquidation or reimbursement is now due 5 working days or 7 days after the activity, whichever comes first.",
             "A cash advance shows the date to hand it in to FMS (3 working days before departure), and the daily reminder includes it.",
             "Marking a filing ready asks you to confirm that your receipts are genuine and your certifications are accurate.",
-            "The checklist explains the new rules for ride-hailing receipts, plane fare screenshots, baggage and the meals and lodging certificate."
+            "The checklist explains the new rules for ride-hailing receipts, plane fare screenshots, baggage and the meals and lodging certificate.",
+            "Each per diem day now starts with meals and lodging marked as provided; untick only the days they were not, and the Certificate of Non-Provision is made from those days."
         ],
     },
     {

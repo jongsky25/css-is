@@ -222,10 +222,13 @@ def sync_flags(conn, filing, specs):
     conn.commit()
 
 
+DERIVED_KEYS = ("rides_cenrr", "rides_rer", "meals_not_provided")
+
+
 def set_derived_answers(conn, filing, derived):
-    """Store the platform-set drivers (rides_cenrr / rides_rer) and add any checklist rows they bring."""
+    """Store the platform-set drivers (rides_cenrr / rides_rer / meals_not_provided) and add any checklist rows they bring."""
     ans = answers_of(filing)
-    ans.update({k: 1 if v else 0 for k, v in derived.items() if k in ("rides_cenrr", "rides_rer")})
+    ans.update({k: 1 if v else 0 for k, v in derived.items() if k in DERIVED_KEYS})
     conn.execute("UPDATE travel_filing SET answers_json=?, updated_at=? WHERE id=?",
                  (json.dumps(ans), tz.now_iso(), filing["id"]))
     sync_items(conn, get_filing(conn, filing["id"]))

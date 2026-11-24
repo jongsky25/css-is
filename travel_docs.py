@@ -92,7 +92,8 @@ MODE_LABELS = {"taxi": "Taxi", "tnvs": "TNVS", "public_noreceipt": "Public trans
 MAX_ROWS, MAX_DAYS = 40, 62
 MAX_KM = 2000
 DOC_TEMPLATES = {"appendix_a": "appendix_a", "appendix_b": "appendix_b", "mc114_justification": "mc114_justification",
-                 "jo_cert": "jo_cert", "travel_report": "travel_report", "cenrr": "cenrr", "rer": "rer"}
+                 "jo_cert": "jo_cert", "travel_report": "travel_report", "cenrr": "cenrr", "rer": "rer",
+                 "meals_lodging_cert": "meals_lodging_cert"}
 # A liquidation and a reimbursement are one document in the office's own forms: Appendix A and Appendix B together,
 # each kind with its own layout. It is made once and credited to both checklist rows. A cash advance has Appendix A only.
 CLAIM_TEMPLATES = {"liquidation": "claim_liq", "reimbursement": "claim_rei"}
@@ -100,7 +101,8 @@ CLAIM_ITEMS = ("appendix_a", "appendix_b")
 DOC_TITLES = {"appendix_a": "Appendix A - Itinerary of Travel", "appendix_b": "Appendix B - Certificate of Travel Completed",
               "appendix_ab": "Appendix A and B - Itinerary and Certificate of Travel Completed",
               "mc114_justification": "MC 114 justification", "jo_cert": "Certification for Job Order",
-              "travel_report": "Post Travel Report", "cenrr": "CENRR", "rer": "RER"}
+              "travel_report": "Post Travel Report", "cenrr": "CENRR", "rer": "RER",
+              "meals_lodging_cert": "Certificate of Non-Provision of Meals and Accommodation"}
 DM_CITATION = "DM No. 2025-0202, as amended by DM Nos. 2025-0202-A and 2025-0202-B"
 REQUEST_PHRASE = {"ca": "cash advance", "liquidation": "liquidation", "reimbursement": "reimbursement"}
 STRICTNESS = ("strict", "cut", "extended", "other")
@@ -211,7 +213,7 @@ def blank_row(day="") -> dict:
     day_kind the per diem rule (travel_rates); empty means 'typed in by hand'."""
     return {"date": day, "from": "", "to": "", "dep": "", "arr": "", "mode": "none", "route_type": "",
             "receipt": "none", "allowance": 0, "per_diem": 0, "basis": "", "place": "", "km": 0, "day_kind": "",
-            "lodging_provided": False, "meals_provided": False}
+            "lodging_provided": True, "meals_provided": True}        # DM 2026-0521: provided unless unticked
 
 
 def defaults(conn, filing, profile, settings, readings=()) -> dict:
@@ -298,6 +300,26 @@ def rides_of(rows, ceilings, opts=None) -> list:
         if res.kind:
             out.append((row, key, res))
     return out
+
+
+def unprovided_days(rows) -> list:
+    """[(date ISO, what)] for each itinerary day whose per diem rule pays meals or lodging and that the person
+    unticked as not provided, in date order, one line per date. `what` is 'Meals', 'Lodging' or
+    'Meals and lodging'."""
+    by_day = {}
+    for r in rows:
+        kind = r.get("day_kind")
+        meals = kind in rates.MEAL_DAY_KINDS and not r.get("meals_provided")
+        lodging = kind in rates.LODGING_DAY_KINDS and not r.get("lodging_provided")
+        if (meals or lodging) and r.get("date"):
+            m, l = by_day.get(r["date"], (False, False))
+            by_day[r["date"]] = (m or meals, l or lodging)
+    words = {(True, True): "Meals and lodging", (True, False): "Meals", (False, True): "Lodging"}
+    return [(d, words[v]) for d, v in sorted(by_day.items())]
+
+
+def meals_answers(rows) -> dict:
+    return {"meals_not_provided": 1 if unprovided_days(rows) else 0}
 
 
 def ride_answers(rows, ceilings, opts=None) -> dict:
@@ -479,6 +501,20 @@ def _cenrr(ctx) -> list:
     return out
 
 
+def _meals_cert(ctx) -> list:
+    """The Certificate of Non-Provision of Meals and Accommodation (DM 2026-0521): one line per day the person
+    unticked. The approver (the head of office by default) signs it."""
+    days = unprovided_days(ctx["rows"])
+    if not days:
+        return []
+    f, sig = ctx["filing"], ctx["sig"]
+    return [DocPayload("meals_lodging_cert", "meals_lodging_cert", ctx["title"]("meals_lodging_cert"), {
+        "date": long_date(ctx["today"]), "traveler_name": ctx["name"], "traveler_designation": ctx["designation"],
+        "activity_title": f["act_title"], "venue": f.get("act_venue") or "", "dates": date_range(f["act_start"], f["act_end"]),
+        "dpo_ref": dpo_ref(f), "approver_name": sig["approver_name"], "approver_title": sig["approver_title"]},
+        rows={"days": {"marker": "m_date", "data": [{"m_date": long_date(d), "m_what": w} for d, w in days]}})]
+
+
 def _rers(ctx) -> list:
     out = []
     for r, _k, res in rides_of(ctx["rows"], ctx["ceilings"], ctx["rates"]):
@@ -496,7 +532,8 @@ def _rers(ctx) -> list:
 
 _BUILDERS = {"appendix_a": lambda c: [_appendix_a(c)], "appendix_b": lambda c: [_appendix_b(c)],
              "mc114_justification": lambda c: [_mc114(c)], "jo_cert": lambda c: [_jo_cert(c)],
-             "travel_report": lambda c: [_travel_report(c)], "cenrr": _cenrr, "rer": _rers}
+             "travel_report": lambda c: [_travel_report(c)], "cenrr": _cenrr, "rer": _rers,
+             "meals_lodging_cert": _meals_cert}
 
 
 def build_payloads(kind, filing, profile, settings, posted, codes, *, ceilings, items=(), today=None) -> list:

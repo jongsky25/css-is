@@ -5,8 +5,9 @@ One row per document the checklist can ask for. `rule(kind, answers)` returns "r
 and the answers that drive the checklist. Pure data and functions: no database.
 
 Keys in `answers` that are not asked on the form but filled in by the platform:
-`mc114_format` (copied from the filing) and `rides_cenrr` / `rides_rer` (set when the
-itinerary is prepared, from `travel_rules.ride_check`)."""
+`mc114_format` (copied from the filing), `rides_cenrr` / `rides_rer` (set when the
+itinerary is prepared, from `travel_rules.ride_check`) and `meals_not_provided` (set then too:
+1 when any per diem day has meals or lodging unticked as not provided, DM 2026-0521)."""
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Optional
@@ -98,6 +99,15 @@ def _mc114(kind, a):
     return "optional" if a.get("mc114_format") == "separate" else None
 
 
+def _meals_lodging_cert(kind, a):
+    """DM 2026-0521: every day counts as meals and lodging provided unless the person unticks it, and only
+    unticked days need the Certificate of Non-Provision. Before the itinerary is prepared the answer is
+    not known, so a per diem claim still lists the certificate."""
+    if kind in (LIQ, REI) and truthy(a.get("per_diem_claimed")) and truthy(a.get("meals_not_provided", 1)):
+        return "required"
+    return None
+
+
 def _cert_appearance(kind, a):
     if kind in (LIQ, REI) and truthy(a.get("cert_of_appearance_available", True)):
         return "required"
@@ -163,11 +173,11 @@ CHECKLIST: tuple = (
             "Sign in ink when submitting."),
     ItemDef("bto_report", "Back-to-office report", "upload", _bto_report, 1,
             "With highlights, plan of action, recommendations and a dated picture."),
-    ItemDef("meals_lodging_cert", "Certification of meals and lodging", "upload",
-            _when("per_diem_claimed", *LR), 1,
-            "Certificate of Non-Provision of Meals and Accommodation. Full per diem is not allowed for any day the host "
-            "or regional unit provided meals or lodging; the signer is accountable and an inaccurate certificate is not "
-            "honoured (DM 2026-0521). Template pending; may sit inside Appendix B if the Head of Office signs."),
+    ItemDef("meals_lodging_cert", "Certificate of Non-Provision of Meals and Accommodation", "generate",
+            _meals_lodging_cert, 1,
+            "Made from the days you unticked on the prepare page. Full per diem is not allowed for any day the host "
+            "or regional unit provided meals or lodging; the head of office who signs is accountable and an "
+            "inaccurate certificate is not honoured (DM 2026-0521)."),
     ItemDef("plane_ticket", "Plane ticket / e-ticket", "upload", _when("flew", *LR), 1,
             "Lowest regular economy fare. Premium economy, comfort and business class are not allowed unless the "
             "Office of the President approved them in advance (DM 2024-0369)."),

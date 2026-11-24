@@ -922,7 +922,8 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
             norm = travel_docs.normalize(body)
             ceilings = travel.ceilings(conn)
             opts = _rate_opts(filing, norm["rates"])
-            filing = travel.set_derived_answers(conn, filing, travel_docs.ride_answers(norm["rows"], ceilings, opts))
+            filing = travel.set_derived_answers(conn, filing, {**travel_docs.ride_answers(norm["rows"], ceilings, opts),
+                                                               **travel_docs.meals_answers(norm["rows"])})
             travel.sync_flags(conn, filing, tr.flags_for(filing, norm["rows"], travel.answers_of(filing), ceilings,
                                                          opts, _working(conn)))
             items = _generate_items(conn, filing)

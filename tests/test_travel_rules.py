@@ -279,3 +279,15 @@ def test_the_representative_dpo_row_says_it_allows_a_representative_or_oic_to_si
     assert row.label == "DPO allowing a representative or OIC to sign" and "officer-in-charge" in row.note
     question = next(label for key, label, _ in tc.ANSWER_KEYS if key == "representative_signs")
     assert "allows a representative or OIC to sign" in question
+
+
+def test_the_meals_certificate_follows_the_unticked_days():
+    def codes(answers):
+        return {i.code for i in tr.build_checklist("reimbursement", answers)}
+    assert "meals_lodging_cert" in codes({"per_diem_claimed": 1})                      # not prepared yet: listed
+    assert "meals_lodging_cert" in codes({"per_diem_claimed": 1, "meals_not_provided": 1})
+    assert "meals_lodging_cert" not in codes({"per_diem_claimed": 1, "meals_not_provided": 0})
+    assert "meals_lodging_cert" not in codes({"per_diem_claimed": 0, "meals_not_provided": 1})
+    assert "meals_lodging_cert" not in {i.code for i in tr.build_checklist("ca", {"per_diem_claimed": 1})}
+    spec = tc.BY_CODE["meals_lodging_cert"]
+    assert spec.handling == "generate" and "DM 2026-0521" in spec.note

@@ -109,14 +109,14 @@ def draft_rows(rows, readings) -> list:
             out[target].update(entry)
         elif same_day:
             extra = {**out[same_day[0]], **entry, "per_diem": 0, "day_kind": "", "basis": "", "place": "", "km": 0,
-                     "lodging_provided": False, "meals_provided": False, "route_type": ""}
+                     "lodging_provided": True, "meals_provided": True, "route_type": ""}
             out.insert(same_day[-1] + 1, extra)
         else:
             base = dict(out[0]) if out else {}
             base.update({k: v for k, v in (("date", x["day"] or ""),) if v is not None})
             base.update(entry)
             base.update({"per_diem": 0, "day_kind": "", "basis": "", "place": "", "km": 0, "route_type": "",
-                         "lodging_provided": False, "meals_provided": False})
+                         "lodging_provided": True, "meals_provided": True})
             out.append(base)
     return out
 

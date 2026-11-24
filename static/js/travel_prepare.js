@@ -94,7 +94,7 @@
   var draftStatus = document.getElementById('draft-status');
   function needs(code) { return codes.indexOf(code) >= 0; }
   var BLANK = { date: '', from: '', to: '', dep: '', arr: '', mode: 'none', route_type: '', receipt: 'none', allowance: 0, per_diem: 0,
-                basis: '', place: '', km: 0, day_kind: '', lodging_provided: false, meals_provided: false };
+                basis: '', place: '', km: 0, day_kind: '', lodging_provided: true, meals_provided: true };   // DM 2026-0521: provided unless unticked
   var calc = [], regionDte = null;     // what the server says the policy allows, one entry per row, and the region's daily rate
   var draftKey = 'travel-draft-' + data.ref;
   // What the server drafted from the uploads (rows with `rid`/`src`, and these suggested answers). A browser draft keeps
@@ -108,6 +108,9 @@
     if (d && Array.isArray(d.rows)) {
       var fromServer = state.rows, serverTexts = state.texts, sig = Object.assign({}, state.signatories);
       state.rows = d.rows.map(function (x) { return Object.assign({}, BLANK, x); });
+      // Drafts saved before DM 2026-0521 started every day as not provided; start them over as provided.
+      var reset = d.provided !== 1;
+      if (reset) state.rows.forEach(function (x) { x.meals_provided = true; x.lodging_provided = true; });
       gone = Array.isArray(d.gone) ? d.gone : [];
       var have = {}, added = 0;
       state.rows.forEach(function (x) { if (x.rid) have[x.rid] = 1; });
@@ -121,7 +124,8 @@
       state.signatories = sig;
       if (typeof d.mc114_text === 'string') state.mc114_text = d.mc114_text;
       if (d.rates) state.rates = Object.assign({}, state.rates, d.rates);
-      if (draftStatus) draftStatus.textContent = 'Draft restored from this browser.' + (added ? ' ' + added + ' entr' + (added === 1 ? 'y' : 'ies') + ' added from files you uploaded since.' : '');
+      if (draftStatus) draftStatus.textContent = 'Draft restored from this browser.' + (added ? ' ' + added + ' entr' + (added === 1 ? 'y' : 'ies') + ' added from files you uploaded since.' : '')
+        + (reset ? ' Meals and lodging now start as provided: untick any day they were not.' : '');
     }
   } catch (e) {
     if (draftStatus) draftStatus.textContent = 'The saved draft could not be restored. Check your details before making forms.';
@@ -135,7 +139,7 @@
   }
   function save(quiet) {                // quiet: the page itself updated a draft line, so leave the status message alone
     try {
-      localStorage.setItem(draftKey, JSON.stringify({ rows: state.rows, texts: state.texts, signatories: state.signatories, mc114_text: state.mc114_text, rates: state.rates, gone: gone, sugg: sugg, dauto: dayAuto }));
+      localStorage.setItem(draftKey, JSON.stringify({ rows: state.rows, texts: state.texts, signatories: state.signatories, mc114_text: state.mc114_text, rates: state.rates, gone: gone, sugg: sugg, dauto: dayAuto, provided: 1 }));
       if (draftStatus && !quiet) draftStatus.textContent = 'Draft saved in this browser only.';
     } catch (e) {
       if (draftStatus) draftStatus.textContent = 'Draft could not be saved. Keep this page open until you make the forms.';
@@ -297,6 +301,10 @@
         kids.push(check('Meals were provided', r.meals_provided, function (v) { r.meals_provided = v; }));
       }
       if (r.day_kind === 'full') kids.push(check('Lodging was provided', r.lodging_provided, function (v) { r.lodging_provided = v; }));
+      if (r.day_kind === 'full' || r.day_kind === 'departure' || ['monitor', 'monitor_late', 'liaison', 'hpdpb'].indexOf(r.day_kind) >= 0) {
+        kids.push(el('div', { 'class': 'tv-row-wide tv-hint', text: 'Leave these ticked unless the host or regional unit really did not provide them. '
+          + 'A day you untick goes on the Certificate of Non-Provision, which the head of office signs and is accountable for (DM 2026-0521).' }));
+      }
       var pdField = field('Per diem (\u20b1)', r.per_diem, function (v) { r.per_diem = v; ownPerDiem.add(r); }, { type: 'number', refresh: true });
       kids.push(pdField);
       var pdLine = el('div', { 'class': 'tv-row-wide tv-hint' }), noteLine = el('div', { 'class': 'tv-row-wide tv-flagline' });
