@@ -138,8 +138,13 @@ class Relay:
         """Trash an uploaded file or folder (the relay refuses anything outside its root folder)."""
         return call("trash_file", id=file_id)
 
+    def share_folder(self, *, folder_key, email) -> RelayResult:
+        """Give one office account view access to a filing's Drive folder (relay version 3)."""
+        return call("share_filing", folder_key=folder_key, email=email)
+
 
 UPLOAD_VERSION = 2      # the relay script version that has upload_file and trash_file
+REVIEW_SHARE_VERSION = 3    # the version that shares a claim's folder with its reviewer (share_filing)
 
 
 def get_relay() -> Relay:

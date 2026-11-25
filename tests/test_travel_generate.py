@@ -20,6 +20,7 @@ URL, SECRET = "https://script.google.com/macros/s/AKfyc/exec", "s3cret"
 class Recorder(gr.Relay):
     def __init__(self):
         self.calls, self.fail = [], {}                    # fail: {template_key: error_code}
+        self.shares, self.share_fail = [], ""             # share_folder calls; share_fail: error code to answer with
 
     def generate_doc(self, **kw):
         self.calls.append(kw)
@@ -29,6 +30,10 @@ class Recorder(gr.Relay):
         n = len(self.calls)
         return gr.RelayResult(True, {"ok": True, "id": f"id{n}", "url": f"https://docs.google.com/document/d/doc{n}/edit", "name": kw["title"]})
 
+    def share_folder(self, **kw):
+        self.shares.append(kw)
+        return gr.RelayResult(False, error=self.share_fail) if self.share_fail else gr.RelayResult(True, {"ok": True})
+
 
 @pytest.fixture()
 def relay(monkeypatch):
@@ -36,6 +41,8 @@ def relay(monkeypatch):
     r = Recorder()
     monkeypatch.setattr(gr, "get_relay", lambda: r)
     ratelimit._HITS.clear()
+    import travel_review
+    travel_review._shared.clear()                         # claim refs repeat between tests
     return r
 
 

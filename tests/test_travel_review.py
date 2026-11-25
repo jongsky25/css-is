@@ -146,6 +146,22 @@ def test_only_the_chosen_reviewer_can_open_or_decide(viewer, encoder, manager, a
     assert travel.get_by_ref(conn, ref)["review_state"] == "requested"
 
 
+def test_the_chosen_reviewer_is_given_access_to_the_files(viewer, encoder, manager, conn, unit, relay, sent):
+    ref = mk(viewer); complete(conn, ref)
+    relay.share_fail = "unknown_action"                                    # a relay script older than version 3
+    ask(viewer, ref, unit[REVIEWER])
+    assert relay.shares == [{"folder_key": ref, "email": REVIEWER}]
+    assert travel.get_by_ref(conn, ref)["review_state"] == "requested"     # a failed share never stops the request
+    relay.share_fail = ""                                                  # the script was updated: opening the page shares
+    assert encoder.get(f"/travel/review/{ref}").status_code == 200
+    assert relay.shares[-1] == {"folder_key": ref, "email": REVIEWER} and len(relay.shares) == 2
+    encoder.get(f"/travel/review/{ref}")
+    assert len(relay.shares) == 2                                          # shared once is enough
+    assert manager.get(f"/travel/review/{ref}").status_code == 403          # nobody else is given access
+    assert {s_["email"] for s_ in relay.shares} == {REVIEWER}
+    assert "shared with you when the claim is sent to you" in encoder.get(f"/travel/review/{ref}").text
+
+
 def test_the_bell_and_nav_tell_each_side(viewer, encoder, conn, unit, relay, sent):
     import travel_notify, tzutil as tz
     ref = mk(viewer); complete(conn, ref); ask(viewer, ref, unit[REVIEWER])

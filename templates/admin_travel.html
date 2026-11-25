@@ -28,6 +28,7 @@
   <h2 class="tv-h">Documents relay</h2>
   {% if relay_ready %}
   <p class="tv-hint">Set up. Requests go to <strong>{{ relay_host or 'the configured address' }}</strong>.</p>
+  {% if not relay_shares %}<p class="tv-hint">Reviewers may not be able to open a claim's files until the relay script is updated to version 3 (<code>apps_script/travel_docs.gs</code>; Deploy, Manage deployments, New version), then tested here.</p>{% endif %}
   <button class="btn" type="submit">Test the relay</button>
   {% else %}
   <p class="tv-hint">Not set up yet. Until it is, people paste a link to a form they made themselves. Steps are in <code>docs/TRAVEL_DOCS_RELAY_SETUP.md</code>; the two Space secrets are <code>CSS_DOCS_RELAY_URL</code> and <code>CSS_DOCS_RELAY_SECRET</code>.</p>

@@ -124,6 +124,14 @@ def test_the_script_source_matches_the_signing_scheme():
     src = open("apps_script/travel_docs.gs").read()
     assert "computeHmacSha256Signature(env.ts + '.' + env.payload" in src
     assert "5 * 60 * 1000" in src and "ALLOWED_DOMAIN" in src and "request_id=" in src
+    assert "case 'share_filing'" in src and "version: 3" in src            # the client's REVIEW_SHARE_VERSION
+    assert gr.REVIEW_SHARE_VERSION == 3
+
+
+def test_share_folder_sends_only_the_folder_and_the_address(env, posts):
+    assert gr.Relay().share_folder(folder_key="TR-1", email="a@doh.gov.ph").ok
+    req = json.loads(posts[-1][1]["json"]["payload"])
+    assert req == {"action": "share_filing", "folder_key": "TR-1", "email": "a@doh.gov.ph"}
 
 
 # --------------------------------------------------------- admin and routes ---
@@ -199,6 +207,9 @@ def test_admin_page_shows_status_and_ping_reports_the_result(admin, fake, env):
     r = post(admin, "/admin/travel/ping")
     assert r.status_code == 303 and fake.pings == 1
     assert "answered" in admin.get(r.headers["location"]).text
+    assert "updated to version 3" in admin.get("/admin/travel").text      # answered as version 1: reviewers cannot open files
+    fake.ping_version = 3; post(admin, "/admin/travel/ping")
+    assert "updated to version 3" not in admin.get("/admin/travel").text
     fake.result = gr.RelayResult(False, error="unauthorized")
     assert "rejected the signature" in admin.get(post(admin, "/admin/travel/ping").headers["location"]).text
 
@@ -298,7 +309,7 @@ def row(conn, code="dpo"):
 
 def test_the_script_has_the_upload_actions_and_only_trashes_under_the_root():
     src = open("apps_script/travel_docs.gs").read()
-    assert "case 'upload_file'" in src and "case 'trash_file'" in src and "version: 2" in src
+    assert "case 'upload_file'" in src and "case 'trash_file'" in src and "version: 3" in src
     assert "underRoot_(item, rootId)" in src and "request_id=" in src
 
 

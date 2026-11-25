@@ -11,6 +11,7 @@ review_state on the filing: ''  nothing asked yet
                             'changes'    the reviewer sent notes back
                             'approved'   the papers are complete"""
 from __future__ import annotations
+import logging
 
 import storage as st
 import tzutil as tz
@@ -60,6 +61,28 @@ def can_review(conn, user, filing) -> bool:
     """The chosen reviewer, as long as they are still in the Administrative Section."""
     import rooms
     return is_reviewer(user, filing) and rooms.is_room_admin(conn, user)
+
+
+_shared: set = set()     # (ref, email) pairs this process has shared; the relay call is safe to repeat anyway
+
+
+def share_papers(ref, email) -> bool:
+    """Give the chosen reviewer view access to the claim's Drive folder, which holds the forms made for it and every
+    uploaded file. Without it the review page lists the documents but Google refuses to open them for the reviewer.
+    Links the traveller pasted from elsewhere stay as the traveller shared them. Best effort; never raises."""
+    import gdocs_relay
+    if not ref or not email or (ref, email) in _shared or not gdocs_relay.configured():
+        return False
+    try:
+        res = gdocs_relay.get_relay().share_folder(folder_key=ref, email=email)
+    except Exception:                                      # noqa: BLE001 - a background task must not crash
+        res = None
+    if res is not None and res.ok:
+        _shared.add((ref, email))
+        return True
+    logging.getLogger(__name__).warning("Travel papers not shared with the reviewer: filing=%s error=%s",
+                                        ref, res.error if res is not None else "exception")
+    return False
 
 
 def _get(conn, filing_id):
