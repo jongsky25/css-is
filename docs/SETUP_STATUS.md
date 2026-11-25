@@ -1,15 +1,15 @@
-## Travel reviewers can open the papers: candidate 10.56 — November 25, 2026
+## Travel reviewers can open the papers: 10.56 live — November 25, 2026
 
 Owner asked whether Admin Unit reviewers of travel claims still lack access, then said "yes do it".
 Finding: the app let the chosen reviewer in, but every form and upload was shared in Drive only with
-the traveller, so the review page's Open buttons failed for the reviewer. Candidate **10.56** on
-`claude/vibrant-cray-q4u26g`: relay action `share_filing` (script version 3) shares the claim's folder
-with the chosen reviewer when the review is requested and again when they open the review page.
-No schema change. Verification: 868 travel/relay tests passed; 5 browser-driven tests could not run
-here (Playwright browser missing in this container, same failure without the change); release metadata OK.
-Next: owner pastes the updated `apps_script/travel_docs.gs` into the travel relay project, deploys a
-New version, presses **Test the relay** (should record version 3), then merges the PR when satisfied.
-Merge/release only on owner instruction.
+the traveller, so the review page's Open buttons failed for the reviewer. Fix: relay action
+`share_filing` (script version 3) shares the claim's folder with the chosen reviewer when the review
+is requested and again when they open the review page. No schema change.
+PR #651 merged on the owner's "merge when ready" after all required checks passed (one stale advisory
+test fixed first); deploy run succeeded and the live /login shows 10.56. The owner pressed Test the relay
+(it answered); whether it answered as version 3 is not yet confirmed.
+Next: owner opens Admin → Travel filing settings; no "version 3" note means the relay is version 3.
+If the note shows, redeploy the existing web-app deployment as a New version and test again.
 
 ## Administrator powers: candidate 10.54 — November 25, 2026
 
