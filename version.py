@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.55"
+APP_VERSION = "10.56"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.56",
+        "date": "November 25, 2026",
+        "summary": "The Admin Unit member you choose to review your travel papers can now open the files.",
+        "changes": [
+            "When you send a travel claim for review, the forms made for it and the files you uploaded are shared with the reviewer you chose, so the Open buttons on their review page work.",
+            "A link you pasted from your own Drive still opens only if you shared it with the reviewer yourself.",
+        ],
+    },
     {
         "version": "10.55",
         "date": "November 25, 2026",

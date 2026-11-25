@@ -1,3 +1,16 @@
+## Travel reviewers can open the papers: candidate 10.56 — November 25, 2026
+
+Owner asked whether Admin Unit reviewers of travel claims still lack access, then said "yes do it".
+Finding: the app let the chosen reviewer in, but every form and upload was shared in Drive only with
+the traveller, so the review page's Open buttons failed for the reviewer. Candidate **10.56** on
+`claude/vibrant-cray-q4u26g`: relay action `share_filing` (script version 3) shares the claim's folder
+with the chosen reviewer when the review is requested and again when they open the review page.
+No schema change. Verification: 868 travel/relay tests passed; 5 browser-driven tests could not run
+here (Playwright browser missing in this container, same failure without the change); release metadata OK.
+Next: owner pastes the updated `apps_script/travel_docs.gs` into the travel relay project, deploys a
+New version, presses **Test the relay** (should record version 3), then merges the PR when satisfied.
+Merge/release only on owner instruction.
+
 ## Administrator powers: candidate 10.54 — November 25, 2026
 
 Owner asked to give the Administrator more administration but limit its power to delete in

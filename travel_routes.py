@@ -615,13 +615,16 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
         finally:
             conn.close()
 
+    def _relay_version(conn):
+        """The script version the relay last answered a test with (0 when never tested)."""
+        try:
+            return int(st.get_setting(conn, "travel.relay_version", "0") or 0)
+        except ValueError:
+            return 0
+
     def _uploads_ready(conn):
         """Upload to Drive is offered only once the relay has answered a test with the version that has it."""
-        try:
-            v = int(st.get_setting(conn, "travel.relay_version", "0") or 0)
-        except ValueError:
-            v = 0
-        return gdocs_relay.configured() and v >= gdocs_relay.UPLOAD_VERSION
+        return gdocs_relay.configured() and _relay_version(conn) >= gdocs_relay.UPLOAD_VERSION
 
     def _trash(file_id):
         try:
@@ -1232,7 +1235,9 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
                 f"{base_url(request)}/travel/review/{done['ref_code']}", again=again), "travel_review_request")
             audit(request, conn, "travel_review_request", target_type="travel_filing", target_id=done["id"],
                   summary=f"asked {rname or to} to review {done['ref_code']}")
-            return _go(f"/travel/f/{ref}#travel-review", msg=f"Sent to {rname or to} to check. You will get an email with their answer.")
+            resp = _go(f"/travel/f/{ref}#travel-review", msg=f"Sent to {rname or to} to check. You will get an email with their answer.")
+            resp.background = BackgroundTask(review.share_papers, done["ref_code"], to)   # so the reviewer can open the files
+            return resp
         finally:
             conn.close()
 
@@ -1282,7 +1287,12 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
         conn = get_conn()
         try:
             filing, bad = _reviewer_load(request, conn, ref)
-            return bad or _review_page(request, conn, filing)
+            if bad:
+                return bad
+            resp = _review_page(request, conn, filing)
+            if filing["review_state"] == "requested":     # also covers requests made through MCP or before the relay could share
+                resp.background = BackgroundTask(review.share_papers, filing["ref_code"], request.state.user.get("username") or "")
+            return resp
         finally:
             conn.close()
 
@@ -1433,6 +1443,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
         return {"nav_active": "admin_travel", "enabled": travel.enabled(conn),
                 "relay_ready": gdocs_relay.configured(),
                 "relay_host": urlparse(os.environ.get(gdocs_relay.ENV_URL, "")).netloc,
+                "relay_shares": _relay_version(conn) >= gdocs_relay.REVIEW_SHARE_VERSION,
                 "holiday_notice": travel.holiday_notice(conn, today_local()),
                 "sig": {k: st.get_setting(conn, f"travel.sig.{k}", "") for k in keys},
                 "template_admins": st.get_setting(conn, "travel.template_admins", ""),

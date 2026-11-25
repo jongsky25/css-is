@@ -19,11 +19,12 @@ function doPost(e) {
       return reply_(typeof advisoryOperation_ === 'function' ? advisoryOperation_(req) : { ok: false, error: 'advisory_not_installed' });
     }
     switch (req.action) {
-      case 'ping': return reply_({ ok: true, version: 2 });
+      case 'ping': return reply_({ ok: true, version: 3 });
       case 'check_link': return reply_(checkLink_(req));
       case 'generate_doc': return reply_(generateDoc_(req));
       case 'upload_file': return reply_(uploadFile_(req));
       case 'trash_file': return reply_(trashFile_(req));
+      case 'share_filing': return reply_(shareFiling_(req));
       default: return reply_({ ok: false, error: 'unknown_action' });
     }
   } catch (err) { return reply_({ ok: false, error: String(err) }); }
@@ -134,6 +135,20 @@ function uploadFile_(req) {
   let count = 0; const all = folder.getFiles(); while (all.hasNext()) { all.next(); count++; }
   return { ok: true, id: file.getId(), url: file.getUrl(), name: file.getName(),
            folder_id: folder.getId(), folder_url: folder.getUrl(), count: count };
+}
+
+// Version 3. The reviewer a traveller chose gets view access to the claim's folder, ROOT/<folder_key>: the forms made
+// for it and every uploaded file sit inside, and so does anything added later. Without this the review page lists
+// the documents but Google will not open them for the reviewer. Office-domain addresses only; no email from Google.
+function shareFiling_(req) {
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(String(req.folder_key))) return { ok: false, error: 'bad_folder' };
+  const email = String(req.email || '').trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+$/.test(email) || !email.endsWith('@' + String(P.getProperty('ALLOWED_DOMAIN')).toLowerCase())) {
+    return { ok: false, error: 'not_allowed' };
+  }
+  const folder = childFolder_(DriveApp.getFolderById(P.getProperty('ROOT_FOLDER_ID')), req.folder_key);
+  shareQuietly_(folder, email, 'reader');
+  return { ok: true, folder_id: folder.getId() };
 }
 
 function underRoot_(item, rootId) {
