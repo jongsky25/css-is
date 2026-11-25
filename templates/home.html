@@ -552,7 +552,7 @@
     </div>
     {% endif %}
 
-    {% if u and can(u.role, 'directory') %}
+    {% if u and can(u.role, 'directory_edit') %}
     <div class="modcard">
       <div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M3 8h2M3 12h2M3 16h2"/><circle cx="12" cy="10" r="2"/><path d="M9 16c0-1.7 1.3-3 3-3s3 1.3 3 3"/></svg></div>
       <a class="title" href="/directory">Directory &amp; people</a>
@@ -560,6 +560,7 @@
       <div class="subs">
         <a href="/directory">Org tree</a>
         <a href="/directory/cleanup">Name cleanup</a>
+        {% if can(u.role, 'users_edit') and not can(u.role, 'operate') %}<a href="/admin/users">Users</a>{% endif %}
       </div>
     </div>
     {% endif %}

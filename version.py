@@ -18,17 +18,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.54"
+APP_VERSION = "10.55"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "10.54",
+        "version": "10.55",
         "date": "November 25, 2026",
         "summary": "The advisory is listed with the documents for an activity and leads straight on from creating the activity.",
         "changes": [
             "On a calendar item, the Advisory now appears under \"Documents for this activity\", next to the invitation, concept note and program flow.",
             "If the item has no activity yet, the button says \"Create the activity, then the advisory\". The create page explains why the activity comes first, and after Create a \"Continue to the advisory\" button takes you to it.",
+        ],
+    },
+    {
+        "version": "10.54",
+        "date": "November 25, 2026",
+        "summary": "Administrators can now manage accounts and the Directory, but cannot remove or merge.",
+        "changes": [
+            "Administrators can open Users & roles: create accounts, send reset links, change roles up to Division Manager, deactivate or reactivate accounts, set acting OICs and birthdays.",
+            "Administrator and Super Administrator accounts, and who sees bureau-wide, stay with the Super Administrator.",
+            "Administrators can open the Directory: add and edit units, staff and speakers, and fix names in Name cleanup.",
+            "Deleting units, archiving people, merging or splitting records and handling signatures stay with the Super Administrator."
         ],
     },
     {

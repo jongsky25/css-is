@@ -32,7 +32,7 @@ def test_role_catalogue():
     assert auth.ROLE_CAPS["admin"] - auth.ROLE_CAPS["system_admin"] == {
         "manage_users", "operate", "directory", "hide", "triage_feedback"}
     assert auth.ROLE_CAPS["system_admin"] - auth.ROLE_CAPS["section_manager"] == {
-        "manage_walkin_entries", "merge_activity"}
+        "manage_walkin_entries", "merge_activity", "users_edit", "directory_edit"}
     assert auth.ROLE_CAPS["division_manager"] == auth.ROLE_CAPS["section_manager"]
     assert not auth.can("section_manager", "operate")
     assert "wipe" not in set().union(*auth.ROLE_CAPS.values())
@@ -40,7 +40,8 @@ def test_role_catalogue():
 
 
 @pytest.mark.parametrize("path,cap", [
-    ("/admin/users", "manage_users"), ("/admin/users/5/role", "manage_users"),
+    ("/admin/users", "users_edit"), ("/admin/users/5/role", "users_edit"),
+    ("/admin/users/5/active", "users_edit"), ("/admin/users/5/bureau-access", "manage_users"),
     ("/admin/audit", "manage_users"), ("/admin/backups", "manage_users"),
     ("/admin/sharing", "manage_users"), ("/admin/restructure", "manage_users"),
     ("/admin/integrations", "manage_users"), ("/admin/documents/setup", "manage_users"),
@@ -163,11 +164,11 @@ def test_calendar_notice_is_limited_to_the_managers_unit(world):
 def test_administrator_pages(app_mod, world):
     client = TestClient(app_mod.app, raise_server_exceptions=True)
     client.cookies.set(auth.COOKIE_NAME, session_token(world["sys_s1"]))
-    for path in ("/admin/users", "/admin/audit", "/admin/backups", "/admin/restructure",
-                 "/admin/email", "/admin/holidays", "/admin/rules", "/admin/feedback", "/ops",
-                 "/directory"):
+    for path in ("/admin/audit", "/admin/backups", "/admin/restructure",
+                 "/admin/email", "/admin/holidays", "/admin/rules", "/admin/feedback", "/ops"):
         assert client.get(path, follow_redirects=False).status_code == 403, path
-    assert client.get("/arta/entries", follow_redirects=False).status_code == 200
+    for path in ("/arta/entries", "/admin/users", "/directory", "/directory/cleanup"):
+        assert client.get(path, follow_redirects=False).status_code == 200, path
     client.close()
 
 
@@ -200,3 +201,144 @@ def test_release_switch_keeps_one_super_administrator(tmp_path):
     st.init_db(conn)
     assert role(a) == "admin"
     conn.close()
+
+
+# ---- Administrator powers in Users and Directory (docs/ADMINISTRATOR_POWERS_PLAN.md) ----
+
+@pytest.mark.parametrize("path,cap", [
+    ("/directory", "directory_edit"), ("/directory/person", "directory_edit"),
+    ("/directory/person/7/update", "directory_edit"), ("/directory/unit/3/edit", "directory_edit"),
+    ("/directory/cleanup", "directory_edit"), ("/directory/cleanup/rename", "directory_edit"),
+    ("/directory/cleanup/quickfix", "directory_edit"),
+    ("/directory/unit/3/delete", "directory"), ("/directory/person/7/archive", "directory"),
+    ("/directory/person/7/signature.png", "directory"), ("/directory/clear-sample", "directory"),
+    ("/directory/cleanup/archive-low", "directory"), ("/directory/cleanup/merge", "directory"),
+    ("/directory/cleanup/split", "directory"), ("/directory/cleanup/ai-suggest", "directory"),
+])
+def test_directory_paths_split(app_mod, path, cap):
+    assert app_mod._required_cap(path) == cap
+
+
+def test_account_helpers():
+    assert auth.assignable_roles("admin") == auth.ROLES
+    assert auth.assignable_roles("system_admin") == ["viewer", "encoder", "section_manager",
+                                                     "division_manager"]
+    assert auth.assignable_roles("section_manager") == []
+    assert auth.can_manage_account("system_admin", "division_manager")
+    assert not auth.can_manage_account("system_admin", "system_admin")
+    assert not auth.can_manage_account("system_admin", "admin")
+    assert auth.can_manage_account("admin", "admin")
+
+
+def _client(app_mod, user):
+    c = TestClient(app_mod.app, raise_server_exceptions=True)
+    c.cookies.set(auth.COOKIE_NAME, session_token(user))
+    return c
+
+
+def _account(conn, uid):
+    return conn.execute("SELECT role, active FROM admin_user WHERE id=?", (uid,)).fetchone()
+
+
+def test_administrator_manages_accounts_below_administrator(app_mod, world):
+    c, conn = _client(app_mod, world["sys_s1"]), world["conn"]
+    sm = world["sm_s1"]["id"]
+    assert c.post(f"/admin/users/{sm}/role", data={"role": "division_manager"},
+                  follow_redirects=False).status_code == 303
+    assert _account(conn, sm)[0] == "division_manager"
+    assert c.post(f"/admin/users/{sm}/active", data={"active": "0"},
+                  follow_redirects=False).status_code == 303
+    assert not _account(conn, sm)[1]
+    assert c.post(f"/admin/users/{sm}/active", data={"active": "1"},
+                  follow_redirects=False).status_code == 303
+    assert _account(conn, sm)[1]
+    c.close()
+
+
+def test_administrator_cannot_raise_or_touch_admin_accounts(app_mod, world):
+    c, conn = _client(app_mod, world["sys_s1"]), world["conn"]
+    sm, sup = world["sm_s1"]["id"], world["super"]["id"]
+    for role in ("system_admin", "admin"):
+        r = c.post(f"/admin/users/{sm}/role", data={"role": role}, follow_redirects=False)
+        assert "err=" in r.headers["location"]
+        assert _account(conn, sm)[0] == "section_manager"
+    r = c.post(f"/admin/users/{sup}/role", data={"role": "viewer"}, follow_redirects=False)
+    assert "err=" in r.headers["location"] and _account(conn, sup)[0] == "admin"
+    r = c.post(f"/admin/users/{sup}/active", data={"active": "0"}, follow_redirects=False)
+    assert "err=" in r.headers["location"] and _account(conn, sup)[1]
+    r = c.post(f"/admin/users/{sup}/reset-default", follow_redirects=False)
+    assert "err=" in r.headers["location"]
+    r = c.post(f"/admin/users/{sm}/bureau-access", data={"bureau_access": "all"},
+               follow_redirects=False)
+    assert r.status_code == 403
+    page = c.get("/admin/users").text
+    assert "Super Administrator only" in page
+    assert f'action="/admin/users/{sup}/active"' not in page
+    assert "bureau-access" not in page
+    c.close()
+
+
+def test_administrator_cannot_invite_an_administrator(app_mod, world):
+    c, conn = _client(app_mod, world["sys_s1"]), world["conn"]
+    rp = conn.execute("INSERT INTO resource_person(name, is_internal, org_unit_id, email)"
+                      " VALUES ('ULVL-new', 1, ?, 'ulvl-new@test.local')",
+                      (world["unit"][P + "/D1/S1"],)).lastrowid
+    conn.commit()
+    r = c.post("/admin/users/invite", data={"rp_id": str(rp), "role": "admin"},
+               follow_redirects=False)
+    assert "err=" in r.headers["location"]
+    assert st.get_admin_user_by_rp(conn, rp) is None
+    c.close()
+
+
+def test_administrator_directory_edits_but_no_removals(app_mod, world):
+    c, conn = _client(app_mod, world["sys_s1"]), world["conn"]
+    s2 = world["unit"][P + "/D1/S2"]
+    assert c.post(f"/directory/unit/{s2}/delete", follow_redirects=False).status_code == 403
+    rp = conn.execute("SELECT rp_id FROM admin_user WHERE id=?", (world["sm_s1"]["id"],)).fetchone()[0]
+    assert c.post(f"/directory/person/{rp}/archive", follow_redirects=False).status_code == 403
+    assert c.post("/directory/cleanup/merge", data={"src_id": "1", "dst_id": "2"},
+                  follow_redirects=False).status_code == 403
+    assert c.post("/directory/cleanup/quickfix", data={"rp_id": str(rp), "op": "archive"},
+                  follow_redirects=False).status_code == 403
+    assert c.post("/directory/clear-sample", follow_redirects=False).status_code == 403
+    assert conn.execute("SELECT 1 FROM org_unit WHERE id=?", (s2,)).fetchone()
+    # Editing a staff entry below Administrator works.
+    r = c.post(f"/directory/person/{rp}/update",
+               data={"name": "ULVL-sm_s1 edited", "org_unit_id": str(world["unit"][P + "/D1/S1"]),
+                     "confirm": "1"}, follow_redirects=False)
+    assert r.status_code == 303 and "err=" not in r.headers["location"]
+    assert st.get_rp(conn, rp)["name"] == "ULVL-sm_s1 edited"
+    page = c.get("/directory").text
+    assert f"/directory/unit/{s2}/delete" not in page and "/archive" not in page
+    c.close()
+
+
+def test_administrator_cannot_edit_admin_directory_entry(app_mod, world):
+    """The directory email is the login email: editing it could hand over an admin account."""
+    c, conn = _client(app_mod, world["sys_s1"]), world["conn"]
+    rp = conn.execute("SELECT rp_id FROM admin_user WHERE id=?", (world["super"]["id"],)).fetchone()[0]
+    r = c.post(f"/directory/person/{rp}/update",
+               data={"name": "ULVL-super", "email": "ulvl-takeover@test.local", "confirm": "1"},
+               follow_redirects=False)
+    assert "err=" in r.headers["location"]
+    assert _account(conn, world["super"]["id"]) and conn.execute(
+        "SELECT username FROM admin_user WHERE id=?", (world["super"]["id"],)).fetchone()[0] \
+        == world["super"]["username"]
+    c.close()
+
+
+def test_super_administrator_keeps_removals(app_mod, world):
+    c, conn = _client(app_mod, world["super"]), world["conn"]
+    spare = conn.execute("INSERT INTO org_unit(name, short_name, level, path) VALUES (?,?,?,?)",
+                         (P + "/D1/S9", "S9", "section", P + "/D1/S9")).lastrowid
+    conn.commit()
+    assert c.post(f"/directory/unit/{spare}/delete", follow_redirects=False).status_code == 303
+    assert not conn.execute("SELECT 1 FROM org_unit WHERE id=?", (spare,)).fetchone()
+    sys_id = world["sys_s1"]["id"]
+    assert c.post(f"/admin/users/{sys_id}/active", data={"active": "0"},
+                  follow_redirects=False).status_code == 303
+    assert not _account(conn, sys_id)[1]
+    page = c.get("/admin/users").text
+    assert "bureau-access" in page and "Super Administrator only" not in page
+    c.close()

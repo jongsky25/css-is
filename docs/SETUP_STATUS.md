@@ -1,3 +1,11 @@
+## Administrator powers: candidate 10.54 — November 25, 2026
+
+Owner asked to give the Administrator more administration but limit its power to delete in
+Users & roles and Directory. Plan and owner answers: [ADMINISTRATOR_POWERS_PLAN.md](ADMINISTRATOR_POWERS_PLAN.md)
+(no settings/Ops; may deactivate accounts below Administrator; no merging). Built as candidate
+10.54 on `claude/eloquent-sagan-theglm` (PR #648); no schema change. Verification is recorded in the PR.
+Owner said "merge when ready" (Nov 25): merge once CI on the merged head is green; the merge deploys 10.54.
+
 Owner answered all questions (section members edit; Slides comments too; real activity
 created with the advisory; no public page for general advisories; email plus a Share button;
 Telegram later; friendly-interface requirements recorded in the plan).
@@ -12,17 +20,17 @@ Not merged or released. Verification is recorded in the PR.
 Next: owner sets up the relay template (setup guide) and tries it live; increment 5 (remove the
 old poster editor and renderer; clear trial advisories with a backup) on owner instruction. Merge/release only on owner instruction.
 
-## Advisory listed with the activity's documents: candidate 10.54 — November 25, 2026
+## Advisory listed with the activity's documents: candidate 10.55 — November 25, 2026
 
 Spot feedback (owner relayed, Nov 25): "Create the activity to prepare an advisory" under Related
 actions opened the create-survey page with no mention of the advisory. Owner approved the fix.
-Candidate **10.54** on branch `claude/inspiring-brahmagupta-98vx03`: the Advisory card now sits in
+Candidate **10.55** (10.54 went to PR #648) on branch `claude/inspiring-brahmagupta-98vx03`: the Advisory card now sits in
 "Documents for this activity" (Related actions only when an item has no documents block); its
 button carries `then=advisory`, the create page says the advisory comes next, and the result page
 offers "Continue to the advisory". PR #649. Verification: 292 related tests passed locally;
 release metadata OK. Owner instruction (Nov 25): "merge when ready", i.e. merge once all required
 checks pass, then verify the guarded deployment.
-Next: confirm the 10.54 deployment and live /login version.
+Next: confirm the 10.55 deployment and live /login version.
 
 ## Advisories in Google Slides: 10.52 live; wording polish 10.53 ready — November 24, 2026
 
