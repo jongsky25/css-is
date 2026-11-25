@@ -237,12 +237,56 @@ def test_a_linked_item_page_offers_the_advisory_only_to_those_who_manage_the_act
     ev, token, _ = new_event(conn, "CALLK Orientation")
     eid = entry(conn)
     first = admin.get(f"/calendar/entries/{eid}").text                                             # not linked yet
-    assert f"/activities/{token}/advisory" not in first and f'href="/create?from_entry={eid}">Create the activity to prepare an advisory' in first
+    assert f"/activities/{token}/advisory" not in first
+    assert f'href="/create?from_entry={eid}&amp;then=advisory">Create the activity, then the advisory' in first
     st.cal_link_event(conn, eid, ev)
     page = admin.get(f"/calendar/entries/{eid}").text
     assert f'href="/activities/{token}/advisory"' in page and 'href="/advisories"' in page
-    assert "Create the activity to prepare an advisory" not in page
+    assert "then the advisory" not in page
     assert f"/activities/{token}/advisory" not in viewer.get(f"/calendar/entries/{eid}").text
+
+
+def test_the_advisory_is_listed_with_the_documents(app_mod, admin, conn):
+    """Spot feedback: the advisory sits in "Documents for this activity", not only under Related actions."""
+    ev, token, _ = new_event(conn, "CALLK Orientation")
+    eid = entry(conn)
+    page = admin.get(f"/calendar/entries/{eid}").text
+    docs = page[page.index('id="documents"'):page.index('id="related-actions-h"')]
+    assert 'class="cal-doc cal-doc-advisory"' in docs and "then=advisory" in docs
+    assert page.count('id="advisory"') == 1
+    st.cal_link_event(conn, eid, ev)
+    page = admin.get(f"/calendar/entries/{eid}").text
+    docs = page[page.index('id="documents"'):page.index('id="related-actions-h"')]
+    assert f'href="/activities/{token}/advisory"' in docs and page.count('id="advisory"') == 1
+
+
+def test_an_item_without_documents_keeps_the_advisory_under_related_actions(app_mod, admin, conn):
+    ev, token, _ = new_event(conn, "CALLK Orientation")
+    eid = entry(conn)
+    st.cal_link_event(conn, eid, ev)
+    st.cal_cancel(conn, eid)                           # a cancelled item has no documents block
+    page = admin.get(f"/calendar/entries/{eid}").text
+    assert 'id="documents"' not in page and page.count('id="advisory"') == 1
+    assert f'href="/activities/{token}/advisory"' in page[page.index('id="related-actions-h"'):]
+
+
+def test_create_then_advisory_leads_on_to_the_advisory(app_mod, admin, conn):
+    eid = entry(conn, people=[])
+    form = admin.get(f"/create?from_entry={eid}&then=advisory").text
+    assert 'name="then" value="advisory"' in form and "Advisory next." in form
+    plain = admin.get(f"/create?from_entry={eid}").text
+    assert 'name="then"' not in plain and "Advisory next." not in plain
+    r = admin.post("/create", content=create_form(from_entry=str(eid), from_entry_title="CALLK Orientation",
+                                                  then="advisory"), headers=FORM)
+    token = conn.execute("SELECT event_token FROM event WHERE title='CALLK Orientation'").fetchone()[0]
+    assert r.status_code == 200 and f'href="/activities/{token}/advisory"' in r.text and "Continue to the advisory" in r.text
+    assert st.cal_get(conn, eid)["event_id"] is not None
+
+
+def test_create_without_the_advisory_intent_shows_the_usual_result(app_mod, admin, conn):
+    eid = entry(conn, people=[])
+    r = admin.post("/create", content=create_form(from_entry=str(eid)), headers=FORM)
+    assert r.status_code == 200 and "Continue to the advisory" not in r.text and "Saved. Scan a QR" in r.text
 
 
 def test_link_activity_validates_its_input(app_mod, manager, conn):

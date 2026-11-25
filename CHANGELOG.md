@@ -1,3 +1,7 @@
+## 10.55 — November 25, 2026
+
+- Spot feedback (Nov 25): the advisory on a calendar item was only under Related actions, and its button opened "Create activity survey" with no mention of the advisory. `templates/calendar_entry.html` now lists an Advisory card (macro `advisory_card`) last in "Documents for this activity": Open advisory / Advisory register when the item is linked and the person can manage the activity, otherwise "Create the activity, then the advisory" (`/create?from_entry=…&then=advisory`). Items without a documents block (e.g. cancelled) keep the card under Related actions. `create_screen` accepts `then=advisory` for a calendar item; `form_create.html` shows an "Advisory next" note and carries `then` through the form; after a bureau activity is created, `result.html` shows "Continue to the advisory" (`/activities/{token}/advisory`) in place of the usual saved note. No schema change.
+
 ## 10.54 — November 25, 2026
 
 - Administrator powers (`docs/ADMINISTRATOR_POWERS_PLAN.md`, owner answers Nov 25). New capabilities `users_edit` and `directory_edit` for `system_admin` (and `admin`). `_required_cap`: `/admin/users/*` needs `users_edit` except `*/bureau-access` (`manage_users`); `/directory/*` needs `directory_edit` except unit delete, person archive/restore, signature image, clear-sample and cleanup archive-low/merge/split/ai-suggest (`directory`). Cleanup quick-fix archive/unarchive needs `directory`.

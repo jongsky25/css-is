@@ -68,6 +68,22 @@
     <ul>{% for h in heads_up %}<li>{{ h }}</li>{% endfor %}</ul></div>
   {% endif %}
 
+{# The advisory lives on the linked CSS activity, not on the item: listed with the documents (spot feedback),
+   or under Related actions for an item that has no documents block. #}
+{% macro advisory_card(tag='li') %}
+  <{{ tag }} class="cal-doc cal-doc-advisory" id="advisory">
+    <div class="cal-doc-head"><strong>📣 Advisory</strong></div>
+    {% if css.linked and css.advisory %}
+    <p class="cal-hint">Prepared on the activity <strong>{{ css.linked.title }}</strong>: send it for review and keep its saved revisions together.</p>
+    <a class="cal-btn" href="/activities/{{ css.linked.event_token }}/advisory">Open advisory</a>
+    <a class="cal-btn" href="/advisories">Advisory register</a>
+    {% else %}
+    <p class="cal-hint">An advisory is prepared on the CSS activity for this item, so the activity comes first. The next page creates it from this item (it also gives you the feedback and rating links), then takes you to the advisory.</p>
+    <a class="cal-btn" href="/create?from_entry={{ e.id }}&amp;then=advisory">Create the activity, then the advisory</a>
+    {% endif %}
+  </{{ tag }}>
+{% endmacro %}
+{% set show_advisory = (css.linked and css.advisory) or (not css.linked and css.eligible) %}
   {% if documents %}
   <section class="cal-docs" id="documents" aria-labelledby="documents-h">
     <h2 id="documents-h">Documents for this activity</h2>
@@ -199,6 +215,7 @@
         {% endif %}
       </li>
     {% endfor %}
+    {% if show_advisory %}{{ advisory_card() }}{% endif %}
     </ul>
   </section>
   {% endif %}
@@ -235,23 +252,10 @@
   <div class="cal-flash ok" role="status">★ This is linked to the CSS activity <strong>{{ css.linked.title }}</strong>.
     The activity owns the title, dates and venue; this item adds the people and tags.
     <a href="{{ '/monitor/' if css.manage else '/e/' }}{{ css.linked.event_token }}">Open the activity</a></div>
-  {% if css.advisory %}
-  <div class="cal-css-box" id="advisory">
-    <strong>📣 Advisory</strong>
-    <a class="cal-btn" href="/activities/{{ css.linked.event_token }}/advisory">Open advisory</a>
-    <a class="cal-btn" href="/advisories">Advisory register</a>
-    <span class="cal-range">Prepare the advisory for this activity, send it for review and keep its saved revisions together.</span>
-  </div>
-  {% endif %}
   {% elif css.eligible %}
   <div class="cal-css-box">
     <a class="cal-btn" href="/create?from_entry={{ e.id }}">Collect feedback (CSS)</a>
     <span class="cal-range">Opens the create-activity form with this item's details filled in; the item is linked to the new activity.</span>
-    <div id="advisory">
-      <strong>📣 Advisory</strong>
-      <a class="cal-btn" href="/create?from_entry={{ e.id }}">Create the activity to prepare an advisory</a>
-      <span class="cal-range">An advisory is prepared from a CSS activity. This creates one from this item, which also gives you the feedback and rating links; the item is linked to it, and the Advisory buttons appear here afterwards.</span>
-    </div>
     {% if css.candidates %}
     <div class="cal-flash warn"><strong>This may already be an activity</strong>
       {% for c in css.candidates %}
@@ -265,6 +269,8 @@
     {% endif %}
   </div>
   {% endif %}
+
+  {% if show_advisory and not documents %}{{ advisory_card('div') }}{% endif %}
 
   {% if filing %}
   <p class="cal-range">✈ <strong>Travel claim:</strong>

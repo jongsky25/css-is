@@ -6867,7 +6867,8 @@ async def api_ai_feedback(request: Request):
 
 
 @app.get("/create", response_class=HTMLResponse)
-def create_screen(request: Request, from_entry: str = "", from_room: str = "", activity_draft: str = ""):
+def create_screen(request: Request, from_entry: str = "", from_room: str = "", activity_draft: str = "",
+                  then: str = ""):
     conn = get_conn()
     try:
         if activity_draft and (from_entry or from_room):
@@ -6896,7 +6897,8 @@ def create_screen(request: Request, from_entry: str = "", from_room: str = "", a
     if draft_prefill:
         ctx['form'] = draft_prefill
     elif prefill:
-        ctx["form"] = prefill
+        # "Create the activity, then the advisory" on a calendar item: the result page leads on to it.
+        ctx["form"] = {**prefill, "then": "advisory"} if then == "advisory" else prefill
     elif room_prefill:
         ctx["form"] = room_prefill
     return templates.TemplateResponse(request, "form_create.html", ctx,
@@ -6940,6 +6942,7 @@ async def create_survey(request: Request):
         return [v for k, v in pairs if k == key]
 
     from_entry = first("from_entry").strip()               # the calendar item this is made from, if any
+    then_advisory = first("then") == "advisory"           # started from "Create the activity, then the advisory"
     from_room = first("from_room").strip()                 # the room reservation this is made from, if any
     reserve_room = bool(first("reserve_room"))             # "also reserve the conference room" ticked
     room_from, room_to = first("room_from").strip(), first("room_to").strip()
@@ -7052,6 +7055,7 @@ async def create_survey(request: Request):
             "close_at": first("close_at").strip(),
             "speakers": list(zip(rp_ids, topics)),
             "from_entry": from_entry, "from_entry_title": first("from_entry_title").strip(),
+            "then": "advisory" if then_advisory else "",
             "from_room": from_room, "from_room_ref": first("from_room_ref").strip(),
             "reserve_room": reserve_room, "room_from": room_from, "room_to": room_to, "room_meals": room_meals, "room_standby": room_standby,
         }
@@ -7227,6 +7231,8 @@ async def create_survey(request: Request):
         # Bureau events have a managed link tree — surface the next step (welcome /
         # closing messages, shared resources, certificate) so it isn't orphaned.
         "event_token": event_token,
+        # The advisory is prepared on a bureau activity; only offered when the person came for it.
+        "advisory_next": f"/activities/{event_token}/advisory" if then_advisory and event_token else "",
     })
 
 
