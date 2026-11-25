@@ -18,19 +18,32 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.53"
+APP_VERSION = "10.54"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "10.53",
+        "version": "10.54",
         "date": "November 25, 2026",
         "summary": "Administrators can now manage accounts and the Directory, but cannot remove or merge.",
         "changes": [
             "Administrators can open Users & roles: create accounts, send reset links, change roles up to Division Manager, deactivate or reactivate accounts, set acting OICs and birthdays.",
             "Administrator and Super Administrator accounts, and who sees bureau-wide, stay with the Super Administrator.",
             "Administrators can open the Directory: add and edit units, staff and speakers, and fix names in Name cleanup.",
-            "Deleting units, archiving people, merging or splitting records and handling signatures stay with the Super Administrator.",
+            "Deleting units, archiving people, merging or splitting records and handling signatures stay with the Super Administrator."
+        ],
+    },
+    {
+        "version": "10.53",
+        "date": "November 25, 2026",
+        "summary": "Super Administrator can check every advisory; old trial advisories can be removed; clearer advisory wording.",
+        "changes": [
+            "The Super Administrator can now open and check every advisory, including drafts, history and review copies. Approving still belongs only to the Division Chief and the Director.",
+            "Advisories has a link for the Super Administrator to review and delete the old trial advisories made with the old poster editor. A full backup is made first; Google Slides advisories are not touched.",
+            "Review buttons now say what they do: Approve and send to the Director, Approve, Send back with comments, Take it back to edit.",
+            "The advisory history reads as plain sentences with readable dates, under \"What has happened so far\".",
+            "Issuing shows how many people get it, and afterwards how many emails were sent and which need attention, with Send again where needed. Rarely used actions are under More actions.",
+            "Messages about a missing Division Chief or Director now say who to ask."
         ],
     },
     {

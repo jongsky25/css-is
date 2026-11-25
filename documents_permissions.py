@@ -1,4 +1,5 @@
 """One document visibility predicate for detail, queues, exports, jobs and search."""
+import auth
 import json
 import storage as st
 from documents_storage import rows
@@ -79,6 +80,8 @@ def can_view(conn, user, doc):
     if doc['canonical_id']:
         target = rows(conn, 'SELECT * FROM document WHERE id=?', (doc['canonical_id'],))
         return bool(target and can_view(conn, user, target[0]))
+    if auth.is_super_admin(user) and conn.execute('SELECT 1 FROM advisory_record WHERE document_id=?', (doc['id'],)).fetchone():
+        return True  # Owner decision (Nov 25, 2026): the Super Administrator can see every advisory to check them.
     explicit = conn.execute('SELECT 1 FROM document_access WHERE document_id=? AND user_id=?', (doc['id'], user['id'])).fetchone()
     if doc['visibility'] == 'restricted':
         return bool(explicit)  # Even a Director or technical admin needs explicit access.
@@ -151,7 +154,7 @@ class RegistryScope:
         self.division_units = [s['id'] for s in current_seats if s['level']=='division']
         signatories = [g['unit_id'] for g in grants if g['role']=='signatory']
         self.signatory_all = None in signatories
-        self.params = {'registry_actor': self.uid,
+        self.params = {'registry_actor': self.uid, 'registry_super': 1 if auth.is_super_admin(self.user) else 0,
                        'registry_officer_units': json.dumps(covered(records + [s['id'] for s in current_seats])),
                        'registry_workflow_units': json.dumps(covered(workflow)),
                        'registry_signatory_units': json.dumps(covered(signatories)),
@@ -185,7 +188,9 @@ class RegistryScope:
     def _base_view_sql(self, alias):
         explicit = f'''EXISTS (SELECT 1 FROM document_access access
             WHERE access.document_id={alias}.id AND access.user_id=:registry_actor)'''
-        return f'''COALESCE((CASE WHEN {alias}.visibility='restricted' THEN {explicit}
+        advisory = f'''(:registry_super=1 AND EXISTS (SELECT 1 FROM advisory_record super_view
+            WHERE super_view.document_id={alias}.id))'''
+        return f'''COALESCE({advisory} OR (CASE WHEN {alias}.visibility='restricted' THEN {explicit}
             ELSE ({explicit} OR {alias}.creator_id=:registry_actor
               OR ({alias}.verification='verified' AND {alias}.visibility='bureau')
               OR {self.officer_sql(alias)}) END),0)'''

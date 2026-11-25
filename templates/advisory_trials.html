@@ -1,0 +1,26 @@
+{% extends "dash_layout.html" %}
+{% block title %}Old trial advisories{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/advisory.css">{% endblock %}
+{% block content %}
+<div class="adv">
+<p><a href="/advisories">← Advisories</a></p>
+<h1>Old trial advisories</h1>
+<p class="lead">These were made with the old poster editor before advisories moved to Google Slides. They were all trials.</p>
+{% if done %}<div class="adv-ok" role="status"><p style="margin-top:0"><strong>Done.</strong> Removed {{ done.records }} trial advisor{{ 'y' if done.records == 1 else 'ies' }} ({{ done.issues }} issued) and {{ done.posters }} old poster{{ '' if done.posters == 1 else 's' }}.</p><p style="margin-bottom:0">A backup was saved first: {{ done.backup }}.</p></div>{% endif %}
+{% if error %}<p class="adv-alert" role="alert">{{ error }}</p>{% endif %}
+{% if total %}
+<div class="adv-card"><h2>What will be removed</h2>
+{% if records %}<p><strong>{{ records|length }} trial advisor{{ 'y' if records|length == 1 else 'ies' }}</strong>{% if issued %}, {{ issued }} of them issued{% endif %}:</p>
+<ul>{% for r in records %}<li>{{ r.number }} · {{ r.title }}{% if r.activity %} · {{ r.activity }}{% endif %} · started by {{ r.started_by }}</li>{% endfor %}</ul>{% endif %}
+{% if posters %}<p><strong>{{ posters|length }} old poster{{ '' if posters|length == 1 else 's' }}</strong> on activity pages:</p>
+<ul>{% for p in posters %}<li>{{ p.number }} · {{ p.title }}{% if p.activity %} · {{ p.activity }}{% endif %}</li>{% endfor %}</ul>{% endif %}
+<p class="hint">Their saved copies, reviews, comments links, issue records and public pictures are deleted. Emails not yet sent are stopped. The records' history lines in Documents stay (history is never erased), marked as removed. Google Slides advisories are not touched.</p>
+</div>
+<form method="post" action="/advisories/trials" class="adv-card">
+<p style="margin-top:0">A full backup of the database is made first. If the backup fails, nothing is deleted.</p>
+<p><label><input type="checkbox" name="confirm" value="1" required> I understand these trial advisories will be deleted.</label></p>
+<button class="btn danger" type="submit">Back up, then delete them</button>
+</form>
+{% elif not done %}<p class="adv-ok">There are no old trial advisories left.</p>{% endif %}
+</div>
+{% endblock %}

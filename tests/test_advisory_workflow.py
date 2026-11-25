@@ -80,7 +80,9 @@ def test_visibility_counts_and_current_actor(drafts):
     first=create(drafts)
     assert aw.list_visible(c,users[0])['total']==1
     assert aw.list_visible(c,users[0],unit_id=other)['total']==0
-    for user in users[1:]:
+    # users[1] is a Super Administrator: owner decision (Nov 25, 2026) lets it see every advisory.
+    assert aw.list_visible(c,users[1])['total']==1 and aw.get_visible(c,users[1],first['id'])['id']==first['id']
+    for user in users[2:]:
         assert aw.list_visible(c,user)['total']==0
         with pytest.raises(permissions.Denied): aw.get_visible(c,user,first['id'])
         with pytest.raises(permissions.Denied): aw.artifact(c,user,first['id'],first['current_revision'],'pdf')

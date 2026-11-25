@@ -1,7 +1,7 @@
 # Administrator powers — November 25, 2026
 
 Owner asked to give the **Administrator** level (`system_admin`) more administration,
-but to limit its power to delete in **Users & roles** and **Directory**. Built as candidate 10.53 on `claude/eloquent-sagan-theglm` (PR #648); not merged or released.
+but to limit its power to delete in **Users & roles** and **Directory**. Built as candidate 10.54 on `claude/eloquent-sagan-theglm` (PR #648); not merged or released.
 
 ## 1. Where things stand (10.51/10.52 on `main`)
 
@@ -54,7 +54,7 @@ Name cleanup AI suggestions (they feed merges), and editing the directory entry 
 holding an Administrator or Super Administrator account (the directory email is the login
 email, so editing it could take over that account through a reset link).
 
-## 4. Build steps (built as candidate 10.53)
+## 4. Build steps (built as candidate 10.54)
 
 1. `auth.py`: add `users_edit` and `directory_edit` to the Administrator; keep `manage_users`
    and `directory` as the Super Administrator's full powers. Update `ROLE_BLURB`.

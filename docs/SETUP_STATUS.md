@@ -1,10 +1,10 @@
-## Administrator powers: candidate 10.53 — November 25, 2026
+## Administrator powers: candidate 10.54 — November 25, 2026
 
 Owner asked to give the Administrator more administration but limit its power to delete in
 Users & roles and Directory. Plan and owner answers: [ADMINISTRATOR_POWERS_PLAN.md](ADMINISTRATOR_POWERS_PLAN.md)
 (no settings/Ops; may deactivate accounts below Administrator; no merging). Built as candidate
-10.53 on `claude/eloquent-sagan-theglm` (PR #648); no schema change. Verification is recorded in the PR.
-Not merged or released. Next: CI on PR #648; release only on owner instruction.
+10.54 on `claude/eloquent-sagan-theglm` (PR #648); no schema change. Verification is recorded in the PR.
+Owner said "merge when ready" (Nov 25): merge once CI on the merged head is green; the merge deploys 10.54.
 
 Owner answered all questions (section members edit; Slides comments too; real activity
 created with the advisory; no public page for general advisories; email plus a Share button;
@@ -20,17 +20,31 @@ Not merged or released. Verification is recorded in the PR.
 Next: owner sets up the relay template (setup guide) and tries it live; increment 5 (remove the
 old poster editor and renderer; clear trial advisories with a backup) on owner instruction. Merge/release only on owner instruction.
 
-## Advisory rethink planned (Google Slides, New advisory flow) — November 24, 2026
+## Advisories in Google Slides: 10.52 live; wording polish 10.53 ready — November 24, 2026
 
-Owner asked for a planning session: advisories become Google Slides files from the office
-template so users can edit freely, and advisories can be started from the Advisories module
-(for an existing activity, a new activity made together with it, or no activity). The old
-renderer need not be kept (all issued advisories were trials). Plan and decisions:
-[ADVISORY_SLIDES_PLAN.md](ADVISORY_SLIDES_PLAN.md). Plan only; no code changed.
-Owner answered seven of eight questions (section members edit; Slides comments too;
-real activity created with the advisory; no public page for general advisories).
-Next: owner picks sending channels (options in the plan), then build increment 1
-(relay Slides actions and placeholder template) on owner instruction.
+Owner asked for a planning session, then "start", then each increment, then "release then
+polish". Plan and decisions: [ADVISORY_SLIDES_PLAN.md](ADVISORY_SLIDES_PLAN.md); setup:
+[ADVISORY_SLIDES_SETUP.md](ADVISORY_SLIDES_SETUP.md). Increments 1-4 (relay Slides actions; New
+advisory flow for an existing activity, a new activity or a general advisory; send for review with
+a Slides copy and stage-based Slides access; issue and Share to group chats) were released as
+**10.52**: PR #645 merged at f4f3104 after all required checks passed (the normal suite hung once
+in a calendar browser test at 21% and passed on its single re-run). **10.52 is live**: guarded
+deployment run 45434917201 secured and verified a fresh live snapshot (59.4 MB), uploaded (Space
+commit ec45d5a), and the live /login version check passed for v10.52 (17:34 UTC).
+Owner setup in progress (Nov 24): advisory_slides.gs added, manifest scopes added (presentations,
+script.external_request; now in the setup guide), `makeAdvisoryTemplate` ran and made the master
+(4 slides, {{number}} on each). Next owner steps: placeholders in the master, `checkAdvisoryTemplate`,
+new deployment version, first live advisory. Until then the new flow says "not switched on yet" and activity
+advisories keep the old editor until the office mailbox follows the setup guide.
+Candidate **10.53** on this branch (PR #647; release only on owner instruction): friendlier review,
+issuing and email wording; owner decisions of Nov 25: the Super Administrator can view every
+advisory (approvals stay with Chief and Director), and the old trial advisories are deleted from
+the Super Administrator page `/advisories/trials` (backup first, Slides advisories untouched, audit
+history kept). The owner hit a trial advisory from a calendar item on Nov 25; deleting the trials
+after 10.53 is live removes that obstacle.
+Next: owner sets up the relay template and tries one advisory end to
+end; increment 5 (remove the old poster editor and renderer, clear trial advisories with a
+backup) on owner instruction.
 
 ## User levels: owner decided; candidate 10.52 — November 24, 2026
 
