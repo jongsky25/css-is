@@ -20,31 +20,29 @@ Not merged or released. Verification is recorded in the PR.
 Next: owner sets up the relay template (setup guide) and tries it live; increment 5 (remove the
 old poster editor and renderer; clear trial advisories with a backup) on owner instruction. Merge/release only on owner instruction.
 
-## Advisories in Google Slides: 10.52 live; wording polish 10.53 ready — November 24, 2026
+## Advisories in Google Slides: 10.52 and 10.53 live — November 25, 2026
 
-Owner asked for a planning session, then "start", then each increment, then "release then
-polish". Plan and decisions: [ADVISORY_SLIDES_PLAN.md](ADVISORY_SLIDES_PLAN.md); setup:
-[ADVISORY_SLIDES_SETUP.md](ADVISORY_SLIDES_SETUP.md). Increments 1-4 (relay Slides actions; New
-advisory flow for an existing activity, a new activity or a general advisory; send for review with
-a Slides copy and stage-based Slides access; issue and Share to group chats) were released as
-**10.52**: PR #645 merged at f4f3104 after all required checks passed (the normal suite hung once
-in a calendar browser test at 21% and passed on its single re-run). **10.52 is live**: guarded
-deployment run 45434917201 secured and verified a fresh live snapshot (59.4 MB), uploaded (Space
-commit ec45d5a), and the live /login version check passed for v10.52 (17:34 UTC).
-Owner setup in progress (Nov 24): advisory_slides.gs added, manifest scopes added (presentations,
-script.external_request; now in the setup guide), `makeAdvisoryTemplate` ran and made the master
-(4 slides, {{number}} on each). Next owner steps: placeholders in the master, `checkAdvisoryTemplate`,
-new deployment version, first live advisory. Until then the new flow says "not switched on yet" and activity
-advisories keep the old editor until the office mailbox follows the setup guide.
-Candidate **10.53** on this branch (PR #647; release only on owner instruction): friendlier review,
-issuing and email wording; owner decisions of Nov 25: the Super Administrator can view every
-advisory (approvals stay with Chief and Director), and the old trial advisories are deleted from
-the Super Administrator page `/advisories/trials` (backup first, Slides advisories untouched, audit
-history kept). The owner hit a trial advisory from a calendar item on Nov 25; deleting the trials
-after 10.53 is live removes that obstacle.
-Next: owner sets up the relay template and tries one advisory end to
-end; increment 5 (remove the old poster editor and renderer, clear trial advisories with a
-backup) on owner instruction.
+Plan and decisions: [ADVISORY_SLIDES_PLAN.md](ADVISORY_SLIDES_PLAN.md); setup:
+[ADVISORY_SLIDES_SETUP.md](ADVISORY_SLIDES_SETUP.md).
+
+- **10.52 live** (PR #645, main f4f3104; deploy run 45434917201, verified snapshot 59.4 MB, live
+  /login v10.52): New advisory flow (existing activity / new activity / general), Google Slides file
+  from the office master, send for review with a Slides copy, stage-based Slides access, issue and
+  Share to group chats.
+- **10.53 live** (PR #647, main f0175b4; deploy run 45535067314, verified snapshot 60.1 MB, live
+  /login v10.53 at 03:59 UTC): friendlier review/issuing wording; owner decisions of Nov 25: the
+  Super Administrator can view every advisory (approvals stay with Chief and Director), and the old
+  trial advisories can be deleted from `/advisories/trials` (backup first; Slides advisories and
+  audit history kept). 10.54 (PR #648, another session) was built on 10.53 and leaves it unchanged.
+- **Owner relay setup (Nov 25):** advisory_slides.gs added; manifest scopes added (presentations,
+  script.external_request); master made (1Ni2lSAu...); slide 1 has every placeholder except venue;
+  slides 2-4 kept as free designs (owner choice). New deployment version done; the owner created
+  test advisory 2026-1125-001 (general) and found it acceptable.
+- **Trials deleted (Nov 25)** by the owner from `/advisories/trials` (2026-1124-001 and -002; backup
+  taken by the page first).
+
+Next (owner's choice): a full review round on a real advisory (send to Chief, Director approval,
+issue, Share on a phone); then, on instruction, remove the old poster editor code (now unreachable).
 
 ## User levels: owner decided; candidate 10.52 — November 24, 2026
 
