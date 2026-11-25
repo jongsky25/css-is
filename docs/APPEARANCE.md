@@ -112,3 +112,13 @@ available. Checks cover publishing, preview isolation, mobile layout, reduced
 motion, contrast, live accessory updates, schedule expiry, and preserving unsaved
 profile input. Backend checks cover access, CSRF/origin validation, atomic
 rollback, stale revisions, overlapping schedules, restoration and art rendering.
+
+## New Year enhanced appearance (Bagong Taon)
+
+`static/css/bagong-taon.css` is the New Year counterpart of `paskong-pinoy.css`, scoped
+to `data-season="newyear"`. It enlarges the existing Philippine-time countdown into gold
+tiles, uses `newyear-fireworks.svg` for the home hero, `newyear-lights.svg` under the top
+bar and in the footer, and `newyear-rooftop.svg` (rooftop at midnight with the twelve round
+fruits) behind the companion. `christmas-companions.css` now applies to both seasons.
+Countdown logic (`newyear-countdown.js`, `appearance.py`) is unchanged. Contrast theme,
+forced colours, reduced motion and print hide or still the artwork as at Christmas.

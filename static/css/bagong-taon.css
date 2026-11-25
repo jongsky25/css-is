@@ -1,0 +1,112 @@
+/* Bagong Taon: the New Year counterpart of paskong-pinoy.css.
+   Decorative artwork stays separate from live copy; the countdown logic is untouched. */
+:root[data-season="newyear"] { --celebration-night:#0f1d3a; }
+:root[data-season="newyear"]:not([data-theme="dark"]):not([data-theme="contrast"]) {
+  --bg:#f2f3f8; --surface:#fdfcf9; --surface-2:#e9ecf5;
+  --surface-3:#dde2ef; --ink:#1d2b47; --ink-soft:#3a4865;
+  --soft:#52607a; --grey:#52607a; --line:#cfd3df;
+  --line-strong:#8a93a8; --accent:#2f4a82; --accent-ink:#223a6c;
+  --accent-bg:#e5eaf6; --on-accent:#fff;
+}
+:root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .celebration-home {
+  grid-template-columns:1fr 1.1fr;
+  background:#0f1d3a;
+  border:1px solid #b89553;
+  border-bottom:3px solid #d6b468;
+  border-radius:20px;
+  min-height:360px;
+  box-shadow:0 12px 32px #0f1d3a26;
+}
+:root[data-season="newyear"][data-season-artwork="1"] .celebration-home .celebration-copy {
+  padding:36px clamp(24px,4vw,60px);
+}
+:root[data-season="newyear"][data-season-artwork="1"] .celebration-home .celebration-ribbon { display:none; }
+:root[data-season="newyear"][data-season-artwork="1"] .celebration-home .celebration-kicker {
+  color:#f2d291; font-size:.7rem; letter-spacing:.2em; line-height:1.6;
+}
+:root[data-season="newyear"][data-season-artwork="1"] .celebration-home h2 {
+  max-width:19ch; margin:16px 0; color:#fff1d3;
+  font:normal clamp(2rem,4vw,4rem)/1.08 Georgia,serif;
+  text-wrap:balance;
+}
+:root[data-season="newyear"][data-season-artwork="1"] .celebration-home p {
+  color:#e6e2d3; font:italic clamp(1rem,1.5vw,1.2rem)/1.5 Georgia,serif;
+}
+/* The countdown is the centrepiece: large gold tiles. */
+:root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .celebration-home .newyear-digits { gap:10px; margin-top:20px; }
+:root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .celebration-home .newyear-digits>div {
+  min-width:72px; padding:10px 8px 8px; border:1px solid #d6b468; border-radius:12px;
+  background:linear-gradient(160deg,#fff1d31f,#fff1d305); box-shadow:inset 0 1px #fff1d340,0 6px 16px #050c1d55;
+}
+:root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .celebration-home .newyear-digits strong {
+  font:normal clamp(1.8rem,3vw,2.6rem)/1 Georgia,serif; color:#ffe3a3;
+}
+:root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .celebration-home .newyear-digits span {
+  margin-top:4px; color:#e6e2d3; text-transform:uppercase; letter-spacing:.14em; font-size:.6rem;
+}
+:root[data-season="newyear"][data-season-artwork="1"] .celebration-home .newyear-date { color:#c9c3ad; font-style:normal; letter-spacing:.03em; }
+:root[data-season="newyear"][data-season-artwork="1"] .celebration-home .newyear-greeting { color:#ffe3a3; font-size:clamp(1.8rem,3vw,2.6rem); }
+:root[data-season="newyear"][data-season-artwork="1"] .celebration-home .celebration-art {
+  min-height:360px;
+  background:url('/static/img/seasonal/newyear-fireworks.svg') center/cover no-repeat!important;
+  mask-image:linear-gradient(to right,transparent,#000 16%);
+}
+:root[data-season="newyear"][data-season-effects="1"] .celebration-home .celebration-art { animation:bagong-taon-glow 2.6s ease-in-out infinite alternate; }
+@keyframes bagong-taon-glow { from{filter:brightness(.9) saturate(.9)} to{filter:brightness(1.12) saturate(1.15)} }
+:root[data-season="newyear"][data-season-artwork="1"] .celebration-home .celebration-year {
+  bottom:auto; top:58%; font-size:clamp(3.4rem,6vw,6rem); color:#ffe3a3; text-shadow:0 0 18px #edc66f88,0 2px 10px #0d1a33;
+}
+:root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .topnav::after {
+  bottom:-18px; height:22px; z-index:-1;
+  background:#0f1d3a url('/static/img/seasonal/newyear-lights.svg') center top/360px 30px repeat-x;
+  border-bottom:1px solid #b89553;
+}
+:root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) body:has(.celebration-home) .oc-card {
+  border-top:1px solid var(--line); box-shadow:0 4px 16px #0f1d3a0d;
+}
+/* Companion room: a rooftop at midnight with the twelve round fruits. */
+:root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-hero .oc-pet-stage {
+  container-type:inline-size; --nook-height:33.333cqw; --nook-avatar:clamp(150px,15cqw,200px);
+  padding:0 12px 12px; border-color:#b89553; background:var(--surface);
+}
+:root[data-season="newyear"][data-season-artwork="1"] .oc-hero .oc-pet-stage::before {
+  height:var(--nook-height);
+  background:#0f1d3a url('/static/img/seasonal/newyear-rooftop.svg') center/100% auto no-repeat;
+  border-bottom:1px solid #b89553;
+}
+:root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-hero .oc-pet-stage .oc-pet {
+  width:min(100%,360px); padding-top:calc(var(--nook-height) - var(--nook-avatar) * 1.16 - 28px);
+}
+:root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-pet-stage .av-play-btn { width:var(--nook-avatar); }
+:root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-pet-stage .av-play-btn>.av-tiltstage {
+  width:var(--nook-avatar)!important; height:calc(var(--nook-avatar) * 1.16)!important;
+}
+:root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-pet-stage .av-sound-controls { margin-top:28px; min-height:48px; gap:8px; padding:6px 4px 0; }
+:root[data-season="newyear"][data-season-artwork="1"] .oc-pet-stage .av-audio-credits { display:inline-flex; align-items:center; min-height:44px; }
+@media(max-width:699px) {
+  :root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .oc-hero .oc-pet-stage { --nook-height:clamp(240px,66.667cqw,420px); --nook-avatar:150px; }
+  :root[data-season="newyear"][data-season-artwork="1"] .oc-hero .oc-pet-stage::before { background-size:cover; background-position:78% bottom; }
+}
+:root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .celebration-footer {
+  margin-top:30px; padding:48px 24px 28px; border-bottom:0;
+  background:url('/static/img/seasonal/newyear-lights.svg') center top/360px 30px repeat-x;
+}
+@media(max-width:650px) {
+  :root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .celebration-home { grid-template-columns:1fr; min-height:0; }
+  :root[data-season="newyear"][data-season-artwork="1"] .celebration-home .celebration-copy { padding:26px 20px 8px; text-align:center; }
+  :root[data-season="newyear"][data-season-artwork="1"] .celebration-home h2 { font-size:2.1rem!important; margin:12px auto; }
+  :root[data-season="newyear"][data-season-artwork="1"] .celebration-home .celebration-kicker:before { content:none; }
+  :root[data-season="newyear"][data-season-artwork="1"] .celebration-home .newyear-digits { justify-content:center; gap:6px; }
+  :root[data-season="newyear"][data-season-artwork="1"]:not([data-theme="contrast"]) .celebration-home .newyear-digits>div { min-width:62px; padding:8px 4px 6px; }
+  :root[data-season="newyear"][data-season-artwork="1"] .celebration-home .celebration-art {
+    display:block!important; min-height:0; height:190px; margin:0;
+    mask-image:linear-gradient(to bottom,transparent,#000 16%);
+  }
+}
+@media(prefers-reduced-motion:reduce) { :root[data-season="newyear"] .celebration-art { animation:none!important; } }
+@media(forced-colors:active) {
+  :root[data-season="newyear"] .celebration-art,
+  :root[data-season="newyear"] .topnav::after,
+  :root[data-season="newyear"] .oc-pet-stage::before,
+  :root[data-season="newyear"] .celebration-footer { display:none!important; }
+}
