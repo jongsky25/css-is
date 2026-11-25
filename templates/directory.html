@@ -122,8 +122,9 @@
               <button type="submit">Save</button>
             </form>
             <a class="rowlink edt" href="#" onclick="toggleEdit('{{ od.id }}'); return false;">Cancel</a>
+            {% if can(request.state.user.role, 'directory') %}
             <form class="del-form" method="post" action="/directory/unit/{{ od.id }}/delete" style="margin:0"
-                  onsubmit="return confirm('Remove “{{ od.name }}”?')"><button class="del">Remove</button></form>
+                  onsubmit="return confirm('Remove “{{ od.name }}”?')"><button class="del">Remove</button></form>{% endif %}
           </div>
         </td>
       </tr>
@@ -159,8 +160,9 @@
               <button type="submit">Save</button>
             </form>
             <a class="rowlink edt" href="#" onclick="toggleEdit('{{ d.id }}'); return false;">Cancel</a>
+            {% if can(request.state.user.role, 'directory') %}
             <form class="del-form" method="post" action="/directory/unit/{{ d.id }}/delete" style="margin:0"
-                  onsubmit="return confirm('Remove division “{{ d.name }}”?')"><button class="del">Remove</button></form>
+                  onsubmit="return confirm('Remove division “{{ d.name }}”?')"><button class="del">Remove</button></form>{% endif %}
           </div>
         </td>
       </tr>
@@ -200,8 +202,9 @@
               <button type="submit">Save</button>
             </form>
             <a class="rowlink edt" href="#" onclick="toggleEdit('{{ s.id }}'); return false;">Cancel</a>
+            {% if can(request.state.user.role, 'directory') %}
             <form class="del-form" method="post" action="/directory/unit/{{ s.id }}/delete" style="margin:0"
-                  onsubmit="return confirm('Remove section “{{ s.name }}”?')"><button class="del">Remove</button></form>
+                  onsubmit="return confirm('Remove section “{{ s.name }}”?')"><button class="del">Remove</button></form>{% endif %}
           </div>
         </td>
       </tr>
@@ -224,8 +227,9 @@
               <button type="submit">Save</button>
             </form>
             <a class="rowlink edt" href="#" onclick="toggleEdit('{{ s.id }}'); return false;">Cancel</a>
+            {% if can(request.state.user.role, 'directory') %}
             <form class="del-form" method="post" action="/directory/unit/{{ s.id }}/delete" style="margin:0"
-                  onsubmit="return confirm('Remove section “{{ s.name }}”?')"><button class="del">Remove</button></form>
+                  onsubmit="return confirm('Remove section “{{ s.name }}”?')"><button class="del">Remove</button></form>{% endif %}
           </div>
         </td>
       </tr>
@@ -265,11 +269,13 @@
         <td>
           <div class="acts">
             <a class="rowlink" href="/directory/person/{{ p.id }}/edit">Edit</a>
+            {% if can(request.state.user.role, 'directory') %}
             <form method="post" action="/directory/person/{{ p.id }}/archive" style="margin:0"
                   data-name="{{ p.name }}" onsubmit="return askArchive(this)">
               <input type="hidden" name="reason">
               <button class="del" type="submit">Archive</button>
             </form>
+            {% endif %}
           </div>
         </td>
       </tr>
@@ -354,11 +360,13 @@
         <td class="arch-why">{{ p.archived_at[:10] if p.archived_at else "—" }}
           {% if p.archived_reason %}<br>{{ p.archived_reason }}{% endif %}</td>
         <td>
+            {% if can(request.state.user.role, 'directory') %}
           <form method="post" action="/directory/person/{{ p.id }}/archive" style="margin:0"
                 onsubmit="return confirm('Restore “{{ p.name }}” to the directory?')">
             <input type="hidden" name="restore" value="1">
             <button class="restore" type="submit">Restore</button>
           </form>
+            {% endif %}
         </td>
       </tr>
       {% endfor %}
@@ -372,6 +380,7 @@
   </div>
 
   <!-- START FRESH -->
+  {% if can(request.state.user.role, 'directory') %}
   <div class="dcard">
     <h2>Start fresh</h2>
     <p class="hint">Clears the sample data (org units, people, surveys, responses) and leaves just the bureau, so you can build your real organogram on a blank slate.</p>
@@ -380,6 +389,7 @@
       <button type="submit" class="del" disabled title="Disabled to prevent accidental data loss">Clear sample data &amp; start fresh</button>
     </form>
   </div>
+  {% endif %}
 </div>
 
 <script>

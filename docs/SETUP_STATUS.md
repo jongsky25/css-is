@@ -1,9 +1,10 @@
-## Administrator powers planned (limited delete) — November 25, 2026
+## Administrator powers: candidate 10.53 — November 25, 2026
 
-Owner asked to give the Administrator level more administration but limit its power to
-delete in Users & roles and Directory. Plan: [ADMINISTRATOR_POWERS_PLAN.md](ADMINISTRATOR_POWERS_PLAN.md).
-Plan only; no code changed. Next: owner answers the three questions in section 3 there,
-then build on owner instruction.
+Owner asked to give the Administrator more administration but limit its power to delete in
+Users & roles and Directory. Plan and owner answers: [ADMINISTRATOR_POWERS_PLAN.md](ADMINISTRATOR_POWERS_PLAN.md)
+(no settings/Ops; may deactivate accounts below Administrator; no merging). Built as candidate
+10.53 on `claude/eloquent-sagan-theglm` (PR #648); no schema change. Verification is recorded in the PR.
+Not merged or released. Next: CI on PR #648; release only on owner instruction.
 
 Owner answered all questions (section members edit; Slides comments too; real activity
 created with the advisory; no public page for general advisories; email plus a Share button;

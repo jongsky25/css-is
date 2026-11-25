@@ -1,3 +1,9 @@
+## 10.53 — November 25, 2026
+
+- Administrator powers (`docs/ADMINISTRATOR_POWERS_PLAN.md`, owner answers Nov 25). New capabilities `users_edit` and `directory_edit` for `system_admin` (and `admin`). `_required_cap`: `/admin/users/*` needs `users_edit` except `*/bureau-access` (`manage_users`); `/directory/*` needs `directory_edit` except unit delete, person archive/restore, signature image, clear-sample and cleanup archive-low/merge/split/ai-suggest (`directory`). Cleanup quick-fix archive/unarchive needs `directory`.
+- Accounts: `auth.can_manage_account` / `assignable_roles`. An Administrator may invite, reset, re-role and (de)activate only accounts below Administrator, and may not assign `system_admin` or `admin`. Users page shows only the allowed controls ("Super Administrator only" otherwise).
+- Directory: an Administrator cannot edit the entry of a person linked to an Administrator or Super Administrator account (its email is the login email), and cannot upload, remove or view signatures; delete/archive/merge/split controls are hidden for them. Nav and Home show Directory and Users to the Administrator. No schema change.
+
 ## 10.52 — November 24, 2026
 
 - Advisory Google Slides, increment 1 of `docs/ADVISORY_SLIDES_PLAN.md`: new relay companion `apps_script/advisory_slides.gs` (`advisory_info`, `advisory_create`, `advisory_snapshot`, `advisory_access`; files only under `ROOT/advisories/`, office-domain sharing without notification emails, request-id idempotent create, snapshot refused if the file changes while it is copied) and the `doPost` hand-off in `travel_docs.gs`. New client `advisory_slides.py` (placeholder fields, QR PNG, digest-checked snapshots, plain-language errors). Setup: `docs/ADVISORY_SLIDES_SETUP.md`.

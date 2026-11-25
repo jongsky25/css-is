@@ -1,7 +1,7 @@
-# Administrator powers: plan — November 25, 2026
+# Administrator powers — November 25, 2026
 
 Owner asked to give the **Administrator** level (`system_admin`) more administration,
-but to limit its power to delete in **Users & roles** and **Directory**. Plan only; no code changed.
+but to limit its power to delete in **Users & roles** and **Directory**. Built as candidate 10.53 on `claude/eloquent-sagan-theglm` (PR #648); not merged or released.
 
 ## 1. Where things stand (10.51/10.52 on `main`)
 
@@ -27,7 +27,7 @@ combines records or raises someone's access** stays with the Super Administrator
 | 3. Set or clear an acting OIC | Yes |
 | 4. Change a role among Staff, Staff + encoding, Section Manager, Division Manager | Yes |
 | 5. Grant or remove Administrator / Super Administrator, or change any admin's account | No |
-| 6. Deactivate an account (the app's "delete"; there is no hard delete) | **No** |
+| 6. Deactivate an account (the app's "delete"; there is no hard delete) | Below Administrator only (answer 2) |
 | 7. Bureau-wide sight grants | No (raises access) |
 | 8. Audit, backups, sharing, integrations, restructure, Documents setup | No |
 
@@ -37,28 +37,31 @@ combines records or raises someone's access** stays with the Super Administrator
 |---|---|
 | 1. Add or edit divisions, sections and the bureau | Yes |
 | 2. Add or edit staff, photos, birthdays; add or edit outside resource persons and organizations | Yes |
-| 3. Clean-up: title case, rename, AI suggestions | Yes |
+| 3. Clean-up: title case, rename | Yes |
 | 4. Delete a unit | **No** |
 | 5. Archive a person; "archive low-use"; Clear sample data | **No** |
 | 6. Merge duplicate people; split a person | **No** (combines or rewrites records) |
 
-## 3. Questions for the owner
+## 3. Owner answers (November 25, 2026)
 
-1. Besides Users and Directory, should the Administrator also get **system settings and Ops**
-   (email, AI, rules, holidays, travel/AWA, appearance, `/ops`), feedback triage, or
-   hiding people from dashboards?
-2. Should deactivating **Staff** accounts (not admins) be allowed, or stay Super Administrator only?
-3. Should merging duplicate people be allowed (it is the main clean-up tool), with only
-   delete/archive held back?
+1. No settings, Ops, feedback triage or hiding people for the Administrator.
+2. Yes: the Administrator may deactivate and reactivate accounts below Administrator
+   (Staff, Staff + encoding, Section Manager, Division Manager).
+3. No: merging (and splitting) people stays with the Super Administrator.
 
-## 4. Build steps (after answers)
+Also kept with the Super Administrator while building: signatures (forgery risk), the
+Name cleanup AI suggestions (they feed merges), and editing the directory entry of anyone
+holding an Administrator or Super Administrator account (the directory email is the login
+email, so editing it could take over that account through a reset link).
+
+## 4. Build steps (built as candidate 10.53)
 
 1. `auth.py`: add `users_edit` and `directory_edit` to the Administrator; keep `manage_users`
    and `directory` as the Super Administrator's full powers. Update `ROLE_BLURB`.
 2. `app.py` `_required_cap`: open `/admin/users` and `/directory` to the new edit
-   capabilities, with a list of Super-only paths (`/active`, `/bureau-access`,
+   capabilities, with a list of Super-only paths (`/bureau-access`,
    `/unit/*/delete`, `/person/*/archive`, `/clear-sample`, `/cleanup/archive-low`,
-   `/cleanup/merge`, `/cleanup/split`, quick-fix archive) that still need the full capability.
+   `/cleanup/merge`, `/cleanup/split`, `/cleanup/ai-suggest`, signature image, quick-fix archive) that still need the full capability.
 3. Role-change handler: refuse assigning `system_admin`/`admin`, and refuse any change to an
    account that holds either role, unless the actor is Super Administrator.
 4. Templates (`users.html`, `directory.html`, `cleanup.html`): hide the delete, deactivate,
