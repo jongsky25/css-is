@@ -12,6 +12,16 @@ Not merged or released. Verification is recorded in the PR.
 Next: owner sets up the relay template (setup guide) and tries it live; increment 5 (remove the
 old poster editor and renderer; clear trial advisories with a backup) on owner instruction. Merge/release only on owner instruction.
 
+## Advisory listed with the activity's documents: candidate 10.54 — November 25, 2026
+
+Spot feedback (owner relayed, Nov 25): "Create the activity to prepare an advisory" under Related
+actions opened the create-survey page with no mention of the advisory. Owner approved the fix.
+Candidate **10.54** on branch `claude/inspiring-brahmagupta-98vx03`: the Advisory card now sits in
+"Documents for this activity" (Related actions only when an item has no documents block); its
+button carries `then=advisory`, the create page says the advisory comes next, and the result page
+offers "Continue to the advisory". Verification: related calendar/create tests (see the PR).
+Next: owner previews and decides on merge/release; nothing merged or deployed.
+
 ## Advisories in Google Slides: 10.52 live; wording polish 10.53 ready — November 24, 2026
 
 Owner asked for a planning session, then "start", then each increment, then "release then

@@ -721,6 +721,8 @@ a.cal-tt:focus-visible { outline:none; }
 .cal-doc-list { list-style:none; margin:.4rem 0 0; padding:0; display:grid; gap:.7rem; }
 .cal-doc { padding:.6rem .7rem; border:1px solid var(--line); border-radius:8px; }
 .cal-doc.is-needed { border-color:var(--accent); }
+.cal-doc-advisory .cal-btn { margin:.2rem .35rem 0 0; }
+div.cal-doc-advisory { margin:0 0 1rem; }
 .cal-doc-head { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; }
 .cal-chip.need { color:var(--on-accent); background:var(--accent); border-color:var(--accent); }
 .cal-chip.soft { opacity:.75; }

@@ -11,7 +11,12 @@
 <div style="max-width:760px;">
   <span class="equity-mark lg" role="img" aria-label="Equity in Health" style="display:block; margin:0 0 .6rem;"></span>
   {{ page_header("✓ Survey created & saved") }}
+  {% if advisory_next %}
+  <div class="flash ok" role="status">Activity created. Next: prepare its advisory.
+    <a class="btn" href="{{ advisory_next }}" style="margin-left:.4rem;">Continue to the advisory</a></div>
+  {% else %}
   <div class="flash ok">Saved. Scan a QR below to open the bound survey, or print this page for the venue.</div>
+  {% endif %}
 
   <div class="card" style="margin-bottom:1rem;">
     <table class="list">

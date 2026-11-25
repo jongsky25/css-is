@@ -57,11 +57,18 @@
     the calendar will show it as the activity, with the people already on that item.
     <button type="button" class="btn small" id="calUnlink">Don't link</button>
   </div>
+  {% if f.then == 'advisory' %}
+  <div class="dup-warn" id="thenAdvisory" role="status">
+    📣 <strong>Advisory next.</strong> An advisory is prepared on a bureau-organized activity, so create the activity first;
+    the page after Create takes you on to its advisory.
+  </div>
+  {% endif %}
   <div class="dup-warn hidden" id="calWarn" role="status"></div>
 
   <form method="post" action="/create" data-loading="Creating survey…">
     <input type="hidden" name="from_entry" id="from_entry" value="{{ f.from_entry|default('') }}">
     <input type="hidden" name="from_entry_title" id="from_entry_title" value="{{ f.from_entry_title|default('') }}">
+    {% if f.then == 'advisory' %}<input type="hidden" name="then" value="advisory">{% endif %}
     {% if duplicate_confirm_key %}
     <div class="dup-warn" role="alert" id="duplicateConfirm">
       <strong>An activity like this already exists. Review it before creating another.</strong>
