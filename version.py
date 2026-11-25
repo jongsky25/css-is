@@ -24,9 +24,11 @@ APP_VERSION = "10.53"
 CHANGELOG = [
     {
         "version": "10.53",
-        "date": "November 24, 2026",
-        "summary": "Clearer words on advisory review and issuing.",
+        "date": "November 25, 2026",
+        "summary": "Super Administrator can check every advisory; old trial advisories can be removed; clearer advisory wording.",
         "changes": [
+            "The Super Administrator can now open and check every advisory, including drafts, history and review copies. Approving still belongs only to the Division Chief and the Director.",
+            "Advisories has a link for the Super Administrator to review and delete the old trial advisories made with the old poster editor. A full backup is made first; Google Slides advisories are not touched.",
             "Review buttons now say what they do: Approve and send to the Director, Approve, Send back with comments, Take it back to edit.",
             "The advisory history reads as plain sentences with readable dates, under \"What has happened so far\".",
             "Issuing shows how many people get it, and afterwards how many emails were sent and which need attention, with Send again where needed. Rarely used actions are under More actions.",

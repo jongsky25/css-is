@@ -138,7 +138,7 @@ def test_activity_advisory_is_created_with_a_slides_file_shared_with_the_section
     assert c.execute("SELECT COUNT(*) FROM document_notice").fetchone()[0] == 0
 
 
-def test_general_advisory_needs_no_activity_and_appears_in_the_register(flow, manager, admin):
+def test_general_advisory_needs_no_activity_and_appears_in_the_register(flow, manager, admin, encoder):
     page = manager.get("/advisories/new/details?kind=general")
     assert "A general advisory" in page.text and 'name="dates"' not in page.text
     made = manager.post("/advisories/new", data=details_form(page, title="Office closed on Friday", link=""),
@@ -149,8 +149,9 @@ def test_general_advisory_needs_no_activity_and_appears_in_the_register(flow, ma
     assert "qr_png_b64" not in flow["relay"].created()[0]                       # no link, no QR
     register = manager.get("/advisories")
     assert "Office closed on Friday" in register.text and "General" in register.text
-    assert f"/advisories/{aid}" not in admin.get("/advisories").text            # private to those preparing it
-    assert admin.get(f"/advisories/{aid}").status_code == 404
+    assert f"/advisories/{aid}" not in encoder.get("/advisories").text          # private to those preparing it
+    assert encoder.get(f"/advisories/{aid}").status_code == 404
+    assert admin.get(f"/advisories/{aid}").status_code == 200                   # the Super Administrator sees all
 
 
 def test_new_activity_is_made_together_with_its_advisory(flow, manager):

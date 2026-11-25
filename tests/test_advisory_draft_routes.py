@@ -46,11 +46,14 @@ def test_form_save_replay_history_and_public_boundaries(draft_route,manager,view
     assert manager.get(f"/activities/{ev['event_token']}/advisory/file.png",follow_redirects=True).status_code==200
     assert client.get(f"/e/{ev['event_token']}/advisory.png").status_code==404
     assert manager.post(f"/activities/{ev['event_token']}/advisory/publish",data={'publish':'1'}).status_code==409
-    for unauthorized in (viewer,admin):
+    for unauthorized in (viewer,):
         assert unauthorized.get(location).status_code==404
         assert unauthorized.get(location+'/history').status_code==404
         assert unauthorized.get(pdf).status_code==404
         assert location not in unauthorized.get('/advisories').text
+    # Owner decision (Nov 25, 2026): the Super Administrator can see every advisory to check them.
+    assert admin.get(location).status_code==200 and admin.get(location+'/history').status_code==200
+    assert admin.get(pdf).status_code==200 and location in admin.get('/advisories').text
     changed=form(page,unit,headline='Updated private headline',summary='Clarify headline')
     assert manager.post(url,data=changed,follow_redirects=False).status_code==303
     stale=manager.post(url,data={**changed,'headline':'Stale unsaved work'},follow_redirects=False)
@@ -103,12 +106,12 @@ def test_rendered_artifacts_fit_bound(draft_route,manager):
     assert all(0<size<aw.MAX_ARTIFACT_BYTES for size,_ in sizes)
 
 
-def test_a_hidden_private_draft_shows_a_page_to_browsers_and_plain_text_to_scripts(draft_route,manager,admin):
+def test_a_hidden_private_draft_shows_a_page_to_browsers_and_plain_text_to_scripts(draft_route,manager,viewer):
     c,user,unit,ev,url=draft_route
     location=manager.post(url,data=form(manager.get(url),unit),follow_redirects=False).headers['location']
-    hidden=admin.get(url)                                                          # someone else's private draft
+    hidden=viewer.get(url)                                                         # someone else's private draft
     assert hidden.status_code==404 and hidden.headers['content-type'].startswith('text/plain')
-    page=admin.get(url,headers={'accept':'text/html,application/xhtml+xml'})
+    page=viewer.get(url,headers={'accept':'text/html,application/xhtml+xml'})
     assert page.status_code==404 and page.headers['content-type'].startswith('text/html')
     assert 'not available to you' in page.text and 'href="/advisories"' in page.text
     assert 'Document not found or unavailable to you.' in page.text

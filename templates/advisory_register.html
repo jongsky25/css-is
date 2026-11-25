@@ -12,6 +12,7 @@
 <li><strong>Review:</strong> your Division Chief, then the Director, approve it or send it back with comments.</li>
 <li><strong>Issue:</strong> it is emailed to the people you chose, and you can share it to group chats.</li>
 </ol></details>
+{% if trial_count %}<p class="adv-note">There {{ 'is' if trial_count == 1 else 'are' }} {{ trial_count }} old trial advisor{{ 'y' if trial_count == 1 else 'ies' }} from the old poster editor. <a href="/advisories/trials">Review and delete them</a></p>{% endif %}
 <p class="lead">You see only the advisories you prepare, edit or review. <a href="/advisories/existing">Older activity advisories</a></p>
 {% if not available %}<p>Changes are unavailable while Documents or Shared work is disabled.</p>{% endif %}
 <form method="get" style="display:flex;flex-wrap:wrap;gap:.8rem;align-items:end">

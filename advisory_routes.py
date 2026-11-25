@@ -14,12 +14,15 @@ import advisory_workflow as workflow
 import advisory_review
 import advisory_distribution
 import advisory_new as new_flow
+import advisory_purge
+import auth
+import backups
 import documents
 import documents_permissions as permissions
 import storage as st
 
 
-def make_router(templates, get_conn, base_url):
+def make_router(templates, get_conn, base_url, db_path=None):
     router = APIRouter()
 
     def failure(error,request=None):
@@ -85,7 +88,8 @@ def make_router(templates, get_conn, base_url):
             filters={'division':division,'status':status,'month':month,'audience':audience}
             links={key:'/advisories?'+urlencode({**filters,'status':key}) for key in workflow.QUEUE_LABELS}
             return templates.TemplateResponse(request,'advisory_register.html',{
-                **listing,'divisions':workflow.divisions(conn),**filters,'filter_query':urlencode(filters),'queue_links':links,'available':workflow.available(conn)})
+                **listing,'divisions':workflow.divisions(conn),**filters,'filter_query':urlencode(filters),'queue_links':links,'available':workflow.available(conn),
+                'trial_count':advisory_purge.preview(conn)['total'] if auth.is_super_admin(user) else 0})
         except ValueError as error:
             return failure(error,request)
         finally: conn.close()
@@ -134,6 +138,45 @@ def make_router(templates, get_conn, base_url):
                 raise permissions.Denied('Advisory not found or unavailable to you.')
             warning=new_flow.sync_access(conn,user,advisory_id)
             return RedirectResponse(f'/advisories/{advisory_id}'+('?access=0' if warning else ''),status_code=303)
+        except ValueError as error: return failure(error,request)
+        finally: conn.close()
+
+    # ---- Super Administrator: remove the old trial advisories (owner decision Nov 25, 2026) ----
+
+    def trials_page(request,conn,*,done=None,error='',status=200):
+        return templates.TemplateResponse(request,'advisory_trials.html',{**advisory_purge.preview(conn),
+            'done':done,'error':error},status_code=status)
+
+    def require_super(request,conn):
+        user=actor(request,conn)
+        if not auth.is_super_admin(user): raise permissions.Denied('Only the Super Administrator can do this.')
+        return user
+
+    @router.get('/advisories/trials',response_class=HTMLResponse)
+    def trials(request:Request):
+        conn=get_conn()
+        try:
+            require_super(request,conn)
+            return trials_page(request,conn)
+        except ValueError as error: return failure(error,request)
+        finally: conn.close()
+
+    @router.post('/advisories/trials',response_class=HTMLResponse)
+    async def trials_delete(request:Request):
+        data=dict(parse_qsl((await request.body()).decode('utf-8',errors='replace')[:4000],keep_blank_values=True))
+        conn=get_conn()
+        try:
+            user=require_super(request,conn)
+            if data.get('confirm')!='1':
+                return trials_page(request,conn,error='Tick the box to confirm.',status=422)
+            if db_path is None:
+                return trials_page(request,conn,error='Backups are not available here, so nothing was deleted.',status=409)
+            try:
+                meta=backups.make_backup(db_path(),kind='manual')
+            except Exception as exc:  # noqa: BLE001 -- never delete without a backup
+                return trials_page(request,conn,error=f'The backup failed, so nothing was deleted ({type(exc).__name__}).',status=500)
+            counts=advisory_purge.purge(conn,user,reason=f"Old trial advisories removed on the owner's instruction; backup {meta['name']}")
+            return trials_page(request,conn,done={**counts,'backup':meta['name']})
         except ValueError as error: return failure(error,request)
         finally: conn.close()
 

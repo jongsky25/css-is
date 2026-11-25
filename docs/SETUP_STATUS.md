@@ -28,8 +28,12 @@ script.external_request; now in the setup guide), `makeAdvisoryTemplate` ran and
 (4 slides, {{number}} on each). Next owner steps: placeholders in the master, `checkAdvisoryTemplate`,
 new deployment version, first live advisory. Until then the new flow says "not switched on yet" and activity
 advisories keep the old editor until the office mailbox follows the setup guide.
-Candidate **10.53** (friendlier review, issuing and email wording; no behaviour change) is on this
-branch in a new PR; release only on owner instruction.
+Candidate **10.53** on this branch (PR #647; release only on owner instruction): friendlier review,
+issuing and email wording; owner decisions of Nov 25: the Super Administrator can view every
+advisory (approvals stay with Chief and Director), and the old trial advisories are deleted from
+the Super Administrator page `/advisories/trials` (backup first, Slides advisories untouched, audit
+history kept). The owner hit a trial advisory from a calendar item on Nov 25; deleting the trials
+after 10.53 is live removes that obstacle.
 Next: owner sets up the relay template and tries one advisory end to
 end; increment 5 (remove the old poster editor and renderer, clear trial advisories with a
 backup) on owner instruction.
