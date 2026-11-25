@@ -36,11 +36,13 @@ Plan and decisions: [ADVISORY_SLIDES_PLAN.md](ADVISORY_SLIDES_PLAN.md); setup:
   audit history kept). 10.54 (PR #648, another session) was built on 10.53 and leaves it unchanged.
 - **Owner relay setup (Nov 25):** advisory_slides.gs added; manifest scopes added (presentations,
   script.external_request); master made (1Ni2lSAu...); slide 1 has every placeholder except venue;
-  slides 2-4 kept as free designs (owner choice). Remaining owner steps: Deploy -> New version in
-  Apps Script, then try + New advisory; delete the trials from Advisories -> Review and delete them.
+  slides 2-4 kept as free designs (owner choice). New deployment version done; the owner created
+  test advisory 2026-1125-001 (general) and found it acceptable.
+- **Trials deleted (Nov 25)** by the owner from `/advisories/trials` (2026-1124-001 and -002; backup
+  taken by the page first).
 
-Next: owner finishes the relay deployment version, deletes the trials, and tries one advisory end
-to end on a phone. Later (on instruction): remove the old poster editor code.
+Next (owner's choice): a full review round on a real advisory (send to Chief, Director approval,
+issue, Share on a phone); then, on instruction, remove the old poster editor code (now unreachable).
 
 ## User levels: owner decided; candidate 10.52 — November 24, 2026
 
