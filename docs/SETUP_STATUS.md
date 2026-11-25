@@ -19,8 +19,10 @@ actions opened the create-survey page with no mention of the advisory. Owner app
 Candidate **10.54** on branch `claude/inspiring-brahmagupta-98vx03`: the Advisory card now sits in
 "Documents for this activity" (Related actions only when an item has no documents block); its
 button carries `then=advisory`, the create page says the advisory comes next, and the result page
-offers "Continue to the advisory". Verification: related calendar/create tests (see the PR).
-Next: owner previews and decides on merge/release; nothing merged or deployed.
+offers "Continue to the advisory". PR #649. Verification: 292 related tests passed locally;
+release metadata OK. Owner instruction (Nov 25): "merge when ready", i.e. merge once all required
+checks pass, then verify the guarded deployment.
+Next: confirm the 10.54 deployment and live /login version.
 
 ## Advisories in Google Slides: 10.52 live; wording polish 10.53 ready — November 24, 2026
 
