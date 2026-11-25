@@ -59,7 +59,7 @@ def test_create_refuses_bad_input_before_copying_anything(relay):
 def test_do_post_routes_advisory_actions_and_explains_a_missing_companion(relay):
     assert relay["route"]["info"]["ok"] and relay["route"]["info"]["version"] == 1
     assert relay["route"]["missing"] == {"ok": False, "error": "advisory_not_installed"}
-    assert relay["route"]["ping"] == {"ok": True, "version": 2}
+    assert relay["route"]["ping"] == {"ok": True, "version": 3}         # travel_docs.gs ping (REVIEW_SHARE_VERSION)
 
 
 def test_info_lists_each_variant_and_its_placeholders(relay):
