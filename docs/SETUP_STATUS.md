@@ -1,3 +1,10 @@
+## Administrator powers planned (limited delete) — November 25, 2026
+
+Owner asked to give the Administrator level more administration but limit its power to
+delete in Users & roles and Directory. Plan: [ADMINISTRATOR_POWERS_PLAN.md](ADMINISTRATOR_POWERS_PLAN.md).
+Plan only; no code changed. Next: owner answers the three questions in section 3 there,
+then build on owner instruction.
+
 Owner answered all questions (section members edit; Slides comments too; real activity
 created with the advisory; no public page for general advisories; email plus a Share button;
 Telegram later; friendly-interface requirements recorded in the plan).
