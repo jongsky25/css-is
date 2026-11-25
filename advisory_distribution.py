@@ -100,9 +100,9 @@ def mutate_in_transaction(conn,user,record,doc,action,data,reason):
         return review._finish(conn,user,doc,action,reason,{},record,target_id=target['id'])[1]
     if action=='issue':
         planned=preview(conn,user,record['id'])
-        if data.get('confirmation')!=planned['confirmation']:raise d.Conflict('The version or audience preview changed. Review issuance again.')
-        if planned['missing'] and data.get('ack_missing')!='1':raise ValueError('Acknowledge the accounts without a deliverable email address.')
-        if not planned['recipients']:raise ValueError('There are no deliverable recipients. Correct the audience before issuing.')
+        if data.get('confirmation')!=planned['confirmation']:raise d.Conflict('The approved copy or the list of people changed since you opened this page. Open "Issue the advisory" again and check the list.')
+        if planned['missing'] and data.get('ack_missing')!='1':raise ValueError('Tick the box to confirm you understand some staff will not get an email.')
+        if not planned['recipients']:raise ValueError('There is no one to email. Check who the advisory is for before issuing.')
         previous=latest(conn,record['id'])
         if previous and live(conn,previous):_stop(conn,user,previous,'superseded',reason)
         iid=conn.execute('''INSERT INTO advisory_issue(advisory_id,revision_id,packet_id,version_id,actor_id,issued_at,

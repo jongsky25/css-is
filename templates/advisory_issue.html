@@ -1,13 +1,16 @@
 {% extends 'dash_layout.html' %}
-{% block title %}Confirm advisory issuance{% endblock %}
-{% block content %}<div style="max-width:50rem;margin:auto;overflow-wrap:anywhere">
-<h1>Confirm issuance</h1><p>Advisory {{ record.number }} · Revision {{ record.ordinal }}</p>
-<p><a href="/advisories/{{ record.id }}/revisions/{{ record.current_revision }}/file.pdf">Review the approved PDF</a> · <a href="/advisories/{{ record.id }}">Back to advisory</a></p>
-<p>Issuing freezes this approved PDF and the audience below, records the issue date and queues individual PDF emails. Each recipient receives one separate message. Public publication is a separate action.</p>
-<h2>{{ recipients|length }} unique email recipients</h2><ul>{% for address in recipients %}<li>{{ address }}</li>{% endfor %}</ul>
-{% if missing %}<h2>Accounts without deliverable email</h2><ul>{% for person in missing %}<li>{{ person.name }}</li>{% endfor %}</ul><p>These accounts remain in the recorded internal audience. No email will be attempted for them.</p>{% endif %}
-<form method="post" action="/advisories/{{ record.id }}/actions"><fieldset {% if not available %}disabled{% endif %}>
+{% block title %}Issue advisory {{ record.number }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/advisory.css">{% endblock %}
+{% block content %}<div class="adv">
+<p><a href="/advisories/{{ record.id }}">← Back to advisory</a></p>
+<h1>Issue the advisory</h1><p class="lead">Advisory {{ record.number }} · {{ record.payload.content.headline }}</p>
+<p>Check who gets it. When you press the button, the approved copy is emailed to each address below, one message per person, so no one sees the other addresses. Today becomes its issue date.</p>
+<p><a href="/advisories/{{ record.id }}/revisions/{{ record.current_revision }}/file.pdf" target="_blank" rel="noopener">Look at the approved PDF</a></p>
+<h2>Goes to {{ recipients|length }} email address{{ '' if recipients|length == 1 else 'es' }}</h2>
+<details{% if recipients|length <= 12 %} open{% endif %}><summary>Show the addresses</summary><ul>{% for address in recipients %}<li>{{ address }}</li>{% endfor %}</ul></details>
+{% if missing %}<div class="adv-note"><h2 style="margin-top:0;font-size:1rem">{{ missing|length }} staff account{{ '' if missing|length == 1 else 's' }} without an email address</h2><ul>{% for person in missing %}<li>{{ person.name }}</li>{% endfor %}</ul><p style="margin-bottom:0">They still count as recipients and can read it in Office Connect under "Issued advisories for you", but no email is sent to them.</p></div>{% endif %}
+<form method="post" action="/advisories/{{ record.id }}/actions"><fieldset {% if not available %}disabled{% endif %} style="border:0;padding:0;margin:1rem 0">
 <input type="hidden" name="action" value="issue"><input type="hidden" name="operation_key" value="{{ action_key }}"><input type="hidden" name="expected_revision" value="{{ record.revision }}"><input type="hidden" name="confirmation" value="{{ confirmation }}">
-{% if missing %}<p><label><input type="checkbox" name="ack_missing" value="1" required> I acknowledge the listed accounts cannot receive email.</label></p>{% endif %}
-<p><label>Issuance note <textarea name="reason" required maxlength="4000" style="width:100%;box-sizing:border-box"></textarea></label></p>
-<button class="btn" type="submit">Issue and queue PDF emails</button></fieldset></form></div>{% endblock %}
+{% if missing %}<p><label><input type="checkbox" name="ack_missing" value="1" required> I understand the people listed above will not get an email.</label></p>{% endif %}
+<div class="adv-field"><label for="issue-note">Note for the history <span class="hint">Required. For example: "Issued as approved by the Director."</span></label><textarea id="issue-note" name="reason" required maxlength="4000" rows="2"></textarea></div>
+<div class="adv-main"><button class="btn" type="submit">Issue and send emails</button></div></fieldset></form></div>{% endblock %}

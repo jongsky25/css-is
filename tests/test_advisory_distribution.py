@@ -151,8 +151,10 @@ def test_dashboard_counts_filters_pagination_and_denial(approved,monkeypatch):
     ops.execute(c,deliveries(c)[0])
     page=aw.list_visible(c,u[0],status='delivery_failures',limit=1)
     assert page['total']==1 and page['counts']['delivery_failures']==1 and page['items'][0]['delivery_attention']
-    uid=st.create_admin_user(c,'unrelated@example.invalid','hash','salt','admin',active=True)
+    uid=st.create_admin_user(c,'unrelated@example.invalid','hash','salt','viewer',active=True)
     assert aw.list_visible(c,{'id':uid},status='delivery_failures')['counts']['all']==0
+    sid=st.create_admin_user(c,'super@example.invalid','hash','salt','admin',active=True)  # sees every advisory
+    assert aw.list_visible(c,{'id':sid},status='delivery_failures')['counts']['all']==1
     r=act(c,u[0],r,'retry_delivery',job_id=deliveries(c)[0])
     assert aw.list_visible(c,u[0],status='delivery_failures')['total']==0
 
