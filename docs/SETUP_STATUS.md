@@ -20,7 +20,7 @@ Not merged or released. Verification is recorded in the PR.
 Next: owner sets up the relay template (setup guide) and tries it live; increment 5 (remove the
 old poster editor and renderer; clear trial advisories with a backup) on owner instruction. Merge/release only on owner instruction.
 
-## Advisory listed with the activity's documents: candidate 10.55 — November 25, 2026
+## Advisory listed with the activity's documents: 10.55 live — November 25, 2026
 
 Spot feedback (owner relayed, Nov 25): "Create the activity to prepare an advisory" under Related
 actions opened the create-survey page with no mention of the advisory. Owner approved the fix.
@@ -30,7 +30,11 @@ button carries `then=advisory`, the create page says the advisory comes next, an
 offers "Continue to the advisory". PR #649. Verification: 292 related tests passed locally;
 release metadata OK. Owner instruction (Nov 25): "merge when ready", i.e. merge once all required
 checks pass, then verify the guarded deployment.
-Next: confirm the 10.55 deployment and live /login version.
+**10.55 is live**: PR #649 merged at b603ba0 after all required checks passed on 2bb1673 (main
+merged in after #648; the 10.54 deploy had finished first). Guarded deployment run 45556538561
+secured and verified a fresh live snapshot (60.1 MB), uploaded (Space commit f46b0d6), and the
+live /login version check passed for v10.55 (07:08 UTC); confirmed again from outside at 07:16 UTC.
+Next: owner tries the Advisory card on a calendar item; nothing else pending for this change.
 
 ## Advisories in Google Slides: 10.52 live; wording polish 10.53 ready — November 24, 2026
 
