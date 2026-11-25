@@ -85,6 +85,7 @@
 {% endblock %}
 
 {% block content %}
+{% set full_dir = can(request.state.user.role, 'directory') %}
 <div class="cwrap">
   {{ directory_header("cleanup") }}
   <p class="muted" style="margin:-.7rem 0 .4rem;">External resource persons</p>
@@ -108,10 +109,12 @@
     <span class="chip" data-filter="hidden">Hidden <span class="ct">{{ counts.hidden }}</span></span>
     <span class="chip" data-filter="all">All external <span class="ct">{{ counts.total }}</span></span>
     <span class="bulk">
+      {% if full_dir %}
       <form method="post" action="/directory/cleanup/archive-low" style="display:inline"
             onsubmit="return confirm('Archive every external record with under 5 ratings ({{ counts.low }})? They vanish from every view but stay in the database; un-archive any later.')">
         <button type="submit" class="danger" title="Archive every external record with under 5 ratings">Archive all under 5 ratings ({{ counts.low }})</button>
       </form>
+      {% endif %}
       <form method="post" action="/directory/cleanup/bulk-titlecase" style="display:inline">
         <button type="submit" title="Proper-case every ALL-CAPS name at once">Aa Fix all ALL-CAPS</button>
       </form>
@@ -154,12 +157,15 @@
             <button type="submit" title="Rename to: {{ p.stripped }}">Strip “{{ p.stripped }}”</button>
           </form>
           {% endif %}
+          {% if full_dir %}
           {% if not p.roster %}
           <span class="tg" data-toggle="merge-{{ p.id }}">Merge…</span>
           {% else %}
           <span class="tg" data-toggle="split-{{ p.id }}">Split…</span>
           {% endif %}
+          {% endif %}
           <span class="tg" data-toggle="rename-{{ p.id }}">Rename</span>
+          {% if full_dir %}
           {% if p.hidden %}
           <form method="post" action="/directory/cleanup/quickfix">
             <input type="hidden" name="rp_id" value="{{ p.id }}"><input type="hidden" name="op" value="unarchive">
@@ -170,6 +176,7 @@
             <input type="hidden" name="rp_id" value="{{ p.id }}"><input type="hidden" name="op" value="archive">
             <button type="submit" class="warn">Archive</button>
           </form>
+          {% endif %}
           {% endif %}
         </span>
       </div>
@@ -187,6 +194,7 @@
         </div>
       </details>
 
+      {% if full_dir %}
       {% if not p.roster %}
       <!-- merge panel -->
       <details class="panel2" id="merge-{{ p.id }}">
@@ -248,6 +256,7 @@
           </form>
         </div>
       </details>
+      {% endif %}
       {% endif %}
     </div>
   {% endfor %}

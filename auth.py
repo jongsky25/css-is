@@ -51,8 +51,11 @@ ROLE_BLURB = {
                        "link trees, reports and outside resource persons, for their OWN unit "
                        "(a chief or acting OIC also covers the units under them).",
     "division_manager": "Section Manager for the whole division they sit in.",
-    "system_admin": "Section Manager + survey data fixes: edit/archive walk-in (Type 1) entries and "
-                    "merge duplicate activities. No system settings, directory, accounts or overrides.",
+    "system_admin": "Section Manager + survey data fixes (edit/archive walk-in entries, merge "
+                    "duplicate activities) + day-to-day Users and Directory work: invite, reset, "
+                    "re-role and deactivate accounts below Administrator; acting OICs; add and edit "
+                    "units, staff and speakers. Cannot delete units, archive or merge people, "
+                    "handle signatures or sight grants, touch admin accounts, or change settings.",
     "admin": "Full access: accounts and roles, sight grants, acting OICs, directory, system settings "
              "(email, AI, rules, holidays, travel/AWA, appearance), feedback, backups, audit, Ops, "
              "restructure, and the overrides (any activity, approvals of unplaced staff).",
@@ -62,8 +65,16 @@ _MANAGER_CAPS = {"view", "encode", "edit_data", "create_activity", "manage_event
 # The Administrator adds only survey data fixes (owner, Nov 24): walk-in entry
 # edits/archiving and activity merges. Settings, operations, the directory,
 # hiding people and feedback triage are Super Administrator only.
-_ADMINISTRATOR_CAPS = _MANAGER_CAPS | {"manage_walkin_entries", "merge_activity"}
+# Nov 25 (docs/ADMINISTRATOR_POWERS_PLAN.md): the Administrator also gets the
+# add-and-correct half of Users (`users_edit`) and Directory (`directory_edit`).
+# Removing, archiving, merging, signatures, sight grants and admin accounts stay
+# under the full `manage_users` / `directory` capabilities.
+_ADMINISTRATOR_CAPS = _MANAGER_CAPS | {"manage_walkin_entries", "merge_activity",
+                                       "users_edit", "directory_edit"}
 _SUPER_CAPS = _ADMINISTRATOR_CAPS | {"operate", "directory", "hide", "triage_feedback", "manage_users"}
+
+# Accounts only the Super Administrator may create, re-role, reset or deactivate.
+ADMIN_ROLES = ("system_admin", "admin")
 
 # Capability map. Every gated action checks one of these names.
 #   operate      -- system operations and settings (most of /admin, /ops)
@@ -101,6 +112,20 @@ def can(role, capability):
 
 def valid_role(role):
     return role in ROLE_CAPS
+
+
+def can_manage_account(actor_role, target_role):
+    """May `actor_role` invite, reset, re-role or (de)activate an account that
+    holds `target_role`? The Super Administrator may touch any account; an
+    Administrator only accounts below Administrator."""
+    if can(actor_role, "manage_users"):
+        return True
+    return can(actor_role, "users_edit") and target_role not in ADMIN_ROLES
+
+
+def assignable_roles(actor_role):
+    """The roles `actor_role` may give an account, in display order."""
+    return [r for r in ROLES if can_manage_account(actor_role, r)]
 
 
 # ---------------------------------------------------------------------

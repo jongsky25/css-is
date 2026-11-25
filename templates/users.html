@@ -117,11 +117,12 @@
         {% else %}<span class="pill active">Active</span>{% endif %}
       </td>
       <td data-label="Role">
-        {% if a %}
+        {% if a and a.role not in assignable_roles %}{{ role_labels[a.role] }}
+        {% elif a %}
         <form method="post" action="/admin/users/{{ a.id }}/role" class="inline"
               data-confirm="Change {{ r.name }}'s role? Their access updates immediately.">
           <select name="role" aria-label="Role for {{ r.name }}">
-            {% for role in roles %}<option value="{{ role }}" {{ 'selected' if a.role==role }}>{{ role_labels[role] }}</option>{% endfor %}
+            {% for role in assignable_roles %}<option value="{{ role }}" {{ 'selected' if a.role==role }}>{{ role_labels[role] }}</option>{% endfor %}
           </select>
           <button class="btn ghost" type="submit">Apply</button>
         </form>
@@ -130,7 +131,8 @@
       {#-- How far this account may SEE. Separate from role on purpose: a role is
            what you may DO, and scope otherwise comes from the directory. --#}
       <td data-label="Sees">
-        {% if a %}
+        {% if a and not full_users %}{{ bureau_labels.get(a.bureau_access or '', '—') }}
+        {% elif a %}
         <form method="post" action="/admin/users/{{ a.id }}/bureau-access" class="inline"
               data-confirm="Change what {{ r.name }} can see? This takes effect on their next page load.">
           <select name="bureau_access" aria-label="Bureau-wide access for {{ r.name }}">
@@ -147,10 +149,12 @@
           {% if r.email %}
           <form method="post" action="/admin/users/invite" class="inline">
             <input type="hidden" name="rp_id" value="{{ r.id }}">
-            <select name="role">{% for role in roles %}<option value="{{ role }}" {{ 'selected' if role=='viewer' }}>{{ role_labels[role] }}</option>{% endfor %}</select>
+            <select name="role">{% for role in assignable_roles %}<option value="{{ role }}" {{ 'selected' if role=='viewer' }}>{{ role_labels[role] }}</option>{% endfor %}</select>
             <button class="btn" type="submit">Create account</button>
           </form>
           {% else %}<span class="noemail">Add an email in the Directory first</span>{% endif %}
+        {% elif a.role not in assignable_roles %}
+          <span class="sec">Super Administrator only</span>
         {% elif a.pending %}
           <form method="post" action="/admin/users/{{ a.id }}/reset-default" class="inline"
                 data-confirm="Resend the invite link to {{ r.name }}?">
@@ -188,13 +192,16 @@
     <tr>
       <td data-label="Email / username"><strong>{{ u.username }}</strong>{% if u.id == request.state.user.id %} <span class="sec">(you)</span>{% endif %}</td>
       <td data-label="Role">
+        {% if u.role not in assignable_roles %}{{ role_labels[u.role] }}{% else %}
         <form method="post" action="/admin/users/{{ u.id }}/role" class="inline"
               data-confirm="Change {{ u.username }}'s role? Their access updates immediately.">
-          <select name="role" aria-label="Role for {{ u.username }}">{% for role in roles %}<option value="{{ role }}" {{ 'selected' if u.role==role }}>{{ role_labels[role] }}</option>{% endfor %}</select>
+          <select name="role" aria-label="Role for {{ u.username }}">{% for role in assignable_roles %}<option value="{{ role }}" {{ 'selected' if u.role==role }}>{{ role_labels[role] }}</option>{% endfor %}</select>
           <button class="btn ghost" type="submit">Apply</button>
         </form>
+        {% endif %}
       </td>
       <td data-label="Sees">
+        {% if not full_users %}{{ bureau_labels.get(u.bureau_access or '', '—') }}{% else %}
         <form method="post" action="/admin/users/{{ u.id }}/bureau-access" class="inline"
               data-confirm="Change what {{ u.username }} can see? This takes effect on their next page load.">
           <select name="bureau_access" aria-label="Bureau-wide access for {{ u.username }}">
@@ -204,9 +211,11 @@
           </select>
           <button class="btn ghost" type="submit">Apply</button>
         </form>
+        {% endif %}
       </td>
       <td data-label="Status">{% if u.pending %}<span class="pill pending">Invited · link not used yet</span>{% elif not u.active %}<span class="pill inactive">Inactive</span>{% elif u.must_change %}<span class="pill pending">Temp password · not set yet</span>{% else %}<span class="pill active">Active</span>{% endif %}</td>
       <td class="actions">
+        {% if u.role not in assignable_roles %}<span class="sec">Super Administrator only</span>{% else %}
         {% if u.pending or u.active %}
         <form method="post" action="/admin/users/{{ u.id }}/reset-default" class="inline"
               data-confirm="{{ 'Resend the invite link to ' + u.username + '?' if u.pending else 'Send ' + u.username + ' a password reset link? Their current password keeps working until they use it.' }}">
@@ -217,6 +226,7 @@
           <input type="hidden" name="active" value="{{ '0' if u.active else '1' }}">
           <button class="btn ghost" type="submit">{{ 'Deactivate' if u.active else 'Activate' }}</button>
         </form>
+        {% endif %}
       </td>
     </tr>
     {% endfor %}

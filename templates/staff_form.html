@@ -127,6 +127,7 @@
     <label for="focus_area">Focus area / programme</label>
     <input type="text" id="focus_area" name="focus_area" value="{{ f.focus_area }}">
 
+    {% if can(request.state.user.role, 'directory') %}
     <input type="hidden" name="signature_data" value="{{ f.signature_data }}">
     <div class="sigfield" style="margin-top:1rem;">
       <label>Signature <span class="opt" style="font-weight:400;color:var(--muted);">— used on Certificates of Appearance this person signs</span></label>
@@ -145,6 +146,7 @@
         </div>
       </div>
     </div>
+    {% endif %}
 
     <div class="actions">
       <button type="submit">{{ (("Save" if is_edit else "Add") ~ " anyway") if dup else ("Save changes" if is_edit else "Add staff") }}</button>

@@ -792,19 +792,19 @@ NAV_GROUPS = [
          "in_nav": False},
         {"key": "directory", "url": "/directory", "label": "Directory",
          "hint": "Org units, staff & speakers",
-         "kw": "directory org units staff speakers people tree organization roster", "cap": "directory"},
+         "kw": "directory org units staff speakers people tree organization roster", "cap": "directory_edit"},
         {"key": "restructure", "url": "/admin/restructure", "label": "Restructure directory",
          "hint": "Move the directory onto a new bureau structure (preview, then apply)",
          "kw": "restructure reorganize reorganization new structure divisions sections dpo directory move retire",
          "cap": "manage_users", "in_nav": False},
         {"key": "cleanup", "url": "/directory/cleanup", "label": "Name cleanup",
          "hint": "Quick speaker/name dedup tool",
-         "kw": "name cleanup dedup duplicate merge speakers harmonize fix names", "cap": "directory",
+         "kw": "name cleanup dedup duplicate merge speakers harmonize fix names", "cap": "directory_edit",
          "in_nav": False},
         {"key": "users", "url": "/admin/users", "label": "Users",
          "section": "Setup & records",
          "hint": "Accounts & roles",
-         "kw": "users accounts roles permissions manage logins members", "cap": "manage_users"},
+         "kw": "users accounts roles permissions manage logins members", "cap": "users_edit"},
         {"key": "backups", "url": "/admin/backups", "label": "System",
          # One entry for the six rarely-used admin screens, now tabs of one
          # page (templates/_page_tabs.html system_header); the other five are
@@ -2112,6 +2112,10 @@ def _issue_session(user):
         conn.close()
 
 
+_DIRECTORY_FULL_PATHS = re.compile(
+    r"^/directory/(?:unit/\d+/delete|person/\d+/archive|person/\d+/signature\.png"
+    r"|clear-sample|cleanup/(?:archive-low|merge|split|ai-suggest))/?$")
+
 _SUPER_ADMIN_PATHS = ("/admin/users", "/admin/audit", "/admin/sharing", "/admin/integrations",
                       "/admin/backups", "/admin/restructure", "/admin/documents")
 
@@ -2121,10 +2125,14 @@ def _required_cap(path):
     prefix so management subtrees are protected without per-handler guards.
     ('/' is intentionally None — its route redirects non-creators to /dashboard.)"""
     if path.startswith("/admin"):
-        # Accounts, sight grants, backups, audit, restructure and first-time
-        # module setup stay with the Super Administrator; the rest of /admin is
-        # system operation, open to the Administrator as well
-        # (docs/USER_LEVELS_ASSESSMENT.md).
+        # Users & roles: the Administrator does the add-and-correct work
+        # (`users_edit`); sight grants need the full `manage_users`, and each
+        # handler refuses admin accounts (docs/ADMINISTRATOR_POWERS_PLAN.md).
+        if path == "/admin/users" or path.startswith("/admin/users/"):
+            return "manage_users" if path.endswith("/bureau-access") else "users_edit"
+        # Audit, backups, sharing, integrations, restructure and module setup
+        # need `manage_users`; the rest of /admin is system operation
+        # (`operate`). Both are Super Administrator only today.
         if any(path == p or path.startswith(p + "/") for p in _SUPER_ADMIN_PATHS):
             return "manage_users"
         return "operate"
@@ -2136,7 +2144,12 @@ def _required_cap(path):
     if path in ("/directory/external/new", "/directory/external"):
         return "add_external_rp"
     if path.startswith("/directory"):
-        return "directory"
+        # Removing, archiving, merging/splitting people, signatures and AI
+        # merge suggestions need the full `directory`; adding and correcting
+        # needs `directory_edit` (docs/ADMINISTRATOR_POWERS_PLAN.md).
+        if _DIRECTORY_FULL_PATHS.match(path):
+            return "directory"
+        return "directory_edit"
     if path in ("/create", "/arta"):
         return "create_activity"
     if path.startswith("/monitor"):
@@ -2939,7 +2952,7 @@ async def reset_password_submit(request: Request):
 
 @app.get("/admin/users", response_class=HTMLResponse)
 def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "users_edit")):
         return r
     conn = get_conn()
     try:
@@ -2984,7 +2997,10 @@ def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
     return templates.TemplateResponse(request, "users.html", {
         "rows": rows, "standalone": standalone, "have": have, "total": len(rows),
         "roles": auth.ROLES, "role_labels": auth.ROLE_LABELS, "role_blurb": auth.ROLE_BLURB,
+        "assignable_roles": auth.assignable_roles(request.state.user["role"]),
+        "full_users": auth.can(request.state.user["role"], "manage_users"),
         "bureau_levels": st.BUREAU_ACCESS_LEVELS,
+        "bureau_labels": st.BUREAU_ACCESS_LABELS,
         "bday_accounts": [{"id": u["id"], "label": bday_names.get(u["id"]) or u["username"], "on": u["id"] in bday_on,
                            "bd": bday_set.get(u["id"])}
                           for u in accounts_all if u["active"]],
@@ -2993,6 +3009,17 @@ def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
         "sections": sections, "section_oics": section_oics, "section_accounts": section_accounts,
         "err": err, "link": link, "msg": msg, "show_scope": False, "nav_active": "",
     })
+
+
+_ADMIN_ACCOUNT_ERR = "Only the Super Administrator can change Administrator and Super Administrator accounts."
+
+
+def _refuse_account(request, target_role):
+    """Redirect with an error when the signed-in account may not manage an
+    account holding `target_role` (auth.can_manage_account), else None."""
+    if auth.can_manage_account(request.state.user["role"], target_role):
+        return None
+    return RedirectResponse("/admin/users?err=" + quote(_ADMIN_ACCOUNT_ERR), status_code=303)
 
 
 def _account_redirect(res):
@@ -3007,10 +3034,12 @@ def _account_redirect(res):
 
 @app.post("/admin/users/invite")
 async def admin_users_invite(request: Request):
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "users_edit")):
         return r
     p = await _posted(request)
     role = p.get("role", "")
+    if auth.valid_role(role) and (r := _refuse_account(request, role)):
+        return r
     try:
         rp_id = int(p.get("rp_id", "0"))
     except ValueError:
@@ -3042,13 +3071,15 @@ async def admin_users_reset_default(request: Request, user_id: int):
     """Admin-triggered password reset: email the account a reset link (same
     mechanism as self-service /forgot). Their current password keeps working
     until they follow the link and choose a new one."""
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "users_edit")):
         return r
     conn = get_conn()
     try:
         u = st.get_admin_user_by_id(conn, user_id)
         if not u:
             return RedirectResponse("/admin/users?err=" + quote("No such account."), status_code=303)
+        if (r := _refuse_account(request, u["role"])):
+            return r
         link = _reset_link(request, u["id"], u["pw_hash"])
         subj, body, html = mailer.reset_message(u["username"], link)
         result = mailer.send(u["username"], subj, body, html=html)
@@ -3072,7 +3103,7 @@ async def admin_users_reset_default(request: Request, user_id: int):
 
 @app.post("/admin/users/{user_id}/role")
 async def admin_users_role(request: Request, user_id: int):
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "users_edit")):
         return r
     p = await _posted(request)
     role = p.get("role", "")
@@ -3080,6 +3111,9 @@ async def admin_users_role(request: Request, user_id: int):
     try:
         target = next((u for u in st.list_admin_users(conn) if u["id"] == user_id), None)
         if target and auth.valid_role(role):
+            if ((r := _refuse_account(request, target["role"]))
+                    or (r := _refuse_account(request, role))):
+                return r
             # Don't demote the last remaining admin.
             if target["role"] == "admin" and role != "admin" and _active_admin_count(conn) <= 1:
                 return RedirectResponse("/admin/users?err=Can%27t+demote+the+only+admin.", status_code=303)
@@ -3132,7 +3166,7 @@ async def admin_users_birthday_coordinators(request: Request):
     """Tick the (optional) accounts that organise birthday celebrations. They get two extra emails
     — the day before and a monthly list — about birthdays people shared with them. Nobody ticked
     means those two emails do not go; everything else about birthdays works without it."""
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "users_edit")):
         return r
     body = parse_qsl((await request.body()).decode("utf-8"), keep_blank_values=True)
     ids = [int(v) for k, v in body if k == "coordinator" and v.isdigit()]
@@ -3154,7 +3188,7 @@ async def admin_users_birthday_coordinators(request: Request):
 async def admin_users_birthday(request: Request):
     """An admin enters (or clears, with a blank month/day) a birthday for an account. Sharing
     still decides who sees it; the date itself is never written to the audit log."""
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "users_edit")):
         return r
     p = {k: v for k, v in parse_qsl((await request.body()).decode("utf-8"), keep_blank_values=True)}
     uid = int(p["user_id"]) if (p.get("user_id") or "").isdigit() else 0
@@ -3197,7 +3231,7 @@ async def admin_users_section_oic_set(request: Request, org_unit_id: int):
     whoever held it. The delegate is ADDED to the approval chain, not swapped
     in for the substantive chief — see get_approvers_for — so nothing has to
     be remembered or undone the day the chief is back."""
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "users_edit")):
         return r
     p = await _posted(request)
     try:
@@ -3247,7 +3281,7 @@ async def admin_users_section_oic_set(request: Request, org_unit_id: int):
 async def admin_users_section_oic_clear(request: Request, org_unit_id: int):
     """Turn the toggle back off: remove a section's temporary OIC, e.g. once
     the substantive chief is back from leave."""
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "users_edit")):
         return r
     conn = get_conn()
     try:
@@ -3264,7 +3298,7 @@ async def admin_users_section_oic_clear(request: Request, org_unit_id: int):
 
 @app.post("/admin/users/{user_id}/active")
 async def admin_users_active(request: Request, user_id: int):
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "users_edit")):
         return r
     p = await _posted(request)
     active = p.get("active") == "1"
@@ -3272,6 +3306,8 @@ async def admin_users_active(request: Request, user_id: int):
     try:
         target = next((u for u in st.list_admin_users(conn) if u["id"] == user_id), None)
         if target:
+            if (r := _refuse_account(request, target["role"])):
+                return r
             # Don't lock everyone out: keep at least one active admin, and don't
             # let an admin deactivate their own account.
             if not active and target["id"] == request.state.user["id"]:
@@ -7571,6 +7607,12 @@ async def directory_clear_sample(request: Request):
     return RedirectResponse("/directory", status_code=303)
 
 
+def _full_directory(request):
+    """True for the full `directory` capability (Super Administrator): deleting,
+    archiving, merging and signatures. The Administrator has `directory_edit`."""
+    return auth.can(request.state.user["role"], "directory")
+
+
 def _staff_detail(p):
     """Pull the HR fields out of a posted form (blank -> None)."""
     g = lambda k: (p.get(k, "") or "").strip() or None
@@ -7597,7 +7639,7 @@ def _render_staff_form(request, f, is_edit, dup=None, msg="", err=""):
         # Birthdays live on the person's ACCOUNT, so an admin can only set one here for
         # staff who have one. Only those who may manage users see the section.
         user = getattr(request.state, "user", None)
-        can_bday = bool(is_edit and f.get("id") and user and auth.can(user["role"], "manage_users"))
+        can_bday = bool(is_edit and f.get("id") and user and auth.can(user["role"], "users_edit"))
         acct = st.get_admin_user_by_rp(conn, f["id"]) if can_bday else None
         bday = (st.get_birthday(conn, acct["id"]) if acct else None) or {}
     finally:
@@ -7634,7 +7676,7 @@ async def directory_add_person(request: Request):
                 "/directory/person", "resource person", name, matches,
                 [("kind", "external"), ("name", name), ("photo_data", p.get("photo_data", ""))]))
 
-    signature = _decode_photo(p.get("signature_data", ""))
+    signature = _decode_photo(p.get("signature_data", "")) if _full_directory(request) else None
     conn = get_conn()
     try:
         if org_id and not st.unit_is_active(conn, org_id):
@@ -7688,11 +7730,19 @@ async def directory_update_person(request: Request, rp_id: int):
                                   has_signature=rp.get("has_signature", False)),
                 is_edit=True, dup=matches)
 
-    signature = _decode_photo(p.get("signature_data", ""))
+    full = _full_directory(request)
+    signature = _decode_photo(p.get("signature_data", "")) if full else None
     detail = _staff_detail(p)
     warn = ""
     conn = get_conn()
     try:
+        # The directory email is the linked account's login email, so editing
+        # an Administrator's or Super Administrator's entry could take over
+        # that account through a reset link. Only the Super Administrator may.
+        acct = st.get_admin_user_by_rp(conn, rp_id)
+        if acct and not auth.can_manage_account(request.state.user["role"], acct["role"]):
+            return RedirectResponse(
+                f"/directory?err={quote(_ADMIN_ACCOUNT_ERR)}#row-p{rp_id}", status_code=303)
         if org_id and not st.unit_is_active(conn, org_id):
             # Retired units take no new staff; someone already filed there keeps it.
             org_id = (st.get_rp(conn, rp_id) or {}).get("org_unit_id") if org_id == (
@@ -7718,7 +7768,7 @@ async def directory_update_person(request: Request, rp_id: int):
             st.set_rp_photo(conn, rp_id, photo[0], photo[1])
         if signature:
             st.set_rp_signature(conn, rp_id, signature[0], signature[1])
-        elif p.get("remove_signature") == "1":
+        elif full and p.get("remove_signature") == "1":
             st.clear_rp_signature(conn, rp_id)
         _audit(request, conn, "directory_edit", target_type="person", target_id=rp_id,
                summary=f"updated '{name}'")
@@ -7732,7 +7782,7 @@ async def directory_update_person(request: Request, rp_id: int):
 async def directory_person_birthday(request: Request, rp_id: int):
     """Admin enters (or clears, with a blank month/day) a staff member's birthday from the
     directory. Same rules as /admin/users/birthday; the date is never written to the audit log."""
-    if (r := _forbid(request, "manage_users")):
+    if (r := _forbid(request, "users_edit")):
         return r
     p = await _posted(request)
     conn = get_conn()
@@ -8050,6 +8100,8 @@ async def cleanup_quickfix(request: Request):
     op = p.get("op", "")
     if not rid or op not in ("titlecase", "strip", "archive", "unarchive"):
         return RedirectResponse("/directory/cleanup", status_code=303)
+    if op in ("archive", "unarchive") and (r := _forbid(request, "directory")):
+        return r
     if op in ("titlecase", "strip", "archive"):
         _cleanup_safety_backup()
     conn = get_conn()

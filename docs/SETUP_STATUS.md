@@ -1,3 +1,11 @@
+## Administrator powers: candidate 10.54 — November 25, 2026
+
+Owner asked to give the Administrator more administration but limit its power to delete in
+Users & roles and Directory. Plan and owner answers: [ADMINISTRATOR_POWERS_PLAN.md](ADMINISTRATOR_POWERS_PLAN.md)
+(no settings/Ops; may deactivate accounts below Administrator; no merging). Built as candidate
+10.54 on `claude/eloquent-sagan-theglm` (PR #648); no schema change. Verification is recorded in the PR.
+Owner said "merge when ready" (Nov 25): merge once CI on the merged head is green; the merge deploys 10.54.
+
 Owner answered all questions (section members edit; Slides comments too; real activity
 created with the advisory; no public page for general advisories; email plus a Share button;
 Telegram later; friendly-interface requirements recorded in the plan).
