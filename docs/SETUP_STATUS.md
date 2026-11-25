@@ -1,10 +1,12 @@
-## Administrator powers: candidate 10.54 — November 25, 2026
+## Administrator powers: 10.54 live — November 25, 2026
 
 Owner asked to give the Administrator more administration but limit its power to delete in
 Users & roles and Directory. Plan and owner answers: [ADMINISTRATOR_POWERS_PLAN.md](ADMINISTRATOR_POWERS_PLAN.md)
-(no settings/Ops; may deactivate accounts below Administrator; no merging). Built as candidate
-10.54 on `claude/eloquent-sagan-theglm` (PR #648); no schema change. Verification is recorded in the PR.
-Owner said "merge when ready" (Nov 25): merge once CI on the merged head is green; the merge deploys 10.54.
+(no settings/Ops; may deactivate accounts below Administrator; no merging). On owner instruction
+("merge when ready"), PR #648 merged as 10.54 (merge 9eaed25) after all required checks passed.
+Deploy run 45544473925 passed its gates, secured a fresh live backup, and confirmed the live
+/login shows v10.54 (05:20 UTC). No schema change.
+Next: none required; the owner can try it with an Administrator account.
 
 Owner answered all questions (section members edit; Slides comments too; real activity
 created with the advisory; no public page for general advisories; email plus a Share button;
