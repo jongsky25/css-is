@@ -387,7 +387,9 @@ def test_non_creator_manager_is_redirected(manager, db_path):
     tok = _seed_event(db_path, "admin@test.local")   # someone else's event
     r = manager.get(f"/monitor/{tok}", follow_redirects=False)
     assert r.status_code == 303
-    assert r.headers["location"] == "/monitor"
+    assert r.headers["location"] == "/monitor?flash=not_yours"
+    # ...and the Monitor says why instead of silently showing an empty list
+    assert "belongs to another section" in manager.get(r.headers["location"]).text
 
 
 def test_admin_can_open_any_event(admin, db_path):
@@ -1126,3 +1128,15 @@ def test_monitor_page_script_leaves_submit_buttons_alone(manager, db_path):
     assert "Archive this activity" in html
     assert "querySelectorAll('.act-btn[data-act]')" in html
     assert "querySelectorAll('.act-btn')" not in html
+
+
+def test_home_feed_links_only_activities_the_viewer_may_open(manager, admin, db_path):
+    """The home Upcoming/Ongoing feeds list every bureau activity, but a row may link to
+    its roster only for someone who can open it — a section manager clicking another
+    section's activity used to land on an empty Monitor with no explanation."""
+    theirs = _seed_event(db_path, "admin@test.local")
+    mine = _seed_event(db_path, "manager@test.local")
+    page = manager.get("/css").text
+    assert f'href="/monitor/{mine}"' in page
+    assert f'href="/monitor/{theirs}"' not in page
+    assert f'href="/monitor/{theirs}"' in admin.get("/css").text

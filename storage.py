@@ -6427,7 +6427,7 @@ def ongoing_invited(conn, limit=20):
             # `id` is a representative form of the event; the inline-archive route
             # expands any event-bound form id to the whole event, so the admin
             # Archive button on this row archives the entire invited activity.
-            "id": r[7], "event_date": r[3], "venue": r[4], "topic": r[2],
+            "id": r[7], "event_id": event_id, "event_date": r[3], "venue": r[4], "topic": r[2],
             "modality": r[5] or "f2f", "close_at": r[6],
             "kind": "Invited activity", "responses": r[8],
             "speakers": event_speaker_names(conn, event_id),

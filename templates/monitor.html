@@ -41,6 +41,7 @@
 
 {% block content %}
 {{ monitor_header("monitor") }}
+{% if flash == 'not_yours' %}<div class="mon-meta" style="background:var(--amber-bg,#fdf3e1); border-radius:10px; padding:.6rem .85rem; margin:0 0 1rem;">That activity belongs to another section, so its roster is not open to you — it lists participants’ contact details. Ask its organizer or an administrator for its CSS status.</div>{% endif %}
 {% if flash == 'archived' %}<div class="mon-meta" style="background:var(--green-bg,#e8f5ee); border-radius:10px; padding:.6rem .85rem; margin:0 0 1rem;">Activity archived. It no longer appears on Monitor or in reports, and its registration link is closed. You can restore it from <a href="/activities/archived">Archived activities</a>.</div>{% endif %}
 <p class="lede">Track who has registered for each activity through its public link, and how far they have got with the customer-satisfaction survey (CSS). The <b>Upcoming &amp; ongoing</b> view lists activities still registering or collecting; once an activity concludes it moves to the <b>Concluded</b> view, where its roster stays available.{% if scope_kind == "bureau" %} You are seeing every activity in the bureau.{% elif scope_kind == "none" %} Your account isn’t linked to a directory record yet, so you are seeing only the activities you created.{% else %} You are seeing your team’s activities — the ones your section ran, and the ones one of you spoke at.{% endif %} Open one for the full participant roster, or export it.</p>
 <nav class="mon-views" aria-label="Monitor view">
