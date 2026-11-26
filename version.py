@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.57"
+APP_VERSION = "10.58"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.58",
+        "date": "November 26, 2026",
+        "summary": "Activities on the home page now open only when you can see their roster.",
+        "changes": [
+            "On the Upcoming and Ongoing lists, an activity run by another section is shown but no longer links to a page you cannot open.",
+            "If you reach another section's roster from an old link, the Monitor now explains why it is closed.",
+            "Administrators can now monitor and manage every section's activities, not only their own section's.",
+        ],
+    },
     {
         "version": "10.57",
         "date": "November 25, 2026",

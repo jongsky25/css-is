@@ -5866,6 +5866,18 @@ def home(request: Request):
                 team_scope=feed_scope)
         else:
             my_activities = []
+        # A row links to its Monitor roster / Manage page only when THIS user may
+        # open it (the same rule those pages enforce). The feeds themselves list
+        # every bureau activity, so linking all of them sent a manager from another
+        # section to a page that bounced them back to an empty Monitor.
+        user = request.state.user
+        for a in upcoming + ongoing:
+            eid = a.get("event_id")
+            if eid:
+                ev_row = st.get_event_by_id(conn, eid)
+                a["can_open"] = bool(ev_row) and _can_manage_event(user, ev_row, conn)
+            else:
+                a["can_open"] = True          # standalone: its public form link
         # 'Recently concluded' reuses the memoized events list (same source +
         # cache key as the Activities/report pages), so each card id matches the
         # /reports/activities/<id> route and the F2 report is guaranteed to render.
@@ -11218,7 +11230,7 @@ def monitor_event(request: Request, event_token: str, flash: str = "", show: str
                                               {"ev": None, "show_scope": False},
                                               status_code=404)
         if not _can_manage_event(request.state.user, ev, conn):
-            return RedirectResponse("/monitor", status_code=303)
+            return RedirectResponse("/monitor?flash=not_yours", status_code=303)
         # Outside activities have no registration roster — show the anonymous
         # response tracker (counts, timing, demographic mix; no identities) instead.
         if ev.get("event_kind") == "outside":

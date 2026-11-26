@@ -266,7 +266,7 @@
         <div class="feed-scroll">
           <ul>
             {% for a in upcoming %}
-            {% set linkable = can_monitor and a.event_token %}
+            {% set linkable = can_monitor and a.event_token and a.can_open %}
             <li>
               {% if linkable %}<a class="feed-item" href="/monitor/{{ a.event_token }}" title="See who registered">{% else %}<div class="feed-item">{% endif %}
                 <span class="fi-date">{{ a.event_date|humandate }}</span>
@@ -301,7 +301,7 @@
           <ul>
             {% for a in ongoing %}
             {% set href = a.link if a.standalone else ('/monitor/' ~ a.event_token if a.event_token else none) %}
-            {% set linkable = can_monitor and href %}
+            {% set linkable = can_monitor and href and a.can_open %}
             <li>
               {% if mine_all %}<div class="mine-row">{% endif %}
               {% if linkable %}<a class="feed-item" href="{{ href }}" title="{{ a.tip if a.standalone else 'See who answered the CSS' }}">{% else %}<div class="feed-item">{% endif %}

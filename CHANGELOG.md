@@ -1,3 +1,8 @@
+## 10.58 — November 26, 2026
+
+- Field report (Nov 26): a section manager clicked another section's activity on the home "Ongoing — CSS collecting" feed and landed on an empty Monitor. The home feeds list every bureau activity, but the roster opens only for its creator, an admin or the organising team (`activity_permissions.can_manage`). Upcoming/Ongoing rows now link only when the viewer may open them (`can_open`, computed in `home()`; `ongoing_invited` rows now carry `event_id`). The roster redirect goes to `/monitor?flash=not_yours`, which says why. No schema change.
+- Owner decision (Nov 26): Administrators (`system_admin`) manage activities bureau-wide. `activity_scope_for_user` returns the whole bureau for them, so the Monitor, rosters, Manage pages, home feeds and calendar notices cover every section's activities. Settings, directory and other Super Administrator powers are unchanged. `docs/USER_LEVELS_ASSESSMENT.md` updated.
+
 ## 10.57 — November 25, 2026
 
 - New Year enhanced appearance, mirroring the Christmas Paskong Pinoy layer. New `static/css/bagong-taon.css` (scoped to `data-season="newyear"`): fireworks hero (`static/img/seasonal/newyear-fireworks.svg`), gold countdown tiles, lights strip (`newyear-lights.svg`) under the top bar and footer, and a midnight rooftop companion room with the twelve round fruits (`newyear-rooftop.svg`). `christmas-companions.css` now applies to both seasons. Countdown logic (`newyear-countdown.js`, `appearance.py`) unchanged. Contrast, forced colours, reduced motion and print behave as at Christmas. No schema change.

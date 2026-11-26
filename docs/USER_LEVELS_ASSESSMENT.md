@@ -169,7 +169,7 @@ Decisions:
 | Staff + survey encoding | `encoder` | Staff + `/encode` |
 | Section Manager | `section_manager` | Activities, monitor, notices for **their own unit**. At division/office level, that unit alone unless they are its chief or acting OIC. |
 | Division Manager | `division_manager` | The same, for the **whole division** they sit in |
-| Administrator | `system_admin` | Section Manager reach + survey data fixes (edit/archive walk-in entries, merge duplicate activities). **No settings, directory, feedback, accounts or overrides.** |
+| Administrator | `system_admin` | Activities, monitor and notices for **every section** (bureau-wide, owner decision Nov 26, 2026) + survey data fixes (edit/archive walk-in entries, merge duplicate activities). **No settings, directory, feedback, accounts or other overrides.** |
 | Super Administrator | `admin` | Everything, including `manage_users` pages and the overrides |
 
 **Release switch (owner instruction):** on the first start of 10.51, every account holding
