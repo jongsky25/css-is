@@ -3466,19 +3466,24 @@ def activity_scope_for_user(conn, user):
     Starts from team_scope_for_user (the directory decides), then applies the
     account's level:
       * Division Manager -> the whole division their unit sits in.
-      * Section Manager / Administrator -> their own unit. A unit at section
+      * Administrator -> the whole bureau (every section's activities).
+      * Section Manager -> their own unit. A unit at section
         level keeps its subtree; at division/office/bureau level the reach is
         that unit alone (exact) unless they are its chief or acting OIC.
       * Super Administrator, Directors and bureau-wide sight grants are as
         team_scope_for_user says. Staff never manage, so their answer only
         shapes feeds they cannot open."""
-    scope_path, kind = team_scope_for_user(conn, user)
     role = (user or {}).get("role")
+    # Administrators manage activities bureau-wide (owner decision, Nov 26 2026):
+    # they monitor and open every section's activity, not only their own unit's.
+    if role == "system_admin":
+        return None, "bureau", False
+    scope_path, kind = team_scope_for_user(conn, user)
     if kind != "unit" or not scope_path or role == "admin":
         return scope_path, kind, False
     if role == "division_manager":
         return (_division_ancestor(conn, scope_path) or scope_path), kind, False
-    if role not in ("section_manager", "system_admin"):
+    if role != "section_manager":
         return scope_path, kind, False
     if _unit_level(conn, scope_path) not in ("division", "office", "bureau"):
         return scope_path, kind, False

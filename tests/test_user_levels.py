@@ -2,8 +2,9 @@
 User levels (docs/USER_LEVELS_ASSESSMENT.md, 10.51).
 
 * Super Administrator (stored "admin") keeps every power and the overrides.
-* Administrator ("system_admin") is a Section Manager who can also fix survey
-  data (walk-in entries, activity merges). No settings, directory or overrides.
+* Administrator ("system_admin") manages every section's activities (bureau-wide,
+  Nov 26) and can fix survey data (walk-in entries, activity merges). No settings,
+  directory or other overrides.
 * Section Manager reaches their own unit; at division level that is the
   division unit alone unless they are its chief or acting OIC.
 * Division Manager reaches the whole division they sit in.
@@ -129,8 +130,13 @@ def test_division_manager_reaches_whole_division(world):
     assert _manages(world, "dm_s1") == {"d1", "s1", "s2"}
 
 
-def test_administrator_has_no_override(world):
-    assert _manages(world, "sys_s1") == {"s1"}
+def test_administrator_manages_activities_bureau_wide(world):
+    assert st.activity_scope_for_user(world["conn"], world["sys_s1"]) == (None, "bureau", False)
+    assert _manages(world, "sys_s1") == {"s1", "s2", "d1", "s3"}
+    owner, team_scope, _ = st.event_feed_scope(world["conn"], world["sys_s1"])
+    titles = {e["title"] for e in st.list_events(world["conn"], created_by=owner, team_scope=team_scope)
+              if e["title"].startswith("ULVL")}
+    assert titles == {"ULVL s1", "ULVL s2", "ULVL d1", "ULVL s3"}
 
 
 def test_super_administrator_keeps_override(world):

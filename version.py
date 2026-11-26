@@ -29,6 +29,7 @@ CHANGELOG = [
         "changes": [
             "On the Upcoming and Ongoing lists, an activity run by another section is shown but no longer links to a page you cannot open.",
             "If you reach another section's roster from an old link, the Monitor now explains why it is closed.",
+            "Administrators can now monitor and manage every section's activities, not only their own section's.",
         ],
     },
     {
